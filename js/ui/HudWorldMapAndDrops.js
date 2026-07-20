@@ -113,12 +113,31 @@
             return false;
         }
 
+        // Clean up previous combat systems before starting a new hunt
+        if (Aethra.BattleSystem && typeof Aethra.BattleSystem.stopCombat === "function") {
+            Aethra.BattleSystem.stopCombat("new-hunt-started");
+        }
+        if (Aethra.CombatSystem && typeof Aethra.CombatSystem.stopCombat === "function") {
+            Aethra.CombatSystem.stopCombat("new-hunt-started");
+        }
+
         const started = originalStartHunt(huntId, options);
         if (started && Aethra.GameState?.hunt) {
             Aethra.GameState.hunt.mode = options.mode || definition?.mode || 'expedition';
             Aethra.GameState.hunt.targetCreatureId = options.targetCreatureId || null;
         }
         return started;
+    };
+
+    const originalStopHunt = Hunt.stopHunt.bind(Hunt);
+    Hunt.stopHunt = function (reason = "manual") {
+        if (Aethra.BattleSystem && typeof Aethra.BattleSystem.stopCombat === "function") {
+            Aethra.BattleSystem.stopCombat("hunt-stopped");
+        }
+        if (Aethra.CombatSystem && typeof Aethra.CombatSystem.stopCombat === "function") {
+            Aethra.CombatSystem.stopCombat("hunt-stopped");
+        }
+        return originalStopHunt(reason);
     };
 
     function getHeroLevel() {
