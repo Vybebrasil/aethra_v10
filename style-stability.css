@@ -1583,4 +1583,86 @@ textarea,
     border-radius: 4px !important;
 }
 
+/* Portrait Placeholder size and alignment fixes */
+.combatant-card__fallback {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 2.2rem !important;
+    box-sizing: border-box !important;
+}
+
+.combatant-card__portrait--standalone,
+.battle-stage-panel--compact .combatant-card__portrait--standalone {
+    min-height: 0 !important;
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Info Bar padding reduction to resolve bottom cut-off */
+.combatant-card__info-bar,
+.battle-stage-panel--compact .combatant-card__info-bar {
+    padding: 4px 6px !important;
+    gap: 2px !important;
+    border: none !important;
+    background: transparent !important;
+    margin-top: 2px !important;
+}
+
+.combatant-card__activity small {
+    font-size: 0.52rem !important;
+    margin-bottom: 0px !important;
+}
+
+.combatant-card__activity strong {
+    font-size: 0.85rem !important;
+}
+
+/* Flexbox overrides for accordion views to prevent collapsed/clipped layout heights */
+.hero-hub__view[data-hero-panel-view="backpack"] {
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+    max-height: none !important;
+    gap: 6px !important;
+    grid-template-rows: none !important;
+}
+
+.hero-backpack-grid.battle-inventory-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    grid-auto-rows: 46px !important;
+    overflow-y: visible !important;
+    height: auto !important;
+}
+
+.hero-backpack-grid .battle-inventory-slot {
+    min-height: 46px !important;
+    height: 46px !important;
+}
+
+.hero-hub__view[data-hero-panel-view="skills"] {
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+    max-height: none !important;
+    gap: 6px !important;
+    grid-template-rows: none !important;
+}
+
+.hero-hub__view[data-hero-panel-view="equipment"] {
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+    max-height: none !important;
+    gap: 8px !important;
+    grid-template-rows: none !important;
+}
+
+
 
