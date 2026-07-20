@@ -1,0 +1,29 @@
+{
+  "revision": "combat-equipment-integrated",
+  "updatedFiles": [
+    "js/combat/BattleSystem.js",
+    "js/ui/UI_Renderer.js",
+    "style.css"
+  ],
+  "checks": {
+    "calculateDamage exists": true,
+    "equipped weapon read": true,
+    "full defense subtraction": true,
+    "humanized weapon log": true,
+    "floating event": true,
+    "floating UI method": true,
+    "world-layer target": true,
+    "floating CSS": true,
+    "critical CSS": true
+  },
+  "syntaxChecks": {
+    "js/combat/BattleSystem.js": {
+      "ok": true,
+      "stderr": ""
+    },
+    "js/ui/UI_Renderer.js": {
+      "ok": true,
+      "stderr": ""
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "passed": true,
+  "specializedHunts": 5,
+  "results": {
+    "thieveryAvailable": true,
+    "miningMultiplier": 27,
+    "invalidActionRejected": true,
+    "deepMineCombatXp": 6,
+    "arenaCombatXp": 25,
+    "thieveryXpGain": 36,
+    "explorationXpLeak": 0,
+    "goldMultiplierResult": 25,
+    "quantityMultiplierResult": 2
+  }
+}

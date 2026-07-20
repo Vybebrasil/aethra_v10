@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Crônicas de Aethra</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style-stability.css">
+</head>
+
+<body>
+    <main id="game-container" class="app-shell">
+        <header class="topbar aethra-navbar">
+            <div class="aethra-brand" aria-label="Crônicas de Aethra">
+                <span class="aethra-brand__mark" aria-hidden="true">A</span>
+                <div>
+                    <h1>Crônicas de Aethra</h1>
+                    <p>Battle Dashboard</p>
+                </div>
+            </div>
+
+            <nav
+                class="window-tabs hud-icon-menu"
+                aria-label="Menu principal"
+            >
+                <button type="button" class="primary-view-button is-active" data-primary-view="hunt" aria-pressed="true" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="NAVEGAÇÃO" data-tooltip-title="Hunt" data-tooltip-body="Exibe as cartas de combate, o log e o Hunt Analyzer." data-tooltip-hint="Use Iniciar Caçada no card do inimigo para buscar um alvo.">
+                    <span class="hud-menu-icon" aria-hidden="true">⚔</span><span>Hunt</span>
+                </button>
+                <button type="button" class="primary-view-button" data-primary-view="city" aria-pressed="false" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="NAVEGAÇÃO" data-tooltip-title="Cidade" data-tooltip-body="Abre o hub de preparação com NPCs, mercadores e serviços.">
+                    <span class="hud-menu-icon" aria-hidden="true">🏙</span><span>Cidade</span>
+                </button>
+                <button type="button" data-open-window="inventory-view" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="INVENTÁRIO" data-tooltip-title="Mochila" data-tooltip-body="Gerencia itens, compara atributos e equipa peças da build.">
+                    <span class="hud-menu-icon" aria-hidden="true">🎒</span><span>Mochila</span>
+                </button>
+                <button type="button" data-open-window="premium-shop-view" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="LOJA PREMIUM" data-tooltip-title="Cash" data-tooltip-body="Abre a loja vinculada à moeda de Diamantes.">
+                    <span class="hud-menu-icon" aria-hidden="true">◆</span><span>Cash</span>
+                </button>
+                <button type="button" data-open-window="player-market-view" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="ECONOMIA" data-tooltip-title="Mercado" data-tooltip-body="Compra e vende itens entre jogadores com preços e taxas do mercado.">
+                    <span class="hud-menu-icon" aria-hidden="true">⚖</span><span>Mercado</span>
+                </button>
+                <button type="button" data-open-window="social-view" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="COMUNIDADE" data-tooltip-title="Social" data-tooltip-body="Centraliza recursos sociais e interação com outros jogadores.">
+                    <span class="hud-menu-icon" aria-hidden="true">👥</span><span>Social</span>
+                </button>
+                <button type="button" data-open-window="skills-view" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="BUILD" data-tooltip-title="Skills" data-tooltip-body="Organiza habilidades, prioridade automática e limites de ativação.">
+                    <span class="hud-menu-icon" aria-hidden="true">✦</span><span>Skills</span>
+                </button>
+                <button type="button" data-open-window="quests-view" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="PROGRESSÃO" data-tooltip-title="Missões" data-tooltip-body="Acompanha objetivos ativos, progresso e recompensas.">
+                    <span class="hud-menu-icon" aria-hidden="true">📜</span><span>Missões</span>
+                </button>
+                <button type="button" data-open-window="options-view" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="SISTEMA" data-tooltip-title="Opções" data-tooltip-body="Altera preferências do jogo, incluindo o modo visual de batalha.">
+                    <span class="hud-menu-icon" aria-hidden="true">⚙</span><span>Opções</span>
+                </button>
+            </nav>
+
+            <div class="wallet" aria-label="Recursos do jogador">
+                <div class="wallet__resource" tabindex="0" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="MOEDA PRINCIPAL" data-tooltip-title="Gold" data-tooltip-body="Usado em lojas, mercado e sistemas econômicos do jogo.">
+                    <span>Gold</span>
+                    <strong id="gold-display" data-currency="gold">0</strong>
+                </div>
+                <div class="wallet__resource" tabindex="0" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="MOEDA PREMIUM" data-tooltip-title="Diamantes" data-tooltip-body="Recurso premium exibido separadamente do Gold comum.">
+                    <span>Diamantes</span>
+                    <strong id="diamonds-display" data-currency="diamonds">0</strong>
+                </div>
+                <div class="wallet__engine" tabindex="0" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="ESTADO DO CLIENTE" data-tooltip-title="Engine" data-tooltip-body="Indica se os sistemas centrais do jogo terminaram de carregar e estão prontos.">
+                    <i aria-hidden="true"></i>
+                    <strong id="engine-status">Carregando</strong>
+                </div>
+            </div>
+        </header>
+
+<!--
+            Raiz visual do Modo de Batalha. O RenderEngine substitui este
+            conteúdo por painéis, cartas, ActionBar e inventário rápido.
+        -->
+        <section
+            id="city-view"
+            class="game-window"
+            data-aethra-window
+            aria-hidden="false"
+        >
+            <div id="city-grid"></div>
+            <div id="hero-sprite" hidden></div>
+            <div id="stats-display"></div>
+            <div id="hunt-display"></div>
+            <div id="combat-display"></div>
+            <div id="boss-weekly-reward"></div>
+            <div id="boss-list"></div>
+        </section>
+
+        <!-- Inventário Tibia Style -->
+        <section
+            id="inventory-view"
+            class="game-window hidden"
+            data-aethra-window
+            data-window-size="medium"
+            aria-hidden="true"
+        >
+            <header class="window-header">
+                <div>
+                    <small>Equipamentos e recursos</small>
+                    <h2>Inventário</h2>
+                </div>
+
+                <button
+                    type="button"
+                    class="window-close"
+                    data-close-window="inventory-view"
+                    aria-label="Fechar inventário"
+                >
+                    ×
+                </button>
+            </header>
+
+            <div class="inventory-client-layout">
+                <section class="inventory-backpack-panel">
+                    <header class="inventory-panel-header">
+                        <div>
+                            <span class="inventory-panel-icon">🎒</span>
+                            <strong>Mochila</strong>
+                        </div>
+
+                        <span id="inventory-count">0 / 40</span>
+                    </header>
+
+                    <div
+                        id="inventory-grid"
+                        class="inventory-scroll-list"
+                    ></div>
+
+                    <div
+                        id="inventory-selected"
+                        class="inventory-selected"
+                    >
+                        <span>Nenhum item selecionado.</span>
+                    </div>
+                </section>
+
+                <aside class="inventory-paperdoll-panel">
+                    <header class="inventory-panel-header">
+                        <div>
+                            <span class="inventory-panel-icon">🛡</span>
+                            <strong>Equipamentos</strong>
+                        </div>
+                    </header>
+
+                    <div class="paperdoll-stage">
+                        <img
+                            src="assets/entities/player_idle.png"
+                            alt="Aventureiro equipado"
+                            class="paperdoll-character"
+                            draggable="false"
+                        >
+
+                        <div
+                            id="equipment-grid"
+                            class="paperdoll-grid"
+                        ></div>
+                    </div>
+
+                    <p class="paperdoll-help">
+                        Dê dois cliques em um item equipável da
+                        mochila. Clique em um slot preenchido para
+                        remover o equipamento.
+                    </p>
+                </aside>
+            </div>
+        </section>
+
+        <!-- NPC Shop: aberto ao clicar no Mercador -->
+        <section
+            id="npc-shop-view"
+            class="game-window hidden"
+            data-aethra-window
+            data-window-size="large"
+            aria-hidden="true"
+        >
+            <header class="window-header">
+                <div>
+                    <small>Mercador da Vila</small>
+                    <h2>NPC Shop</h2>
+                </div>
+
+                <button
+                    type="button"
+                    class="window-close"
+                    data-close-window="npc-shop-view"
+                    aria-label="Fechar NPC Shop"
+                >
+                    ×
+                </button>
+            </header>
+
+            <div class="shop-split-layout">
+                <section class="card">
+                    <h2>Comprar</h2>
+                    <div id="npc-shop-grid"></div>
+                </section>
+
+                <section class="card">
+                    <h2>Vender</h2>
+                    <div id="npc-sell-grid"></div>
+                </section>
+            </div>
+        </section>
+
+        <!-- Loja Premium separada -->
+        <section
+            id="premium-shop-view"
+            class="game-window hidden"
+            data-aethra-window
+            data-window-size="large"
+            aria-hidden="true"
+        >
+            <header class="window-header">
+                <div>
+                    <small>Itens exclusivos</small>
+                    <h2>Loja de Diamantes</h2>
+                </div>
+
+                <button
+                    type="button"
+                    class="window-close"
+                    data-close-window="premium-shop-view"
+                    aria-label="Fechar Loja de Diamantes"
+                >
+                    ×
+                </button>
+            </header>
+
+            <div id="premium-shop-grid"></div>
+        </section>
+
+        <!-- Mercado de Players separado -->
+        <section
+            id="player-market-view"
+            class="game-window hidden"
+            data-aethra-window
+            data-window-size="large"
+            aria-hidden="true"
+        >
+            <header class="window-header">
+                <div>
+                    <small>Negociação entre aventureiros</small>
+                    <h2>Mercado de Players</h2>
+                </div>
+
+                <button
+                    type="button"
+                    class="window-close"
+                    data-close-window="player-market-view"
+                    aria-label="Fechar Mercado de Players"
+                >
+                    ×
+                </button>
+            </header>
+
+            <div class="market-toolbar">
+                <strong>Ofertas ativas</strong>
+                <span>Taxa de transação: 5%</span>
+            </div>
+
+            <div id="player-market-grid"></div>
+        </section>
+
+        <!-- Social -->
+        <section
+            id="social-view"
+            class="game-window hidden"
+            data-aethra-window
+            data-window-size="small"
+            aria-hidden="true"
+        >
+            <header class="window-header">
+                <div>
+                    <small>Comunidade</small>
+                    <h2>Social</h2>
+                </div>
+
+                <button
+                    type="button"
+                    class="window-close"
+                    data-close-window="social-view"
+                    aria-label="Fechar Social"
+                >
+                    ×
+                </button>
+            </header>
+
+            <div class="social-list">
+                <article>
+                    <span class="social-status is-online"></span>
+                    <div>
+                        <strong>Mercador</strong>
+                        <small>Vila da Fronteira</small>
+                    </div>
+                </article>
+
+                <article>
+                    <span class="social-status"></span>
+                    <div>
+                        <strong>Companheiros</strong>
+                        <small>Nenhum jogador conectado.</small>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+
+        <!-- Skills e Smart Healing -->
+        <section
+            id="skills-view"
+            class="game-window hidden"
+            data-aethra-window
+            data-window-size="large"
+            aria-hidden="true"
+        >
+            <header class="window-header">
+                <div>
+                    <small>ActionBar e sobrevivência</small>
+                    <h2>Skills e Prioridades</h2>
+                </div>
+
+                <button
+                    type="button"
+                    class="window-close"
+                    data-close-window="skills-view"
+                    aria-label="Fechar Skills"
+                >
+                    ×
+                </button>
+            </header>
+
+            <div class="skills-priority-guide">
+                <strong>Ordem de decisão por tick</strong>
+
+                <ol>
+                    <li>
+                        Curar quando o HP estiver abaixo do
+                        limite individual.
+                    </li>
+
+                    <li>
+                        Executar a primeira skill de dano
+                        marcada como Auto.
+                    </li>
+
+                    <li>
+                        Aguardar uma skill manual.
+                    </li>
+                </ol>
+            </div>
+
+            <div
+                id="skills-priority-status"
+                class="skills-priority-status"
+            ></div>
+
+            <div
+                id="skills-config-list"
+                class="skills-config-list"
+            ></div>
+        </section>
+
+        <section
+            id="quests-view"
+            class="game-window hidden"
+            data-aethra-window
+            data-window-size="medium"
+            aria-hidden="true"
+        >
+            <header class="window-header">
+                <div>
+                    <small>Jornada do herói</small>
+                    <h2>Missões</h2>
+                </div>
+
+                <button
+                    type="button"
+                    class="window-close"
+                    data-close-window="quests-view"
+                    aria-label="Fechar missões"
+                >
+                    ×
+                </button>
+            </header>
+
+            <div id="quests-list"></div>
+        </section>
+
+        <section
+            id="options-view"
+            class="game-window hidden"
+            data-aethra-window
+            data-window-size="small"
+            aria-hidden="true"
+        >
+            <header class="window-header">
+                <div>
+                    <small>Preferências do jogador</small>
+                    <h2>Configurações</h2>
+                </div>
+
+                <button
+                    type="button"
+                    class="window-close"
+                    data-close-window="options-view"
+                    aria-label="Fechar configurações"
+                >
+                    ×
+                </button>
+            </header>
+
+            <div class="settings-panel">
+                <div class="settings-panel__heading">
+                    <div>
+                        <small>View Engine</small>
+                        <h3>Modo de Batalha</h3>
+                    </div>
+                    <span class="settings-panel__badge">Visual</span>
+                </div>
+
+                <p class="settings-panel__description">
+                    Escolha como o encontro será apresentado. Esta preferência
+                    fica salva neste navegador.
+                </p>
+
+                <fieldset
+                    class="battle-mode-options"
+                    aria-label="Escolher modo de batalha"
+                >
+                    <label
+                        class="battle-mode-choice"
+                        data-battle-mode-choice
+                    >
+                        <input
+                            type="radio"
+                            name="battle-mode"
+                            value="cards"
+                            data-battle-mode-option
+                        >
+                        <span class="battle-mode-choice__icon" aria-hidden="true">▣</span>
+                        <span class="battle-mode-choice__copy">
+                            <strong>Cartas</strong>
+                            <small>Painéis de Herói, Inimigo e log.</small>
+                        </span>
+                        <span class="battle-mode-choice__state">Atual</span>
+                    </label>
+
+                    <label
+                        class="battle-mode-choice"
+                        data-battle-mode-choice
+                    >
+                        <input
+                            type="radio"
+                            name="battle-mode"
+                            value="map2d"
+                            data-battle-mode-option
+                        >
+                        <span class="battle-mode-choice__icon" aria-hidden="true">◇</span>
+                        <span class="battle-mode-choice__copy">
+                            <strong>3D/Mapa</strong>
+                            <small>Modo de exploração planejado.</small>
+                        </span>
+                        <span class="battle-mode-choice__state battle-mode-choice__state--future">
+                            Em breve
+                        </span>
+                    </label>
+                </fieldset>
+
+                <div
+                    id="battle-mode-setting-status"
+                    class="settings-mode-status"
+                    role="status"
+                    aria-live="polite"
+                >
+                    Modo ativo: Cartas
+                </div>
+            </div>
+        </section>
+
+        <section
+            id="professions-view"
+            class="game-window hidden"
+            data-aethra-window
+            aria-hidden="true"
+        >
+            <header class="window-header">
+                <h2>Profissões</h2>
+                <button
+                    type="button"
+                    class="window-close"
+                    data-close-window="professions-view"
+                >
+                    ×
+                </button>
+            </header>
+
+            <div id="professions-grid"></div>
+        </section>
+
+        <section
+            id="dungeon-view"
+            class="game-window hidden"
+            data-aethra-window
+            aria-hidden="true"
+        >
+            <header class="window-header">
+                <h2>Dungeons</h2>
+                <button
+                    type="button"
+                    class="window-close"
+                    data-close-window="dungeon-view"
+                >
+                    ×
+                </button>
+            </header>
+
+            <div id="dungeon-list"></div>
+        </section>
+    </main>
+
+    <!-- Core e dados -->
+    <script src="js/core/game-core.js" defer></script>
+    <script src="js/data/GameData.js" defer></script>
+    <script src="js/data/CreatureBalanceConfig.js" defer></script>
+    <script src="js/data/MonsterAbilityParser.js" defer></script>
+    <script src="js/data/LootProfileRegistry.js" defer></script>
+    <script src="js/data/MonsterCatalogAdapter.js" defer></script>
+    <script src="js/data/MonsterCatalogData.js" defer></script>
+    <script src="js/data/MonsterCatalog.js" defer></script>
+    <script src="js/data/HuntCatalog.js" defer></script>
+    <script src="js/world/EntityManager.js" defer></script>
+    <script src="js/infrastructure/SaveManager.js" defer></script>
+    <script src="js/infrastructure/SettingsManager.js" defer></script>
+    <script src="js/economy/EconomyRNGManager.js" defer></script>
+
+    <!-- UI base -->
+    <script src="js/ui/WindowManager.js" defer></script>
+    <script src="js/ui/TooltipManager.js" defer></script>
+
+    <!-- Itens e progressão -->
+    <script src="js/items/ItemSystem.js" defer></script>
+    <script src="js/items/BagSystem.js" defer></script>
+    <script src="js/items/EquipSystem.js" defer></script>
+    <script src="js/progression/XPSystem.js" defer></script>
+    <script src="js/items/LootSystem.js" defer></script>
+
+    <!-- Combate e mundo -->
+    <script src="js/combat/CombatSystem.js" defer></script>
+    <script src="js/combat/SkillSystem.js" defer></script>
+    <script src="js/combat/SkillController.js" defer></script>
+    <script src="js/combat/BattleSystem.js" defer></script>
+    <script src="js/world/HuntSystem.js" defer></script>
+    <script src="js/progression/ProfessionSystem.js" defer></script>
+    <script src="js/world/ExplorationSystem.js" defer></script>
+    <script src="js/combat/BossSystem.js" defer></script>
+    <script src="js/progression/QuestSystem.js" defer></script>
+    <script src="js/world/DungeonSystem.js" defer></script>
+
+    <!-- Mercado e renderização -->
+    <script src="js/market/MarketplaceSystem.js" defer></script>
+    <script src="js/ui/RenderEngine.js" defer></script>
+    <script src="js/ui/UI_Renderer.js" defer></script>
+    <script src="js/ui/UIManager.js" defer></script>
+    <script src="js/ui/HudExperience.js" defer></script>
+    <script src="js/ui/HudWorldMapAndDrops.js" defer></script>
+    <script src="js/ui/EncounterInteractionPass.js" defer></script>
+    <script src="js/ui/UIStabilityPass.js" defer></script>
+
+    <!-- Inicialização final -->
+    <script src="js/core/GameLoader.js" defer></script>
+</body>
+</html>

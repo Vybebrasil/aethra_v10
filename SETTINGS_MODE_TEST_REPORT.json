@@ -1,0 +1,46 @@
+{
+  "defaultMode": {
+    "settingsManager": true,
+    "mode": "cards",
+    "renderMode": "cards",
+    "cardsLayout": true,
+    "mapPlaceholder": false,
+    "cardsChecked": true,
+    "actionbarFixed": true,
+    "optionsRegistered": true,
+    "stored": "{\"battleMode\":\"cards\"}",
+    "engineStatus": "Pronta"
+  },
+  "switchToMap2d": {
+    "mode": "map2d",
+    "renderMode": "map2d",
+    "mapPlaceholder": true,
+    "cardsLayout": false,
+    "placeholderText": "Modo Mapa 2D em desenvolvimento",
+    "stored": "{\"battleMode\":\"map2d\"}",
+    "legacy": "map2d",
+    "mapChecked": true,
+    "optionsOpen": true,
+    "actionbarChildren": 0
+  },
+  "switchBackToCards": {
+    "mode": "cards",
+    "cardsLayout": true,
+    "mapPlaceholder": false,
+    "actionbarFixed": true,
+    "stored": "{\"battleMode\":\"cards\"}",
+    "optionsOpen": true
+  },
+  "reloadWithMap2dSaved": {
+    "mode": "map2d",
+    "renderMode": "map2d",
+    "mapPlaceholder": true,
+    "cardsLayout": false,
+    "mapChecked": true,
+    "status": "Modo ativo: 3D/Mapa. Visualização em desenvolvimento.",
+    "stored": "{\"battleMode\":\"map2d\"}",
+    "actionbarChildren": 0
+  },
+  "runtimeExceptions": 0,
+  "passed": true
+}

@@ -1,0 +1,45 @@
+{
+  "initial": {
+    "mode": "battle-cards",
+    "engine": true,
+    "missing": [],
+    "layout": true,
+    "panels": 6,
+    "slots": 10,
+    "filled": 5,
+    "auto": 2,
+    "entityLayer": false,
+    "duplicateIds": []
+  },
+  "actionBar": {
+    "order": [
+      "heavy_strike",
+      "basic_attack",
+      "heal",
+      "guard",
+      "fire_bolt"
+    ],
+    "heavyAuto": true,
+    "heavyClass": true
+  },
+  "inventory": {
+    "multiplier": 1.65,
+    "bag": 1,
+    "quickSlots": 1
+  },
+  "inventoryModal": true,
+  "skillsModal": {
+    "open": true,
+    "cards": 5
+  },
+  "battle": {
+    "active": true,
+    "enemy": "INIMIGO Esqueleto Guardião NV. 1 E HP 22 / 32 ATQ 6 DEF 3 XP 6",
+    "round": "Turno 2",
+    "hp": 47,
+    "mana": 35,
+    "greenLog": true
+  },
+  "pageErrors": [],
+  "consoleErrors": []
+}

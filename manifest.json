@@ -1,0 +1,47 @@
+{
+  "name": "Crônicas de Aethra — Engine Completa RPG Dark",
+  "entry": "index.html",
+  "script_count": 25,
+  "scripts": [
+    "js/core/game-core.js",
+    "js/data/GameData.js",
+    "js/world/EntityManager.js",
+    "js/infrastructure/SaveManager.js",
+    "js/infrastructure/SettingsManager.js",
+    "js/ui/WindowManager.js",
+    "js/items/ItemSystem.js",
+    "js/items/BagSystem.js",
+    "js/items/EquipSystem.js",
+    "js/progression/XPSystem.js",
+    "js/items/LootSystem.js",
+    "js/combat/CombatSystem.js",
+    "js/combat/SkillSystem.js",
+    "js/combat/SkillController.js",
+    "js/combat/BattleSystem.js",
+    "js/world/HuntSystem.js",
+    "js/progression/ProfessionSystem.js",
+    "js/combat/BossSystem.js",
+    "js/progression/QuestSystem.js",
+    "js/world/DungeonSystem.js",
+    "js/market/MarketplaceSystem.js",
+    "js/ui/RenderEngine.js",
+    "js/ui/UI_Renderer.js",
+    "js/ui/UIManager.js",
+    "js/core/GameLoader.js"
+  ],
+  "optional_tests": [
+    "tests/integration.html"
+  ],
+  "revision": "settings-manager-battle-mode",
+  "updatedFiles": [
+    "index.html",
+    "style.css",
+    "js/infrastructure/SettingsManager.js",
+    "js/core/GameLoader.js",
+    "js/ui/RenderEngine.js",
+    "js/ui/UIManager.js",
+    "tests/integration.html",
+    "js/tests/IntegrationTest.js",
+    "SETTINGS_MODE_TEST_REPORT.json"
+  ]
+}

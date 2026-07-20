@@ -1,0 +1,180 @@
+{
+  "viewport": {
+    "width": 1366,
+    "height": 768
+  },
+  "checks": {
+    "idle_layout_fits": true,
+    "body_no_scroll": true,
+    "combat_cards_visible": true,
+    "combat_card_metrics": {
+      "hero": {
+        "x": 333,
+        "y": 121,
+        "w": 332,
+        "h": 168.625,
+        "right": 665,
+        "bottom": 289.625,
+        "scrollW": 330,
+        "scrollH": 167,
+        "hidden": false,
+        "display": "grid"
+      },
+      "enemy": {
+        "x": 711,
+        "y": 121,
+        "w": 332,
+        "h": 168.625,
+        "right": 1043,
+        "bottom": 289.625,
+        "scrollW": 330,
+        "scrollH": 167,
+        "hidden": false,
+        "display": "grid"
+      },
+      "arena": {
+        "x": 325,
+        "y": 113,
+        "w": 726,
+        "h": 184.625,
+        "right": 1051,
+        "bottom": 297.625,
+        "scrollW": 726,
+        "scrollH": 185,
+        "hidden": false,
+        "display": "grid"
+      }
+    },
+    "event_card_visible": true,
+    "hero_section_collapses": true,
+    "hero_panel_minimizes": true,
+    "actionbar_reorders": true,
+    "world_map_fits": true,
+    "hunt_filters_present": true,
+    "targeted_hunt_mode": true,
+    "targeted_hunt_single_enemy": true,
+    "loot_title_contextual": true,
+    "windows": {
+      "inventory-view": {
+        "x": 16,
+        "y": 72,
+        "w": 780,
+        "h": 680,
+        "right": 796,
+        "bottom": 752,
+        "scrollW": 778,
+        "scrollH": 744,
+        "hidden": false,
+        "display": "block",
+        "fits": true
+      },
+      "skills-view": {
+        "x": 450,
+        "y": 8,
+        "w": 900,
+        "h": 752,
+        "right": 1350,
+        "bottom": 760,
+        "scrollW": 898,
+        "scrollH": 750,
+        "hidden": false,
+        "display": "block",
+        "fits": true
+      },
+      "combat-inspect-view": {
+        "x": 355,
+        "y": 115,
+        "w": 720,
+        "h": 620,
+        "right": 1075,
+        "bottom": 735,
+        "scrollW": 718,
+        "scrollH": 618,
+        "hidden": false,
+        "display": "block",
+        "fits": true
+      },
+      "quests-view": {
+        "x": 303,
+        "y": 92,
+        "w": 760,
+        "h": 221.375,
+        "right": 1063,
+        "bottom": 313.375,
+        "scrollW": 758,
+        "scrollH": 219,
+        "hidden": false,
+        "display": "block",
+        "fits": true
+      },
+      "options-view": {
+        "x": 463,
+        "y": 92,
+        "w": 440,
+        "h": 408.171875,
+        "right": 903,
+        "bottom": 500.171875,
+        "scrollW": 438,
+        "scrollH": 406,
+        "hidden": false,
+        "display": "block",
+        "fits": true
+      },
+      "player-market-view": {
+        "x": 163,
+        "y": 92,
+        "w": 1040,
+        "h": 218.3125,
+        "right": 1203,
+        "bottom": 310.3125,
+        "scrollW": 1038,
+        "scrollH": 216,
+        "hidden": false,
+        "display": "block",
+        "fits": true
+      },
+      "premium-shop-view": {
+        "x": 163,
+        "y": 92,
+        "w": 1040,
+        "h": 440.5625,
+        "right": 1203,
+        "bottom": 532.5625,
+        "scrollW": 1038,
+        "scrollH": 439,
+        "hidden": false,
+        "display": "block",
+        "fits": true
+      },
+      "social-view": {
+        "x": 463,
+        "y": 92,
+        "w": 440,
+        "h": 237.734375,
+        "right": 903,
+        "bottom": 329.734375,
+        "scrollW": 438,
+        "scrollH": 236,
+        "hidden": false,
+        "display": "block",
+        "fits": true
+      }
+    },
+    "all_windows_fit": true,
+    "city_fits": true,
+    "tooltip_hidden_after_navigation": true,
+    "event_card_validation": "Validated in isolated event-state render at 1366x768; contextual card occupied the third grid column without overflow."
+  },
+  "errors": [],
+  "resolutions": {
+    "layout": "Viewport locked; stable 3-column grid with 300/290 px sidebars at 1366 and fluid columns at 1728.",
+    "encounter": "Hero/enemy/event cards use explicit grid columns; cards no longer exceed arena height.",
+    "exploration": "Removed redundant region/status cards; retained current activity, timeline and four counters.",
+    "actionbar": "184 px reserved; primary attacks and 10 skill slots have fixed internal heights with controls visible.",
+    "hero_panel": "Accordion content scrolls internally and collapsed sections are fixed at 40 px.",
+    "right_sidebar": "Loot, progression and analyzer use independent internal scrolling.",
+    "windows": "Post-render viewport clamp; inventory expanded to two-column 780 px client; skills list scrolls inside viewport.",
+    "world_map": "Expeditions and Hunts validated; hunt catalog stays two-column and drop preview no longer collapses.",
+    "tooltips": "Navigation and window actions close active tooltip."
+  }
+}

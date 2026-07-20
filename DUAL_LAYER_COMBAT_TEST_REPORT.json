@@ -1,0 +1,21 @@
+{
+  "feature": "dual-layer-combat",
+  "status": "passed",
+  "checks": {
+    "javascriptSyntax": true,
+    "cssParsing": true,
+    "primarySkillsRemovedFromActionBar": true,
+    "mainHandAttacksIndependently": true,
+    "heavyStrikeExecutesAlongsideMainHand": true,
+    "rotationFallsThroughToFireBoltDuringHeavyStrikeCooldown": true,
+    "mainHandContinuesWhileAllSkillsAreOnCooldown": true,
+    "manualPriorityRunsBeforeAutomaticOffense": true,
+    "offhandRequiresWeapon": true,
+    "resourceCostsRemainActive": true
+  },
+  "testedRotation": [
+    "round 1: heavy_strike + basic_attack",
+    "round 2: fire_bolt + basic_attack",
+    "round 3: basic_attack only while skills recharge"
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 2,
+  "catalogProfiles": 327,
+  "economyTiers": 8,
+  "explicitDragonOverrides": 20,
+  "syntax": "passed",
+  "huntIntegration": {
+    "goldUpdatesHero": true,
+    "goldUpdatesSession": true,
+    "lootValueUpdatesSession": true,
+    "lootCountUpdatesSession": true,
+    "profitEventEmitted": true,
+    "analyzerUpdateEventEmitted": true
+  },
+  "simulation": {
+    "seed": 123456789,
+    "wolf_50000": {
+      "tier": "T0",
+      "averageGoldPerKill": 0.5455,
+      "averageLootValuePerKill": 1.59122,
+      "averageItemsPerKill": 0.45166,
+      "rareUnitsPerKill": 0.00194
+    },
+    "bandit_50000": {
+      "tier": "T0",
+      "averageGoldPerKill": 0.55086,
+      "averageLootValuePerKill": 1.92204,
+      "averageItemsPerKill": 0.41932,
+      "rareUnitsPerKill": 0.00194
+    },
+    "adult_red_dragon_20000": {
+      "tier": "T6",
+      "averageGoldPerKill": 357.99295,
+      "averageLootValuePerKill": 561.63055,
+      "legendaryUnitsPerKill": 0.0108
+    },
+    "ancient_red_dragon_20000": {
+      "tier": "T7",
+      "averageGoldPerKill": 1077.3263,
+      "averageLootValuePerKill": 1185.2056,
+      "legendaryUnitsPerKill": 0.0525
+    }
+  }
+}

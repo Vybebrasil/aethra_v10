@@ -1,0 +1,53 @@
+{
+  "generatedAt": "2026-07-20T15:54:58.828Z",
+  "catalogMonsters": 327,
+  "expeditions": 12,
+  "uniqueHuntCreatures": 55,
+  "missingCreatureReferences": [],
+  "creatureTypes": [
+    "aberration",
+    "beast",
+    "celestial",
+    "dragon",
+    "elemental",
+    "fey",
+    "fiend",
+    "giant",
+    "humanoid",
+    "monstrosity",
+    "plant",
+    "undead"
+  ],
+  "biomes": [
+    "Acampamentos e paliçadas",
+    "Cavernas e teias",
+    "Cidadela amaldiçoada",
+    "Floresta antiga",
+    "Montanhas minerais",
+    "Penhascos dracônicos",
+    "Plano infernal instável",
+    "Pântano arcano",
+    "Ruínas abissais",
+    "Ruínas subterrâneas",
+    "Tundra e geleiras",
+    "Zona de cataclismo"
+  ],
+  "lootPreviewCoverage": {
+    "withBaseProfile": 55,
+    "total": 55
+  },
+  "expeditionTagCounts": {
+    "SOLO": 4,
+    "GRUPO": 10,
+    "ELITE": 8,
+    "BOSS": 6
+  },
+  "filters": [
+    "search",
+    "type",
+    "biome",
+    "access",
+    "sort"
+  ],
+  "persistenceKey": "aethra.worldMap.huntFilters.v1"
+}

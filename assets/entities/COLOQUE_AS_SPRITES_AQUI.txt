@@ -1,0 +1,7 @@
+Coloque aqui as sprites individuais de criaturas.
+
+Exemplos usados no GameData.js:
+- giant_rat.png
+- forest_wolf.png
+
+Os nomes precisam corresponder exatamente ao campo `sprite` da criatura.

@@ -1,0 +1,26 @@
+{
+  "revision": "item-math-tooltip-drag-npc-interaction",
+  "updatedFiles": [
+    "js/data/GameData.js",
+    "js/items/ItemSystem.js",
+    "js/items/EquipSystem.js",
+    "js/ui/UI_Renderer.js",
+    "js/ui/RenderEngine.js",
+    "js/world/EntityManager.js",
+    "js/world/InputManager.js",
+    "style.css"
+  ],
+  "checks": {
+    "GameData calculateItemStats": true,
+    "Saved stat multiplier": true,
+    "Advanced tooltip": true,
+    "Inventory draggable": true,
+    "Drop equip": true,
+    "Double click equip": true,
+    "Selected item": true,
+    "NPC click manager": true,
+    "Space interaction": true,
+    "Proximity": true,
+    "No missing scripts": true
+  }
+}

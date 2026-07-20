@@ -1,0 +1,20 @@
+{
+  "feature": "Unified Hero Panel and Skill Progression",
+  "viewport": "1366x768",
+  "status": "passed",
+  "checks": {
+    "single_unified_left_panel": true,
+    "hero_identity_and_location_visible": true,
+    "hp_mana_energy_xp_visible": true,
+    "six_attributes_rendered": true,
+    "equipment_tab_rendered": true,
+    "backpack_tab_rendered": true,
+    "five_skill_progression_rows_rendered": true,
+    "skill_xp_awarded_on_use": true,
+    "skill_level_up_tested": true,
+    "skill_mastery_affects_damage_and_healing": true,
+    "page_vertical_scroll": false,
+    "page_horizontal_scroll": false,
+    "javascript_syntax": "passed"
+  }
+}

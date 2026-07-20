@@ -1,0 +1,26 @@
+{
+  "name": "Aethra UI/UX Refinement",
+  "checks": {
+    "javascriptSyntax": true,
+    "cssBraceBalance": true,
+    "tooltipManagerLoadedBeforeRenderEngine": true,
+    "skillTooltipFields": [
+      "name",
+      "type",
+      "baseDamageOrHeal",
+      "resourceCost",
+      "cooldown"
+    ],
+    "cooldownAnimation": "requestAnimationFrame + vertical wipe",
+    "cooldownBlocksUse": true,
+    "heroLastActionFeedback": true,
+    "heroStatTooltips": true,
+    "xpBarDedicatedRow": true,
+    "singleScreenViewportLockPreserved": true,
+    "combatCardActiveGlow": true
+  },
+  "notes": [
+    "Browser visual automation was unavailable in the execution sandbox; geometry was validated through fixed CSS dimensions and static checks.",
+    "All project JavaScript files passed node --check."
+  ]
+}

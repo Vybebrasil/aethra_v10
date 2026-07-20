@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "file": "data/source/pocketdm_monstros_srd.json",
+    "filter": "is_srd === true",
+    "count": 327
+  },
+  "runtime": {
+    "file": "js/data/MonsterCatalogData.js",
+    "catalog": "MonsterCatalog",
+    "aliases": [
+      "forest_wolf",
+      "giant_rat",
+      "orc_scout",
+      "skeleton_guard"
+    ]
+  },
+  "hunts": {
+    "file": "js/data/HuntCatalog.js",
+    "count": 12,
+    "weightedEntries": 57,
+    "levelRange": [
+      1,
+      220
+    ]
+  },
+  "systems": [
+    "CreatureBalanceConfig",
+    "MonsterAbilityParser",
+    "LootProfileRegistry",
+    "MonsterCatalogAdapter",
+    "MonsterCatalog",
+    "HuntCatalog"
+  ],
+  "tests": [
+    "tests/monster_catalog_test.js",
+    "MONSTER_CATALOG_TEST_REPORT.json"
+  ]
+}

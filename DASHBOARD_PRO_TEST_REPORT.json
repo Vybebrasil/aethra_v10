@@ -1,0 +1,412 @@
+{
+  "project": "Crônicas de Aethra - Dashboard Pro",
+  "generatedAt": "2026-07-19",
+  "status": "passed",
+  "checks": {
+    "javascriptSyntax": {
+      "passed": true,
+      "filesChecked": 30
+    },
+    "cssParsing": {
+      "passed": true,
+      "parseErrors": 0
+    },
+    "duplicateStaticIds": {
+      "passed": true,
+      "duplicates": []
+    },
+    "mapLoaderOrTiledRendererBootstrapReferences": {
+      "passed": true,
+      "count": 0
+    },
+    "browserRuntime": {
+      "passed": true,
+      "uncaughtErrors": 0
+    }
+  },
+  "viewportTests": [
+    {
+      "viewport": {
+        "width": 1366,
+        "height": 768
+      },
+      "document": {
+        "scrollWidth": 1366,
+        "scrollHeight": 768,
+        "bodyScrollWidth": 1366,
+        "bodyScrollHeight": 768
+      },
+      "bodyOverflow": "hidden",
+      "navbar": {
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1366,
+          "height": 56,
+          "bottom": 56
+        },
+        "fits": true,
+        "buttons": 9
+      },
+      "gridColumns": "259.531px 773.953px 300.516px",
+      "actionBar": {
+        "rect": {
+          "x": 0,
+          "y": 670,
+          "width": 1366,
+          "height": 98,
+          "bottom": 768
+        },
+        "position": "fixed",
+        "slots": [
+          {
+            "x": 321,
+            "y": 698,
+            "width": 68,
+            "height": 68,
+            "bottom": 766
+          },
+          {
+            "x": 394,
+            "y": 698,
+            "width": 68,
+            "height": 68,
+            "bottom": 766
+          },
+          {
+            "x": 467,
+            "y": 698,
+            "width": 68,
+            "height": 68,
+            "bottom": 766
+          },
+          {
+            "x": 540,
+            "y": 698,
+            "width": 68,
+            "height": 68,
+            "bottom": 766
+          },
+          {
+            "x": 613,
+            "y": 698,
+            "width": 68,
+            "height": 68,
+            "bottom": 766
+          },
+          {
+            "x": 686,
+            "y": 698,
+            "width": 68,
+            "height": 68,
+            "bottom": 766
+          },
+          {
+            "x": 759,
+            "y": 698,
+            "width": 68,
+            "height": 68,
+            "bottom": 766
+          },
+          {
+            "x": 832,
+            "y": 698,
+            "width": 68,
+            "height": 68,
+            "bottom": 766
+          },
+          {
+            "x": 905,
+            "y": 698,
+            "width": 68,
+            "height": 68,
+            "bottom": 766
+          },
+          {
+            "x": 978,
+            "y": 698,
+            "width": 68,
+            "height": 68,
+            "bottom": 766
+          }
+        ]
+      },
+      "heroResources": 3,
+      "equipmentSlots": 6,
+      "analyzerMetrics": 6
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "document": {
+        "scrollWidth": 1440,
+        "scrollHeight": 900,
+        "bodyScrollWidth": 1440,
+        "bodyScrollHeight": 900
+      },
+      "bodyOverflow": "hidden",
+      "navbar": {
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 60,
+          "bottom": 60
+        },
+        "fits": true,
+        "buttons": 9
+      },
+      "gridColumns": "273.594px 817.609px 316.797px",
+      "actionBar": {
+        "rect": {
+          "x": 0,
+          "y": 796,
+          "width": 1440,
+          "height": 104,
+          "bottom": 900
+        },
+        "position": "fixed",
+        "slots": [
+          {
+            "x": 338,
+            "y": 825,
+            "width": 72,
+            "height": 72,
+            "bottom": 897
+          },
+          {
+            "x": 415,
+            "y": 825,
+            "width": 72,
+            "height": 72,
+            "bottom": 897
+          },
+          {
+            "x": 492,
+            "y": 825,
+            "width": 72,
+            "height": 72,
+            "bottom": 897
+          },
+          {
+            "x": 569,
+            "y": 825,
+            "width": 72,
+            "height": 72,
+            "bottom": 897
+          },
+          {
+            "x": 646,
+            "y": 825,
+            "width": 72,
+            "height": 72,
+            "bottom": 897
+          },
+          {
+            "x": 723,
+            "y": 825,
+            "width": 72,
+            "height": 72,
+            "bottom": 897
+          },
+          {
+            "x": 800,
+            "y": 825,
+            "width": 72,
+            "height": 72,
+            "bottom": 897
+          },
+          {
+            "x": 877,
+            "y": 825,
+            "width": 72,
+            "height": 72,
+            "bottom": 897
+          },
+          {
+            "x": 954,
+            "y": 825,
+            "width": 72,
+            "height": 72,
+            "bottom": 897
+          },
+          {
+            "x": 1031,
+            "y": 825,
+            "width": 72,
+            "height": 72,
+            "bottom": 897
+          }
+        ]
+      },
+      "heroResources": 3,
+      "equipmentSlots": 6,
+      "analyzerMetrics": 6
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "document": {
+        "scrollWidth": 1920,
+        "scrollHeight": 1080,
+        "bodyScrollWidth": 1920,
+        "bodyScrollHeight": 1080
+      },
+      "bodyOverflow": "hidden",
+      "navbar": {
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1920,
+          "height": 60,
+          "bottom": 60
+        },
+        "fits": true,
+        "buttons": 9
+      },
+      "gridColumns": "276px 1282px 330px",
+      "actionBar": {
+        "rect": {
+          "x": 0,
+          "y": 976,
+          "width": 1920,
+          "height": 104,
+          "bottom": 1080
+        },
+        "position": "fixed",
+        "slots": [
+          {
+            "x": 578,
+            "y": 1005,
+            "width": 72,
+            "height": 72,
+            "bottom": 1077
+          },
+          {
+            "x": 655,
+            "y": 1005,
+            "width": 72,
+            "height": 72,
+            "bottom": 1077
+          },
+          {
+            "x": 732,
+            "y": 1005,
+            "width": 72,
+            "height": 72,
+            "bottom": 1077
+          },
+          {
+            "x": 809,
+            "y": 1005,
+            "width": 72,
+            "height": 72,
+            "bottom": 1077
+          },
+          {
+            "x": 886,
+            "y": 1005,
+            "width": 72,
+            "height": 72,
+            "bottom": 1077
+          },
+          {
+            "x": 963,
+            "y": 1005,
+            "width": 72,
+            "height": 72,
+            "bottom": 1077
+          },
+          {
+            "x": 1040,
+            "y": 1005,
+            "width": 72,
+            "height": 72,
+            "bottom": 1077
+          },
+          {
+            "x": 1117,
+            "y": 1005,
+            "width": 72,
+            "height": 72,
+            "bottom": 1077
+          },
+          {
+            "x": 1194,
+            "y": 1005,
+            "width": 72,
+            "height": 72,
+            "bottom": 1077
+          },
+          {
+            "x": 1271,
+            "y": 1005,
+            "width": 72,
+            "height": 72,
+            "bottom": 1077
+          }
+        ]
+      },
+      "heroResources": 3,
+      "equipmentSlots": 6,
+      "analyzerMetrics": 6
+    }
+  ],
+  "functionalTests": {
+    "huntAnalyzer": {
+      "passed": true,
+      "fixture": {
+        "elapsedMs": 1800000,
+        "kills": 10,
+        "xp": 500,
+        "gold": 200,
+        "lootValue": 100,
+        "supplyCost": 50
+      },
+      "expected": {
+        "xpPerHour": 1000,
+        "profitPerHour": 500,
+        "averageKill": "3m 00s",
+        "netProfit": 250
+      },
+      "resetResult": {
+        "kills": 0,
+        "xp": 0,
+        "gold": 0,
+        "lootValue": 0,
+        "supplyCost": 0,
+        "elapsedMs": 0
+      }
+    },
+    "cityHuntNavigation": {
+      "passed": true,
+      "cityShowsHub": true,
+      "cityHidesActionBar": true,
+      "huntRestoresCards": true
+    },
+    "inventoryOverlay": {
+      "passed": true,
+      "inventoryOpens": true,
+      "heroCardRemainsVisible": true,
+      "enemyCardRemainsVisible": true
+    },
+    "actionBar": {
+      "passed": true,
+      "slotCount": 10,
+      "fixedToViewportBottom": true,
+      "desktopSlotSize": "72x72",
+      "compact768SlotSize": "68x68"
+    },
+    "dashboardGrid": {
+      "passed": true,
+      "columns": 3,
+      "left": "Status/Inventário",
+      "center": "Cartas",
+      "right": "Log/Hunt Analyzer"
+    }
+  }
+}

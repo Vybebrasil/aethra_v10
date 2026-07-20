@@ -1,0 +1,33 @@
+{
+  "passed": true,
+  "specializedHunts": 5,
+  "results": {
+    "thieveryAvailable": true,
+    "miningMultiplier": 27,
+    "invalidActionRejected": true,
+    "deepMineCombatXp": 6,
+    "arenaCombatXp": 25,
+    "thieveryXpGain": 36,
+    "explorationXpLeak": 0,
+    "goldMultiplierResult": 25,
+    "quantityMultiplierResult": 2
+  },
+  "javascriptFilesChecked": 44,
+  "syntaxValid": true,
+  "specializedHuntIds": [
+    "merchant_ruins_focus",
+    "deep_mines_focus",
+    "whispering_woods_focus",
+    "catacombs_focus",
+    "arena_focus"
+  ],
+  "features": {
+    "specializedBiomeSelector": true,
+    "actionIsolatedSkillXp": true,
+    "thieveryChecks": true,
+    "huntEconomyModifiers": true,
+    "combatXpModifiers": true,
+    "combatSkillXpModifiers": true,
+    "eventEconomyInAnalyzer": true
+  }
+}

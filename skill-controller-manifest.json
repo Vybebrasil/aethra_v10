@@ -1,0 +1,60 @@
+{
+  "revision": "skill-controller-main-flow-integration",
+  "updatedFiles": [
+    "index.html",
+    "style.css",
+    "js/core/GameLoader.js",
+    "js/combat/SkillSystem.js",
+    "js/combat/SkillController.js",
+    "js/combat/BattleSystem.js",
+    "js/ui/UI_Renderer.js",
+    "js/ui/WindowManager.js",
+    "js/setup/GameInitializer.js",
+    "SKILL_CONTROLLER_SMART_HEALING.md"
+  ],
+  "checks": {
+    "SkillController content": true,
+    "SkillSystem threshold": true,
+    "Battle integration": true,
+    "UI skill renderer": true,
+    "Window renderer": true,
+    "SkillController required": true,
+    "BattleSystem required": true,
+    "HUD button": true,
+    "Skills modal": true,
+    "SkillController script": true,
+    "Correct script order": true,
+    "Skills CSS": true,
+    "No missing scripts": true,
+    "Player controller instance": true,
+    "Battle update deltaTime": true,
+    "Mana validation in executeSkill": true,
+    "Legacy controller state migration": true
+  },
+  "syntaxChecks": {
+    "js/combat/SkillSystem.js": {
+      "ok": true,
+      "stderr": ""
+    },
+    "js/combat/SkillController.js": {
+      "ok": true,
+      "stderr": ""
+    },
+    "js/combat/BattleSystem.js": {
+      "ok": true,
+      "stderr": ""
+    },
+    "js/ui/UI_Renderer.js": {
+      "ok": true,
+      "stderr": ""
+    },
+    "js/ui/WindowManager.js": {
+      "ok": true,
+      "stderr": ""
+    },
+    "js/core/GameLoader.js": {
+      "ok": true,
+      "stderr": ""
+    }
+  }
+}

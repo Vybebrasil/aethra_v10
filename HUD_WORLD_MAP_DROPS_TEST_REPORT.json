@@ -1,0 +1,38 @@
+{
+  "viewport": "1366x768",
+  "pageScroll": false,
+  "engineStatus": "Pronta",
+  "huntWorldMap": {
+    "regions": 6,
+    "unlockedAtLevel1": 1,
+    "lockedAtLevel1": 5,
+    "topbarHuntOpensMap": true
+  },
+  "encounter": {
+    "stageHeight": 280,
+    "combatCardHeight": 226,
+    "portraitHeight": 103
+  },
+  "inspect": {
+    "floatingWindow": true,
+    "popoverInsideCard": false
+  },
+  "heroAccordion": {
+    "collapsedHeight": 38,
+    "emptySpaceAfterCollapse": false
+  },
+  "dropLog": {
+    "live": true,
+    "gold": true,
+    "items": true,
+    "resources": true,
+    "xp": true,
+    "skillUp": true,
+    "combatLogMovedToSecondaryWindow": true
+  },
+  "actionBar": {
+    "dragHandleInteractive": true,
+    "dragHandlePointerEvents": "auto"
+  },
+  "javascriptSyntax": "passed"
+}

@@ -1,0 +1,8 @@
+Coloque aqui os arquivos de ícones dos itens.
+
+Exemplos usados no GameData.js:
+- sword_iron.png
+- potion_health.png
+- wolf_hide.png
+
+Os nomes precisam corresponder exatamente ao campo `image` do item.

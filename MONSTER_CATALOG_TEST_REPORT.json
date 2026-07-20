@@ -1,0 +1,70 @@
+{
+  "passed": true,
+  "catalog": {
+    "initialized": true,
+    "total": 327,
+    "aliases": 548,
+    "byType": {
+      "plant": 6,
+      "beast": 92,
+      "humanoid": 34,
+      "monstrosity": 40,
+      "construct": 10,
+      "fiend": 27,
+      "fey": 9,
+      "undead": 18,
+      "celestial": 10,
+      "aberration": 9,
+      "dragon": 43,
+      "elemental": 16,
+      "ooze": 4,
+      "giant": 9
+    },
+    "byRank": {
+      "normal": 215,
+      "elite": 58,
+      "legendary": 30,
+      "boss": 24
+    },
+    "source": "PocketDM SRD / CC-BY-4.0"
+  },
+  "huntCatalog": {
+    "initialized": true,
+    "hunts": 17,
+    "encounters": 84,
+    "minLevel": 1,
+    "maxLevel": 220
+  },
+  "huntValidation": {
+    "valid": true,
+    "missing": []
+  },
+  "aliases": {
+    "forestWolf": "wolf-xmm-2024",
+    "giantRat": "giant-rat-xmm-2024"
+  },
+  "samples": {
+    "wolf": {
+      "name": "Lobo",
+      "level": 2,
+      "hp": 20,
+      "loot": 3
+    },
+    "dragon": {
+      "name": "Adult Black Dragon",
+      "level": 86,
+      "abilities": [
+        "Multiattack",
+        "Rend",
+        "Acid Breath (Recharge 5-6)"
+      ]
+    },
+    "selectedAbility": "Rend",
+    "whisperingForestEnemies": 6
+  },
+  "registered": {
+    "gameDataCreatures": 331,
+    "lootTables": 331,
+    "itemTemplates": 42
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "status": "passed",
+  "configuration": {
+    "rareEncounterBaseChance": 0.002,
+    "eventAppearanceBonus": 0.5,
+    "boosterAppearanceBonus": 3,
+    "combinedAppearanceMultiplier": 6,
+    "boostedRareEncounterChance": 0.012,
+    "specialItemChancePerRareEncounter": 0.0015
+  },
+  "mathematicalChecks": {
+    "normalOdds": "1 in 500 eligible kills",
+    "boostedOdds": "1 in 83.33 eligible kills",
+    "expectedRareEncountersIn40000BoostedKills": 480,
+    "probabilityOfNoSpecialItemAfter482RareEncounters": 0.4850308446,
+    "probabilityOfAtLeastOneSpecialItemAfter482RareEncounters": 0.5149691554,
+    "normalSpecialItemPerEligibleKill": 0.000003,
+    "boostedSpecialItemPerEligibleKill": 0.000018,
+    "normalMythicSpecialPerEligibleKill": 0.000000015,
+    "boostedMythicSpecialPerEligibleKill": 0.00000009
+  },
+  "seededSimulation": {
+    "normal10000000": {
+      "expectedRareEncounters": 20000,
+      "observedRareEncounters": 20238,
+      "observedSpecialItems": 34
+    },
+    "boosted10000000": {
+      "expectedRareEncounters": 120000,
+      "observedRareEncounters": 119923,
+      "observedSpecialItems": 180
+    },
+    "boosted40000": {
+      "expectedRareEncounters": 480,
+      "observedRareEncounters": 517,
+      "observedSpecialItems": 0
+    }
+  },
+  "integrationChecks": {
+    "rareEncounterCreatesConsolationItem": true,
+    "rareEncounterCanCreateIndividualEquipment": true,
+    "specialEquipmentContainsRarity": true,
+    "specialEquipmentContainsIV": true,
+    "specialEquipmentContainsMultiplier": true,
+    "specialEquipmentContainsOriginRollIds": true,
+    "telemetryUpdates": true,
+    "affixIVUsesActualRolledValue": true,
+    "boostersDoNotDirectlyMultiplyJackpotChance": true,
+    "javascriptSyntax": "passed"
+  }
+}

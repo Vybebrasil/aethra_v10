@@ -1,0 +1,1506 @@
+/* Aethra UI Stability Pass
+   Final layout authority loaded after style.css. */
+
+:root {
+    --stable-topbar-height: 56px;
+    --stable-actionbar-height: 176px;
+    --stable-left-column: clamp(300px, 21vw, 360px);
+    --stable-right-column: clamp(290px, 19vw, 340px);
+    --stable-gap: 8px;
+    --stable-panel-radius: 12px;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    min-width: 1120px;
+    overflow: hidden !important;
+}
+
+body.aethra-battle-mode #game-container,
+body.aethra-battle-mode.app-shell,
+body.aethra-battle-mode .app-shell {
+    height: 100vh !important;
+    min-height: 100vh !important;
+    overflow: hidden !important;
+}
+
+.aethra-navbar {
+    height: var(--stable-topbar-height) !important;
+    min-height: var(--stable-topbar-height) !important;
+    max-height: var(--stable-topbar-height) !important;
+    padding: 6px 10px !important;
+    gap: 10px !important;
+    overflow: hidden !important;
+}
+
+.aethra-navbar .window-tabs {
+    min-width: 0 !important;
+    flex-wrap: nowrap !important;
+    overflow: hidden !important;
+}
+
+.aethra-navbar .window-tabs > button {
+    min-width: 0 !important;
+    min-height: 38px !important;
+    padding: 0 9px !important;
+    white-space: nowrap !important;
+}
+
+.aethra-navbar .window-tabs > button > span:last-child {
+    font-size: 0.67rem !important;
+}
+
+body.aethra-battle-mode #city-view {
+    position: fixed !important;
+    inset: var(--stable-topbar-height) 0 var(--stable-actionbar-height) 0 !important;
+    width: auto !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: hidden !important;
+}
+
+.battle-mode-layout,
+.primary-screen--hunt,
+.battle-hunt-layout {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+}
+
+.battle-hunt-layout {
+    display: grid !important;
+    grid-template-columns: var(--stable-left-column) minmax(0, 1fr) var(--stable-right-column) !important;
+    gap: var(--stable-gap) !important;
+    padding: 8px !important;
+    overflow: hidden !important;
+}
+
+.battle-hunt-layout.is-hero-panel-minimized {
+    grid-template-columns: 56px minmax(0, 1fr) var(--stable-right-column) !important;
+}
+
+.battle-sidebar,
+.battle-main-column,
+.battle-panel {
+    min-width: 0 !important;
+    min-height: 0 !important;
+}
+
+/* Hero panel */
+.battle-sidebar--hero {
+    height: 100% !important;
+    overflow: hidden !important;
+}
+
+.battle-sidebar--hero > [data-hero-hub] {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+.hero-hub__header,
+.battle-panel__header {
+    flex: 0 0 auto !important;
+    min-height: 40px !important;
+    padding: 7px 10px !important;
+}
+
+.hero-hub__summary {
+    flex: 0 0 auto !important;
+    min-height: 0 !important;
+}
+
+.hero-hub__views,
+.hero-hub__accordion {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(107, 144, 163, 0.42) transparent;
+}
+
+.hero-hub__accordion-section {
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+}
+
+.hero-hub__accordion-section.is-collapsed {
+    min-height: 40px !important;
+    height: 40px !important;
+    max-height: 40px !important;
+    overflow: hidden !important;
+}
+
+.hero-hub__accordion-heading {
+    min-height: 40px !important;
+    padding: 5px 8px !important;
+}
+
+.attribute-impact-grid,
+.hero-attribute-grid,
+.hero-stats-grid {
+    gap: 6px !important;
+}
+
+.attribute-impact-card,
+.hero-attribute-card {
+    min-height: 74px !important;
+    padding: 9px !important;
+}
+
+/* Main center layout */
+.battle-main-column--world-loop,
+.battle-main-column {
+    display: grid !important;
+    grid-template-rows: minmax(270px, 54%) minmax(0, 1fr) !important;
+    gap: var(--stable-gap) !important;
+    height: 100% !important;
+    overflow: hidden !important;
+}
+
+.battle-stage-panel {
+    display: grid !important;
+    grid-template-rows: 40px minmax(0, 1fr) auto !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+.battle-stage-panel__header {
+    min-height: 40px !important;
+    height: 40px !important;
+}
+
+.battle-card-arena {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 7px !important;
+    gap: 6px !important;
+    overflow: hidden !important;
+    align-items: stretch !important;
+}
+
+.battle-card-arena.is-hero-only {
+    grid-template-columns: minmax(0, 1fr) !important;
+}
+
+.battle-card-arena.has-enemy-card {
+    grid-template-columns: minmax(0, 1fr) 34px minmax(0, 1fr) !important;
+}
+
+.battle-card-arena.has-event-card {
+    grid-template-columns: minmax(0, 1.05fr) 34px minmax(250px, 0.95fr) !important;
+}
+
+.battle-card-arena.has-context-card:not(.has-enemy-card):not(.has-event-card) {
+    grid-template-columns: minmax(0, 1fr) !important;
+}
+
+.battle-stage-panel--compact .battle-card-arena.has-context-card,
+.battle-stage-panel--compact .battle-card-arena.has-enemy-card,
+.battle-stage-panel--compact .battle-card-arena.has-event-card {
+    grid-template-columns: minmax(0, 1fr) 34px minmax(0, 1fr) !important;
+}
+
+.battle-card-arena.is-hero-only .battle-versus,
+#battle-enemy-card[hidden] {
+    display: none !important;
+}
+
+.battle-versus {
+    width: 34px !important;
+    min-width: 34px !important;
+    align-self: center !important;
+}
+
+.battle-versus span {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 0.72rem !important;
+}
+
+.battle-versus small {
+    display: none !important;
+}
+
+.combatant-card {
+    display: grid !important;
+    grid-template-rows: 40px minmax(0, 1fr) !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: hidden !important;
+}
+
+.combatant-card__header,
+.battle-stage-panel--compact .combatant-card__header {
+    min-height: 40px !important;
+    height: 40px !important;
+    padding: 5px 9px !important;
+}
+
+.combatant-card__header h3,
+.battle-stage-panel--compact .combatant-card__header h3 {
+    max-width: 220px !important;
+    overflow: hidden !important;
+    font-size: 1rem !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+.combatant-card__body,
+.combatant-card__body--hero,
+.combatant-card__body--enemy,
+.combatant-card__body--event,
+.battle-stage-panel--compact .combatant-card__body,
+.battle-stage-panel--compact .combatant-card__body--hero,
+.battle-stage-panel--compact .combatant-card__body--enemy,
+.battle-stage-panel--compact .combatant-card__body--event {
+    display: grid !important;
+    grid-template-columns: 88px minmax(0, 1fr) !important;
+    gap: 8px !important;
+    min-height: 0 !important;
+    padding: 7px !important;
+    overflow: hidden !important;
+}
+
+.combatant-card__visual-wrap {
+    min-width: 0 !important;
+    min-height: 0 !important;
+}
+
+.combatant-card__portrait--standalone,
+.battle-stage-panel--compact .combatant-card__portrait--standalone,
+.combatant-card__event-icon,
+.battle-stage-panel--compact .combatant-card__event-icon {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    border-radius: 12px !important;
+}
+
+.combatant-card__portrait--standalone img,
+.battle-stage-panel--compact .combatant-card__portrait--standalone img {
+    width: auto !important;
+    max-width: 92% !important;
+    height: auto !important;
+    max-height: 92% !important;
+    object-fit: contain !important;
+}
+
+.combatant-card__event-icon {
+    font-size: 2.4rem !important;
+}
+
+.combatant-card__info-panel {
+    display: grid !important;
+    grid-template-rows: auto auto minmax(0, 1fr) !important;
+    gap: 6px !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+.combatant-card__state-line {
+    min-width: 0 !important;
+    flex-wrap: nowrap !important;
+    overflow: hidden !important;
+}
+
+.combatant-card__state-pill {
+    min-height: 20px !important;
+    padding: 0 7px !important;
+    font-size: 0.5rem !important;
+}
+
+.combatant-card__location {
+    min-width: 0 !important;
+    overflow: hidden !important;
+    font-size: 0.58rem !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+.combatant-card__resources--stacked,
+.battle-stage-panel--compact .combatant-card__resources--stacked {
+    display: grid !important;
+    gap: 5px !important;
+    padding: 7px !important;
+    border-radius: 10px !important;
+}
+
+.combatant-resource span {
+    font-size: 0.55rem !important;
+}
+
+.combatant-resource progress {
+    height: 5px !important;
+}
+
+.combatant-card__info-bar,
+.battle-stage-panel--compact .combatant-card__info-bar {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 5px !important;
+    min-height: 0 !important;
+    padding: 6px !important;
+    overflow: hidden !important;
+    border-radius: 10px !important;
+}
+
+.combatant-card__activity {
+    min-width: 0 !important;
+}
+
+.combatant-card__activity small {
+    margin-bottom: 2px !important;
+    font-size: 0.45rem !important;
+}
+
+.combatant-card__activity strong {
+    display: block !important;
+    overflow: hidden !important;
+    font-size: 0.67rem !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+.combatant-card__mini-metrics,
+.combatant-card__intel,
+.combatant-card__event-metrics {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 4px !important;
+}
+
+.combatant-card__mini-metrics span,
+.combatant-card__intel span,
+.combatant-card__event-metrics span {
+    gap: 1px !important;
+    min-height: 31px !important;
+    padding: 4px !important;
+    border-radius: 7px !important;
+}
+
+.combatant-card__mini-metrics small,
+.combatant-card__intel small,
+.combatant-card__event-metrics small {
+    font-size: 0.4rem !important;
+}
+
+.combatant-card__mini-metrics b,
+.combatant-card__intel b,
+.combatant-card__event-metrics b {
+    font-size: 0.67rem !important;
+}
+
+.combatant-card__event-copy {
+    min-height: 0 !important;
+    padding: 7px !important;
+    overflow: auto !important;
+}
+
+.combatant-card__event-copy p,
+.combatant-card__event-copy li {
+    font-size: 0.59rem !important;
+}
+
+/* The floating turn banner was obscuring the portrait and resource bars. */
+.combatant-card__last-action {
+    display: none !important;
+}
+
+.encounter-context-dock {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    min-height: 46px !important;
+    height: 46px !important;
+    padding: 5px 8px !important;
+    overflow: hidden !important;
+}
+
+.encounter-context-dock__stream {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    min-width: 0 !important;
+}
+
+.encounter-context-item {
+    min-height: 34px !important;
+    padding: 4px 7px !important;
+}
+
+.encounter-context-item:nth-child(n + 2) {
+    display: none !important;
+}
+
+.encounter-context-item__copy strong {
+    font-size: 0.63rem !important;
+}
+
+.encounter-context-item__copy small {
+    font-size: 0.52rem !important;
+}
+
+.encounter-context-dock__actions button {
+    min-height: 32px !important;
+    padding: 0 8px !important;
+    font-size: 0.56rem !important;
+}
+
+#battle-status-strip {
+    display: none !important;
+}
+
+/* Exploration panel: one activity row plus a useful event stream. */
+.battle-panel--exploration {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+#exploration-feed {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 7px !important;
+    overflow: hidden !important;
+}
+
+.expedition-live-layout {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 92px !important;
+    gap: 7px !important;
+    height: 100% !important;
+    min-height: 0 !important;
+}
+
+.expedition-live-main {
+    display: grid !important;
+    grid-template-rows: auto minmax(0, 1fr) !important;
+    gap: 7px !important;
+    min-height: 0 !important;
+}
+
+.expedition-current-card {
+    display: grid !important;
+    grid-template-columns: 34px minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 8px !important;
+    min-height: 48px !important;
+    padding: 6px 8px !important;
+    border: 1px solid rgba(77, 112, 130, 0.28) !important;
+    border-radius: 10px !important;
+    background: linear-gradient(180deg, rgba(12, 23, 29, 0.96), rgba(6, 12, 16, 0.98)) !important;
+}
+
+.expedition-current-card__icon {
+    width: 32px !important;
+    height: 32px !important;
+    display: grid !important;
+    place-items: center !important;
+    border: 1px solid rgba(204, 164, 68, 0.35) !important;
+    border-radius: 8px !important;
+    color: #e3c36f !important;
+}
+
+.expedition-current-card__copy {
+    min-width: 0 !important;
+}
+
+.expedition-current-card__copy small,
+.expedition-current-card__copy strong,
+.expedition-current-card__copy p {
+    display: block !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+.expedition-current-card__copy small {
+    color: #718b9a !important;
+    font-size: 0.46rem !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.08em !important;
+}
+
+.expedition-current-card__copy strong {
+    color: #edf4f8 !important;
+    font-size: 0.72rem !important;
+}
+
+.expedition-current-card__copy p {
+    color: #8fa6b3 !important;
+    font-size: 0.55rem !important;
+}
+
+.expedition-current-card__action,
+.expedition-current-card__state {
+    min-height: 28px !important;
+    padding: 0 8px !important;
+    border: 1px solid rgba(80, 148, 119, 0.28) !important;
+    border-radius: 8px !important;
+    background: rgba(13, 35, 29, 0.8) !important;
+    color: #8ee1b2 !important;
+    font-size: 0.52rem !important;
+    font-weight: 900 !important;
+    white-space: nowrap !important;
+}
+
+.expedition-current-card__action {
+    border-color: rgba(214, 174, 77, 0.36) !important;
+    background: rgba(63, 48, 18, 0.9) !important;
+    color: #f0d17d !important;
+    cursor: pointer !important;
+}
+
+.expedition-event-stream {
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    border: 1px solid rgba(77, 112, 130, 0.22) !important;
+    border-radius: 10px !important;
+    background: rgba(5, 10, 14, 0.68) !important;
+}
+
+.expedition-event-row {
+    display: grid !important;
+    grid-template-columns: 28px minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 7px !important;
+    min-height: 40px !important;
+    padding: 5px 8px !important;
+    border-bottom: 1px solid rgba(77, 103, 117, 0.14) !important;
+}
+
+.expedition-event-row:last-child {
+    border-bottom: 0 !important;
+}
+
+.expedition-event-row > span {
+    width: 26px !important;
+    height: 26px !important;
+    display: grid !important;
+    place-items: center !important;
+    border-radius: 7px !important;
+    background: rgba(255, 255, 255, 0.035) !important;
+    color: #d6bd72 !important;
+}
+
+.expedition-event-row div {
+    min-width: 0 !important;
+}
+
+.expedition-event-row strong,
+.expedition-event-row small {
+    display: block !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+.expedition-event-row strong {
+    color: #e8f0f4 !important;
+    font-size: 0.62rem !important;
+}
+
+.expedition-event-row small,
+.expedition-event-row time {
+    color: #7f98a6 !important;
+    font-size: 0.5rem !important;
+}
+
+.expedition-event-empty {
+    height: 100% !important;
+    display: grid !important;
+    place-items: center !important;
+    padding: 14px !important;
+    color: #78909e !important;
+    font-size: 0.62rem !important;
+    text-align: center !important;
+}
+
+.expedition-live-stats {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 5px !important;
+    min-height: 0 !important;
+}
+
+.expedition-live-stats span {
+    display: grid !important;
+    place-items: center !important;
+    min-height: 0 !important;
+    padding: 5px !important;
+    border: 1px solid rgba(73, 105, 121, 0.19) !important;
+    border-radius: 9px !important;
+    background: rgba(7, 14, 18, 0.84) !important;
+}
+
+.expedition-live-stats small {
+    color: #6f8794 !important;
+    font-size: 0.42rem !important;
+    text-transform: uppercase !important;
+}
+
+.expedition-live-stats strong {
+    color: #e7f1f6 !important;
+    font-size: 0.8rem !important;
+}
+
+/* Right sidebar */
+.battle-sidebar--combat {
+    display: grid !important;
+    grid-template-rows: minmax(182px, 1fr) minmax(112px, 0.58fr) minmax(158px, 0.82fr) !important;
+    gap: 7px !important;
+    height: 100% !important;
+    overflow: hidden !important;
+}
+
+.battle-sidebar--combat > .battle-panel {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+#drop-log-display,
+#progression-log-display,
+#hunt-display {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+.loot-session-view,
+.stackable-loot-list,
+.special-drop-list,
+.progression-log-list,
+.hunt-analyzer,
+.hunt-analyzer--command {
+    min-height: 0 !important;
+}
+
+.loot-session-view,
+.stackable-loot-list,
+.special-drop-list,
+.progression-log-list {
+    overflow-y: auto !important;
+    scrollbar-width: thin;
+}
+
+.progression-log-display {
+    display: grid !important;
+    grid-template-rows: auto minmax(0, 1fr) !important;
+}
+
+.progression-log-summary {
+    flex: 0 0 auto !important;
+}
+
+.hunt-analyzer,
+.hunt-analyzer--command {
+    height: 100% !important;
+    overflow-y: auto !important;
+    padding: 7px !important;
+}
+
+.analyzer-primary-kpis,
+.hunt-analyzer-live-grid {
+    gap: 5px !important;
+}
+
+.analyzer-primary-kpis article,
+.analyzer-live-card {
+    min-height: 58px !important;
+    padding: 7px !important;
+}
+
+/* Action bar */
+#battle-actionbar-layer {
+    position: fixed !important;
+    inset: auto 0 0 0 !important;
+    z-index: 1200 !important;
+    width: 100% !important;
+    height: var(--stable-actionbar-height) !important;
+    min-height: var(--stable-actionbar-height) !important;
+    max-height: var(--stable-actionbar-height) !important;
+    overflow: hidden !important;
+}
+
+#battle-actionbar-layer > .battle-panel--actionbar,
+.battle-panel--actionbar {
+    display: grid !important;
+    grid-template-rows: 38px minmax(0, 1fr) !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+.battle-panel--actionbar > .battle-panel__header {
+    min-height: 38px !important;
+    height: 38px !important;
+    padding: 5px 9px !important;
+}
+
+.combat-action-deck {
+    display: grid !important;
+    grid-template-columns: 292px minmax(0, 1fr) !important;
+    gap: 7px !important;
+    min-height: 0 !important;
+    padding: 0 7px 6px !important;
+    overflow: hidden !important;
+}
+
+.primary-attack-deck,
+.skill-action-deck {
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+.primary-attack-deck {
+    display: grid !important;
+    grid-template-rows: 18px minmax(0, 1fr) !important;
+}
+
+.skill-action-deck {
+    display: grid !important;
+    grid-template-rows: 20px minmax(0, 1fr) !important;
+}
+
+.combat-action-deck__label,
+.battle-priority-legend {
+    min-height: 18px !important;
+    height: 18px !important;
+    overflow: hidden !important;
+}
+
+.primary-attack-bar {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    height: 122px !important;
+    min-height: 122px !important;
+    overflow: hidden !important;
+}
+
+.primary-attack-card {
+    display: grid !important;
+    grid-template-rows: minmax(0, 1fr) 23px !important;
+    height: 122px !important;
+    min-height: 122px !important;
+    overflow: hidden !important;
+}
+
+.primary-attack-card__button {
+    min-height: 0 !important;
+    padding: 6px !important;
+    overflow: hidden !important;
+}
+
+.primary-attack-card__copy b,
+.primary-attack-card__copy small {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+.primary-attack-card__auto {
+    min-height: 23px !important;
+    height: 23px !important;
+}
+
+#skill-action-bar {
+    display: grid !important;
+    grid-template-columns: repeat(10, minmax(88px, 1fr)) !important;
+    gap: 5px !important;
+    width: 100% !important;
+    height: 122px !important;
+    min-height: 122px !important;
+    max-height: 122px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: thin;
+}
+
+.battle-action-slot {
+    display: grid !important;
+    grid-template-rows: minmax(0, 1fr) 23px !important;
+    width: auto !important;
+    min-width: 88px !important;
+    height: 122px !important;
+    min-height: 122px !important;
+    max-height: 122px !important;
+    overflow: hidden !important;
+}
+
+.battle-action-slot__skill {
+    min-height: 0 !important;
+    height: 99px !important;
+    padding: 5px !important;
+    overflow: hidden !important;
+}
+
+.battle-action-slot__topline {
+    min-height: 16px !important;
+}
+
+.battle-action-slot__icon {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 1rem !important;
+}
+
+.battle-action-slot__copy {
+    min-height: 0 !important;
+}
+
+.battle-action-slot__name {
+    display: -webkit-box !important;
+    min-height: 22px !important;
+    overflow: hidden !important;
+    font-size: 0.58rem !important;
+    line-height: 1.05 !important;
+    -webkit-box-orient: vertical !important;
+    -webkit-line-clamp: 2 !important;
+}
+
+.battle-action-slot__meta-line small,
+.battle-action-slot__condition {
+    font-size: 0.42rem !important;
+}
+
+.battle-action-slot__controls {
+    min-height: 23px !important;
+    height: 23px !important;
+    padding: 2px !important;
+    overflow: hidden !important;
+}
+
+.battle-action-slot__drag-handle {
+    z-index: 12 !important;
+}
+
+/* Floating windows */
+.game-window[data-aethra-window]:not(#city-view),
+.game-window[data-window-size] {
+    max-width: calc(100vw - 28px) !important;
+    max-height: calc(100vh - 28px) !important;
+    overflow: hidden !important;
+}
+
+.game-window[data-aethra-window]:not(#city-view) > :not(.window-header),
+.game-window[data-window-size] > :not(.window-header) {
+    min-height: 0 !important;
+}
+
+.combat-inspect-window__content,
+.inventory-client-layout,
+.hunt-world-map-content {
+    min-height: 0 !important;
+    overflow: auto !important;
+}
+
+@media (max-width: 1450px) {
+    :root {
+        --stable-left-column: 300px;
+        --stable-right-column: 290px;
+        --stable-actionbar-height: 172px;
+    }
+
+    .combat-action-deck {
+        grid-template-columns: 286px minmax(0, 1fr) !important;
+    }
+
+    .battle-card-arena.has-enemy-card,
+    .battle-stage-panel--compact .battle-card-arena.has-enemy-card {
+        grid-template-columns: minmax(0, 1fr) 30px minmax(0, 1fr) !important;
+    }
+
+    .combatant-card__body,
+    .combatant-card__body--hero,
+    .combatant-card__body--enemy,
+    .combatant-card__body--event,
+    .battle-stage-panel--compact .combatant-card__body,
+    .battle-stage-panel--compact .combatant-card__body--hero,
+    .battle-stage-panel--compact .combatant-card__body--enemy,
+    .battle-stage-panel--compact .combatant-card__body--event {
+        grid-template-columns: 76px minmax(0, 1fr) !important;
+        padding: 6px !important;
+    }
+
+    .combatant-card__mini-metrics span:nth-child(n + 4),
+    .combatant-card__intel span:nth-child(n + 4) {
+        display: none !important;
+    }
+
+    .combatant-card__mini-metrics,
+    .combatant-card__intel {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
+}
+
+@media (max-height: 820px) {
+    :root {
+        --stable-actionbar-height: 172px;
+    }
+
+    .battle-main-column--world-loop,
+    .battle-main-column {
+        grid-template-rows: minmax(264px, 54%) minmax(0, 1fr) !important;
+    }
+
+    .hero-hub__header,
+    .battle-panel__header {
+        min-height: 38px !important;
+        height: 38px !important;
+        padding: 5px 8px !important;
+    }
+}
+
+/* Final corrections after automated overflow audit. */
+.battle-card-arena.has-enemy-card .battle-versus,
+.battle-card-arena.has-event-card .battle-versus {
+    display: flex !important;
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+}
+
+.battle-card-arena.has-enemy-card #battle-hero-card,
+.battle-card-arena.has-event-card #battle-hero-card {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+}
+
+.battle-card-arena.has-enemy-card #battle-enemy-card,
+.battle-card-arena.has-event-card #battle-enemy-card {
+    display: grid !important;
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+}
+
+.battle-stage-panel--compact .battle-card-arena > .combatant-card,
+.battle-card-arena > .combatant-card {
+    min-height: 0 !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    align-self: stretch !important;
+}
+
+:root {
+    --stable-actionbar-height: 184px;
+}
+
+body.aethra-battle-mode #city-view {
+    bottom: var(--stable-actionbar-height) !important;
+}
+
+#battle-actionbar-layer,
+#battle-actionbar-layer.battle-actionbar-overlay {
+    height: var(--stable-actionbar-height) !important;
+    min-height: var(--stable-actionbar-height) !important;
+    max-height: var(--stable-actionbar-height) !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+}
+
+#battle-actionbar-layer > .battle-panel--actionbar {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    max-height: 100% !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+}
+
+.primary-attack-bar,
+#skill-action-bar {
+    height: 112px !important;
+    min-height: 112px !important;
+    max-height: 112px !important;
+}
+
+.primary-attack-card,
+.battle-action-slot,
+.skill-action-deck #skill-action-bar .battle-action-slot {
+    height: 112px !important;
+    min-height: 112px !important;
+    max-height: 112px !important;
+}
+
+.primary-attack-card {
+    grid-template-rows: minmax(0, 1fr) 22px !important;
+}
+
+.battle-action-slot,
+.skill-action-deck #skill-action-bar .battle-action-slot {
+    grid-template-rows: minmax(0, 1fr) 22px !important;
+}
+
+.battle-action-slot__skill {
+    height: 90px !important;
+    max-height: 90px !important;
+}
+
+.primary-attack-card__auto,
+.battle-action-slot__controls {
+    min-height: 22px !important;
+    height: 22px !important;
+    max-height: 22px !important;
+}
+
+@media (max-height: 820px) {
+    :root {
+        --stable-actionbar-height: 184px;
+    }
+}
+
+/* Keep only information that can be read inside compact contextual cards. */
+.battle-card-arena.has-enemy-card .combatant-card__intel {
+    display: none !important;
+}
+
+.battle-card-arena.has-event-card .combatant-card__event-metrics span:nth-child(-n + 2) {
+    display: none !important;
+}
+
+.battle-card-arena.has-event-card .combatant-card__event-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.battle-card-arena.has-event-card .combatant-card__info-panel {
+    grid-template-rows: auto minmax(0, 1fr) auto auto !important;
+}
+
+.battle-card-arena.has-event-card .combatant-card__event-copy {
+    padding: 5px 7px !important;
+    overflow: hidden !important;
+}
+
+.battle-card-arena.has-event-card .combatant-card__event-copy p {
+    display: -webkit-box !important;
+    overflow: hidden !important;
+    -webkit-box-orient: vertical !important;
+    -webkit-line-clamp: 2 !important;
+}
+
+.battle-card-arena.has-event-card .combatant-card__event-button {
+    min-height: 28px !important;
+    height: 28px !important;
+    padding: 0 10px !important;
+    font-size: 0.62rem !important;
+}
+
+#battle-actionbar-layer .battle-action-slot__drag-handle {
+    right: 3px !important;
+    bottom: 25px !important;
+    width: 17px !important;
+    height: 17px !important;
+    font-size: 10px !important;
+}
+
+/* Context cards get a reduced information set; the full build remains in Inspect. */
+.battle-card-arena.has-context-card #battle-hero-card .combatant-card__mini-metrics {
+    display: none !important;
+}
+
+.battle-card-arena.has-context-card #battle-hero-card .combatant-card__info-bar {
+    grid-template-columns: minmax(0, 1fr) !important;
+    padding: 5px 7px !important;
+}
+
+.battle-card-arena.has-context-card #battle-hero-card .combatant-card__info-panel {
+    grid-template-rows: auto auto auto !important;
+}
+
+.battle-card-arena.has-enemy-card #battle-enemy-card .combatant-resource--mana {
+    display: none !important;
+}
+
+.battle-card-arena.has-enemy-card #battle-enemy-card .combatant-card__info-panel {
+    grid-template-rows: auto auto minmax(0, 1fr) !important;
+}
+
+.battle-card-arena.has-enemy-card #battle-enemy-card .combatant-card__info-bar {
+    padding: 5px !important;
+}
+
+/* Atlas Hunts must remain a two-column working view at desktop widths. */
+.hunt-world-map-layout--hunts {
+    grid-template-columns: minmax(300px, 0.78fr) minmax(430px, 1.22fr) !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+.hunt-world-map-layout--hunts .hunt-creature-catalog,
+.hunt-world-map-layout--hunts .hunt-world-map-detail--creature {
+    height: 100% !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+}
+
+.hunt-world-map-detail--creature {
+    padding-bottom: 14px !important;
+}
+
+/* Inventory is a two-column client, not a long narrow document. */
+#inventory-view {
+    width: min(780px, calc(100vw - 32px)) !important;
+    height: min(680px, calc(100vh - 32px)) !important;
+    max-width: calc(100vw - 32px) !important;
+    max-height: calc(100vh - 32px) !important;
+    display: grid !important;
+    grid-template-rows: auto minmax(0, 1fr) !important;
+    overflow: hidden !important;
+}
+
+#inventory-view .inventory-client-layout {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 330px !important;
+    gap: 10px !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 10px !important;
+    overflow: hidden !important;
+}
+
+#inventory-view .inventory-backpack-panel,
+#inventory-view .inventory-paperdoll-panel {
+    min-height: 0 !important;
+    overflow-y: auto !important;
+}
+
+#inventory-view .inventory-scroll-list {
+    min-height: 170px !important;
+    max-height: 300px !important;
+    overflow-y: auto !important;
+}
+
+/* Skills window is clamped and its long list scrolls inside the window. */
+#skills-view {
+    width: min(900px, calc(100vw - 32px)) !important;
+    height: calc(100vh - 32px) !important;
+    max-width: calc(100vw - 32px) !important;
+    max-height: calc(100vh - 32px) !important;
+    display: grid !important;
+    grid-template-rows: auto auto auto minmax(0, 1fr) !important;
+    overflow: hidden !important;
+}
+
+#skills-view .skills-priority-guide,
+#skills-view .skills-priority-status {
+    margin-inline: 14px !important;
+}
+
+#skills-view .skills-config-list {
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    padding: 0 14px 14px !important;
+}
+
+@media (max-width: 1180px) {
+    .hunt-world-map-layout--hunts {
+        grid-template-columns: minmax(260px, 0.7fr) minmax(390px, 1.3fr) !important;
+    }
+
+    #inventory-view .inventory-client-layout {
+        grid-template-columns: minmax(0, 1fr) 300px !important;
+    }
+}
+
+.hunt-world-map-detail--creature > * {
+    flex-shrink: 0 !important;
+}
+
+.hunt-world-map-detail--creature .hunt-loot-preview {
+    min-height: 128px !important;
+    height: auto !important;
+}
+
+.hunt-world-map-detail--creature .hunt-loot-preview__list {
+    max-height: 150px !important;
+    overflow-y: auto !important;
+}
+
+.hunt-world-map-detail--creature .hunt-world-map-start {
+    position: sticky !important;
+    bottom: 0 !important;
+    z-index: 4 !important;
+    box-shadow: 0 -10px 20px rgba(5, 10, 13, 0.88) !important;
+}
+
+/* =========================================================
+   AETHRA MODERN HUD REDESIGN
+   ========================================================= */
+
+/* Typography Rules */
+h1, h2, h3, h4, h5, h6,
+.aethra-brand h1,
+.window-header h2,
+.battle-panel__header h2,
+.combatant-card__header h3,
+.inventory-panel-header strong,
+.shop-split-layout h2,
+.battle-versus span {
+    font-family: 'Cinzel', Georgia, serif !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+}
+
+body,
+button,
+input,
+select,
+textarea,
+.wallet,
+.attribute-value,
+.stat-value,
+.xp-bar,
+.cooldown-badge,
+.skills-level-badge,
+.inventory-count,
+.loot-analyzer,
+.hero-hub,
+.battle-panel,
+.combatant-card,
+.expedition-live-stats strong,
+.expedition-event-row small,
+.window-tabs button span,
+.hud-icon-menu button span,
+.paperdoll-help {
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+/* Glassmorphism Containers */
+.aethra-navbar,
+.battle-panel,
+.combatant-card,
+.game-window,
+.inventory-client-layout,
+.shop-split-layout .card,
+.premium-shop-grid .card,
+#premium-shop-grid > div,
+#npc-shop-grid > div,
+#npc-sell-grid > div,
+#player-market-view .card {
+    background: rgba(8, 14, 18, 0.82) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    border: 1px solid rgba(201, 154, 61, 0.16) !important;
+    box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.65), inset 0 1px 1px rgba(255, 255, 255, 0.05) !important;
+    border-radius: var(--stable-panel-radius, 12px) !important;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease !important;
+}
+
+/* Hover Glow & Lift */
+.battle-panel:hover,
+.combatant-card:hover {
+    border-color: rgba(201, 154, 61, 0.35) !important;
+    box-shadow: 0 16px 48px 0 rgba(0, 0, 0, 0.75), 0 0 20px rgba(201, 154, 61, 0.06) !important;
+}
+
+/* Custom Scrollbar Styles for Windows and Lists */
+.hero-hub__views,
+.hero-hub__accordion,
+.inventory-scroll-list,
+.expedition-event-stream,
+.analyzer-scroll-list,
+.skills-config-list,
+.hunt-world-map-detail--creature .hunt-loot-preview__list,
+.game-window {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(201, 154, 61, 0.3) rgba(12, 18, 23, 0.1);
+}
+
+::-webkit-scrollbar {
+    width: 6px !important;
+    height: 6px !important;
+}
+::-webkit-scrollbar-track {
+    background: rgba(12, 18, 23, 0.15) !important;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(201, 154, 61, 0.25) !important;
+    border-radius: 4px !important;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(201, 154, 61, 0.5) !important;
+}
+
+/* Elegant Headers and Section Strips */
+.window-header,
+.battle-panel__header,
+.combatant-card__header,
+.hero-hub__header,
+.inventory-panel-header {
+    border-bottom: 1px solid rgba(201, 154, 61, 0.18) !important;
+    background: rgba(20, 29, 36, 0.5) !important;
+    border-top-left-radius: inherit !important;
+    border-top-right-radius: inherit !important;
+}
+
+/* Modern Gradient Resource and Progress Bars */
+.resource-bar, .xp-bar-container {
+    background: rgba(5, 8, 11, 0.6) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 6px !important;
+    height: 10px !important;
+    overflow: hidden !important;
+}
+
+/* Specific overrides for HP fills */
+.resource-bar__fill[style*="background-color: var(--health)"],
+.resource-bar__fill[style*="var(--health)"],
+.hero-hud-card .resource-bar__fill,
+[id*="hp-bar"] .resource-bar__fill,
+[class*="health-bar"] .resource-bar__fill,
+.combatant-card [class*="hp"] .resource-bar__fill,
+.combatant-card [id*="hp"] .resource-bar__fill {
+    background: linear-gradient(90deg, #991b1b, #ef4444, #f87171) !important;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.45) !important;
+    border-radius: 5px !important;
+}
+
+/* Specific overrides for Mana fills */
+.resource-bar__fill[style*="background-color: var(--mana)"],
+.resource-bar__fill[style*="var(--mana)"],
+[id*="mana-bar"] .resource-bar__fill,
+[class*="mana-bar"] .resource-bar__fill,
+.combatant-card [class*="mana"] .resource-bar__fill,
+.combatant-card [id*="mana"] .resource-bar__fill {
+    background: linear-gradient(90deg, #1e40af, #3b82f6, #60a5fa) !important;
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.45) !important;
+    border-radius: 5px !important;
+}
+
+/* Specific overrides for XP fills */
+.resource-bar__fill[style*="background-color: var(--xp)"],
+.resource-bar__fill[style*="var(--xp)"],
+[id*="xp-bar"] .resource-bar__fill,
+[class*="xp-bar"] .resource-bar__fill,
+.xp-bar-container .resource-bar__fill {
+    background: linear-gradient(90deg, #5b21b6, #8b5cf6, #c084fc) !important;
+    box-shadow: 0 0 12px rgba(139, 92, 246, 0.45) !important;
+    border-radius: 5px !important;
+}
+
+/* Buttons, Tabs, Slots Transition Animations */
+.action-bar__slot,
+.hud-icon-menu button,
+.primary-view-button,
+.window-tabs button,
+.expedition-current-card__action,
+.window-close {
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border-radius: 8px !important;
+}
+
+/* Button & Slot Hover state */
+.action-bar__slot:hover,
+.hud-icon-menu button:hover:not(.is-active),
+.primary-view-button:hover:not(.is-active),
+.window-tabs button:hover:not(.is-active) {
+    border-color: rgba(201, 154, 61, 0.5) !important;
+    background: rgba(201, 154, 61, 0.05) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(201, 154, 61, 0.18) !important;
+}
+
+.primary-view-button.is-active,
+.hud-icon-menu button.is-active {
+    border-color: rgba(201, 154, 61, 0.8) !important;
+    background: rgba(201, 154, 61, 0.12) !important;
+    box-shadow: 0 0 12px rgba(201, 154, 61, 0.25) !important;
+}
+
+/* Avoid cut-offs in lists and layout cards */
+.hero-stats-grid > div,
+.hero-attribute-grid > div {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 6px 10px !important;
+    background: rgba(20, 28, 35, 0.35) !important;
+    border-radius: 6px !important;
+    border: 1px solid rgba(201, 154, 61, 0.1) !important;
+    font-size: 0.82rem !important;
+}
+
+.analyzer-row {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    padding: 3px 6px !important;
+}
+
+/* Beautiful Branding/Header Logo styling */
+.aethra-brand {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.aethra-brand h1 {
+    font-family: 'Cinzel', Georgia, serif !important;
+    font-size: 1.2rem !important;
+    letter-spacing: 0.08em !important;
+    text-shadow: 0 0 10px rgba(201, 154, 61, 0.35) !important;
+    margin: 0 !important;
+    color: var(--gold-light) !important;
+}
+
+.aethra-brand p {
+    font-family: 'Outfit', sans-serif !important;
+    font-size: 0.65rem !important;
+    letter-spacing: 0.15em !important;
+    text-transform: uppercase !important;
+    color: var(--text-muted) !important;
+    margin: 0 !important;
+}
+
+/* Versus badge decoration */
+.battle-versus span {
+    font-family: 'Cinzel', Georgia, serif !important;
+    font-size: 0.8rem !important;
+    background: rgba(20, 28, 35, 0.8) !important;
+    border: 1px solid var(--border-gold) !important;
+    box-shadow: 0 0 10px rgba(201, 154, 61, 0.35) !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-weight: 900 !important;
+    color: var(--gold-light) !important;
+    width: 36px !important;
+    height: 36px !important;
+}
+
+/* Clean tooltip design matching glassmorphism */
+.aethra-tooltip,
+[data-aethra-tooltip] {
+    background: rgba(8, 14, 18, 0.95) !important;
+    backdrop-filter: blur(8px) !important;
+    border: 1px solid var(--border-gold) !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7) !important;
+    border-radius: 8px !important;
+    color: var(--text-main) !important;
+    font-family: 'Outfit', sans-serif !important;
+}
+

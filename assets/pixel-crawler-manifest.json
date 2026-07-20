@@ -1,0 +1,1092 @@
+{
+  "source": "Pixel Crawler - Free Pack 2.11.zip",
+  "pngCount": 181,
+  "files": [
+    {
+      "path": "Entities/Characters/Body_A/Animations/Carry_Idle/Carry_Idle_Down-Sheet.png",
+      "width": 256,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Carry_Idle/Carry_Idle_Side-Sheet.png",
+      "width": 256,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Carry_Idle/Carry_Idle_Up-Sheet.png",
+      "width": 256,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Carry_Run/Carry_Run_Down-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Carry_Run/Carry_Run_Side-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Carry_Run/Carry_Run_Up-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Carry_Walk/Carry_Walk_Down-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Carry_Walk/Carry_Walk_Side-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Carry_Walk/Carry_Walk_Up-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Collect_Base/Collect_Down-Sheet.png",
+      "width": 512,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Collect_Base/Collect_Side-Sheet.png",
+      "width": 512,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Collect_Base/Collect_Up-Sheet.png",
+      "width": 512,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Crush_Base/Crush_Down-Sheet.png",
+      "width": 512,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Crush_Base/Crush_Side-Sheet.png",
+      "width": 512,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Crush_Base/Crush_Up-Sheet.png",
+      "width": 512,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Death_Base/Death_Down-Sheet.png",
+      "width": 512,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Death_Base/Death_Side-Sheet.png",
+      "width": 512,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Death_Base/Death_Up-Sheet.png",
+      "width": 512,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Fishing_Base/Fishing_Down-Sheet.png",
+      "width": 512,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Fishing_Base/Fishing_Side-Sheet.png",
+      "width": 512,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Fishing_Base/Fishing_Up-Sheet.png",
+      "width": 512,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Hit_Base/Hit_Down-Sheet.png",
+      "width": 256,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Hit_Base/Hit_Side-Sheet.png",
+      "width": 256,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Hit_Base/Hit_Up-Sheet.png",
+      "width": 256,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Idle_Base/Idle_Down-Sheet.png",
+      "width": 256,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Idle_Base/Idle_Side-Sheet.png",
+      "width": 256,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Idle_Base/Idle_Up-Sheet.png",
+      "width": 256,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Pierce_Base/Pierce_Down-Sheet.png",
+      "width": 512,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Pierce_Base/Pierce_Side-Sheet.png",
+      "width": 512,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Pierce_Base/Pierce_Top-Sheet.png",
+      "width": 512,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Run_Base/Run_Down-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Run_Base/Run_Side-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Run_Base/Run_Up-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Slice_Base/Slice_Down-Sheet.png",
+      "width": 512,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Slice_Base/Slice_Side-Sheet.png",
+      "width": 512,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Slice_Base/Slice_Up-Sheet.png",
+      "width": 512,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Walk_Base/Walk_Down-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Walk_Base/Walk_Side-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Walk_Base/Walk_Up-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Watering_Base/Watering_Down-Sheet.png",
+      "width": 512,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Watering_Base/Watering_Side-Sheet.png",
+      "width": 512,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Characters/Body_A/Animations/Watering_Base/Watering_Up-Sheet.png",
+      "width": 512,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Mobs/Orc Crew/Orc - Rogue/Death/Death-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Mobs/Orc Crew/Orc - Rogue/Idle/Idle-Sheet.png",
+      "width": 128,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Mobs/Orc Crew/Orc - Rogue/Run/Run-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Mobs/Orc Crew/Orc - Shaman/Death/Death-Sheet.png",
+      "width": 448,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Mobs/Orc Crew/Orc - Shaman/Idle/Idle-Sheet.png",
+      "width": 128,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Mobs/Orc Crew/Orc - Shaman/Run/Run-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Mobs/Orc Crew/Orc - Warrior/Death/Death-Sheet.png",
+      "width": 576,
+      "height": 80,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Mobs/Orc Crew/Orc - Warrior/Idle/Idle-Sheet.png",
+      "width": 128,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Mobs/Orc Crew/Orc - Warrior/Run/Run-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Mobs/Orc Crew/Orc/Death/Death-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Mobs/Orc Crew/Orc/Idle/Idle-Sheet.png",
+      "width": 128,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Mobs/Orc Crew/Orc/Run/Run-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Mobs/Skeleton Crew/Skeleton - Base/Death/Death-Sheet.png",
+      "width": 768,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Mobs/Skeleton Crew/Skeleton - Base/Idle/Idle-Sheet.png",
+      "width": 128,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Mobs/Skeleton Crew/Skeleton - Base/Run/Run-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Mobs/Skeleton Crew/Skeleton - Mage/Death/Death-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Mobs/Skeleton Crew/Skeleton - Mage/Idle/Idle-Sheet.png",
+      "width": 128,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Mobs/Skeleton Crew/Skeleton - Mage/Run/Run-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Mobs/Skeleton Crew/Skeleton - Rogue/Death/Death-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Mobs/Skeleton Crew/Skeleton - Rogue/Idle/Idle-Sheet.png",
+      "width": 128,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Mobs/Skeleton Crew/Skeleton - Rogue/Run/Run-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Mobs/Skeleton Crew/Skeleton - Warrior/Death/Death-Sheet.png",
+      "width": 384,
+      "height": 48,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Mobs/Skeleton Crew/Skeleton - Warrior/Idle/Idle-Sheet.png",
+      "width": 128,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Mobs/Skeleton Crew/Skeleton - Warrior/Run/Run-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Npc's/Citizen_F/Peasant_A/Idle/Idle-Sheet.png",
+      "width": 256,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Npc's/Citizen_F/Peasant_A/Walk/Walk-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Npc's/Citizen_F/Tavern_A/Idle/Idle_Side-Sheet.png",
+      "width": 256,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Npc's/Citizen_F/Tavern_A/Idle_Hold/Idle_Side-Sheet.png",
+      "width": 256,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Npc's/Citizen_F/Tavern_A/Walk/Walk_Side-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Npc's/Citizen_F/Tavern_A/Walk_Hold/Walk_Side-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Npc's/Citizen_F/Tavern_B/Idle/Idle_Side-Sheet.png",
+      "width": 256,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Npc's/Citizen_F/Tavern_B/Idle_Hold/Idle_Side-Sheet.png",
+      "width": 256,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Npc's/Citizen_F/Tavern_B/Walk/Walk_Side-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Npc's/Citizen_F/Tavern_B/Walk_Hold/Walk_Side-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Npc's/Knight/Death/Death-Sheet.png",
+      "width": 288,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Npc's/Knight/Idle/Idle-Sheet.png",
+      "width": 128,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Npc's/Knight/Run/Run-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Npc's/Rogue/Death/Death-Sheet.png",
+      "width": 384,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Npc's/Rogue/Idle/Idle-Sheet.png",
+      "width": 128,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Npc's/Rogue/Run/Run-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Npc's/Wizzard/Death/Death-Sheet.png",
+      "width": 384,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Npc's/Wizzard/Idle/Idle-Sheet.png",
+      "width": 128,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Entities/Npc's/Wizzard/Run/Run-Sheet.png",
+      "width": 384,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Animated/Pan_01-Sheet.png",
+      "width": 128,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Animated/Pan_02-Sheet.png",
+      "width": 64,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Animated/Pan_03-Sheet.png",
+      "width": 384,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Animated/Pan_04-Sheet.png",
+      "width": 128,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Animated/Pan_05-Sheet.png",
+      "width": 256,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Static/Dungeon_Props.png",
+      "width": 400,
+      "height": 400,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Static/Esoteric.png",
+      "width": 400,
+      "height": 400,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Static/Farm.png",
+      "width": 400,
+      "height": 400,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Static/Furniture.png",
+      "width": 800,
+      "height": 864,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Static/Meat.png",
+      "width": 192,
+      "height": 144,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Static/Pan.png",
+      "width": 160,
+      "height": 176,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Static/Resources.png",
+      "width": 400,
+      "height": 400,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Static/Rocks.png",
+      "width": 208,
+      "height": 304,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Static/Shadows.png",
+      "width": 400,
+      "height": 400,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Static/Tools.png",
+      "width": 400,
+      "height": 400,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Static/Trees/Model_01/Size_02.png",
+      "width": 256,
+      "height": 128,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Static/Trees/Model_01/Size_03.png",
+      "width": 208,
+      "height": 192,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Static/Trees/Model_01/Size_04.png",
+      "width": 368,
+      "height": 256,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Static/Trees/Model_01/Size_05.png",
+      "width": 448,
+      "height": 368,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Static/Trees/Model_02/Size_02.png",
+      "width": 128,
+      "height": 96,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Static/Trees/Model_02/Size_03.png",
+      "width": 144,
+      "height": 160,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Static/Trees/Model_02/Size_04.png",
+      "width": 192,
+      "height": 224,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Static/Trees/Model_02/Size_05.png",
+      "width": 288,
+      "height": 320,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Static/Trees/Model_03/Size_02.png",
+      "width": 128,
+      "height": 160,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Static/Trees/Model_03/Size_03-export.png",
+      "width": 192,
+      "height": 288,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Static/Trees/Model_03/Size_03.png",
+      "width": 192,
+      "height": 288,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Static/Trees/Model_03/Size_04-export-export.png",
+      "width": 288,
+      "height": 416,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Static/Trees/Model_03/Size_04-export.png",
+      "width": 288,
+      "height": 416,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Static/Trees/Model_03/Size_04.png",
+      "width": 400,
+      "height": 416,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Static/Trees/Model_03/Size_05.png",
+      "width": 384,
+      "height": 512,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Props/Static/Vegetation.png",
+      "width": 400,
+      "height": 432,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Buildings/Interior/Interior_Props_01.png",
+      "width": 608,
+      "height": 384,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Buildings/Interior/Interior_Walls_01.png",
+      "width": 656,
+      "height": 400,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Buildings/Props.png",
+      "width": 400,
+      "height": 400,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Buildings/Roofs.png",
+      "width": 400,
+      "height": 400,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Buildings/Shadows.png",
+      "width": 400,
+      "height": 400,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Buildings/Walls.png",
+      "width": 672,
+      "height": 800,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Alchemy/Alchemy_Table_01-Sheet.png",
+      "width": 192,
+      "height": 704,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Alchemy/Alchemy_Table_02-Sheet.png",
+      "width": 528,
+      "height": 320,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Alchemy/Alchemy_Table_03-Sheet.png",
+      "width": 400,
+      "height": 400,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Anvil/Anvil.png",
+      "width": 272,
+      "height": 160,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Anvil/Anvil_01-Sheet.png",
+      "width": 512,
+      "height": 400,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Anvil/Anvil_02-Sheet.png",
+      "width": 480,
+      "height": 480,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Anvil/Anvil_03-Sheet.png",
+      "width": 768,
+      "height": 560,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Bonfire/Bonfire.png",
+      "width": 64,
+      "height": 384,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Bonfire/Bonfire_01-Sheet.png",
+      "width": 128,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Bonfire/Bonfire_02-Sheet.png",
+      "width": 128,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Bonfire/Bonfire_03-Sheet.png",
+      "width": 128,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Bonfire/Bonfire_04-Sheet.png",
+      "width": 128,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Bonfire/Bonfire_05-Sheet.png",
+      "width": 128,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Bonfire/Bonfire_06-Sheet.png",
+      "width": 128,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Bonfire/Bonfire_07-Sheet.png",
+      "width": 128,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Bonfire/Bonfire_08-Sheet.png",
+      "width": 128,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Bonfire/Bonfire_09-Sheet.png",
+      "width": 320,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Bonfire/Bonfire_10-Sheet.png",
+      "width": 192,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Bonfire/Fire_01-Sheet.png",
+      "width": 128,
+      "height": 48,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Bonfire/Fire_02-Sheet.png",
+      "width": 128,
+      "height": 48,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Bonfire/Smoke-Sheet.png",
+      "width": 128,
+      "height": 48,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Cooking Station/Butchery/Butchery_01-Sheet.png",
+      "width": 64,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Cooking Station/Butchery/Butchery_02.png",
+      "width": 64,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Cooking Station/Butchery/Butchery_03.png",
+      "width": 80,
+      "height": 80,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Cooking Station/Butchery/Butchery_04.png",
+      "width": 80,
+      "height": 80,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Cooking Station/Cooker/Cooker_01.png",
+      "width": 64,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Cooking Station/Cooker/Cooker_02.png",
+      "width": 64,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Cooking Station/Cooker/Cooker_03-Sheet.png",
+      "width": 192,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Cooking Station/Cooker/Cooker_04-Sheet.png",
+      "width": 320,
+      "height": 80,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Cooking Station/Cooking Station.png",
+      "width": 288,
+      "height": 224,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Cooking Station/Estructure.png",
+      "width": 288,
+      "height": 224,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Cooking Station/Grill/Grill_01-Sheet.png",
+      "width": 256,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Cooking Station/Grill/Grill_02-Sheet.png",
+      "width": 256,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Cooking Station/Grill/Grill_03-Sheet.png",
+      "width": 256,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Cooking Station/Grill/Grill_04-Sheet.png",
+      "width": 320,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Furnace/Bricks_01-Sheet.png",
+      "width": 64,
+      "height": 96,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Furnace/Bricks_02-Sheet.png",
+      "width": 96,
+      "height": 128,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Furnace/Bricks_03-Sheet.png",
+      "width": 96,
+      "height": 128,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Furnace/Furnace.png",
+      "width": 192,
+      "height": 384,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Furnace/Iron_01-Sheet.png",
+      "width": 64,
+      "height": 96,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Furnace/Iron_02-Sheet.png",
+      "width": 96,
+      "height": 128,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Furnace/Iron_03-Sheet.png",
+      "width": 96,
+      "height": 128,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Furnace/Stone_01-Sheet.png",
+      "width": 64,
+      "height": 96,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Furnace/Stone_02-Sheet.png",
+      "width": 96,
+      "height": 128,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Furnace/Stone_03-Sheet.png",
+      "width": 96,
+      "height": 128,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Sawmill/Base.png",
+      "width": 256,
+      "height": 144,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Sawmill/Level_1.png",
+      "width": 32,
+      "height": 32,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Sawmill/Level_2-Sheet.png",
+      "width": 640,
+      "height": 512,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Sawmill/Level_3-Sheet.png",
+      "width": 896,
+      "height": 640,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Structures/Stations/Workbench/Workbench.png",
+      "width": 192,
+      "height": 352,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Tilesets/Dungeon_Tiles.png",
+      "width": 400,
+      "height": 400,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Tilesets/Floors_Tiles.png",
+      "width": 400,
+      "height": 416,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Tilesets/Wall_Tiles.png",
+      "width": 400,
+      "height": 400,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Tilesets/Wall_Variations.png",
+      "width": 256,
+      "height": 480,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Environment/Tilesets/Water_tiles.png",
+      "width": 400,
+      "height": 400,
+      "mode": "RGBA"
+    },
+    {
+      "path": "MockUps/Tavern.png",
+      "width": 1280,
+      "height": 1280,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Weapons/Bone/Bone.png",
+      "width": 224,
+      "height": 144,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Weapons/Hands/Hands.png",
+      "width": 32,
+      "height": 96,
+      "mode": "RGBA"
+    },
+    {
+      "path": "Weapons/Wood/Wood.png",
+      "width": 192,
+      "height": 112,
+      "mode": "RGBA"
+    }
+  ]
+}

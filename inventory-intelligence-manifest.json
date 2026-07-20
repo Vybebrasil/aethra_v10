@@ -1,0 +1,24 @@
+{
+  "revision": "inventory-intelligence-final",
+  "updatedFiles": [
+    "js/core/game-core.js",
+    "js/data/GameData.js",
+    "js/items/ItemSystem.js",
+    "js/items/EquipSystem.js",
+    "js/ui/RenderEngine.js",
+    "js/ui/UI_Renderer.js",
+    "style.css"
+  ],
+  "checks": {
+    "playerEquipment": true,
+    "itemType": true,
+    "canEquip boolean": true,
+    "WEAPON strict": true,
+    "updatePlayerStats": true,
+    "persistent alias": true,
+    "tooltip formula": true,
+    "inventory formula": true,
+    "boolean drag validation": true,
+    "formula styles": true
+  }
+}

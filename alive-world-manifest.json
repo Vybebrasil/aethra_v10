@@ -1,0 +1,26 @@
+{
+  "revision": "alive-world-wasd-tibia-inventory",
+  "updatedFiles": [
+    "index.html",
+    "style.css",
+    "js/world/InputManager.js",
+    "js/world/EntityManager.js",
+    "js/ui/UI_Renderer.js",
+    "js/ui/RenderEngine.js",
+    "js/core/GameLoader.js"
+  ],
+  "checks": {
+    "InputManager criado": true,
+    "InputManager no index": true,
+    "InputManager no loader": true,
+    "WASD": true,
+    "Inventário dividido": true,
+    "Mochila com scroll": true,
+    "Paperdoll": true,
+    "NPC Shop separado": true,
+    "Player Market separado": true,
+    "Mercador abre NPC Shop": true,
+    "Sprites 32px": true,
+    "Scripts existentes": true
+  }
+}

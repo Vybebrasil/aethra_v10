@@ -1,0 +1,41 @@
+[
+  {
+    "bodyNoScroll": true,
+    "actionBottom": 768,
+    "actionHeight": 156,
+    "worldBottom": 612,
+    "noOverlap": true,
+    "xpVisible": true,
+    "slotNameVisible": true,
+    "tooltipHost": "BODY",
+    "tooltipVisible": true,
+    "viewport": "1366x768",
+    "errors": []
+  },
+  {
+    "bodyNoScroll": true,
+    "actionBottom": 900,
+    "actionHeight": 164,
+    "worldBottom": 736,
+    "noOverlap": true,
+    "xpVisible": true,
+    "slotNameVisible": true,
+    "tooltipHost": "BODY",
+    "tooltipVisible": true,
+    "viewport": "1440x900",
+    "errors": []
+  },
+  {
+    "bodyNoScroll": true,
+    "actionBottom": 1080,
+    "actionHeight": 164,
+    "worldBottom": 916,
+    "noOverlap": true,
+    "xpVisible": true,
+    "slotNameVisible": true,
+    "tooltipHost": "BODY",
+    "tooltipVisible": true,
+    "viewport": "1920x1080",
+    "errors": []
+  }
+]

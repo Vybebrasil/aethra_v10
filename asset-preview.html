@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aethra — Conferência Pixel Crawler</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #090806;
+            --panel: #18130d;
+            --gold: #e2bb63;
+            --border: #62471f;
+            --text: #f0e6d2;
+            --muted: #aaa08e;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            padding: 30px;
+            background:
+                radial-gradient(circle at top, #302314 0, transparent 42rem),
+                var(--bg);
+            color: var(--text);
+            font-family: Georgia, serif;
+        }
+
+        main {
+            width: min(980px, 100%);
+            margin: auto;
+        }
+
+        h1, h2 { color: var(--gold); }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+        }
+
+        .card {
+            display: grid;
+            place-items: center;
+            gap: 10px;
+            min-height: 190px;
+            padding: 18px;
+            border: 2px ridge var(--border);
+            background: linear-gradient(145deg, #2a2115, var(--panel));
+            box-shadow: 0 18px 35px rgba(0,0,0,.4);
+            text-align: center;
+        }
+
+        img {
+            width: 96px;
+            height: 96px;
+            object-fit: contain;
+            image-rendering: pixelated;
+            filter: drop-shadow(0 9px 8px rgba(0,0,0,.55));
+        }
+
+        code {
+            color: var(--muted);
+            font-size: 12px;
+            word-break: break-all;
+        }
+
+        .notice {
+            margin-top: 22px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            background: rgba(24,19,13,.85);
+            color: var(--muted);
+        }
+    </style>
+</head>
+<body>
+<main>
+    <h1>Pixel Crawler — Assets verificados</h1>
+
+    <h2>Itens padronizados</h2>
+    <section class="grid">
+        <article class="card">
+            <img src="assets/icons/sword_iron.png" alt="Espada de Ferro">
+            <strong>Espada de Ferro</strong>
+            <code>assets/icons/sword_iron.png</code>
+        </article>
+
+        <article class="card">
+            <img src="assets/icons/potion_health.png" alt="Poção de Vida">
+            <strong>Poção de Vida</strong>
+            <code>assets/icons/potion_health.png</code>
+        </article>
+
+        <article class="card">
+            <img src="assets/icons/wolf_hide.png" alt="Pele">
+            <strong>Ícone de Pele</strong>
+            <code>assets/icons/wolf_hide.png</code>
+        </article>
+    </section>
+
+    <h2>Criaturas disponíveis no pacote</h2>
+    <section class="grid">
+        <article class="card">
+            <img src="assets/entities/orc_scout.png" alt="Batedor Orc">
+            <strong>Batedor Orc</strong>
+            <code>assets/entities/orc_scout.png</code>
+        </article>
+
+        <article class="card">
+            <img src="assets/entities/skeleton_guard.png" alt="Esqueleto Guardião">
+            <strong>Esqueleto Guardião</strong>
+            <code>assets/entities/skeleton_guard.png</code>
+        </article>
+    </section>
+
+    <div class="notice">
+        O pacote gratuito não possui sprites de rato ou lobo. Esses dois
+        monstros continuam usando o fallback visual até que
+        <code>giant_rat.png</code> e <code>forest_wolf.png</code> sejam
+        adicionados em <code>assets/entities/</code>.
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,198 @@
+{
+  "passed": true,
+  "assertions": {
+    "itemGenerated": true,
+    "multiplierPreserved": true,
+    "ivCalculated": true,
+    "criticalRolled": true,
+    "criticalMultiplierApplied": true,
+    "analyticCritical": true,
+    "analyticSkillBonus": true,
+    "analyticItemRoll": true,
+    "inspectEquipmentRolls": true
+  },
+  "item": {
+    "name": "Espada de Ferro",
+    "multiplier": 1.65,
+    "ivPercent": 62.5,
+    "attributeRolls": 3
+  },
+  "damage": {
+    "amount": 25,
+    "baseDamage": 10,
+    "multiplier": 1.65,
+    "individualMultiplier": 1,
+    "affixBonus": 0,
+    "scaledWeaponDamage": 17,
+    "isCrit": true,
+    "criticalChance": 0.5,
+    "criticalMultiplier": 1.75,
+    "damageBeforeDefense": 30,
+    "enemyDefense": 5,
+    "blockReduction": 0,
+    "weaponId": "item_sword_iron_1d17a2c5-8b75-4e36-8026-751863819761",
+    "weaponName": "Espada de Ferro",
+    "weapon": {
+      "instanceId": "item_sword_iron_1d17a2c5-8b75-4e36-8026-751863819761",
+      "seed": "seed_d5443331-bb27-4162-ac2f-cd54a8b4c3c1",
+      "templateId": "sword_iron",
+      "name": "Espada de Ferro",
+      "baseName": "Espada de Ferro",
+      "description": "Uma espada simples e confiável para aventureiros iniciantes.",
+      "image": "sword_iron.png",
+      "type": "weapon",
+      "itemType": "WEAPON",
+      "slot": "weapon",
+      "allowedSlots": [
+        "weapon"
+      ],
+      "rarity": "Épico",
+      "rarityId": "epic",
+      "quality": 100,
+      "potential": 100,
+      "statMultiplier": 1.65,
+      "multiplier": 1.65,
+      "baseStats": {
+        "damageMin": 8,
+        "damageMax": 12,
+        "defense": 0
+      },
+      "baseRolls": {
+        "damageMin": 100,
+        "damageMax": 100,
+        "defense": 100
+      },
+      "individualMultipliers": {
+        "damageMin": 1,
+        "damageMax": 1,
+        "defense": 1
+      },
+      "affixes": [],
+      "quantity": 1,
+      "stackable": false,
+      "maxStack": 1,
+      "effect": null,
+      "healAmount": 0,
+      "basePrice": 50,
+      "price": 321,
+      "stats": {
+        "damageMin": 13,
+        "damageMax": 20,
+        "defense": 0
+      },
+      "upgrades": {
+        "level": 0,
+        "maxLevel": 10,
+        "investedMaterials": []
+      },
+      "bond": {
+        "level": 0,
+        "xp": 0,
+        "xpNext": 100
+      },
+      "ownership": {
+        "ownerId": null,
+        "bound": false,
+        "tradeable": true
+      },
+      "origin": {
+        "source": "generated",
+        "enemyId": null,
+        "huntId": null,
+        "bossId": null,
+        "professionId": null,
+        "crafterId": null,
+        "createdAt": "2026-07-19T21:20:46.924Z"
+      },
+      "history": [
+        {
+          "type": "created",
+          "at": "2026-07-19T21:20:46.924Z",
+          "source": "generated"
+        }
+      ],
+      "iv": {
+        "percent": 62.5,
+        "tier": "Regular",
+        "multiplierPercent": 100
+      },
+      "rollScore": 62.5
+    }
+  },
+  "analytic": [
+    {
+      "type": "critical-analysis",
+      "color": "#ffb347",
+      "message": "CRÍTICO ATIVADO! 2.50x de dano | Pré-armadura 62 | DEF 8 | Final 54",
+      "battleId": null,
+      "round": 0,
+      "source": "battle-analytics",
+      "createdAt": 1784496046928
+    },
+    {
+      "type": "skill-bonus-analysis",
+      "color": "#66c2ff",
+      "message": "BÔNUS DE SKILL ATIVADO: 1.40x (Golpe Arcano) | Dano final 54",
+      "battleId": null,
+      "round": 0,
+      "source": "battle-analytics",
+      "createdAt": 1784496046928
+    },
+    {
+      "type": "item-roll-analysis",
+      "color": "#bd8cff",
+      "message": "ROLL DA BUILD: item 1.65x × IV 1.080x + 3.0 de afixo | Base 14",
+      "battleId": null,
+      "round": 0,
+      "source": "battle-analytics",
+      "createdAt": 1784496046928
+    }
+  ],
+  "combatInspect": {
+    "side": "hero",
+    "name": "Aethra",
+    "criticalChance": 0.5,
+    "criticalMultiplier": 1.75,
+    "damageMultiplier": 1.65,
+    "evasionChance": 0,
+    "defense": 0,
+    "armorReduction": 0,
+    "blockChance": 0,
+    "blockReduction": 0.35,
+    "precision": 0,
+    "damageMin": 3,
+    "damageMax": 5,
+    "statBonuses": [
+      {
+        "stat": "gold",
+        "base": 0,
+        "final": 301,
+        "bonus": 301
+      },
+      {
+        "stat": "critical",
+        "base": 0,
+        "final": 0.5,
+        "bonus": 0.5
+      }
+    ],
+    "itemRolls": [
+      {
+        "slot": "weapon",
+        "itemId": "item_sword_iron_1d17a2c5-8b75-4e36-8026-751863819761",
+        "name": "Espada de Ferro",
+        "rarity": "Épico",
+        "multiplier": 1.65,
+        "ivPercent": 62.5
+      }
+    ],
+    "weapon": {
+      "name": "Espada de Ferro",
+      "multiplier": 1.65,
+      "individualMin": 1,
+      "individualMax": 1,
+      "affixMin": 0,
+      "affixMax": 0
+    }
+  }
+}

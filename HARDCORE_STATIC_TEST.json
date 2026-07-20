@@ -1,0 +1,9 @@
+{
+  "javascriptSyntax": true,
+  "cssBalanced": true,
+  "combatInspectMarkup": true,
+  "equipmentIVMarkup": true,
+  "tooltipIVMarkup": true,
+  "analyticBattleLogs": true,
+  "itemInspectionAPI": true
+}

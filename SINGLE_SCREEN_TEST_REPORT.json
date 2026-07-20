@@ -1,0 +1,69 @@
+{
+  "initial": {
+    "viewport": [
+      1366,
+      768
+    ],
+    "bodyScrollHeight": 768,
+    "docScrollHeight": 768,
+    "cityScrollHeight": 768,
+    "cityClientHeight": 768,
+    "bodyOverflow": "hidden",
+    "cityOverflowY": "hidden",
+    "actionBottom": 768,
+    "actionTop": 656,
+    "actionHidden": false,
+    "layoutTop": 96,
+    "layoutBottom": 656,
+    "huntVisible": true,
+    "cityHidden": true,
+    "currentView": "hunt",
+    "startButton": true,
+    "topButtons": [
+      {
+        "view": "hunt",
+        "active": true
+      },
+      {
+        "view": "city",
+        "active": false
+      }
+    ]
+  },
+  "city": {
+    "view": "city",
+    "cityVisible": true,
+    "huntHidden": true,
+    "actionHidden": true,
+    "merchantVisible": true,
+    "bodyScrollHeight": 768,
+    "innerHeight": 768
+  },
+  "city_with_shop": {
+    "shopOpen": true,
+    "cityVisible": true,
+    "bodyScrollHeight": 768,
+    "innerHeight": 768
+  },
+  "hunt_return": {
+    "view": "hunt",
+    "huntVisible": true,
+    "cityHidden": true,
+    "actionHidden": false,
+    "startButton": true
+  },
+  "hunt_started": {
+    "huntActive": true,
+    "huntId": "whispering_forest",
+    "currentEnemy": "giant_rat",
+    "battleActive": true,
+    "battleEnemy": "giant_rat",
+    "enemyIdle": false,
+    "enemyName": "Rato Gigante",
+    "startButtonPresent": false,
+    "bodyScrollHeight": 768,
+    "innerHeight": 768
+  },
+  "console_errors": [],
+  "page_errors": []
+}

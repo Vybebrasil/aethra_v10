@@ -1,0 +1,20 @@
+{
+  "status": "passed",
+  "viewport": "1366x768",
+  "checks": {
+    "stackable_items_are_grouped": true,
+    "stackable_quantity_is_accumulated": true,
+    "gold_is_grouped": true,
+    "unique_items_keep_individual_entries": true,
+    "unique_items_are_deduplicated_by_instance_id": true,
+    "rarity_is_visible": true,
+    "iv_is_visible": true,
+    "multiplier_is_visible": true,
+    "primary_stat_is_visible": true,
+    "rare_filter_works": true,
+    "clear_history_keeps_inventory_untouched": true,
+    "xp_does_not_enter_loot_panel": true,
+    "page_has_no_vertical_scroll": true,
+    "javascript_page_errors": 0
+  }
+}

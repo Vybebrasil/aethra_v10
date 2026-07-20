@@ -1,0 +1,21 @@
+{
+  "viewport": "1366x768",
+  "javascriptSyntax": "passed",
+  "runtimeErrors": 0,
+  "verticalScroll": false,
+  "horizontalScroll": false,
+  "paperdollSlots": 6,
+  "initialBackpackSlots": 40,
+  "backpackExpansion": "multiples of 8",
+  "backpackFilters": ["all", "equipment", "consumable", "resource", "loot"],
+  "masteryCards": 9,
+  "analyzerPrimaryCards": 4,
+  "explorationEventTest": {
+    "triggered": true,
+    "manualResolution": true,
+    "rewardAddedToBag": true,
+    "skillXpGranted": true
+  },
+  "analyzerReset": "passed",
+  "navbarCurrencySync": "passed"
+}

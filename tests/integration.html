@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aethra — Integration Test</title>
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+    <main id="game-container" class="app-shell">
+        <header class="topbar"><div><h1>Integration Test</h1><p>Abra o Console do navegador.</p></div><strong id="engine-status">Carregando</strong></header>
+        <section id="city-view" class="game-window" data-aethra-window><div id="city-grid"></div></section>
+        <section id="inventory-view" class="game-window hidden" data-aethra-window><div id="inventory-grid"></div><div id="equipment-grid"></div></section>
+        <section id="quests-view" class="game-window hidden" data-aethra-window><div id="quests-list"></div></section>
+        <div id="stats-display"></div><div id="hunt-display"></div><div id="combat-display"></div><div id="boss-list"></div><div id="boss-weekly-reward"></div><div id="professions-grid"></div><div id="dungeon-list"></div><div id="hero-sprite" hidden></div>
+    </main>
+    <script src="../js/core/game-core.js" defer></script>
+    <script src="../js/data/GameData.js" defer></script>
+    <script src="../js/infrastructure/SaveManager.js" defer></script>
+    <script src="../js/infrastructure/SettingsManager.js" defer></script>
+    <script src="../js/ui/WindowManager.js" defer></script>
+    <script src="../js/items/ItemSystem.js" defer></script>
+    <script src="../js/items/BagSystem.js" defer></script>
+    <script src="../js/items/EquipSystem.js" defer></script>
+    <script src="../js/progression/XPSystem.js" defer></script>
+    <script src="../js/items/LootSystem.js" defer></script>
+    <script src="../js/combat/CombatSystem.js" defer></script>
+    <script src="../js/combat/SkillSystem.js" defer></script>
+    <script src="../js/world/CityScene.js" defer></script>
+    <script src="../js/world/HuntSystem.js" defer></script>
+    <script src="../js/progression/ProfessionSystem.js" defer></script>
+    <script src="../js/combat/BossSystem.js" defer></script>
+    <script src="../js/progression/QuestSystem.js" defer></script>
+    <script src="../js/world/DungeonSystem.js" defer></script>
+    <script src="../js/market/MarketplaceSystem.js" defer></script>
+    <script src="../js/ui/RenderEngine.js" defer></script>
+    <script src="../js/ui/UI_Renderer.js" defer></script>
+    <script src="../js/tests/IntegrationTest.js" defer></script>
+    <script src="../js/core/GameLoader.js" defer></script>
+</body>
+</html>

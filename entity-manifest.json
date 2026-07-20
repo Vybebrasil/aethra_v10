@@ -1,0 +1,24 @@
+{
+  "revision": "entity-system",
+  "initialEntities": [
+    "player",
+    "merchant"
+  ],
+  "updatedFiles": [
+    "js/world/EntityManager.js",
+    "js/ui/UI_Renderer.js",
+    "js/core/GameLoader.js",
+    "index.html",
+    "style.css"
+  ],
+  "checks": {
+    "EntityManager file": true,
+    "player asset": true,
+    "npc asset": true,
+    "index loads module": true,
+    "loader requires module": true,
+    "UI renders entities": true,
+    "UI positions x/y": true,
+    "CSS entity layer": true
+  }
+}

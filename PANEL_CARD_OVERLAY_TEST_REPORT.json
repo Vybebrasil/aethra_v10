@@ -1,0 +1,29 @@
+{
+  "mode": "panel-card-overlay",
+  "validationDate": "2026-07-19",
+  "syntax": {
+    "allJavaScriptFilesValid": true
+  },
+  "runtime": {
+    "battleLayoutCreated": true,
+    "heroCardCreated": true,
+    "enemyCardCreated": true,
+    "enemyManaBarCreated": true,
+    "actionBarMountedInHud": true,
+    "actionBarPosition": "fixed",
+    "independentWindowsTested": [
+      "inventory-view",
+      "skills-view",
+      "npc-shop-view"
+    ],
+    "allThreeWindowsOpenSimultaneously": true,
+    "modalBackdropDisabled": true,
+    "battleCardsRemainVisible": true,
+    "runtimeErrors": 0
+  },
+  "mapCleanup": {
+    "mapLoaderReferences": 0,
+    "tiledRendererReferences": 0,
+    "otbmReferences": 0
+  }
+}

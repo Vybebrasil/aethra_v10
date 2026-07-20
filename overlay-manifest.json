@@ -1,0 +1,24 @@
+{
+  "revision": "game-client-overlay",
+  "layers": {
+    "world": 1,
+    "hud": 10,
+    "modal": 100
+  },
+  "updatedFiles": [
+    "style.css",
+    "js/ui/WindowManager.js"
+  ],
+  "checks": {
+    "world layer CSS": true,
+    "hud layer CSS": true,
+    "modal layer CSS": true,
+    "fixed centered modal": true,
+    "pixelated modal images": true,
+    "automatic layers": true,
+    "automatic modal adoption": true,
+    "automatic close button": true,
+    "backdrop close": true,
+    "escape close": true
+  }
+}
