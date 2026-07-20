@@ -320,17 +320,11 @@
     }
 
     function getHuntAtlasView() {
-        Aethra.GameState.ui = Aethra.GameState.ui || {};
-        return Aethra.GameState.ui.huntAtlasView === "creatures" ? "creatures" : "focus";
+        return "creatures";
     }
 
-    function renderHuntAtlasToggle(activeView) {
-        return `
-            <div class="hunt-atlas-submode" role="tablist" aria-label="Tipo de Hunt">
-                <button type="button" class="${activeView === "focus" ? "is-active" : ""}" data-hunt-atlas-view="focus" role="tab" aria-selected="${activeView === "focus"}">Por foco</button>
-                <button type="button" class="${activeView === "creatures" ? "is-active" : ""}" data-hunt-atlas-view="creatures" role="tab" aria-selected="${activeView === "creatures"}">Por criatura</button>
-            </div>
-        `;
+    function renderHuntAtlasToggle() {
+        return "";
     }
 
     function formatFocusMultiplier(value, suffix = "x") {
@@ -493,7 +487,11 @@
             if (selectedCreature) Aethra.GameState.ui.selectedHuntCreature = selectedCreature.id;
             const selectedCreatureData = selectedCreature ? (Aethra.GameData?.creatures?.[selectedCreature.id] || {}) : {};
             const creatureLocked = selectedCreature ? heroLevel < Number(selectedCreature.level || 1) : false;
-            const sourceHuntsHtml = (selectedCreature?.hunts || []).slice(0, 8).map((huntInfo) => `<span>${escapeHTML(huntInfo.name)} · NV. ${Number(huntInfo.minLevel || 1)}</span>`).join('');
+            const sourceHuntsHtml = (selectedCreature?.hunts || []).slice(0, 8).map((huntInfo) => {
+                const fullHunt = Hunt.hunts?.[huntInfo.id];
+                const focusText = fullHunt?.focus ? ` (${fullHunt.focus.icon} Foco: ${fullHunt.focus.name})` : '';
+                return `<span>${escapeHTML(huntInfo.name)}${escapeHTML(focusText)} · NV. ${Number(huntInfo.minLevel || 1)}</span>`;
+            }).join('');
             const lootPreview = selectedCreature ? getCreatureLootPreview(selectedCreatureData) : [];
             const types = Array.from(new Set(creatures.map((entry) => entry.type).filter(Boolean))).sort((a,b) => String(a).localeCompare(String(b)));
             const biomes = Array.from(new Set(creatures.flatMap((entry) => (entry.hunts || []).map((hunt) => hunt.biome)).filter(Boolean))).sort((a,b) => String(a).localeCompare(String(b)));
@@ -690,6 +688,26 @@
                     </header>
                     <div class="hunt-world-map-detail__danger"><span>Perigo</span><div>${dangers}</div></div>
                     <p class="hunt-world-map-detail__description">${escapeHTML(selected.description || "Expedição disponível.")}</p>
+                    
+                    ${selected.focus ? `
+                    <div class="expedition-focus-info" style="margin: 8px 0; padding: 7px 10px; border-radius: 8px; background: rgba(201, 154, 61, 0.04); border: 1px solid rgba(201, 154, 61, 0.12); display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.1rem;">${escapeHTML(selected.focus.icon)}</span>
+                        <div>
+                            <small style="color: var(--text-muted); font-size: 0.52rem; text-transform: uppercase; letter-spacing: 0.05em; display: block;">Foco Regional</small>
+                            <strong style="font-family: 'Cinzel', serif; font-size: 0.82rem; color: var(--gold-light);">${escapeHTML(selected.focus.name)}</strong>
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    ${selected.modifiers ? `
+                    <div class="hunt-focus-modifiers" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 10px 0;">
+                        <article class="${Number(selected.modifiers.combatXp ?? 1) >= 1 ? "is-positive" : "is-negative"}" style="padding: 4px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); text-align: center; background: rgba(0,0,0,0.15); margin: 0;"><small style="display: block; font-size: 0.52rem; color: var(--text-muted); text-transform: uppercase;">Hero XP</small><strong style="font-size: 0.8rem; color: #fff;">${formatFocusMultiplier(selected.modifiers.combatXp ?? 1)}</strong></article>
+                        <article class="${Number(selected.modifiers.gold ?? 1) >= 1 ? "is-positive" : "is-negative"}" style="padding: 4px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); text-align: center; background: rgba(0,0,0,0.15); margin: 0;"><small style="display: block; font-size: 0.52rem; color: var(--text-muted); text-transform: uppercase;">Gold</small><strong style="font-size: 0.8rem; color: #fff;">${formatFocusMultiplier(selected.modifiers.gold ?? 1)}</strong></article>
+                        <article class="${Number(selected.modifiers.materialChance ?? 1) >= 1 ? "is-positive" : "is-negative"}" style="padding: 4px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); text-align: center; background: rgba(0,0,0,0.15); margin: 0;"><small style="display: block; font-size: 0.52rem; color: var(--text-muted); text-transform: uppercase;">Loot</small><strong style="font-size: 0.8rem; color: #fff;">${formatFocusMultiplier(selected.modifiers.materialChance ?? 1)}</strong></article>
+                        <article class="${Number(selected.modifiers.eventChance ?? 1) >= 1 ? "is-positive" : "is-negative"}" style="padding: 4px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); text-align: center; background: rgba(0,0,0,0.15); margin: 0;"><small style="display: block; font-size: 0.52rem; color: var(--text-muted); text-transform: uppercase;">Eventos</small><strong style="font-size: 0.8rem; color: #fff;">${formatFocusMultiplier(selected.modifiers.eventChance ?? 1)}</strong></article>
+                    </div>
+                    ` : ''}
+
                     <div class="hunt-world-map-detail__rewards"><small>Principais recompensas</small><div>${(selected.rewards || []).map((reward) => `<span>${escapeHTML(reward)}</span>`).join("")}</div></div>
                     <div class="hunt-world-map-detail__enemies"><small>Criaturas conhecidas</small><div>${(selected.enemies || []).map((entry) => {
                         const creature = Aethra.GameData?.creatures?.[typeof entry === 'string' ? entry : entry.id];
