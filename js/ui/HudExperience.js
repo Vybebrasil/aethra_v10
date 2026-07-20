@@ -19,7 +19,7 @@
         overview: ["✦", "Atributos", false],
         equipment: ["♟", "Equipamentos", true],
         backpack: ["▦", "Backpack", true],
-        skills: ["↑", "Skills e maestrias", true]
+        skills: ["↑", "Skills", true]
     };
 
     function readSections() {
