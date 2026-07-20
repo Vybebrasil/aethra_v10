@@ -19,15 +19,15 @@ function load(file) {
 
 load('js/core/game-core.js');
 load('js/data/GameData.js');
-load('js/data/CreatureBalanceConfig.js');
-load('js/data/MonsterAbilityParser.js');
-load('js/data/LootProfileRegistry.js');
-load('js/data/MonsterCatalogAdapter.js');
-load('js/data/MonsterCatalogData.js');
+load('js/data/monsters/CreatureBalanceConfig.js');
+load('js/data/monsters/MonsterAbilityParser.js');
+load('js/data/loot/LootProfileRegistry.js');
+load('js/data/monsters/MonsterCatalogAdapter.js');
+load('js/data/monsters/MonsterCatalogData.js');
 load('js/economy/EconomyRNGManager.js');
 load('js/items/LootSystem.js');
-load('js/data/MonsterCatalog.js');
-load('js/data/HuntCatalog.js');
+load('js/data/monsters/MonsterCatalog.js');
+load('js/data/hunts/HuntCatalog.js');
 load('js/world/HuntSystem.js');
 load('js/combat/BattleSystem.js');
 

@@ -10,7 +10,7 @@
     color-scheme: dark;
 
     --world-map-image:
-        url("assets/pixel-crawler/MockUps/Tavern.png");
+        url("../assets/pixel-crawler/MockUps/Tavern.png");
 
     --bg-deep: #050606;
     --bg-panel: rgba(8, 13, 17, 0.94);

@@ -67,7 +67,7 @@ global.Aethra = {
 };
 
 require(path.resolve('js/progression/ProfessionSystem.js'));
-require(path.resolve('js/data/HuntCatalog.js'));
+require(path.resolve('js/data/hunts/HuntCatalog.js'));
 require(path.resolve('js/world/HuntSystem.js'));
 require(path.resolve('js/items/LootSystem.js'));
 require(path.resolve('js/world/ExplorationSystem.js'));
