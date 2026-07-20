@@ -1083,7 +1083,7 @@ body.aethra-battle-mode #city-view {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
 }
 
-.battle-card-arena.has-event-card .combatant-card__info-panel {
+.battle-card-arena.has-event-card .combatant-card__body--event .combatant-card__info-panel {
     grid-template-rows: auto minmax(0, 1fr) auto auto !important;
 }
 
