@@ -1754,6 +1754,9 @@
                 const intervalMs = Math.max(250, Number(attack.intervalMs || 1000));
                 const remaining = Math.max(0, readyAt - Date.now());
 
+                const hasWeapon = !!state.weapon;
+                const displayIcon = hasWeapon ? (skill.icon || (isRight ? "🗡" : "⚔")) : "👊";
+
                 const card = document.createElement("article");
                 card.className = [
                     "primary-attack-card",
@@ -1779,7 +1782,7 @@
                         ${available ? "" : "disabled"}
                     >
                         <span class="primary-attack-card__mouse">${mouseLabel}</span>
-                        <strong class="primary-attack-card__icon">${escapeHTML(skill.icon || "⚔")}</strong>
+                        <strong class="primary-attack-card__icon">${escapeHTML(displayIcon)}</strong>
                         <span class="primary-attack-card__copy">
                             <b>${escapeHTML(skill.shortName || skill.name)}</b>
                             <small>${escapeHTML(weaponName)}</small>
