@@ -71,6 +71,7 @@
 
     Aethra.SaveManager = {
         key: SAVE_KEY,
+        initialized: false,
 
         save(reason = 'manual') {
             try {
@@ -173,7 +174,8 @@
         },
 
         init() {
-            if (initialized) return;
+            if (this.initialized || initialized) return;
+            this.initialized = true;
             initialized = true;
 
             // O load precisa acontecer antes dos outros módulos renderizarem seus HUDs.
