@@ -156,13 +156,44 @@ body.aethra-battle-mode #city-view {
 }
 
 /* Main center layout */
-.battle-main-column--world-loop,
 .battle-main-column {
     display: grid !important;
     grid-template-rows: minmax(270px, 54%) minmax(0, 1fr) !important;
     gap: var(--stable-gap) !important;
     height: 100% !important;
     overflow: hidden !important;
+}
+
+.battle-main-column--world-loop {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: var(--stable-gap) !important;
+    height: 100% !important;
+    overflow: hidden !important;
+}
+
+.battle-main-column--world-loop .battle-stage-panel {
+    flex: 0 0 255px !important;
+    min-height: 255px !important;
+    max-height: 255px !important;
+    border-bottom: none !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+.battle-main-column--world-loop .battle-panel--exploration {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    margin-top: calc(-1 * var(--stable-gap)) !important;
+    border-top: none !important;
+    border-top-left-radius: 0 !important;
+    border-top-right-radius: 0 !important;
+}
+
+.battle-main-column--world-loop .battle-panel--actionbar {
+    flex: 0 0 var(--stable-actionbar-height) !important;
+    min-height: var(--stable-actionbar-height) !important;
+    max-height: var(--stable-actionbar-height) !important;
 }
 
 .battle-stage-panel {
@@ -984,7 +1015,6 @@ body.aethra-battle-mode #city-view {
         --stable-actionbar-height: 172px;
     }
 
-    .battle-main-column--world-loop,
     .battle-main-column {
         grid-template-rows: minmax(264px, 54%) minmax(0, 1fr) !important;
     }
