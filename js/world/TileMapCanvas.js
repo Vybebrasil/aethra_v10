@@ -578,10 +578,27 @@
         }, 1200);
     }
 
-    // Event bus listeners
-    Aethra.EventBus.on("battle:damage-dealt", executeHuntTick);
-    Aethra.EventBus.on("battle:round-processed", executeHuntTick);
-    Aethra.EventBus.on("combat:hit", executeHuntTick);
+    // Event bus listeners — Sync fully with HuntSystem, BattleSystem & ExplorationSystem
+    const HUNT_SYNC_EVENTS = [
+        "hunt:started",
+        "hunt:tick",
+        "hunt:updated",
+        "hunt:encountered",
+        "EnemyEncountered",
+        "EnemyDefeated",
+        "hunt:enemy-defeated",
+        "battle:damage-dealt",
+        "battle:round-processed",
+        "combat:hit",
+        "LootFound"
+    ];
+
+    HUNT_SYNC_EVENTS.forEach((evt) => {
+        Aethra.EventBus.on(evt, (payload) => {
+            if (!isRunning || !canvas) startEngine();
+            executeHuntTick(payload);
+        });
+    });
 
     Aethra.TileMapCanvas = {
         start: startEngine,
