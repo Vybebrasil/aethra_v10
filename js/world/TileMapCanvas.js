@@ -47,13 +47,24 @@
     const floatingTexts = [];
     const chatLogs = [];
 
-    const SPELL_LIST = [
-        "exori infir",
-        "exori mas",
-        "adori infir mas tere",
-        "exori gran",
-        "exori amp vis"
-    ];
+    function getHeroActiveSkillName() {
+        const equipped = Aethra.GameState?.hero?.equippedSkills;
+        if (Array.isArray(equipped) && equipped.length > 0) {
+            const first = equipped[0];
+            const sk = Aethra.SkillSystem?.getSkill?.(first?.id || first);
+            if (sk?.name) return sk.name;
+        }
+        const archetype = Aethra.GameState?.hero?.archetypeId;
+        const ARCHETYPE_SKILLS = {
+            vanguard: "Corte Preciso",
+            berserker: "Golpe Brutal",
+            arcanist: "Projétil de Fogo",
+            ranger: "Tiro Mirado",
+            nightblade: "Presa Dupla",
+            templar: "Quebra-Armadura"
+        };
+        return ARCHETYPE_SKILLS[archetype] || "Corte Preciso";
+    }
 
     const MONSTER_SPECIES = [
         { key: "goblin",   name: "Goblin Ladrão", hp: 60,  maxHp: 60 },
@@ -431,13 +442,13 @@
             return;
         }
 
-        // Hero is in range -> Execute Attack / Spell Chant
+        // Hero is in range -> Execute Attack / Skill Chant
         player.state = "attacking";
-        const spell = SPELL_LIST[Math.floor(Math.random() * SPELL_LIST.length)];
-        player.spellText = spell;
+        const skillName = getHeroActiveSkillName();
+        player.spellText = skillName;
         player.spellTextTimer = 40;
 
-        addChatLog(`Conjuras "${spell}"!`, "spell");
+        addChatLog(`Usou "${skillName}"!`, "spell");
 
         // Damage target monster
         target.hurtTimer = 16;
