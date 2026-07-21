@@ -70,7 +70,11 @@ body.aethra-battle-mode .battle-stage-panel > .battle-panel--exploration,
 body.aethra-battle-mode .battle-stage-panel > #exploration-feed,
 body.aethra-battle-mode .battle-main-column > .battle-panel--exploration,
 body.aethra-battle-mode .battle-main-column > #hunt-display,
-body.aethra-battle-mode .battle-main-column > section:not(.battle-stage-panel):not(.battle-panel--actionbar) {
+body.aethra-battle-mode .battle-main-column > .battle-panel--hunt,
+body.aethra-battle-mode #encounter-context-dock,
+body.aethra-battle-mode .encounter-context-dock,
+#encounter-context-dock,
+.encounter-context-dock {
     display: none !important;
 }
 
