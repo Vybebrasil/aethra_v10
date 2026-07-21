@@ -80,10 +80,20 @@
             role: "Bloqueio reativo", description: "Melhora posturas e abre espaço para bloqueios decisivos.",
             benefit: "+1% de bloqueio por nível investido.", starterSkill: "guard", skillIds: ["guard"]
         },
-        armor: {
-            id: "armor", name: "Armaduras", icon: "♜", group: "defense", category: "Defesa",
-            role: "Redução constante", description: "Especialização defensiva para combates longos e seguros.",
-            benefit: "+1% de eficiência da Defesa por nível.", starterSkill: "guard", skillIds: ["guard"]
+        cloth_armor: {
+            id: "cloth_armor", name: "Armadura de Tecido", icon: "🥋", group: "defense", category: "Defesa",
+            role: "Conjuradores e mana", description: "Especialização leve para quem foca em poder mágico.",
+            benefit: "+1% Poder Mágico e +0.5% Mana Máxima por nível.", starterSkill: "guard", skillIds: ["guard"]
+        },
+        leather_armor: {
+            id: "leather_armor", name: "Armadura de Couro", icon: "▧", group: "defense", category: "Defesa",
+            role: "Agilidade e Evasão", description: "Especialização média voltada para precisão e esquiva de ataques.",
+            benefit: "+0.5% Evasão e +0.2% Chance Crítica por nível.", starterSkill: "guard", skillIds: ["guard"]
+        },
+        plate_armor: {
+            id: "plate_armor", name: "Armadura de Placa", icon: "♜", group: "defense", category: "Defesa",
+            role: "Dano Físico e Mitigação", description: "Especialização pesada para absorver grandes impactos de dano.",
+            benefit: "+1% eficiência de Defesa e +1% Vida Máxima por nível.", starterSkill: "guard", skillIds: ["guard"]
         },
         mining: {
             id: "mining", name: "Mineração", icon: "⛏", group: "world", category: "Coleta",
@@ -175,12 +185,48 @@
                 const id = this.resolveSkillDiscipline(payload.skillId, payload.skill);
                 if (id) this.addUseXP(id, 4, { source: "skill-use", payload });
             });
+            Aethra.EventBus.on("battle:damage-dealt", (payload = {}) => {
+                if (payload.side === "creature" && payload.hit) {
+                    if (payload.isBlocked) {
+                        this.addUseXP("shield", 2, { source: "defense-block", payload });
+                    }
+                    const chestItem = Aethra.GameState.hero?.equipment?.chest;
+                    if (chestItem) {
+                        const armorType = this.resolveArmorType(chestItem);
+                        if (armorType) {
+                            this.addUseXP(armorType, 2, { source: "defense-hit", payload });
+                        }
+                    } else {
+                        this.addUseXP("leather_armor", 1, { source: "defense-unarmored", payload });
+                    }
+                }
+            });
             Aethra.EventBus.on("profession:xpChanged", (payload = {}) => {
                 const id = Object.keys(DEFINITIONS).find((key) => DEFINITIONS[key].professionId === payload.professionId);
                 if (id) this.addUseXP(id, Math.max(1, Math.floor(number(payload.amount, 1) / 3)), { source: "profession-use", payload });
             });
             Aethra.EventBus.on("game:reset", () => this.ensureState(true));
             Aethra.EventBus.on("save:loaded", () => this.ensureState());
+        },
+
+        resolveArmorType(item = null) {
+            if (!item) return null;
+            const template = Aethra.GameData?.items?.[item.templateId || item.id] || {};
+            const armorType = item.armorType || template.armorType;
+            if (armorType && ["cloth", "leather", "plate"].includes(armorType)) {
+                return `${armorType}_armor`;
+            }
+            const name = String(item.name || template.name || "").toLowerCase();
+            if (/tecido|cloth|mago|arcanista|arcanist|seda|linho|runico|focus|wand|staff/.test(name)) {
+                return "cloth_armor";
+            }
+            if (/couro|leather|batedor|ranger|assassino|nightblade|adaga|veloz|skinning/.test(name)) {
+                return "leather_armor";
+            }
+            if (/placa|plate|ferro|aco|vanguarda|berserker|heavy|pesado|elmo|peitoral|perneiras|guard|shield|escudo/.test(name)) {
+                return "plate_armor";
+            }
+            return "plate_armor";
         },
 
         resolveWeaponDiscipline(weapon = null) {

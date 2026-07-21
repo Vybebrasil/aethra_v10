@@ -52,6 +52,12 @@
             difficulty: "Difícil (★★★)",
             highlight: "Agilidade & Crítico",
             starterSkillId: "twin_fang"
+        },
+        templar: {
+            focus: "Híbrido / Suporte",
+            difficulty: "Média (★★☆)",
+            highlight: "Maças & Restauração",
+            starterSkillId: "armor_breaker"
         }
     };
 
@@ -347,9 +353,15 @@
             : definition.professionId ? "Evolui em ações do mundo" : "Especialização passiva";
         return `
             <article class="creation-discipline ${value > 0 ? "is-invested" : ""}" data-discipline-group="${esc(definition.group)}"
-                data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="DISCIPLINA DISPONÍVEL" data-tooltip-title="${esc(definition.name)} (${esc(definition.category)})" data-tooltip-body="${esc(definition.description)} Especialização ativa: ${esc(proc)}.">
+                data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-html="true" data-tooltip-eyebrow="DISCIPLINA DISPONÍVEL" data-tooltip-title="${esc(definition.name)} (${esc(definition.category)})" data-tooltip-body="${esc(definition.description)}<br><br><b>Efeito por nível:</b> ${esc(definition.benefit)}<br><b>Especialização:</b> ${esc(proc)}">
                 <span class="creation-discipline__icon" data-discipline-id="${esc(definition.id)}">${esc(definition.icon)}</span>
-                <div class="creation-discipline__copy"><small>${esc(definition.category)} · ${esc(definition.role)}</small><strong>${esc(definition.name)}</strong><p>${esc(definition.description)}</p><em>${esc(proc)}</em></div>
+                <div class="creation-discipline__copy">
+                    <small>${esc(definition.category)} · ${esc(definition.role)}</small>
+                    <strong>${esc(definition.name)}</strong>
+                    <p>${esc(definition.description)}</p>
+                    <span class="creation-discipline__benefit">Bônus: ${esc(definition.benefit)}</span>
+                    <em>${esc(proc)}</em>
+                </div>
                 ${mode === "creation" ? `<div class="creation-stepper"><button type="button" data-creation-adjust="mastery" data-id="${esc(definition.id)}" data-delta="-1">−</button><b>${value}</b><button type="button" data-creation-adjust="mastery" data-id="${esc(definition.id)}" data-delta="1">+</button></div>` : `<div class="creation-discipline__runtime"><small>NV. ${fmt(runtime?.level || 1)}</small><i><b style="width:${fmt(runtime?.progressPercent || 0)}%"></b></i><em>${fmt(runtime?.xpCurrent || 0)}/${fmt(runtime?.xpNext || 1)} XP</em></div><button type="button" class="creation-discipline__spend" data-spend-skill-point="${esc(definition.id)}" ${available ? "" : "disabled"}>+1</button>`}
             </article>`;
     }

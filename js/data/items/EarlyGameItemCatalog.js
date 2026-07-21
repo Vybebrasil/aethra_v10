@@ -37,6 +37,12 @@
         feet: { name: "Botas", icon: "⌄", defense: 0.48, hp: 0.8, evasion: 0.003 }
     };
 
+    const ARMOR_CLASSES = {
+        cloth: { name: "de Tecido", defMultiplier: 0.5, bonusName: "mag", bonusVal: 0.6, bonusHp: 0.8 },
+        leather: { name: "de Couro", defMultiplier: 0.8, bonusName: "evasion", bonusVal: 0.0006, bonusHp: 1.0 },
+        plate: { name: "de Placa", defMultiplier: 1.3, bonusName: "str", bonusVal: 0.5, bonusHp: 1.4 }
+    };
+
     const FAMILY_MATERIALS = {
         beast: ["beast_hide", "raw_meat", "monster_fang"],
         monstrosity: ["monster_fang", "beast_hide", "aether_fragment"],
@@ -130,30 +136,44 @@
         });
 
         Object.entries(ARMOR_PIECES).forEach(([slot, definition]) => {
-            const stats = {
-                defense: Math.max(1, Math.round((1 + level * 0.72) * definition.defense)),
-                hpMax: Math.max(1, Math.round(level * definition.hp))
-            };
-            if (definition.precision) stats.precision = Math.max(1, Math.floor(level * 0.2 + definition.precision));
-            if (definition.evasion) stats.evasion = Number((definition.evasion + level * 0.0007).toFixed(3));
+            Object.entries(ARMOR_CLASSES).forEach(([armorClass, classDef]) => {
+                const defBase = Math.max(1, Math.round((1 + level * 0.72) * definition.defense * classDef.defMultiplier));
+                const hpBase = Math.max(1, Math.round(level * definition.hp * classDef.bonusHp));
+                
+                const stats = {
+                    defense: defBase,
+                    hpMax: hpBase
+                };
+                
+                if (classDef.bonusName === "evasion") {
+                    stats.evasion = Number((classDef.bonusVal * level + (definition.evasion || 0)).toFixed(4));
+                } else if (classDef.bonusName) {
+                    stats[classDef.bonusName] = Math.max(1, Math.round(classDef.bonusVal * level));
+                }
+                
+                if (definition.precision) {
+                    stats.precision = Math.max(1, Math.floor(level * 0.2 + definition.precision));
+                }
 
-            item(`eg_${slot}_l${level}`, {
-                name: `${definition.name} ${grade}`,
-                icon: definition.icon,
-                type: "armor",
-                itemType: slot.toUpperCase(),
-                slot,
-                equipmentClass: "armor",
-                levelReq: level,
-                tier,
-                rarity: level >= 9 ? "Raro" : level >= 5 ? "Incomum" : "Comum",
-                price: 11 + level * level * 5,
-                value: 11 + level * level * 5,
-                stackable: false,
-                maxStack: 1,
-                baseStats: stats,
-                stats: clone(stats),
-                description: `Proteção de nível ${level} com atributos variáveis e potencial de melhoria.`
+                item(`eg_${slot}_${armorClass}_l${level}`, {
+                    name: `${definition.name} ${classDef.name} ${grade}`,
+                    icon: definition.icon,
+                    type: "armor",
+                    itemType: slot.toUpperCase(),
+                    slot,
+                    equipmentClass: "armor",
+                    armorType: armorClass,
+                    levelReq: level,
+                    tier,
+                    rarity: level >= 9 ? "Raro" : level >= 5 ? "Incomum" : "Comum",
+                    price: Math.round((11 + level * level * 5) * classDef.defMultiplier),
+                    value: Math.round((11 + level * level * 5) * classDef.defMultiplier),
+                    stackable: false,
+                    maxStack: 1,
+                    baseStats: stats,
+                    stats: clone(stats),
+                    description: `Proteção de ${armorClass === "cloth" ? "Tecido" : armorClass === "leather" ? "Couro" : "Placa"} de nível ${level} com atributos variáveis.`
+                });
             });
         });
 
@@ -195,12 +215,17 @@
 
     function equipmentPool(level) {
         const safeLevel = clamp(Math.floor(Number(level) || 1), 1, 10);
-        return [
+        const pool = [
             ...Object.keys(WEAPON_FAMILIES).map((family) => `eg_${family}_l${safeLevel}`),
-            ...Object.keys(ARMOR_PIECES).map((slot) => `eg_${slot}_l${safeLevel}`),
             `eg_shield_l${safeLevel}`,
             `eg_ring_l${safeLevel}`
         ];
+        Object.keys(ARMOR_PIECES).forEach((slot) => {
+            pool.push(`eg_${slot}_cloth_l${safeLevel}`);
+            pool.push(`eg_${slot}_leather_l${safeLevel}`);
+            pool.push(`eg_${slot}_plate_l${safeLevel}`);
+        });
+        return pool;
     }
 
     function signatureMaterials(monster) {

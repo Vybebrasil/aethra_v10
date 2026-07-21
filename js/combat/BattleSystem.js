@@ -2437,7 +2437,7 @@
         getHeroCombatant() {
             const hero = Aethra.GameState.hero;
             const stats = { ...(hero.stats || {}) };
-            const armorLevel = Math.max(1, integer(Aethra.DisciplineSystem?.getState?.("armor")?.level, 1));
+            const armorLevel = Math.max(1, integer(Aethra.DisciplineSystem?.getState?.("plate_armor")?.level || Aethra.DisciplineSystem?.getState?.("armor")?.level, 1));
             stats.defense = Math.max(0, number(stats.defense, 0)) + Math.max(0, armorLevel - 1) * 0.5;
 
             const guard = Aethra.GameState.battle?.heroGuard;

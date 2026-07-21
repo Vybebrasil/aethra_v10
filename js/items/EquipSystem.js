@@ -736,6 +736,26 @@
                 }
             });
 
+            // Apply armor discipline passives to nextStats
+            if (Aethra.DisciplineSystem) {
+                const clothLevel = Math.max(1, Number(Aethra.DisciplineSystem.getState("cloth_armor")?.level || 1));
+                const leatherLevel = Math.max(1, Number(Aethra.DisciplineSystem.getState("leather_armor")?.level || 1));
+                const plateLevel = Math.max(1, Number(Aethra.DisciplineSystem.getState("plate_armor")?.level || 1));
+
+                if (clothLevel > 1) {
+                    nextStats.mag = (nextStats.mag || 0) * (1 + (clothLevel - 1) * 0.01);
+                    nextStats.maxMana = (nextStats.maxMana || 0) * (1 + (clothLevel - 1) * 0.005);
+                }
+                if (leatherLevel > 1) {
+                    nextStats.evasion = (nextStats.evasion || 0) + (leatherLevel - 1) * 0.005;
+                    nextStats.critical = (nextStats.critical || 0) + (leatherLevel - 1) * 0.002;
+                }
+                if (plateLevel > 1) {
+                    nextStats.defense = (nextStats.defense || 0) * (1 + (plateLevel - 1) * 0.01);
+                    nextStats.maxHp = (nextStats.maxHp || 0) * (1 + (plateLevel - 1) * 0.01);
+                }
+            }
+
             hero.stats = nextStats;
             hero.equipment = equipment;
             Aethra.GameState.playerEquipment = equipment;
