@@ -131,35 +131,37 @@
         ctx.ellipse(px + 16, py + 28, 12, 6, 0, 0, Math.PI * 2);
         ctx.stroke();
 
-        // Character Sprite (Tibia Pixel Art style)
-        // Body (Armor)
-        ctx.fillStyle = "#2c4c68";
-        ctx.fillRect(px + 9, py + 12 + bob, 14, 14);
+        const hero = Aethra.GameState?.hero || {};
+        const archetypeId = hero.archetypeId || "vanguard";
 
-        // Head/Helmet
-        ctx.fillStyle = "#8a9ea8";
-        ctx.fillRect(px + 10, py + 4 + bob, 12, 10);
+        // Try drawing sprite image via SpriteLoader first
+        const spriteDrawn = Aethra.SpriteLoader?.draw?.(ctx, archetypeId, px, py + bob, 32, 32);
 
-        // Visor glow
-        ctx.fillStyle = "#50c878";
-        ctx.fillRect(px + 13, py + 8 + bob, 6, 2);
+        if (!spriteDrawn) {
+            // Procedural fallback character drawing
+            ctx.fillStyle = "#2c4c68";
+            ctx.fillRect(px + 9, py + 12 + bob, 14, 14);
 
-        // Shield / Weapon
-        ctx.fillStyle = "#d9b85f";
-        if (player.state === "attack") {
-            // Slash effect forward
-            ctx.strokeStyle = "#ffe066";
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.arc(px + 28, py + 16, 16, -Math.PI / 4, Math.PI / 4);
-            ctx.stroke();
-            ctx.fillRect(px + 24, py + 10, 10, 4);
-        } else {
-            ctx.fillRect(px + 4, py + 12 + bob, 5, 12); // Shield on side
+            ctx.fillStyle = "#8a9ea8";
+            ctx.fillRect(px + 10, py + 4 + bob, 12, 10);
+
+            ctx.fillStyle = "#50c878";
+            ctx.fillRect(px + 13, py + 8 + bob, 6, 2);
+
+            ctx.fillStyle = "#d9b85f";
+            if (player.state === "attack") {
+                ctx.strokeStyle = "#ffe066";
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(px + 28, py + 16, 16, -Math.PI / 4, Math.PI / 4);
+                ctx.stroke();
+                ctx.fillRect(px + 24, py + 10, 10, 4);
+            } else {
+                ctx.fillRect(px + 4, py + 12 + bob, 5, 12);
+            }
         }
 
         // Overhead HP bar
-        const hero = Aethra.GameState?.hero || {};
         const curHp = hero.hp || hero.stats?.hp || 50;
         const maxHp = hero.maxHp || hero.stats?.maxHp || 50;
         const hpPct = Math.max(0, Math.min(1, curHp / maxHp));
@@ -188,19 +190,22 @@
         const shake = monster.hurtTimer > 0 ? (Math.random() * 4 - 2) : 0;
         const bob = Math.sin(time * 0.005 + 1) * 2;
 
-        // Monster sprite (Red Orc / Beast style)
-        ctx.fillStyle = monster.hurtTimer > 0 ? "#ff8888" : "#8c3a3a";
-        ctx.fillRect(px + 8 + shake, py + 10 + bob, 16, 16);
+        const mKey = (currentEnemy?.id || "monster").toLowerCase();
+        const spriteDrawn = Aethra.SpriteLoader?.draw?.(ctx, mKey, px + shake, py + bob, 32, 32);
 
-        // Eyes
-        ctx.fillStyle = "#ffff00";
-        ctx.fillRect(px + 11 + shake, py + 13 + bob, 3, 3);
-        ctx.fillRect(px + 18 + shake, py + 13 + bob, 3, 3);
+        if (!spriteDrawn) {
+            // Procedural fallback monster drawing
+            ctx.fillStyle = monster.hurtTimer > 0 ? "#ff8888" : "#8c3a3a";
+            ctx.fillRect(px + 8 + shake, py + 10 + bob, 16, 16);
 
-        // Horns / Teeth
-        ctx.fillStyle = "#e0e0e0";
-        ctx.fillRect(px + 7 + shake, py + 6 + bob, 4, 6);
-        ctx.fillRect(px + 21 + shake, py + 6 + bob, 4, 6);
+            ctx.fillStyle = "#ffff00";
+            ctx.fillRect(px + 11 + shake, py + 13 + bob, 3, 3);
+            ctx.fillRect(px + 18 + shake, py + 13 + bob, 3, 3);
+
+            ctx.fillStyle = "#e0e0e0";
+            ctx.fillRect(px + 7 + shake, py + 6 + bob, 4, 6);
+            ctx.fillRect(px + 21 + shake, py + 6 + bob, 4, 6);
+        }
 
         // Overhead HP bar
         ctx.fillStyle = "rgba(0,0,0,0.65)";
