@@ -471,11 +471,29 @@
         if (target.hp <= 0) {
             target.isDead = true;
             const goldLoot = Math.floor(Math.random() * 15 + 8);
-            addFloatingText(`+${goldLoot} 🪙`, px, py - 18, "#ffd700", 13);
-            addChatLog(`☠ ${target.name} foi derrotado! Loot: +${goldLoot} Ouro.`, "kill");
+            const xpReward = Math.floor(target.maxHp * 1.6 + waveState.currentFloor * 10);
 
-            // Dispatch loot event to backend GameState
-            Aethra.EventBus.emit("goldChanged", { amount: goldLoot, total: (Aethra.GameState?.hero?.gold || 0) + goldLoot });
+            addFloatingText(`+${goldLoot} 🪙`, px, py - 18, "#ffd700", 13);
+            addFloatingText(`+${xpReward} XP`, px, py - 32, "#79c9e8", 13);
+            addChatLog(`☠ ${target.name} derrotado! (+${goldLoot} G, +${xpReward} XP)`, "kill");
+
+            // Sync backend GameState hero & hunt telemetry
+            if (Aethra.GameState) {
+                Aethra.GameState.hero = Aethra.GameState.hero || {};
+                Aethra.GameState.hero.gold = (Aethra.GameState.hero.gold || 0) + goldLoot;
+                Aethra.GameState.hero.xp = (Aethra.GameState.hero.xp || 0) + xpReward;
+
+                Aethra.GameState.hunt = Aethra.GameState.hunt || {};
+                Aethra.GameState.hunt.isActive = true;
+                Aethra.GameState.hunt.kills = (Aethra.GameState.hunt.kills || 0) + 1;
+                Aethra.GameState.hunt.xp = (Aethra.GameState.hunt.xp || 0) + xpReward;
+                Aethra.GameState.hunt.gold = (Aethra.GameState.hunt.gold || 0) + goldLoot;
+            }
+
+            Aethra.EventBus.emit("goldChanged", { amount: goldLoot, total: Aethra.GameState?.hero?.gold || 0 });
+            Aethra.EventBus.emit("EnemyDefeated", { enemy: target, xp: xpReward, gold: goldLoot });
+            Aethra.EventBus.emit("hunt:enemy-defeated", { enemy: target, xp: xpReward, gold: goldLoot });
+            Aethra.EventBus.emit("hunt:updated", Aethra.GameState?.hunt || {});
 
             // Select next target in horde
             selectNextAliveTarget();
