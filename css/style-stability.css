@@ -1750,7 +1750,9 @@ textarea,
     min-height: 0 !important;
 }
 
-.battle-panel--exploration {
+.battle-panel--exploration,
+#hunt-display,
+.journey-focus-card {
     display: none !important;
 }
 

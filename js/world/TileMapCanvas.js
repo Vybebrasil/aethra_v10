@@ -536,7 +536,10 @@
                     </div>
                     <div class="tilemap-header__right">
                         <span class="tilemap-header__badge" id="tilemap-boss-badge">ONDA 1/5</span>
-                        <button type="button" class="tilemap-btn" id="tilemap-loop-btn">🔄 Loop</button>
+                        <div class="battle-mode-switcher" style="display:flex; gap:4px;">
+                            <button type="button" class="stage-mode-btn is-active" data-set-stage-mode="map2d" style="padding:4px 8px; border-radius:5px; border:1px solid rgba(91,175,200,0.4); background:rgba(91,175,200,0.18); color:#79c9e8; font:700 9px Outfit,sans-serif; cursor:pointer;">🗺 Mapa 2D</button>
+                            <button type="button" class="stage-mode-btn" data-set-stage-mode="cards" style="padding:4px 8px; border-radius:5px; border:1px solid rgba(91,139,162,0.25); background:rgba(6,14,20,0.6); color:#6a8894; font:700 9px Outfit,sans-serif; cursor:pointer;">🃏 Cartas</button>
+                        </div>
                     </div>
                 </div>
 

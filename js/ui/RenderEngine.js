@@ -736,18 +736,7 @@
 
                     <main class="battle-main-column">
                         <section class="battle-stage-panel">
-                            <header class="battle-panel__header battle-stage-panel__header" style="margin-bottom: 8px;">
-                                <div>
-                                    <small>Visualização de combate</small>
-                                    <h2 id="central-stage-mode-title">Palco 2D em Tempo Real</h2>
-                                </div>
-                                <div class="battle-mode-switcher" style="display:flex; gap:4px;">
-                                    <button type="button" class="stage-mode-btn is-active" data-set-stage-mode="map2d" style="padding:4px 10px; border-radius:6px; border:1px solid rgba(91,175,200,0.4); background:rgba(91,175,200,0.15); color:#79c9e8; font:700 9px Outfit,sans-serif; cursor:pointer;">🗺 Mapa 2D</button>
-                                    <button type="button" class="stage-mode-btn" data-set-stage-mode="cards" style="padding:4px 10px; border-radius:6px; border:1px solid rgba(91,139,162,0.25); background:rgba(6,14,20,0.6); color:#6a8894; font:700 9px Outfit,sans-serif; cursor:pointer;">🃏 Cartas</button>
-                                </div>
-                            </header>
-
-                            <!-- Mode 1: 2D Canvas Map -->
+                            <!-- Mode 1: 2D Canvas Map (Full Height Stage) -->
                             <div id="tilemap-canvas-root" class="map2d-active-root"></div>
 
                             <!-- Mode 2: Card Arena (Hero vs Enemy) -->
