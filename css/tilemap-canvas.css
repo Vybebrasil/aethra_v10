@@ -1,20 +1,36 @@
 /* =====================================================
    TILEMAP CANVAS ENGINE — css/tilemap-canvas.css
-   Renderizador de Mapa 2D no estilo Tibia/Baiak Idle
+   Visor de Arena 2D no estilo Tibia/Baiak Idle (Full Height)
    ===================================================== */
+
+.battle-stage-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex: 1 1 0;
+    min-height: 0;
+}
+
+.map2d-active-root {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    height: 100%;
+    min-height: 480px;
+}
 
 .tilemap-workspace {
     position: relative;
     width: 100%;
     height: 100%;
-    min-height: 420px;
+    flex: 1 1 0;
     display: flex;
     flex-direction: column;
-    border-radius: 14px;
+    border-radius: 12px;
     overflow: hidden;
-    background: #060d13;
-    border: 2px solid rgba(80, 55, 30, 0.4);
-    box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8), 0 8px 24px rgba(0, 0, 0, 0.4);
+    background: #04090d;
+    border: 3px solid #3a2818; /* Moldura de Madeira estilo Tibia */
+    box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.85), 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 .tilemap-header {
@@ -22,15 +38,15 @@
     top: 10px;
     left: 12px;
     right: 12px;
-    z-index: 10;
+    z-index: 20;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 8px 14px;
-    border-radius: 10px;
-    background: rgba(6, 15, 22, 0.88);
+    padding: 7px 14px;
+    border-radius: 8px;
+    background: rgba(6, 14, 20, 0.92);
     backdrop-filter: blur(8px);
-    border: 1px solid rgba(91, 139, 162, 0.25);
+    border: 1px solid rgba(218, 182, 94, 0.25);
     pointer-events: auto;
 }
 
@@ -47,12 +63,13 @@
 }
 
 .tilemap-zone-tag {
-    color: #e0eaee;
-    font: 700 11px/1 "Cinzel", serif;
+    color: #e8dfc8;
+    font: 800 12px/1 "Cinzel", serif;
     letter-spacing: .06em;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.8);
 }
 
-/* Wave progress pips: [ 1 ][ 2 ][ 3 ][ 4 ][ 👹 ] */
+/* Wave progress pips */
 .tilemap-wave-pips {
     display: flex;
     align-items: center;
@@ -62,83 +79,84 @@
 .wave-pip {
     display: grid;
     place-items: center;
-    width: 20px;
-    height: 14px;
+    width: 22px;
+    height: 16px;
     border-radius: 4px;
     background: rgba(91, 139, 162, 0.15);
-    border: 1px solid rgba(91, 139, 162, 0.22);
-    color: #4a6a78;
-    font: 800 8px/1 "Outfit", sans-serif;
+    border: 1px solid rgba(91, 139, 162, 0.25);
+    color: #5a7a88;
+    font: 800 9px/1 "Outfit", sans-serif;
     transition: background .2s, border-color .2s, color .2s;
 }
 
 .wave-pip.is-active {
-    background: rgba(91, 175, 200, 0.25);
-    border-color: rgba(91, 175, 200, 0.5);
+    background: rgba(91, 175, 200, 0.28);
+    border-color: rgba(91, 175, 200, 0.6);
     color: #79c9e8;
 }
 
 .wave-pip.is-current {
-    box-shadow: 0 0 8px rgba(121, 201, 232, 0.5);
+    box-shadow: 0 0 10px rgba(121, 201, 232, 0.6);
 }
 
 .wave-pip.is-boss {
-    background: rgba(220, 50, 50, 0.15);
-    border-color: rgba(220, 50, 50, 0.35);
+    background: rgba(220, 50, 50, 0.18);
+    border-color: rgba(220, 50, 50, 0.4);
     color: #f26666;
 }
 
 .wave-pip.is-boss.is-active {
-    background: rgba(220, 50, 50, 0.35);
-    border-color: rgba(220, 50, 50, 0.8);
+    background: rgba(220, 50, 50, 0.4);
+    border-color: rgba(220, 50, 50, 0.9);
     color: #ffd700;
-    box-shadow: 0 0 10px rgba(220, 50, 50, 0.6);
+    box-shadow: 0 0 14px rgba(220, 50, 50, 0.7);
 }
 
 .tilemap-header__badge {
-    padding: 3px 8px;
-    border-radius: 4px;
+    padding: 4px 9px;
+    border-radius: 5px;
     background: rgba(80, 200, 120, 0.15);
-    border: 1px solid rgba(80, 200, 120, 0.3);
+    border: 1px solid rgba(80, 200, 120, 0.35);
     color: #50c878;
-    font: 800 8.5px/1 "Outfit", sans-serif;
+    font: 800 9px/1 "Outfit", sans-serif;
     letter-spacing: .08em;
     text-transform: uppercase;
 }
 
 .tilemap-header__badge.is-boss-active {
-    background: rgba(220, 50, 50, 0.25);
-    border: 1px solid rgba(220, 50, 50, 0.6);
+    background: rgba(220, 50, 50, 0.3);
+    border: 1px solid rgba(220, 50, 50, 0.7);
     color: #ff6666;
-    animation: boss-badge-pulse 1.5s ease-in-out infinite alternate;
+    animation: boss-badge-pulse 1.2s ease-in-out infinite alternate;
 }
 
 @keyframes boss-badge-pulse {
     from { box-shadow: 0 0 4px rgba(220, 50, 50, 0.3); }
-    to   { box-shadow: 0 0 12px rgba(220, 50, 50, 0.7); }
+    to   { box-shadow: 0 0 14px rgba(220, 50, 50, 0.8); }
 }
 
 .tilemap-btn {
-    padding: 4px 9px;
-    border: 1px solid rgba(91, 139, 162, 0.3);
+    padding: 4px 10px;
+    border: 1px solid rgba(218, 182, 94, 0.3);
     border-radius: 6px;
-    background: rgba(91, 139, 162, 0.1);
-    color: #8fa8b4;
+    background: rgba(218, 182, 94, 0.1);
+    color: #ecd06a;
     font: 700 9px/1 "Outfit", sans-serif;
     cursor: pointer;
     transition: background .15s, color .15s;
 }
 
 .tilemap-btn:hover {
-    background: rgba(91, 175, 200, 0.22);
-    color: #e0eaee;
+    background: rgba(218, 182, 94, 0.22);
+    color: #ffffff;
 }
 
 .tilemap-canvas-container {
     position: relative;
-    flex: 1;
+    flex: 1 1 0;
     width: 100%;
     height: 100%;
+    min-height: 440px;
     overflow: hidden;
 }
 
@@ -153,33 +171,34 @@
 /* Chat / Log Dock in bottom-left corner of canvas (Baiak style) */
 .tilemap-chat-dock {
     position: absolute;
-    bottom: 10px;
-    left: 10px;
-    width: min(320px, 85vw);
-    max-height: 110px;
-    z-index: 10;
+    bottom: 12px;
+    left: 12px;
+    width: min(340px, 85vw);
+    max-height: 130px;
+    z-index: 20;
     display: flex;
     flex-direction: column;
     border-radius: 8px;
-    background: rgba(4, 10, 14, 0.85);
-    backdrop-filter: blur(6px);
-    border: 1px solid rgba(91, 139, 162, 0.2);
+    background: rgba(4, 10, 14, 0.88);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(91, 139, 162, 0.25);
     overflow: hidden;
     pointer-events: auto;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
 }
 
 .tilemap-chat-dock header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 4px 8px;
-    background: rgba(10, 24, 32, 0.92);
-    border-bottom: 1px solid rgba(91, 139, 162, 0.15);
+    padding: 5px 10px;
+    background: rgba(10, 24, 34, 0.95);
+    border-bottom: 1px solid rgba(91, 139, 162, 0.2);
 }
 
 .tilemap-chat-dock header span {
-    color: #6a8894;
-    font: 700 8px/1 "Outfit", sans-serif;
+    color: #79c9e8;
+    font: 700 9px/1 "Outfit", sans-serif;
     letter-spacing: .08em;
     text-transform: uppercase;
 }
@@ -188,24 +207,59 @@
     display: flex;
     flex-direction: column-reverse;
     gap: 3px;
-    padding: 6px 8px;
+    padding: 6px 10px;
     overflow-y: auto;
-    max-height: 80px;
+    max-height: 95px;
 }
 
 .tilemap-chat-line {
-    font: 500 9px/1.2 "Outfit", sans-serif;
+    font: 500 9.5px/1.25 "Outfit", sans-serif;
     color: #a0b4be;
 }
 
 .tilemap-chat-line small {
     color: #4a6a78;
-    font-size: 8px;
+    font-size: 8.5px;
 }
 
-.tilemap-chat-line--atk { color: #f0a070; }
-.tilemap-chat-line--def { color: #70c0f0; }
+.tilemap-chat-line--atk  { color: #f0a070; }
+.tilemap-chat-line--def  { color: #70c0f0; }
 .tilemap-chat-line--crit { color: #ffd700; font-weight: 700; }
 .tilemap-chat-line--kill { color: #f07070; font-weight: 700; }
 .tilemap-chat-line--wave { color: #70f0a0; font-weight: 700; }
 .tilemap-chat-line--boss { color: #ff6666; font-weight: 800; }
+.tilemap-chat-line--spell{ color: #c080ff; font-weight: 700; }
+
+/* Floor Transition Overlay Banner */
+.floor-transition-banner {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: rgba(2, 6, 10, 0.85);
+    backdrop-filter: blur(6px);
+    animation: floor-banner-fade .5s ease forwards;
+}
+
+@keyframes floor-banner-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.floor-banner-title {
+    color: #ffd700;
+    font: 800 22px/1 "Cinzel", serif;
+    letter-spacing: .1em;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+.floor-banner-sub {
+    color: #a8c0c8;
+    font: 600 12px/1 "Outfit", sans-serif;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
