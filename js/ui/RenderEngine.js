@@ -579,7 +579,7 @@
 
             if (!placeholderAlreadyMounted) {
                 cityView.innerHTML = `
-                    <div id="tilemap-canvas-root" class="map2d-active-root"></div>
+                    <div id="tilemap-canvas-root" data-map2d-placeholder class="map2d-active-root"></div>
                     <div class="battle-compatibility-nodes" hidden>
                         <div id="stats-display"></div>
                         <div id="hunt-display"></div>

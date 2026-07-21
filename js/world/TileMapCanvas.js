@@ -343,4 +343,6 @@
     // Auto mount when container is available
     Aethra.EventBus.on("EngineReady", () => setTimeout(startEngine, 100));
     Aethra.EventBus.on("engine:ready", () => setTimeout(startEngine, 100));
+    Aethra.EventBus.on("render:all", () => setTimeout(startEngine, 50));
+    Aethra.EventBus.on("state:restored", () => setTimeout(startEngine, 50));
 })(window.Aethra = window.Aethra || {});

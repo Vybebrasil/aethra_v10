@@ -34,6 +34,12 @@
 
     const fmt = (v) => new Intl.NumberFormat("pt-BR").format(Math.floor(Number(v) || 0));
 
+    Aethra.LobbyUI = {
+        active: false,
+        open: null,
+        exit: null
+    };
+
     // ─── slot storage ───────────────────────────────────────────────────────
     function readSlot(n) {
         try {
