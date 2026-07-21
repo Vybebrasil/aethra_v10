@@ -649,10 +649,36 @@ body.is-allocating-skills { overflow: hidden; }
 
 /* Grayscale filters to standardize colored emojis into flat monochrome icons */
 .creation-archetype__icon,
-.creation-archetype__dna span,
+.creation-archetype__dna span b,
 .creation-archetype__skill-row div b,
 .creation-discipline__icon,
 .creation-tooltip__item span,
 .creation-tooltip__masteries span {
     filter: grayscale(1) brightness(1.7) contrast(1.2);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Adjust size scaling of top circular icons to make them visually equal */
+.creation-archetype[data-select-archetype="vanguard"] .creation-archetype__icon { font-size: 26px; }
+.creation-archetype[data-select-archetype="berserker"] .creation-archetype__icon { font-size: 15px; }
+.creation-archetype[data-select-archetype="arcanist"] .creation-archetype__icon { font-size: 24px; }
+.creation-archetype[data-select-archetype="ranger"] .creation-archetype__icon { font-size: 22px; }
+.creation-archetype[data-select-archetype="nightblade"] .creation-archetype__icon { font-size: 22px; }
+
+/* Scale down emojis in DNA badges & active skills */
+[data-mastery="axe"], [data-mastery="unarmed"], [data-mastery="fire"], [data-mastery="ice"],
+[data-discipline-id="axe"], [data-discipline-id="unarmed"], [data-discipline-id="fire"], [data-discipline-id="ice"],
+[data-skill-id="brutal_cleave"], [data-skill-id="fire_bolt"], [data-skill-id="ice_shard"], [data-skill-id="shadow_bolt"] {
+    font-size: 10px;
+    transform: scale(0.85);
+}
+
+/* Scale up unicode characters in DNA badges & active skills */
+[data-mastery="sword"], [data-mastery="armor"], [data-mastery="shield"], [data-mastery="shadow"], [data-mastery="restoration"], [data-mastery="bow"], [data-mastery="dagger"],
+[data-discipline-id="sword"], [data-discipline-id="armor"], [data-discipline-id="shield"], [data-discipline-id="shadow"], [data-discipline-id="restoration"], [data-discipline-id="bow"], [data-discipline-id="dagger"],
+[data-skill-id="precise_strike"], [data-skill-id="aimed_shot"], [data-skill-id="twin_fang"], [data-skill-id="heal"], [data-skill-id="guard"] {
+    font-size: 13px;
+    transform: scale(1.15);
 }

@@ -540,7 +540,7 @@
                                     data-tooltip-body="${esc(`${entry.description || entry.benefit || "Evolui conforme é utilizada."}${entry.procName ? ` Chance-base: ${Math.round(Number(entry.procChance || 0) * 100)}% de ${entry.procName}.` : ""}`)}"
                                     data-tooltip-effect="${esc(entry.benefit || entry.nextBenefit || "Ganha eficiência no próximo nível.")}"
                                     data-tooltip-hint="${fmt(current)} / ${fmt(next)} XP para o próximo nível">
-                                    <span class="player-skill-row__icon">${esc(entry.icon || "•")}</span>
+                                    <span class="player-skill-row__icon" data-discipline-id="${esc(entry.id)}">${esc(entry.icon || "•")}</span>
                                     <div><header><strong>${esc(entry.name)}</strong><em>Lv. ${fmt(entry.level)}</em></header><i><b style="width:${progress.toFixed(2)}%"></b></i><small>${fmt(current)} / ${fmt(next)} XP</small></div>
                                 </article>`;
                         }).join("")}

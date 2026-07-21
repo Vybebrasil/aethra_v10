@@ -993,3 +993,23 @@ body > #aethra-shop-tooltip:not([hidden]) {
     .player-hud-summary__location { min-height: 23px; }
     .hero-hub--cockpit .player-hud-workspace { padding-top: 5px !important; }
 }
+
+/* Adjust size scaling of HUD discipline icons to make them visually equal */
+.player-skill-row__icon[data-discipline-id="axe"],
+.player-skill-row__icon[data-discipline-id="unarmed"],
+.player-skill-row__icon[data-discipline-id="fire"],
+.player-skill-row__icon[data-discipline-id="ice"] {
+    font-size: 10px;
+    transform: scale(0.85);
+}
+
+.player-skill-row__icon[data-discipline-id="sword"],
+.player-skill-row__icon[data-discipline-id="armor"],
+.player-skill-row__icon[data-discipline-id="shield"],
+.player-skill-row__icon[data-discipline-id="shadow"],
+.player-skill-row__icon[data-discipline-id="restoration"],
+.player-skill-row__icon[data-discipline-id="bow"],
+.player-skill-row__icon[data-discipline-id="dagger"] {
+    font-size: 14px;
+    transform: scale(1.15);
+}

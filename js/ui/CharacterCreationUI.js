@@ -281,14 +281,14 @@
                         .slice(0, 3)
                         .map(([id, val]) => {
                             const mastery = system().masteries[id];
-                            return `<span>${esc(mastery?.icon || "✦")} ${esc(mastery?.name || id)} +${val}</span>`;
+                            return `<span><b data-mastery="${esc(id)}">${esc(mastery?.icon || "✦")}</b> ${esc(mastery?.name || id)} +${val}</span>`;
                         }).join("")}
                 </div>
 
                 <div class="creation-archetype__skill-row" data-ui-tooltip="true" data-tooltip-kind="skill" data-skill-id="${esc(meta.starterSkillId)}">
                     <small>TÉCNICA INICIAL</small>
                     <div>
-                        <b>${esc(skill.icon || "✦")}</b>
+                        <b data-skill-id="${esc(meta.starterSkillId)}">${esc(skill.icon || "✦")}</b>
                         <strong>${esc(skill.name || meta.starterSkillId)}</strong>
                     </div>
                 </div>
@@ -348,7 +348,7 @@
         return `
             <article class="creation-discipline ${value > 0 ? "is-invested" : ""}" data-discipline-group="${esc(definition.group)}"
                 data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="DISCIPLINA DISPONÍVEL" data-tooltip-title="${esc(definition.name)} (${esc(definition.category)})" data-tooltip-body="${esc(definition.description)} Especialização ativa: ${esc(proc)}.">
-                <span class="creation-discipline__icon">${esc(definition.icon)}</span>
+                <span class="creation-discipline__icon" data-discipline-id="${esc(definition.id)}">${esc(definition.icon)}</span>
                 <div class="creation-discipline__copy"><small>${esc(definition.category)} · ${esc(definition.role)}</small><strong>${esc(definition.name)}</strong><p>${esc(definition.description)}</p><em>${esc(proc)}</em></div>
                 ${mode === "creation" ? `<div class="creation-stepper"><button type="button" data-creation-adjust="mastery" data-id="${esc(definition.id)}" data-delta="-1">−</button><b>${value}</b><button type="button" data-creation-adjust="mastery" data-id="${esc(definition.id)}" data-delta="1">+</button></div>` : `<div class="creation-discipline__runtime"><small>NV. ${fmt(runtime?.level || 1)}</small><i><b style="width:${fmt(runtime?.progressPercent || 0)}%"></b></i><em>${fmt(runtime?.xpCurrent || 0)}/${fmt(runtime?.xpNext || 1)} XP</em></div><button type="button" class="creation-discipline__spend" data-spend-skill-point="${esc(definition.id)}" ${available ? "" : "disabled"}>+1</button>`}
             </article>`;
