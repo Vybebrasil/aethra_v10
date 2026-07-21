@@ -736,40 +736,13 @@
 
                     <main class="battle-main-column">
                         <section class="battle-stage-panel">
-                            <header class="battle-panel__header battle-stage-panel__header">
-                                <div>
-                                    <small>Encontro atual</small>
-                                    <h2>Cartas de Combate</h2>
-                                </div>
-                                <div class="battle-stage-panel__status">
-                                    <div class="battle-speed-controls" aria-label="Velocidade da apresentação das rodadas">
-                                        <button type="button" data-battle-speed="1" aria-label="Velocidade normal" aria-pressed="true">1×</button>
-                                        <button type="button" data-battle-speed="2" aria-label="Velocidade dupla" aria-pressed="false">2×</button>
-                                        <button type="button" data-battle-speed="4" aria-label="Velocidade quádrupla" aria-pressed="false">4×</button>
-                                    </div>
-                                    <span id="battle-round-indicator">Aguardando</span>
-                                </div>
-                            </header>
-
-                            <div id="tilemap-canvas-root" class="map2d-active-root" style="margin-bottom: 12px;"></div>
-                            <div class="battle-card-arena">
-                                <article
-                                    id="battle-hero-card"
-                                    class="combatant-card combatant-card--hero"
-                                ></article>
-
-                                <div class="battle-versus" aria-hidden="true">
-                                    <span>VS</span>
-                                    <small>POR RODADAS</small>
-                                </div>
-
-                                <article
-                                    id="battle-enemy-card"
-                                    class="combatant-card combatant-card--enemy"
-                                ></article>
+                            <div id="tilemap-canvas-root" class="map2d-active-root"></div>
+                            <div class="battle-card-arena-compat" hidden>
+                                <article id="battle-hero-card"></article>
+                                <article id="battle-enemy-card"></article>
+                                <div id="battle-round-indicator"></div>
+                                <div id="battle-status-strip"></div>
                             </div>
-
-                            <div id="battle-status-strip" class="battle-status-strip"></div>
                         </section>
 
                         <section class="battle-panel battle-panel--actionbar">

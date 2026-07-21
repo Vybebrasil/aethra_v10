@@ -273,27 +273,91 @@
         animationFrameId = requestAnimationFrame(renderLoop);
     }
 
+    // Wave State Tracking
+    let waveState = {
+        currentWave: 1,
+        maxWaves: 5,
+        isBossWave: false,
+        isLoop: true,
+        floorsCleared: 0
+    };
+
+    const chatLogs = [];
+
+    function addChatLog(text, type = "info") {
+        const time = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+        chatLogs.unshift({ time, text, type });
+        if (chatLogs.length > 5) chatLogs.pop();
+        
+        const chatEl = document.getElementById("tilemap-chat-log");
+        if (chatEl) {
+            chatEl.innerHTML = chatLogs.map(log => 
+                `<div class="tilemap-chat-line tilemap-chat-line--${log.type}"><small>[${log.time}]</small> <span>${log.text}</span></div>`
+            ).join("");
+        }
+    }
+
+    function renderWaveProgress() {
+        const barEl = document.getElementById("tilemap-wave-pips");
+        if (!barEl) return;
+
+        let html = "";
+        for (let i = 1; i <= waveState.maxWaves; i++) {
+            const isActive = i <= waveState.currentWave;
+            const isCurrent = i === waveState.currentWave;
+            const isBoss = i === waveState.maxWaves;
+            html += `<span class="wave-pip ${isActive ? "is-active" : ""} ${isCurrent ? "is-current" : ""} ${isBoss ? "is-boss" : ""}" title="Onda ${i}">${isBoss ? "👹" : i}</span>`;
+        }
+        barEl.innerHTML = html;
+
+        const bossBadge = document.getElementById("tilemap-boss-badge");
+        if (bossBadge) {
+            bossBadge.textContent = waveState.currentWave === waveState.maxWaves ? "👹 MINI-BOSS" : `ONDA ${waveState.currentWave}/5`;
+            bossBadge.className = `tilemap-header__badge ${waveState.currentWave === waveState.maxWaves ? "is-boss-active" : ""}`;
+        }
+    }
+
+    function advanceWave() {
+        if (waveState.currentWave < waveState.maxWaves) {
+            waveState.currentWave++;
+            addChatLog(`Avançou para a Onda ${waveState.currentWave}/5 da sala!`, "wave");
+        } else {
+            // Cleared Wave 5 / Boss
+            waveState.floorsCleared++;
+            addChatLog(`🏆 Mini-Boss derrotado! Sala ${waveState.floorsCleared} limpa. Avançando...`, "boss");
+            waveState.currentWave = 1;
+        }
+        renderWaveProgress();
+    }
+
     function startEngine() {
         const container = document.getElementById("tilemap-canvas-root");
         if (!container) return;
 
+        const zoneName = Aethra.GameState?.huntState?.currentZoneName || "Bosque dos Sussurros";
+
         container.innerHTML = `
             <div class="tilemap-workspace">
                 <div class="tilemap-header">
-                    <div class="tilemap-header__title">
-                        <span>🗺 Mapa 2D em Tempo Real</span>
-                        <span class="tilemap-header__badge">Tibia Idle Engine</span>
+                    <div class="tilemap-header__left">
+                        <span class="tilemap-zone-tag">🗺 ${zoneName}</span>
+                        <div class="tilemap-wave-pips" id="tilemap-wave-pips"></div>
                     </div>
-                    <div class="tilemap-controls">
-                        <button type="button" class="tilemap-btn" id="tilemap-spawn-btn">⚔ Atacar Alvo</button>
+                    <div class="tilemap-header__right">
+                        <span class="tilemap-header__badge" id="tilemap-boss-badge">ONDA 1/5</span>
+                        <button type="button" class="tilemap-btn" id="tilemap-loop-btn">🔄 Loop</button>
                     </div>
                 </div>
+
                 <div class="tilemap-canvas-container">
                     <canvas id="tilemap-canvas" width="${MAP_COLS * TILE_SIZE}" height="${MAP_ROWS * TILE_SIZE}"></canvas>
-                </div>
-                <div class="tilemap-hud-overlay">
-                    <div class="tilemap-zone-info">
-                        <span>Região: <strong id="tilemap-zone-name">Bosque dos Sussurros</strong></span>
+                    
+                    <!-- Chat / Log Overlay in bottom-left corner of map viewport (Baiak style) -->
+                    <div class="tilemap-chat-dock">
+                        <header><span>Log de Combate</span></header>
+                        <div class="tilemap-chat-log" id="tilemap-chat-log">
+                            <div class="tilemap-chat-line"><small>[Sessão]</small> <span>Caçada iniciada em ${zoneName}...</span></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -303,9 +367,7 @@
         if (!canvas) return;
         ctx = canvas.getContext("2d");
 
-        document.getElementById("tilemap-spawn-btn")?.addEventListener("click", () => {
-            triggerAttackAnimation({ damage: Math.floor(Math.random() * 25 + 15), isCrit: Math.random() < 0.3 });
-        });
+        renderWaveProgress();
 
         isRunning = true;
         animationFrameId = requestAnimationFrame(renderLoop);
@@ -326,23 +388,36 @@
 
         if (isEvade) {
             addFloatingText("ESQUIVA!", px, py, "#79c9e8", 13);
+            addChatLog("Você se esquivou do ataque!", "def");
         } else if (isBlock) {
             addFloatingText("BLOQUEIO!", px, py, "#d9b85f", 13);
+            addChatLog("Ataque bloqueado com sucesso!", "def");
         } else if (isCrit) {
             addFloatingText(`💥 ${dmg}!`, px, py - 5, "#ffcc00", 17);
+            addChatLog(`Ataque crítico de ${dmg} de dano!`, "crit");
         } else {
             addFloatingText(`-${dmg}`, px, py, "#ff4d4d", 14);
+            addChatLog(`Causou ${dmg} de dano no inimigo.`, "atk");
         }
+    }
+
+    function onEnemyDefeated(payload = {}) {
+        const name = payload.enemyName || payload.name || "Inimigo";
+        addChatLog(`☠ ${name} foi derrotado!`, "kill");
+        advanceWave();
     }
 
     // Event bus listeners for combat integration
     Aethra.EventBus.on("battle:damage-dealt", triggerAttackAnimation);
     Aethra.EventBus.on("battle:round-processed", triggerAttackAnimation);
     Aethra.EventBus.on("combat:hit", triggerAttackAnimation);
+    Aethra.EventBus.on("EnemyDefeated", onEnemyDefeated);
+    Aethra.EventBus.on("battle:enemy-defeated", onEnemyDefeated);
 
     Aethra.TileMapCanvas = {
         start: startEngine,
-        triggerAttack: triggerAttackAnimation
+        triggerAttack: triggerAttackAnimation,
+        advanceWave
     };
 
     // Auto mount when container is available
@@ -351,3 +426,4 @@
     Aethra.EventBus.on("render:all", () => setTimeout(startEngine, 50));
     Aethra.EventBus.on("state:restored", () => setTimeout(startEngine, 50));
 })(window.Aethra = window.Aethra || {});
+
