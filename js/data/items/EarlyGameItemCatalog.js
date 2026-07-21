@@ -100,10 +100,10 @@
 
     // ── Suprimentos iniciais (usados por CharacterBuildSystem.createCharacter) ──
     item("potion_health", {
-        name: "Poção de Vida", icon: "🧪", price: 15, value: 15,
+        name: "Poção de Vida", icon: "🧪", price: 10, value: 10,
         rarity: "Comum", type: "consumable", itemType: "CONSUMABLE",
-        healAmount: 30, stackable: true, maxStack: 99,
-        description: "Recupera 30 de HP. Item inicial de todo aventureiro."
+        healAmount: 20, stackable: true, maxStack: 99,
+        description: "Recupera 20 de HP. Item inicial de todo aventureiro."
     });
     item("potion_mana", {
         name: "Poção de Mana", icon: "💧", price: 18, value: 18,
