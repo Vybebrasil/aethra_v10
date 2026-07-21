@@ -22,6 +22,51 @@
         return `${item.name} (Dano: ${damage}${extra})`;
     };
 
+    // Slot icons for the paper-doll (Tibia-style)
+    const SLOT_DEFS = [
+        { id: "head",    label: "Cabeça",  emptyIcon: "⬡" },
+        { id: "chest",   label: "Peitoral", emptyIcon: "◫" },
+        { id: "hands",   label: "Mãos",    emptyIcon: "⬡" },
+        { id: "weapon",  label: "Arma",    emptyIcon: "⚔" },
+        { id: "feet",    label: "Pés",     emptyIcon: "⬡" },
+        { id: "offhand", label: "Offhand", emptyIcon: "⬡" },
+        { id: "ring",    label: "Anel",    emptyIcon: "◎" },
+        { id: "legs",    label: "Pernas",  emptyIcon: "◫" }
+    ];
+
+    // Maps archetype id → which slot(s) have starter items
+    const ARCHETYPE_STARTER_SLOTS = {
+        vanguard:   { weapon: "starterItemId" },
+        berserker:  { weapon: "starterItemId" },
+        arcanist:   { weapon: "starterItemId" },
+        ranger:     { weapon: "starterItemId" },
+        nightblade: { weapon: "starterItemId" },
+        templar:    { weapon: "starterItemId" }
+    };
+
+    const WEAPON_ICONS = {
+        vanguard: "⚔", berserker: "🪓", arcanist: "✦",
+        ranger: "➶", nightblade: "†", templar: "◆"
+    };
+
+    function paperdollHTML(entry) {
+        const starterItem = Aethra.GameData?.items?.[entry.starterItemId] || null;
+        const weaponIcon = WEAPON_ICONS[entry.id] || "⚔";
+
+        return SLOT_DEFS.map((slot) => {
+            const hasItem = slot.id === "weapon" && starterItem;
+            const itemName = hasItem ? esc(starterItem.name) : slot.label;
+            const itemIcon = hasItem ? weaponIcon : slot.emptyIcon;
+            const dmgLabel = hasItem
+                ? ` · Dano: ${starterItem.damageMin}–${starterItem.damageMax}${starterItem.mag ? ` +${starterItem.mag}M` : ""}`
+                : "";
+            const tooltip = hasItem
+                ? `data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="SLOT: ${esc(slot.label.toUpperCase())}" data-tooltip-title="${itemName}" data-tooltip-body="${esc(starterItem.description || '')}" data-tooltip-effect="${esc(dmgLabel.trim())}"`
+                : `data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="SLOT: ${esc(slot.label.toUpperCase())}" data-tooltip-title="Vazio" data-tooltip-body="Nenhum item equipado neste slot." `;
+            return `<span class="creation-paperdoll-slot ${hasItem ? "has-item" : ""}" ${tooltip}><b>${itemIcon}</b><small>${hasItem ? (slot.label) : ""}</small></span>`;
+        }).join("");
+    }
+
     const ARCHETYPE_META = {
         vanguard: {
             focus: "Defensor / Tanque",
@@ -300,7 +345,11 @@
                 </div>
 
                 <div class="creation-archetype__tags">${entry.tags.map((tag) => `<em>${esc(tag)}</em>`).join("")}</div>
-                <footer><span>${selected ? "ARQUÉTIPO ESCOLHIDO" : "ESCOLHER ARQUÉTIPO"}</span><b>${esc(getStarterWeaponBonus(entry))}</b></footer>
+
+                <div class="creation-archetype__paperdoll">
+                    <header><span>${selected ? "✓ ARQUÉTIPO ESCOLHIDO" : "ESCOLHER ARQUÉTIPO"}</span></header>
+                    <div class="creation-paperdoll-grid">${paperdollHTML(entry)}</div>
+                </div>
             </button>`;
     }
 

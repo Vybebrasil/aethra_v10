@@ -272,7 +272,6 @@ body.is-allocating-skills { overflow: hidden; }
     grid-column: auto;
     min-width: 0;
     padding: 15px;
-    overflow: hidden;
     border: 1px solid rgba(91, 127, 139, .23);
     border-radius: 14px;
     color: #dfe8eb;
@@ -281,7 +280,7 @@ body.is-allocating-skills { overflow: hidden; }
     cursor: pointer;
     transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
 }
-.creation-archetype::before { content: ""; position: absolute; inset: 0; opacity: 0; background: radial-gradient(circle at 50% 100%, color-mix(in srgb, var(--archetype-accent) 24%, transparent), transparent 70%); transition: opacity .22s ease; }
+.creation-archetype::before { content: ""; position: absolute; inset: 0; opacity: 0; border-radius: 14px; background: radial-gradient(circle at 50% 100%, color-mix(in srgb, var(--archetype-accent) 24%, transparent), transparent 70%); transition: opacity .22s ease; pointer-events: none; }
 .creation-archetype::after { content: ""; position: absolute; inset: auto 0 0; height: 2px; background: var(--archetype-accent); transform: scaleX(0); transition: transform .22s ease; }
 .creation-archetype:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--archetype-accent) 56%, transparent); box-shadow: 0 14px 34px rgba(0,0,0,.24); }
 .creation-archetype:hover::before,
@@ -411,9 +410,81 @@ body.is-allocating-skills { overflow: hidden; }
     font-weight: 800;
 }
 
-.creation-archetype footer { position: relative; display: grid; gap: 2px; margin-top: auto; padding-top: 9px; border-top: 1px solid rgba(112, 145, 155, .14); }
-.creation-archetype footer span { color: var(--archetype-accent); font-size: 7px; font-weight: 900; letter-spacing: .08em; }
-.creation-archetype footer b { overflow: hidden; color: #9cadb3; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+.creation-archetype__paperdoll {
+    position: relative;
+    margin-top: auto;
+    padding-top: 9px;
+    border-top: 1px solid rgba(112, 145, 155, .14);
+}
+.creation-archetype__paperdoll > header {
+    margin-bottom: 7px;
+}
+.creation-archetype__paperdoll > header span {
+    color: var(--archetype-accent);
+    font-size: 7px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+/* Paper-doll grid: 4 columns × 2 rows */
+.creation-paperdoll-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+}
+
+.creation-paperdoll-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    height: 38px;
+    border: 1px solid rgba(91, 127, 139, .18);
+    border-radius: 7px;
+    background: rgba(6, 16, 22, 0.6);
+    transition: border-color .18s, background .18s;
+    cursor: default;
+}
+
+.creation-paperdoll-slot b {
+    font-size: 13px;
+    line-height: 1;
+    font-style: normal;
+    color: rgba(112, 145, 155, 0.38);
+}
+
+.creation-paperdoll-slot small {
+    font-size: 6px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    color: rgba(112, 145, 155, 0.35);
+    text-transform: uppercase;
+    line-height: 1;
+}
+
+/* Slot WITH item — highlighted */
+.creation-paperdoll-slot.has-item {
+    border-color: color-mix(in srgb, var(--archetype-accent) 45%, transparent);
+    background: color-mix(in srgb, var(--archetype-accent) 8%, rgba(6, 16, 22, 0.7));
+    box-shadow: 0 0 8px color-mix(in srgb, var(--archetype-accent) 12%, transparent);
+}
+
+.creation-paperdoll-slot.has-item b {
+    color: var(--archetype-accent);
+    filter: drop-shadow(0 0 3px color-mix(in srgb, var(--archetype-accent) 50%, transparent));
+}
+
+.creation-paperdoll-slot.has-item small {
+    color: color-mix(in srgb, var(--archetype-accent) 65%, #fff);
+}
+
+.creation-archetype:hover .creation-paperdoll-slot.has-item,
+.creation-archetype.is-selected .creation-paperdoll-slot.has-item {
+    border-color: color-mix(in srgb, var(--archetype-accent) 70%, transparent);
+    background: color-mix(in srgb, var(--archetype-accent) 14%, rgba(6, 16, 22, 0.7));
+}
 .creation-freedom-note,
 .creation-use-xp { display: grid; align-items: center; gap: 10px; padding: 9px 12px; border: 1px solid rgba(81, 165, 189, .22); border-radius: 11px; background: rgba(11, 34, 41, .48); }
 .creation-freedom-note { grid-template-columns: 28px 1fr; }
@@ -599,8 +670,8 @@ body.is-allocating-skills { overflow: hidden; }
     .creation-build-dna,
     .creation-combat-stats { grid-column: 1; grid-row: 2 / 4; margin: 0; }
     .creation-death-rule { display: none; }
-    .creation-workspace { min-height: 560px; overflow: visible; }
-    .creation-archetype-grid { min-height: 430px; }
+    .creation-workspace { min-height: 560px; overflow-y: auto; overflow-x: hidden; }
+    .creation-archetype-grid { overflow-y: visible; }
     .character-creation__footer { position: sticky; bottom: 0; }
 }
 
