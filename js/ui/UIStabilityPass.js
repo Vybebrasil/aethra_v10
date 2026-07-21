@@ -333,6 +333,39 @@
         Aethra.RenderEngine?.renderDisciplineGuide?.(disciplineId);
     });
 
+    // Alternador de Modo Palco: 🗺 Mapa 2D vs 🃏 Cartas
+    document.addEventListener("click", (event) => {
+        const btn = event.target.closest("[data-set-stage-mode]");
+        if (!btn) return;
+        const mode = btn.dataset.setStageMode;
+        
+        const mapRoot = document.getElementById("tilemap-canvas-root");
+        const cardsRoot = document.getElementById("battle-card-arena-container");
+        const titleEl = document.getElementById("central-stage-mode-title");
+        const allBtns = document.querySelectorAll("[data-set-stage-mode]");
+
+        allBtns.forEach((b) => {
+            const isSelected = b.dataset.setStageMode === mode;
+            b.classList.toggle("is-active", isSelected);
+            b.style.background = isSelected ? "rgba(91,175,200,0.15)" : "rgba(6,14,20,0.6)";
+            b.style.borderColor = isSelected ? "rgba(91,175,200,0.4)" : "rgba(91,139,162,0.25)";
+            b.style.color = isSelected ? "#79c9e8" : "#6a8894";
+        });
+
+        if (mode === "map2d") {
+            if (mapRoot) mapRoot.hidden = false;
+            if (cardsRoot) cardsRoot.hidden = true;
+            if (titleEl) titleEl.textContent = "Palco 2D em Tempo Real";
+            Aethra.TileMapCanvas?.start?.();
+        } else if (mode === "cards") {
+            if (mapRoot) mapRoot.hidden = true;
+            if (cardsRoot) cardsRoot.hidden = false;
+            if (titleEl) titleEl.textContent = "Jogo de Cartas Por Rodadas";
+            Aethra.RenderEngine?.renderBattleHeroCard?.();
+            Aethra.RenderEngine?.renderBattleEnemyCard?.();
+        }
+    });
+
     // Botão "Novo Personagem" → reseta e reabre criação
     document.addEventListener("click", (event) => {
         if (!event.target.closest("[data-new-character]")) return;
