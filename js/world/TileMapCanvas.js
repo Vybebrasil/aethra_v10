@@ -42,7 +42,7 @@
     let currentTargetIndex = -1;
 
     // Staircase position
-    const STAIRS_POS = { x: 21, y: 8 };
+    const STAIRS_POS = { x: 19, y: 7 };
 
     const floatingTexts = [];
     const chatLogs = [];
@@ -158,10 +158,10 @@
         for (let i = 0; i < horde.length; i++) {
             if (!horde[i].isDead && horde[i].hp > 0) {
                 currentTargetIndex = i;
-                // Walk player towards this target creature
+                // Walk player towards this target creature (clamped strictly inside visible grid)
                 const target = horde[i];
-                player.targetX = Math.max(2, target.x - 1);
-                player.targetY = target.y;
+                player.targetX = Math.max(3, Math.min(16, target.x - 1));
+                player.targetY = Math.max(3, Math.min(10, target.y));
                 player.state = "walking";
                 return true;
             }
