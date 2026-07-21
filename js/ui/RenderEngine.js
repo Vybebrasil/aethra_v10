@@ -579,23 +579,7 @@
 
             if (!placeholderAlreadyMounted) {
                 cityView.innerHTML = `
-                    <div class="map2d-placeholder" data-map2d-placeholder>
-                        <div class="map2d-placeholder__icon" aria-hidden="true">◇</div>
-                        <small>View Engine</small>
-                        <h2>Modo Mapa 2D em desenvolvimento</h2>
-                        <p>
-                            A preferência foi salva. Enquanto o carregador de mapas
-                            não estiver pronto, use o painel de Opções para voltar
-                            ao modo Cartas.
-                        </p>
-                        <button
-                            type="button"
-                            class="map2d-placeholder__button"
-                            data-open-window="options-view"
-                        >
-                            Abrir Opções
-                        </button>
-                    </div>
+                    <div id="tilemap-canvas-root" class="map2d-active-root"></div>
                     <div class="battle-compatibility-nodes" hidden>
                         <div id="stats-display"></div>
                         <div id="hunt-display"></div>
@@ -767,6 +751,7 @@
                                 </div>
                             </header>
 
+                            <div id="tilemap-canvas-root" class="map2d-active-root" style="margin-bottom: 12px;"></div>
                             <div class="battle-card-arena">
                                 <article
                                     id="battle-hero-card"
