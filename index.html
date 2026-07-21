@@ -25,6 +25,7 @@
     <link rel="stylesheet" href="css/character-creation.css?v=4">
     <link rel="stylesheet" href="css/coliseum-workspace.css?v=1">
     <link rel="stylesheet" href="css/npc-shop.css">
+    <link rel="stylesheet" href="css/lobby.css">
 </head>
 
 <body>
@@ -93,7 +94,16 @@
             </div>
         </header>
 
-<!--
+        <!-- Lobby: tela de seleção de personagens (sempre a primeira tela) -->
+        <section
+            id="lobby-view"
+            class="is-hidden"
+            aria-label="Seleção de personagem"
+        >
+            <!-- Rendered by LobbyUI.js on engine:ready -->
+        </section>
+
+        <!--
             Raiz visual do Modo de Batalha. O RenderEngine substitui este
             conteúdo por painéis, cartas, ActionBar e inventário rápido.
         -->
@@ -682,6 +692,7 @@
     <script src="js/ui/CombatHudModernizer.js?v=2" defer></script>
     <script src="js/ui/EncounterCombatHUD.js?v=5" defer></script>
     <script src="js/ui/PlayerHudWorkspace.js?v=3" defer></script>
+    <script src="js/ui/LobbyUI.js" defer></script>
     <script src="js/ui/CharacterCreationUI.js?v=4" defer></script>
     <script src="js/ui/ColiseumWorkspace.js?v=5" defer></script>
     <script src="js/ui/NpcShopUI.js" defer></script>
