@@ -24,6 +24,7 @@
     <link rel="stylesheet" href="css/player-hud-workspace.css?v=1">
     <link rel="stylesheet" href="css/character-creation.css?v=4">
     <link rel="stylesheet" href="css/coliseum-workspace.css?v=1">
+    <link rel="stylesheet" href="css/npc-shop.css">
 </head>
 
 <body>
@@ -49,6 +50,9 @@
                 </button>
                 <button type="button" data-open-window="inventory-view" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="INVENTÁRIO" data-tooltip-title="Mochila" data-tooltip-body="Gerencia itens, compara atributos e equipa peças da build.">
                     <span class="hud-menu-icon" aria-hidden="true">🎒</span><span>Mochila</span>
+                </button>
+                <button type="button" data-open-window="npc-shop-view" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="LOJA NPC" data-tooltip-title="Mercador" data-tooltip-body="Compra itens e vende loot ao Velho Varian, o mercador da cidade.">
+                    <span class="hud-menu-icon" aria-hidden="true">🏪</span><span>Loja</span>
                 </button>
                 <button type="button" data-open-window="premium-shop-view" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="LOJA PREMIUM" data-tooltip-title="Cash" data-tooltip-body="Abre a loja vinculada à moeda de Diamantes.">
                     <span class="hud-menu-icon" aria-hidden="true">◆</span><span>Cash</span>
@@ -106,6 +110,17 @@
             <div id="combat-display"></div>
             <div id="boss-weekly-reward"></div>
             <div id="boss-list"></div>
+        </section>
+
+        <!-- Loja do Mercador NPC -->
+        <section
+            id="npc-shop-view"
+            class="game-window hidden"
+            data-aethra-window
+            data-window-size="medium"
+            aria-hidden="true"
+        >
+            <!-- Rendered entirely by NpcShopUI.js -->
         </section>
 
         <!-- Coliseu global, matchmaking e ranking vivo de relíquias -->
@@ -669,6 +684,7 @@
     <script src="js/ui/PlayerHudWorkspace.js?v=3" defer></script>
     <script src="js/ui/CharacterCreationUI.js?v=4" defer></script>
     <script src="js/ui/ColiseumWorkspace.js?v=5" defer></script>
+    <script src="js/ui/NpcShopUI.js" defer></script>
 
     <!-- Inicialização final -->
     <script src="js/core/GameLoader.js?v=2" defer></script>
