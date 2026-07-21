@@ -410,16 +410,17 @@ body.is-allocating-skills { overflow: hidden; }
     font-weight: 800;
 }
 
-.creation-archetype__paperdoll {
+/* Archetype card footer — compact, two-line */
+.creation-archetype__footer {
     position: relative;
+    display: grid;
+    gap: 2px;
     margin-top: auto;
     padding-top: 9px;
     border-top: 1px solid rgba(112, 145, 155, .14);
 }
-.creation-archetype__paperdoll > header {
-    margin-bottom: 7px;
-}
-.creation-archetype__paperdoll > header span {
+
+.creation-archetype__footer-label {
     color: var(--archetype-accent);
     font-size: 7px;
     font-weight: 900;
@@ -427,64 +428,108 @@ body.is-allocating-skills { overflow: hidden; }
     text-transform: uppercase;
 }
 
-/* Paper-doll grid: 4 columns × 2 rows */
-.creation-paperdoll-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 4px;
+.creation-archetype__footer-item {
+    overflow: hidden;
+    color: #9cadb3;
+    font-size: 8px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.creation-paperdoll-slot {
+/* ─── Starter Gear Paperdoll — Hero Preview Sidebar ─── */
+.creation-starter-gear {
+    padding: 8px 0 4px;
+    border-top: 1px solid rgba(112, 145, 155, .12);
+}
+
+.creation-starter-gear > small {
+    display: block;
+    margin-bottom: 6px;
+    color: #6a8894;
+    font-size: 7px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+/* 3×2 grid like Tibia paper-doll */
+.creation-starter-paperdoll {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+}
+
+.creation-starter-slot {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 2px;
-    height: 38px;
-    border: 1px solid rgba(91, 127, 139, .18);
-    border-radius: 7px;
-    background: rgba(6, 16, 22, 0.6);
-    transition: border-color .18s, background .18s;
+    min-height: 46px;
+    padding: 5px 3px;
+    border: 1px solid rgba(91, 127, 143, .2);
+    border-radius: 8px;
+    background: rgba(5, 12, 16, 0.75);
     cursor: default;
+    transition: border-color .16s, background .16s;
 }
 
-.creation-paperdoll-slot b {
-    font-size: 13px;
+.creation-starter-slot b {
+    font-size: 15px;
     line-height: 1;
     font-style: normal;
-    color: rgba(112, 145, 155, 0.38);
+    color: rgba(90, 120, 135, 0.45);
 }
 
-.creation-paperdoll-slot small {
-    font-size: 6px;
+.creation-starter-slot small {
+    font-size: 6.5px;
     font-weight: 700;
-    letter-spacing: .04em;
-    color: rgba(112, 145, 155, 0.35);
-    text-transform: uppercase;
-    line-height: 1;
+    letter-spacing: .03em;
+    color: rgba(90, 120, 135, 0.45);
+    text-align: center;
+    line-height: 1.3;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+    text-align: center;
 }
 
-/* Slot WITH item — highlighted */
-.creation-paperdoll-slot.has-item {
-    border-color: color-mix(in srgb, var(--archetype-accent) 45%, transparent);
-    background: color-mix(in srgb, var(--archetype-accent) 8%, rgba(6, 16, 22, 0.7));
-    box-shadow: 0 0 8px color-mix(in srgb, var(--archetype-accent) 12%, transparent);
+.creation-starter-slot small em {
+    display: block;
+    font-style: normal;
+    color: rgba(90, 120, 135, 0.35);
+    font-size: 5.5px;
 }
 
-.creation-paperdoll-slot.has-item b {
-    color: var(--archetype-accent);
-    filter: drop-shadow(0 0 3px color-mix(in srgb, var(--archetype-accent) 50%, transparent));
+/* Slot with actual item */
+.creation-starter-slot.is-equipped {
+    border-color: rgba(218, 182, 94, 0.35);
+    background: rgba(218, 182, 94, 0.06);
 }
 
-.creation-paperdoll-slot.has-item small {
-    color: color-mix(in srgb, var(--archetype-accent) 65%, #fff);
+.creation-starter-slot.is-equipped b {
+    color: #d9b85f;
+    filter: drop-shadow(0 0 4px rgba(218, 182, 94, 0.5));
 }
 
-.creation-archetype:hover .creation-paperdoll-slot.has-item,
-.creation-archetype.is-selected .creation-paperdoll-slot.has-item {
-    border-color: color-mix(in srgb, var(--archetype-accent) 70%, transparent);
-    background: color-mix(in srgb, var(--archetype-accent) 14%, rgba(6, 16, 22, 0.7));
+.creation-starter-slot.is-equipped small {
+    color: rgba(218, 182, 94, 0.75);
 }
+
+.creation-starter-slot:hover {
+    border-color: rgba(112, 171, 191, 0.38);
+    background: rgba(10, 25, 32, 0.9);
+}
+
+.creation-starter-slot.is-equipped:hover {
+    border-color: rgba(218, 182, 94, 0.6);
+    background: rgba(218, 182, 94, 0.1);
+}
+
+
 .creation-freedom-note,
 .creation-use-xp { display: grid; align-items: center; gap: 10px; padding: 9px 12px; border: 1px solid rgba(81, 165, 189, .22); border-radius: 11px; background: rgba(11, 34, 41, .48); }
 .creation-freedom-note { grid-template-columns: 28px 1fr; }

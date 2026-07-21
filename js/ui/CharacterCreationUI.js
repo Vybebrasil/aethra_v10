@@ -260,6 +260,35 @@
                         <span class="is-act" data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="ATRIBUTO DE COMBATE" data-tooltip-title="Precisão (ACT)" data-tooltip-body="Sua chance base de acertar golpes físicos ou mágicos antes de ser reduzida pela esquiva do alvo."><small>ACT</small><i><b style="width:${preview.hit}%"></b></i><strong>${preview.hit.toFixed(0)}%</strong></span>
                     </div>
                 </div>
+
+                ${selected ? `
+                <div class="creation-starter-gear">
+                    <small>EQUIPAMENTO INICIAL</small>
+                    <div class="creation-starter-paperdoll">
+                        ${(()=>{
+                            const PREVIEW_SLOTS = [
+                                { id: "head",    label: "Cabeça",  icon: "□" },
+                                { id: "weapon",  label: "Arma",    icon: "⚔" },
+                                { id: "chest",   label: "Peitoral", icon: "◫" },
+                                { id: "offhand", label: "Offhand", icon: "◇" },
+                                { id: "legs",    label: "Pernas",  icon: "‖" },
+                                { id: "feet",    label: "Pés",     icon: "∥" }
+                            ];
+                            const wIcon = WEAPON_ICONS[selected.id] || "⚔";
+                            return PREVIEW_SLOTS.map(slot => {
+                                const hasWeapon = slot.id === "weapon" && starterItem?.name;
+                                const slotIcon = hasWeapon ? wIcon : slot.icon;
+                                const label = hasWeapon ? esc(starterItem.name) : slot.label;
+                                const dmg = hasWeapon ? ` (${starterItem.damageMin}–${starterItem.damageMax}${starterItem.mag ? ` +${starterItem.mag}M` : ""})` : "";
+                                const tipBody = hasWeapon
+                                    ? `${esc(starterItem.description || '')} Dano: ${starterItem.damageMin}–${starterItem.damageMax}${starterItem.mag ? ` +${starterItem.mag} Magia` : ""}.`
+                                    : "Slot vazio — equipe itens durante a exploração.";
+                                return `<span class="creation-starter-slot ${hasWeapon ? 'is-equipped' : ''}" data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="SLOT: ${esc(slot.label.toUpperCase())}" data-tooltip-title="${hasWeapon ? esc(starterItem.name) : 'Vazio — '+slot.label}" data-tooltip-body="${tipBody}"><b>${slotIcon}</b><small>${label.length > 9 ? label.slice(0,8)+'…' : label}${dmg ? `<em>${esc(dmg)}</em>` : ""}</small></span>`;
+                            }).join("");
+                        })()}
+                    </div>
+                </div>` : ""}
+
                 <div class="creation-death-rule" data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="REGRA DE DERROTA" data-tooltip-title="A Morte Deixa Marcas" data-tooltip-body="Se a vida cair a zero durante uma caçada, você ressucita na cidade perdendo 10% de ouro e 10% de XP."><span>☠</span><p><strong>A morte deixa marcas</strong><small>Derrota: −10% XP do nível, −10% Gold e retorno à cidade.</small></p></div>
             </aside>`;
     }
@@ -346,10 +375,10 @@
 
                 <div class="creation-archetype__tags">${entry.tags.map((tag) => `<em>${esc(tag)}</em>`).join("")}</div>
 
-                <div class="creation-archetype__paperdoll">
-                    <header><span>${selected ? "✓ ARQUÉTIPO ESCOLHIDO" : "ESCOLHER ARQUÉTIPO"}</span></header>
-                    <div class="creation-paperdoll-grid">${paperdollHTML(entry)}</div>
-                </div>
+                <footer class="creation-archetype__footer">
+                    <span class="creation-archetype__footer-label">${selected ? "✓ ARQUÉTIPO ESCOLHIDO" : "ESCOLHER ARQUÉTIPO"}</span>
+                    <b class="creation-archetype__footer-item">${esc(weaponIcon)} ${esc(starterItem.name || "?")} &middot; Dano: ${esc(weaponDmg)}</b>
+                </footer>
             </button>`;
     }
 
