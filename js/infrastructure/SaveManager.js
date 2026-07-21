@@ -12,7 +12,7 @@
     // A mudança para combate por rodadas e criação distribuída inaugura um
     // formato de progressão novo. O save anterior permanece preservado.
     const SAVE_KEY = configuredSaveKey || 'aethra_save_v71_disciplines';
-    const CURRENT_SCHEMA_VERSION = 72;
+    const CURRENT_SCHEMA_VERSION = 73;
     const AUTO_SAVE_DELAY = 120;
 
     let initialized = false;
@@ -53,6 +53,33 @@
         const migrated = clone(saved);
         migrated.meta = isObject(migrated.meta) ? migrated.meta : {};
         const fromVersion = Math.max(71, Math.floor(Number(migrated.meta.schemaVersion) || 71));
+
+        // v72 → v73: garantir crafting.discovered como array
+        // Personagens que já fizeram craft recebem as receitas base como descobertas.
+        if (fromVersion < 73) {
+            if (!migrated.crafting || typeof migrated.crafting !== 'object') {
+                migrated.crafting = { completed: 0, recipeCounts: {}, processedCommands: [], discovered: [] };
+            }
+            if (!Array.isArray(migrated.crafting.discovered)) {
+                migrated.crafting.discovered = [];
+            }
+            // Se já tem crafts anteriores, descobrir os starters da Forjaria e Couraria.
+            const alreadyCrafted = Number(migrated.crafting.completed || 0) > 0;
+            if (alreadyCrafted && migrated.crafting.discovered.length === 0) {
+                const legacyIds = [
+                    'smelt_iron', 'forge_iron_sword', 'forge_iron_axe', 'forge_iron_mace',
+                    'forge_iron_helm', 'forge_iron_legs', 'forge_plate_chest',
+                    'tan_beast_hide', 'craft_leather_boots', 'craft_leather_helm',
+                    'craft_leather_legs', 'craft_leather_chest'
+                ];
+                legacyIds.forEach((id) => {
+                    if (!migrated.crafting.discovered.includes(id)) {
+                        migrated.crafting.discovered.push(id);
+                    }
+                });
+            }
+        }
+
         migrated.meta.schemaVersion = CURRENT_SCHEMA_VERSION;
         return { state: migrated, fromVersion, toVersion: CURRENT_SCHEMA_VERSION };
     }
@@ -212,6 +239,7 @@
                 'discipline:xp-changed',
                 'profession:policy-changed',
                 'crafting:completed',
+                'crafting:recipe-discovered',
                 'hero:death-penalty',
                 'goldChanged',
                 'statsChanged',

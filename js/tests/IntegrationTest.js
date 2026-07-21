@@ -37,6 +37,7 @@
         "EquipSystem",
         "XPSystem",
         "ProfessionSystem",
+        "RecipeCatalog",
         "CharacterBuildSystem",
         "BossSystem",
         "QuestSystem",
@@ -447,6 +448,65 @@
             Aethra.GameState.hero.disciplines.blacksmithing.level = 4;
             Aethra.GameState.hero.disciplines.blacksmithing.xpNext = Aethra.XPSystem.getSkillXPRequired(4);
             Aethra.GameState.hero.disciplines.blacksmithing.trainingMode = "training";
+
+            // --- Testes do catálogo declarativo de receitas ---
+            const catalogAll = Aethra.RecipeCatalog?.all?.() || [];
+            const catalogBySmith = Aethra.RecipeCatalog?.byProfession?.("blacksmithing") || [];
+            checks.push(
+                createCheck(
+                    "RecipeCatalog contém receitas declarativas",
+                    catalogAll.length >= 20
+                        && catalogBySmith.length >= 10
+                        && catalogAll.every((r) => r.id && r.professionId && r.unlockLevel >= 1 && r.tier >= 1),
+                    `${catalogAll.length} total · ${catalogBySmith.length} Forjaria · tiers OK`
+                )
+            );
+
+            // Garantir estado de crafting com array discovered
+            Aethra.CraftingSystem.ensureState();
+            const discoveredBefore = (Aethra.GameState.crafting.discovered || []).slice();
+
+            // Descobre starters de Forjaria para o teste de craft a seguir
+            const starterIds = Aethra.RecipeCatalog?.starterIds?.("blacksmithing") || [];
+            starterIds.forEach((id) => Aethra.CraftingSystem.discoverRecipe(id, { save: false }));
+            const discoveredAfterSeed = (Aethra.GameState.crafting.discovered || []).length;
+            checks.push(
+                createCheck(
+                    "Receitas iniciais são descobertas automaticamente",
+                    starterIds.length >= 5 && discoveredAfterSeed >= starterIds.length
+                        && Aethra.CraftingSystem.isDiscovered("smelt_iron")
+                        && Aethra.CraftingSystem.isDiscovered("forge_iron_sword"),
+                    `${starterIds.length} starters · descobertas: ${discoveredAfterSeed}`
+                )
+            );
+
+            // Receitas T2 não devem estar descobertas antes de atingir nv 5
+            const t2BeforeLevel = Aethra.CraftingSystem.isDiscovered("smelt_steel");
+            // Simular rankUp para nv 5
+            const discoveredByRankUp = Aethra.CraftingSystem.discoverByProfessionLevel("blacksmithing", 5);
+            const t2AfterLevel = Aethra.CraftingSystem.isDiscovered("smelt_steel");
+            checks.push(
+                createCheck(
+                    "Receitas T2 só aparecem após atingir nível de ofício",
+                    t2BeforeLevel === false && t2AfterLevel === true && discoveredByRankUp.includes("smelt_steel"),
+                    `antes nv5: ${t2BeforeLevel} · após nv5: ${t2AfterLevel} · descobertas: ${discoveredByRankUp.length}`
+                )
+            );
+
+            // Receitas não descobertas retornam pela API correta
+            const undiscoveredLeather = Aethra.CraftingSystem.getUndiscovered("leatherworking");
+            Aethra.CraftingSystem.discoverStarters("leatherworking");
+            const leatherKnown = Aethra.CraftingSystem.getRecipes("leatherworking");
+            checks.push(
+                createCheck(
+                    "getRecipes retorna só receitas descobertas e getUndiscovered o restante",
+                    leatherKnown.length >= 5
+                        && leatherKnown.every((r) => Aethra.CraftingSystem.isDiscovered(r.id)),
+                    `Couraria: ${leatherKnown.length} conhecidas`
+                )
+            );
+            // ---
+
             const testIngots = Aethra.ItemSystem.generateItem("refined_ingot", { quantity: 6, quality: 20, potential: 20, source: "integration" });
             Aethra.BagSystem.addItem(testIngots, "integration");
             const ingotsBeforeCraft = Aethra.BagSystem.countItem("refined_ingot");
@@ -468,7 +528,7 @@
             );
             Aethra.GameState.hero.bag = craftingBackup.bag;
             Aethra.GameState.hero.disciplines.blacksmithing = craftingBackup.discipline;
-            Aethra.GameState.crafting = craftingBackup.crafting;
+            Aethra.GameState.crafting = craftingBackup.crafting || { completed: 0, recipeCounts: {}, processedCommands: [], discovered: discoveredBefore };
             Aethra.GameState.hunt = craftingBackup.hunt;
 
             const forcedDisciplineProc = Aethra.DisciplineSystem?.rollCombatProc?.("axe", () => 0);

@@ -280,7 +280,14 @@
             const professionPayload = { ...clone(payload), professionId, action, definition: clone(definition), state: this.getState(professionId) };
             Aethra.EventBus.emit("profession:xpChanged", professionPayload);
             Aethra.EventBus.emit("profession:updated", professionPayload);
-            if (payload.levelsGained > 0) Aethra.EventBus.emit("profession:rankUp", professionPayload);
+            if (payload.levelsGained > 0) {
+                Aethra.EventBus.emit("profession:rankUp", professionPayload);
+                // Descobrir receitas desbloqueadas pelo novo nível de profissão.
+                Aethra.CraftingSystem?.discoverByProfessionLevel?.(
+                    professionId,
+                    professionPayload.state?.level || payload.newLevel || 1
+                );
+            }
             return professionPayload;
         },
 

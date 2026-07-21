@@ -1,7 +1,9 @@
+/* profession-workshop.css — Oficina de Forjaria e Couraria */
+
 .profession-workshop {
     --workshop-accent: #e5b65f;
-    width: min(920px, calc(100vw - 32px));
-    max-height: min(780px, calc(100dvh - 86px));
+    width: min(960px, calc(100vw - 32px));
+    max-height: min(820px, calc(100dvh - 86px));
     overflow: hidden;
     border: 1px solid color-mix(in srgb, var(--workshop-accent) 46%, #29444c);
     border-radius: 14px;
@@ -10,51 +12,241 @@
     box-shadow: 0 24px 80px #000b, inset 0 1px 0 #ffffff0d;
 }
 
-.profession-workshop__shell { display: grid; grid-template-rows: auto auto auto auto auto minmax(0, 1fr); max-height: inherit; }
-.profession-workshop__header { display: grid; grid-template-columns: 52px minmax(0, 1fr) 36px; gap: 12px; align-items: center; padding: 14px 16px; border-bottom: 1px solid #29404a80; background: linear-gradient(100deg, color-mix(in srgb, var(--workshop-accent) 12%, transparent), transparent); }
-.profession-workshop__header > span { display: grid; width: 50px; height: 50px; place-items: center; border: 1px solid color-mix(in srgb, var(--workshop-accent) 55%, transparent); border-radius: 11px; color: var(--workshop-accent); background: #0d1d21; font-size: 25px; }
-.profession-workshop__header small, .profession-workshop__status small, .workshop-recipe small { color: #758c95; font: 800 9px "Outfit", sans-serif; letter-spacing: .08em; }
-.profession-workshop__header h2 { margin: 1px 0; color: #f1dfae; font: 900 23px Georgia, serif; }
-.profession-workshop__header p { margin: 0; color: #879ca4; font-size: 11px; }
-.profession-workshop__header button { width: 34px; height: 34px; border: 1px solid #44606b80; border-radius: 9px; color: #b4c5ca; background: #0b181d; font-size: 20px; cursor: pointer; }
-.profession-workshop__status { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; padding: 9px 14px; }
-.profession-workshop__status span { display: grid; gap: 2px; padding: 8px 10px; border: 1px solid #29404a80; border-radius: 8px; background: #0a171b; }
-.profession-workshop__status strong { color: var(--workshop-accent); font-size: 12px; }
-.profession-workshop__tabs { display: flex; gap: 7px; padding: 0 14px 9px; }
-.profession-workshop__tabs button { min-height: 34px; padding: 0 13px; border: 1px solid #304b5680; border-radius: 8px; color: #8ba0a8; background: #091418; font: 800 10px "Outfit", sans-serif; cursor: pointer; }
-.profession-workshop__tabs button.is-active { border-color: color-mix(in srgb, var(--workshop-accent) 55%, transparent); color: var(--workshop-accent); background: color-mix(in srgb, var(--workshop-accent) 10%, #091418); }
-.profession-workshop__controls { display: grid; grid-template-columns: minmax(0, 1fr) 120px; gap: 10px; padding: 9px 14px; border-block: 1px solid #29404a70; background: #081317; }
-.profession-workshop__controls label { display: grid; gap: 4px; color: #82969e; font: 800 9px "Outfit", sans-serif; }
-.profession-workshop__controls select, .profession-workshop__controls input { min-width: 0; height: 32px; padding: 0 9px; border: 1px solid #35515c; border-radius: 7px; color: #d9e3e6; background: #050d10; font: 700 10px "Outfit", sans-serif; }
-.profession-workshop__notice { margin: 8px 14px 0; padding: 8px 10px; border: 1px solid #47616c; border-radius: 7px; font-size: 10px; }
-.profession-workshop__notice.is-success { border-color: #3ac67880; color: #72e2a8; background: #12382366; }
-.profession-workshop__notice.is-error { border-color: #dc795e80; color: #eaa38e; background: #421d1766; }
-.profession-workshop__recipes { display: grid; gap: 9px; overflow: auto; padding: 12px 14px 16px; }
-.workshop-recipe { padding: 11px; border: 1px solid #2d465080; border-radius: 10px; background: linear-gradient(135deg, #0d1c20, #071014); }
-.workshop-recipe.is-ready { border-color: color-mix(in srgb, var(--workshop-accent) 42%, #2d4650); }
-.workshop-recipe > header { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; gap: 9px; align-items: start; }
-.workshop-recipe > header > span { display: grid; width: 36px; height: 36px; place-items: center; border: 1px solid #455d66; border-radius: 8px; color: var(--workshop-accent); font-size: 19px; }
-.workshop-recipe h3, .workshop-recipe strong { color: #dce6e8; }
-.workshop-recipe header strong { display: block; margin: 1px 0 3px; font-size: 13px; }
-.workshop-recipe header p { margin: 0; color: #81959c; font-size: 9px; }
-.workshop-recipe header em { color: #8adbb1; font: 800 10px "Outfit", sans-serif; }
-.workshop-recipe__flow { display: grid; grid-template-columns: 1fr 24px 1fr; gap: 8px; align-items: center; margin: 9px 0; padding: 8px; border-radius: 8px; background: #040b0e99; }
-.workshop-recipe__flow > div { display: grid; gap: 4px; }
-.workshop-recipe__flow > i { color: var(--workshop-accent); text-align: center; }
-.workshop-recipe__flow span, .workshop-recipe__flow strong { font-size: 9px; font-style: normal; }
-.workshop-recipe__flow .has-item b { color: #68d89d; }
-.workshop-recipe__flow .missing-item b { color: #e8866d; }
-.workshop-recipe > footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.workshop-recipe > footer button { min-width: 110px; height: 32px; border: 1px solid color-mix(in srgb, var(--workshop-accent) 60%, transparent); border-radius: 7px; color: #f3dd9d; background: color-mix(in srgb, var(--workshop-accent) 13%, #0a171b); font: 900 9px "Outfit", sans-serif; cursor: pointer; }
-.workshop-recipe > footer button:disabled { border-color: #33464d; color: #60747b; background: #0a1316; cursor: not-allowed; }
+.profession-workshop__shell {
+    display: grid;
+    grid-template-rows: auto auto auto auto auto auto minmax(0, 1fr);
+    max-height: inherit;
+}
 
+/* ── Header ─────────────────────────────────────────────────────────────────── */
+.profession-workshop__header {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr) 36px;
+    gap: 12px;
+    align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid #29404a80;
+    background: linear-gradient(100deg, color-mix(in srgb, var(--workshop-accent) 12%, transparent), transparent);
+}
+.profession-workshop__header > span {
+    display: grid; width: 50px; height: 50px; place-items: center;
+    border: 1px solid color-mix(in srgb, var(--workshop-accent) 55%, transparent);
+    border-radius: 11px; color: var(--workshop-accent); background: #0d1d21; font-size: 25px;
+}
+.profession-workshop__header small,
+.profession-workshop__status small,
+.workshop-recipe small { color: #758c95; font: 800 9px "Outfit", sans-serif; letter-spacing: .08em; }
+.profession-workshop__header h2 { margin: 1px 0; color: #f1dfae; font: 900 23px Georgia, serif; }
+.profession-workshop__header p  { margin: 0; color: #879ca4; font-size: 11px; }
+.profession-workshop__header button {
+    width: 34px; height: 34px;
+    border: 1px solid #44606b80; border-radius: 9px;
+    color: #b4c5ca; background: #0b181d; font-size: 20px; cursor: pointer;
+}
+
+/* ── Status bar ─────────────────────────────────────────────────────────────── */
+.profession-workshop__status {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 7px; padding: 9px 14px;
+}
+.profession-workshop__status span {
+    display: grid; gap: 2px; padding: 8px 10px;
+    border: 1px solid #29404a80; border-radius: 8px; background: #0a171b;
+}
+.profession-workshop__status strong { color: var(--workshop-accent); font-size: 12px; }
+
+/* ── Tabs de profissão ───────────────────────────────────────────────────────── */
+.profession-workshop__tabs { display: flex; gap: 7px; padding: 0 14px 9px; }
+.profession-workshop__tabs button {
+    min-height: 34px; padding: 0 13px;
+    border: 1px solid #304b5680; border-radius: 8px;
+    color: #8ba0a8; background: #091418;
+    font: 800 10px "Outfit", sans-serif; cursor: pointer;
+    transition: border-color .15s, color .15s, background .15s;
+}
+.profession-workshop__tabs button.is-active {
+    border-color: color-mix(in srgb, var(--workshop-accent) 55%, transparent);
+    color: var(--workshop-accent);
+    background: color-mix(in srgb, var(--workshop-accent) 10%, #091418);
+}
+
+/* ── Subtabs (Conhecidas / A Descobrir) ─────────────────────────────────────── */
+.profession-workshop__subtabs {
+    display: flex; gap: 5px; padding: 0 14px 8px;
+    border-bottom: 1px solid #1e3038;
+}
+.profession-workshop__subtabs button {
+    display: inline-flex; align-items: center; gap: 5px;
+    height: 28px; padding: 0 10px;
+    border: 1px solid #2a404b; border-radius: 7px;
+    color: #7898a2; background: #071014;
+    font: 700 9px "Outfit", sans-serif; cursor: pointer;
+    transition: border-color .15s, color .15s, background .15s;
+}
+.profession-workshop__subtabs button.is-active {
+    border-color: color-mix(in srgb, var(--workshop-accent) 50%, transparent);
+    color: var(--workshop-accent);
+    background: color-mix(in srgb, var(--workshop-accent) 8%, #071014);
+}
+.badge-count {
+    display: inline-grid; place-items: center;
+    min-width: 16px; height: 16px; padding: 0 4px;
+    border-radius: 8px; background: #1f3d49;
+    color: #9cbeca; font: 800 8px "Outfit", sans-serif;
+}
+.badge-new-pill {
+    display: inline-grid; place-items: center;
+    height: 16px; padding: 0 5px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--workshop-accent) 22%, #1a2d0e);
+    color: var(--workshop-accent);
+    font: 800 8px "Outfit", sans-serif;
+    animation: pulse-badge .9s ease-in-out infinite alternate;
+}
+@keyframes pulse-badge { from { opacity: .7; } to { opacity: 1; } }
+
+/* ── Controles ────────────────────────────────────────────────────────────── */
+.profession-workshop__controls {
+    display: grid; grid-template-columns: minmax(0, 1fr) 120px;
+    gap: 10px; padding: 9px 14px;
+    border-bottom: 1px solid #29404a70; background: #081317;
+}
+.profession-workshop__controls label { display: grid; gap: 4px; color: #82969e; font: 800 9px "Outfit", sans-serif; }
+.profession-workshop__controls select,
+.profession-workshop__controls input {
+    min-width: 0; height: 32px; padding: 0 9px;
+    border: 1px solid #35515c; border-radius: 7px;
+    color: #d9e3e6; background: #050d10;
+    font: 700 10px "Outfit", sans-serif;
+}
+
+/* ── Notices ─────────────────────────────────────────────────────────────── */
+.profession-workshop__notice {
+    margin: 8px 14px 0; padding: 8px 10px;
+    border: 1px solid #47616c; border-radius: 7px; font-size: 10px;
+}
+.profession-workshop__notice.is-success { border-color: #3ac67880; color: #72e2a8; background: #12382366; }
+.profession-workshop__notice.is-error   { border-color: #dc795e80; color: #eaa38e; background: #421d1766; }
+
+/* ── Container de receitas ───────────────────────────────────────────────── */
+.profession-workshop__recipes {
+    display: grid; gap: 0;
+    overflow: auto; padding: 12px 14px 16px;
+}
+.workshop-empty {
+    padding: 20px; text-align: center;
+    color: #6a8490; font-size: 11px; font-style: italic;
+}
+
+/* ── Seção de tier ───────────────────────────────────────────────────────── */
+.workshop-tier { margin-bottom: 14px; }
+.workshop-tier__label {
+    display: flex; align-items: center; gap: 8px; margin: 0 0 8px;
+    color: #5d7e8a; font: 800 9px "Outfit", sans-serif; letter-spacing: .1em; text-transform: uppercase;
+}
+.workshop-tier__label::after {
+    content: ""; flex: 1; height: 1px; background: #1e3038;
+}
+.workshop-tier__recipes { display: grid; gap: 9px; }
+
+/* ── Card de receita ─────────────────────────────────────────────────────── */
+.workshop-recipe {
+    padding: 11px;
+    border: 1px solid #2d465080; border-radius: 10px;
+    background: linear-gradient(135deg, #0d1c20, #071014);
+    transition: border-color .2s, box-shadow .2s;
+}
+.workshop-recipe.is-ready {
+    border-color: color-mix(in srgb, var(--workshop-accent) 42%, #2d4650);
+}
+.workshop-recipe.is-ready:hover {
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--workshop-accent) 30%, transparent);
+}
+.workshop-recipe.is-new {
+    border-color: color-mix(in srgb, var(--workshop-accent) 60%, transparent);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--workshop-accent) 12%, transparent);
+}
+
+/* Card bloqueado */
+.workshop-recipe.is-locked {
+    opacity: .62;
+    border-style: dashed;
+    border-color: #273d47;
+    background: #050e12;
+}
+.workshop-recipe.is-locked .locked-icon { font-size: 18px; opacity: .5; }
+
+/* Cabeçalho do card */
+.workshop-recipe > header {
+    display: grid; grid-template-columns: 38px minmax(0, 1fr) auto;
+    gap: 9px; align-items: start;
+}
+.workshop-recipe > header > span,
+.workshop-recipe > header > .locked-icon {
+    display: grid; width: 36px; height: 36px; place-items: center;
+    border: 1px solid #455d66; border-radius: 8px;
+    color: var(--workshop-accent); font-size: 19px;
+}
+.workshop-recipe h3,
+.workshop-recipe strong           { color: #dce6e8; }
+.workshop-recipe header strong    { display: block; margin: 1px 0 3px; font-size: 13px; }
+.workshop-recipe header p         { margin: 0; color: #81959c; font-size: 9px; }
+.workshop-recipe header em        { color: #8adbb1; font: 800 10px "Outfit", sans-serif; }
+
+/* Badge NOVO */
+.badge-new {
+    display: inline-block; margin-left: 5px; padding: 1px 5px;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--workshop-accent) 20%, transparent);
+    color: var(--workshop-accent);
+    font: 800 8px "Outfit", sans-serif; letter-spacing: .06em;
+    vertical-align: middle;
+}
+
+/* Fluxo materiais → resultado */
+.workshop-recipe__flow {
+    display: grid; grid-template-columns: 1fr 24px 1fr;
+    gap: 8px; align-items: center;
+    margin: 9px 0; padding: 8px;
+    border-radius: 8px; background: #040b0e99;
+}
+.workshop-recipe__flow > div   { display: grid; gap: 4px; }
+.workshop-recipe__flow > i     { color: var(--workshop-accent); text-align: center; }
+.workshop-recipe__flow span,
+.workshop-recipe__flow strong  { font-size: 9px; font-style: normal; }
+.workshop-recipe__flow .has-item b    { color: #68d89d; }
+.workshop-recipe__flow .missing-item b { color: #e8866d; }
+
+/* Rodapé do card */
+.workshop-recipe > footer {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.workshop-recipe > footer button {
+    min-width: 110px; height: 32px;
+    border: 1px solid color-mix(in srgb, var(--workshop-accent) 60%, transparent);
+    border-radius: 7px; color: #f3dd9d;
+    background: color-mix(in srgb, var(--workshop-accent) 13%, #0a171b);
+    font: 900 9px "Outfit", sans-serif; cursor: pointer;
+    transition: background .15s, box-shadow .15s;
+}
+.workshop-recipe > footer button:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--workshop-accent) 20%, #0a171b);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--workshop-accent) 18%, transparent);
+}
+.workshop-recipe > footer button:disabled {
+    border-color: #33464d; color: #60747b; background: #0a1316; cursor: not-allowed;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────────── */
 @media (max-width: 680px) {
     .profession-workshop { width: calc(100vw - 12px); max-height: calc(100dvh - 68px); }
     .profession-workshop__header { grid-template-columns: 42px minmax(0, 1fr) 32px; padding: 10px; }
     .profession-workshop__header > span { width: 40px; height: 40px; }
     .profession-workshop__header h2 { font-size: 18px; }
     .profession-workshop__status { grid-template-columns: 1fr; padding-inline: 10px; }
-    .profession-workshop__tabs, .profession-workshop__controls { padding-inline: 10px; }
+    .profession-workshop__tabs,
+    .profession-workshop__subtabs,
+    .profession-workshop__controls { padding-inline: 10px; }
     .profession-workshop__controls { grid-template-columns: 1fr 86px; }
     .profession-workshop__recipes { padding: 10px; }
     .workshop-recipe__flow { grid-template-columns: 1fr; }

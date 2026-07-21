@@ -2,7 +2,7 @@
 
 Atualizado em: 2026-07-21  
 Branch de continuidade: `main`  
-Baseline anterior a este ciclo: `a3d29d5`
+Baseline anterior a este ciclo: `c9e03c8`
 
 Este documento é o ponto de entrada para continuar a versão atual. Leia-o antes
 de alterar HUD, automação de hunt, progressão, profissões, coleta, crafting ou
@@ -35,7 +35,8 @@ paralelos que leem e escrevem o mesmo estado.
 | XP e nível de skills | `js/progression/XPSystem.js` | `GameState.hero.disciplines` | HUD, profissões, crafting | Somar XP diretamente na HUD ou em sistemas de coleta |
 | Definições de disciplinas | `js/progression/DisciplineSystem.js` | catálogo + projeção em `hero.disciplines` | XP, HUD, combate | Criar outro catálogo de skills com níveis próprios |
 | Ações, ferramentas e políticas de profissão | `js/progression/ProfessionSystem.js` | `hero.disciplines` | Hunt, exploração, oficina | Tratar `GameState.professions` como segunda autoridade |
-| Fabricação | `js/items/CraftingSystem.js` | receitas + comando transacional | `ProfessionWorkshopUI` | Consumir material ou gerar item diretamente na UI |
+| **Dados declarativos de receitas** | **`js/data/recipes/RecipeCatalog.js`** | **catálogo imutável em memória** | **CraftingSystem** | **Adicionar lógica de gameplay ou estado de gameplay aqui** |
+| Fabricação, descoberta e estado de receitas | `js/items/CraftingSystem.js` | receitas ativas + `GameState.crafting.discovered` | `ProfessionWorkshopUI` | Consumir material ou gerar item diretamente na UI |
 | Itens e inventário | `ItemSystem` e `BagSystem` | `GameState.hero.bag` | loot, crafting, HUD | Usar `bag.push`, objetos crus ou IDs inventados fora do catálogo |
 | Loot, venda e reposição de supplies | `js/economy/IdleLoopSystem.js` | configuração do idle loop | modal de supplies, hunt | Reimplementar compra automática em componentes visuais |
 | Janelas | `js/ui/WindowManager.js` | registro/estado das janelas | todas as HUDs | Criar overlay solto com ciclo de vida próprio |
@@ -86,8 +87,10 @@ materiais, criação de resultados, qualidade e XP de fabricação.
   `skill:xp-changed`, `skill:xp-rejected`, `discipline:xp-changed` e
   `discipline:level-up`.
 - Profissões: `profession:policy-changed`, `profession:xpChanged`,
-  `profession:xpRejected` e `profession:rankUp`.
-- Crafting: `crafting:ready`, `crafting:completed` e `crafting:rejected`.
+  `profession:xpRejected`, `profession:rankUp` e `profession:updated`.
+- Crafting: `crafting:ready`, `crafting:completed`, `crafting:rejected`,
+  `crafting:recipe-discovered` (ao descobrir nova receita por nível),
+  `crafting:catalog-loaded` (ao carregar o RecipeCatalog).
 - Hunt: `hunt:profession-delay`.
 
 Eventos servem para projeção e atualização visual. Um consumidor não deve usar
@@ -102,9 +105,11 @@ exploração e quests. `js/core/GameLoader.js` já inclui `CraftingSystem` na or
 correta. Mudar a ordem exige rodar a suíte completa.
 
 O save ativo usa `aethra_save_v71_disciplines` e metadata
-`schemaVersion: 72`. A migração de profissões usa
-`hero.professionMigrationVersion: 2`. Personagens existentes são migrados sem
-refazer a introdução; personagens novos ou resetados seguem o novo fluxo.
+`schemaVersion: 73`. A migração v72 → v73 garante `crafting.discovered`
+como array; personagens com crafts anteriores recebem as 12 receitas base como
+descobertas. A migração de profissões usa `hero.professionMigrationVersion: 2`.
+Personagens existentes são migrados sem refazer a introdução; personagens novos
+ou resetados seguem o novo fluxo.
 
 ## 7. Como rodar e verificar
 
@@ -127,8 +132,8 @@ node scripts/verify-project.mjs
 
 Resultado do checkpoint antes do commit:
 
-- quality gate: 453/453 verificações;
-- integração no navegador: 120/120 testes;
+- quality gate: 453+/453+ verificações;
+- integração no navegador: 124+/124+ testes;
 - layout verificado em 1280x720 e 1920x1080.
 
 Ao continuar, confirme também console sem erros, rede sem 404, personagem novo e
@@ -136,12 +141,13 @@ save migrado. Atualize estes números se a suíte crescer.
 
 ## 8. Próximos passos recomendados
 
-1. Migrar receitas para catálogo declarativo e implementar descoberta/desbloqueio.
+1. ~~Migrar receitas para catálogo declarativo e implementar descoberta/desbloqueio.~~ ✅ **Concluído**
 2. Criar durabilidade e reparo transacional usando os mesmos donos de item/bag.
 3. Adicionar especializações e perks de profissão com retornos decrescentes.
 4. Tornar estações e missões introdutórias presença real no mundo/cidade.
 5. Levar inventário, moeda, crafting e RNG valioso para backend autoritativo,
    conforme `docs/BACKEND_AUTHORITY_CONTRACT.md`.
+6. Ampliar catálogo de receitas com Tier 3 (Mestre) e materiais de dungeon.
 
 Limitações deliberadas: o conteúdo de fabricação ainda cobre somente o primeiro
 ciclo de ferro/couro; reparo não foi implementado; não há árvore completa de
