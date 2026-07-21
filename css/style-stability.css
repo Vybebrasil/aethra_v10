@@ -3,7 +3,7 @@
 
 :root {
     --stable-topbar-height: 56px;
-    --stable-actionbar-height: 72px;
+    --stable-actionbar-height: 110px;
     --stable-left-column: clamp(260px, 17vw, 300px);
     --stable-right-column: clamp(250px, 16vw, 290px);
     --stable-gap: 8px;

@@ -80,17 +80,21 @@ body.aethra-battle-mode .encounter-context-dock,
 
 /* SLIM ACTIONBAR AT BOTTOM */
 body.aethra-battle-mode .battle-panel--actionbar {
-    flex: 0 0 68px !important;
-    height: 68px !important;
-    min-height: 68px !important;
-    max-height: 68px !important;
+    flex: 0 0 110px !important;
+    height: 110px !important;
+    min-height: 110px !important;
+    max-height: 110px !important;
     margin-top: 4px !important;
-    padding: 2px 8px !important;
+    padding: 6px 12px !important;
     overflow: hidden !important;
 }
 
 body.aethra-battle-mode .battle-panel--actionbar .battle-panel__header {
-    display: none !important;
+    display: flex !important;
+    min-height: 26px !important;
+    height: 26px !important;
+    padding: 2px 4px !important;
+    margin-bottom: 4px !important;
 }
 
 .tilemap-workspace {
