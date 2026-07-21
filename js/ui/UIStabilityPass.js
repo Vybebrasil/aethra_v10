@@ -277,13 +277,10 @@
         return result;
     };
 
-    const originalBattleCards = Render.renderBattleCards.bind(Render);
-    Render.renderBattleCards = function (...args) {
-        const result = originalBattleCards(...args);
+    Aethra.EventBus.on("render:battle-cards", () => {
         stabilizeEncounterDock();
         syncContextTitles();
-        return result;
-    };
+    });
 
     const originalHunt = Render.renderHunt?.bind(Render);
     if (originalHunt) {
@@ -366,19 +363,18 @@
         }
     });
 
-    // Botão "Novo Personagem" → reseta e reabre criação
+    // Botão "Novo Personagem" → volta ao Lobby (seleção/criação/deleção de personagens)
     document.addEventListener("click", (event) => {
         if (!event.target.closest("[data-new-character]")) return;
         const confirmed = window.confirm(
-            "Tem certeza? Todo o progresso atual será apagado e você irá criar um novo personagem."
+            "Tem certeza? Você será levado à seleção de personagens. O progresso do herói atual está salvo no slot ativo."
         );
         if (!confirmed) return;
         Aethra.WindowManager?.closeAll?.();
-        Aethra.SaveManager?.reset?.();
-        Aethra.StateManager?.reset?.({ source: "new-character-ui" });
+        // Navegar ao Lobby em vez de criar diretamente
         window.setTimeout(() => {
-            Aethra.CharacterCreationUI?.show?.();
-        }, 200);
+            Aethra.LobbyUI?.open?.();
+        }, 100);
     });
 
     if (document.readyState === "loading") {
