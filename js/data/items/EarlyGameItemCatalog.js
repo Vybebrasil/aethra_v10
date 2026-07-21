@@ -98,6 +98,76 @@
         description: "Remove veneno e reduz sua duração nas próximas duas rodadas."
     });
 
+    // ── Suprimentos iniciais (usados por CharacterBuildSystem.createCharacter) ──
+    item("potion_health", {
+        name: "Poção de Vida", icon: "🧪", price: 15, value: 15,
+        rarity: "Comum", type: "consumable", itemType: "CONSUMABLE",
+        healAmount: 30, stackable: true, maxStack: 99,
+        description: "Recupera 30 de HP. Item inicial de todo aventureiro."
+    });
+    item("potion_mana", {
+        name: "Poção de Mana", icon: "💧", price: 18, value: 18,
+        rarity: "Comum", type: "consumable", itemType: "CONSUMABLE",
+        manaAmount: 25, stackable: true, maxStack: 99,
+        description: "Restaura 25 de Mana. Essencial para arcanistas."
+    });
+
+    // ── Armas de treino iniciais por arquétipo ────────────────────────────────
+    item("training_sword", {
+        name: "Espada de Treino", icon: "⚔", price: 0, value: 0,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON",
+        slot: "weapon", weaponFamily: "sword",
+        baseStats: { damageMin: 4, damageMax: 8, precision: 1 },
+        stats:     { damageMin: 4, damageMax: 8, precision: 1 },
+        levelReq: 1, stackable: false, maxStack: 1,
+        description: "Espada de madeira reforçada. Item de iniciante vinculado ao herói."
+    });
+    item("training_axe", {
+        name: "Machado de Treino", icon: "◩", price: 0, value: 0,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON",
+        slot: "weapon", weaponFamily: "axe",
+        baseStats: { damageMin: 5, damageMax: 10, critical: 0.04 },
+        stats:     { damageMin: 5, damageMax: 10, critical: 0.04 },
+        levelReq: 1, stackable: false, maxStack: 1,
+        description: "Machado pesado de treino. Item de iniciante vinculado ao herói."
+    });
+    item("training_mace", {
+        name: "Maça de Treino", icon: "✣", price: 0, value: 0,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON",
+        slot: "weapon", weaponFamily: "mace",
+        baseStats: { damageMin: 4, damageMax: 9, defense: 1 },
+        stats:     { damageMin: 4, damageMax: 9, defense: 1 },
+        levelReq: 1, stackable: false, maxStack: 1,
+        description: "Maça de madeira pesada. Item de iniciante vinculado ao herói."
+    });
+    item("training_dagger", {
+        name: "Adaga de Treino", icon: "†", price: 0, value: 0,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON",
+        slot: "weapon", weaponFamily: "dagger",
+        baseStats: { damageMin: 3, damageMax: 7, precision: 2, critical: 0.06 },
+        stats:     { damageMin: 3, damageMax: 7, precision: 2, critical: 0.06 },
+        levelReq: 1, stackable: false, maxStack: 1,
+        description: "Adaga fina de prática. Item de iniciante vinculado ao herói."
+    });
+    item("training_bow", {
+        name: "Arco de Treino", icon: "➶", price: 0, value: 0,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON",
+        slot: "weapon", weaponFamily: "bow",
+        baseStats: { damageMin: 4, damageMax: 8, precision: 3 },
+        stats:     { damageMin: 4, damageMax: 8, precision: 3 },
+        levelReq: 1, stackable: false, maxStack: 1,
+        description: "Arco de cipó resistente. Item de iniciante vinculado ao herói."
+    });
+    item("novice_focus", {
+        name: "Foco de Novato", icon: "✦", price: 0, value: 0,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON",
+        slot: "weapon", weaponFamily: "focus",
+        baseStats: { damageMin: 3, damageMax: 6, mag: 3, precision: 1 },
+        stats:     { damageMin: 3, damageMax: 6, mag: 3, precision: 1 },
+        levelReq: 1, stackable: false, maxStack: 1,
+        description: "Orbe canalizado para iniciantes em magia. Item de iniciante vinculado ao herói."
+    });
+
     for (let level = 1; level <= 10; level += 1) {
         const grade = LEVEL_NAMES[level - 1];
         const tier = Math.ceil(level / 2);
