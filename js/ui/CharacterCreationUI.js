@@ -22,6 +22,39 @@
         return `${item.name} (Dano: ${damage}${extra})`;
     };
 
+    const ARCHETYPE_META = {
+        vanguard: {
+            focus: "Defensor / Tanque",
+            difficulty: "Fácil (★☆☆)",
+            highlight: "Vitalidade & Defesa",
+            starterSkillId: "precise_strike"
+        },
+        berserker: {
+            focus: "Dano Físico / Risco",
+            difficulty: "Média (★★☆)",
+            highlight: "Força Física",
+            starterSkillId: "brutal_cleave"
+        },
+        arcanist: {
+            focus: "Elemental / Conjurador",
+            difficulty: "Difícil (★★★)",
+            highlight: "Magia & Mana",
+            starterSkillId: "fire_bolt"
+        },
+        ranger: {
+            focus: "Distância / Utilitário",
+            difficulty: "Fácil (★☆☆)",
+            highlight: "Precisão & Esquiva",
+            starterSkillId: "aimed_shot"
+        },
+        nightblade: {
+            focus: "Velocidade / Assassino",
+            difficulty: "Difícil (★★★)",
+            highlight: "Agilidade & Crítico",
+            starterSkillId: "twin_fang"
+        }
+    };
+
     const STEP_META = [
         { id: 1, label: "Origem", title: "Escolha sua fantasia", copy: "Seu arquétipo define o ponto de partida, não o seu destino." },
         { id: 2, label: "Atributos", title: "Modele o corpo e a mente", copy: "Cada ponto muda números que você verá durante o combate." },
@@ -187,6 +220,8 @@
             .map(([id]) => system().masteries[id])
             .find(Boolean);
         const starterItem = Aethra.GameData?.items?.[entry.starterItemId] || {};
+        const meta = ARCHETYPE_META[entry.id] || {};
+        const skill = Aethra.SkillSystem?.getSkill?.(meta.starterSkillId) || {};
         
         const weaponDmg = `${starterItem.damageMin}–${starterItem.damageMax}`;
         const weaponExtra = starterItem.mag ? `, +${starterItem.mag} Magia` : "";
@@ -233,6 +268,13 @@
                 <small>${esc(entry.title)}</small>
                 <strong>${esc(entry.name)}</strong>
                 <p>${esc(entry.description)}</p>
+
+                <div class="creation-archetype__specs">
+                    <span><b>Foco:</b> ${esc(meta.focus)}</span>
+                    <span><b>Dif.:</b> ${esc(meta.difficulty)}</span>
+                    <span><b>Destaque:</b> ${esc(meta.highlight)}</span>
+                </div>
+
                 <div class="creation-archetype__dna">
                     ${Object.entries(entry.masteries)
                         .sort((a, b) => b[1] - a[1])
@@ -240,8 +282,17 @@
                         .map(([id, val]) => {
                             const mastery = system().masteries[id];
                             return `<span>${esc(mastery?.icon || "✦")} ${esc(mastery?.name || id)} +${val}</span>`;
-                        }).join(" · ")}
+                        }).join("")}
                 </div>
+
+                <div class="creation-archetype__skill-row" data-ui-tooltip="true" data-tooltip-kind="skill" data-skill-id="${esc(meta.starterSkillId)}">
+                    <small>TÉCNICA INICIAL</small>
+                    <div>
+                        <b>${esc(skill.icon || "✦")}</b>
+                        <strong>${esc(skill.name || meta.starterSkillId)}</strong>
+                    </div>
+                </div>
+
                 <div>${entry.tags.map((tag) => `<em>${esc(tag)}</em>`).join("")}</div>
                 <footer><span>${selected ? "ARQUÉTIPO ESCOLHIDO" : "ESCOLHER ARQUÉTIPO"}</span><b>${esc(getStarterWeaponBonus(entry))}</b></footer>
             </button>`;
