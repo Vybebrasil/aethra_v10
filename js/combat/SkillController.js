@@ -76,7 +76,7 @@
     function getDefaultAutoValue(skillId, skill) {
         if (isPrimarySkill(skill)) return false;
         if (isHealingSkill(skill)) return true;
-        return skillId === "heavy_strike" || skillId === "fire_bolt";
+        return isDamageSkill(skill);
     }
 
     function getSkillTarget(skill, context = {}) {
@@ -499,7 +499,7 @@
         /**
          * Prioridade absoluta de suporte.
          *
-         * Esta função é chamada em todo tick pelo BattleSystem.
+         * Esta função é chamada uma vez por rodada pelo BattleSystem.
          */
         checkSupportPriorities(context = {}) {
             const hp = this.getHeroHpState();
@@ -1004,6 +1004,14 @@
                         decision.target,
                         context
                     );
+            } else if (
+                String(decision.skill?.type || decision.skill?.effect?.type || "").toLowerCase() === "buff"
+            ) {
+                result = this.applyBuffSkill(
+                    decision.skill,
+                    usage,
+                    context
+                );
             } else {
                 result = {
                     action: "utility",
@@ -1135,6 +1143,12 @@
                     Aethra.SkillSystem?.getSkillPowerMultiplier?.(skill.id),
                     1
                 )
+            ) * Math.max(
+                1,
+                safeNumber(
+                    Aethra.DisciplineSystem?.getPowerMultiplier?.(skill.disciplineId || "restoration"),
+                    1
+                )
             );
 
             const requestedAmount = Math.max(
@@ -1239,6 +1253,54 @@
             return result;
         },
 
+        applyBuffSkill(skill, usage, context = {}) {
+            const effect = skill.effect || {};
+            const battle = Aethra.GameState.battle || (Aethra.GameState.battle = {});
+            const currentRound = Math.max(0, Math.floor(safeNumber(battle.round, 0)));
+            const disciplineId = skill.disciplineId || "shield";
+            const disciplineLevel = Aethra.DisciplineSystem?.getState?.(disciplineId)?.level || 1;
+            const powerMultiplier = Math.max(
+                1,
+                safeNumber(Aethra.DisciplineSystem?.getPowerMultiplier?.(disciplineId), 1)
+            );
+            const defenseBonus = Math.max(0, Math.round(safeNumber(effect.amount, 0) * powerMultiplier));
+            const blockChance = clamp(
+                safeNumber(effect.blockChance, 0) + Math.max(0, disciplineLevel - 1) * 0.01,
+                0,
+                0.75
+            );
+            const blockReduction = clamp(safeNumber(effect.blockReduction, 0.5), 0, 0.9);
+
+            battle.heroGuard = {
+                skillId: skill.id,
+                skillName: skill.name,
+                disciplineId,
+                disciplineLevel,
+                defenseBonus,
+                blockChance,
+                blockReduction,
+                activatedRound: currentRound,
+                expiresRound: currentRound + 1
+            };
+
+            const result = {
+                action: "buff",
+                skillId: skill.id,
+                skillName: skill.name,
+                disciplineId,
+                disciplineLevel,
+                defenseBonus,
+                blockChance,
+                blockReduction,
+                message: `${skill.name}: +${defenseBonus} Defesa e ${Math.round(blockChance * 100)}% de bloqueio até o próximo ataque inimigo.`,
+                source: usage.source || context.source || "skill-controller"
+            };
+
+            Aethra.EventBus.emit("BuffApplied", clone(result));
+            Aethra.EventBus.emit("SkillEffectApplied", clone(result));
+            return result;
+        },
+
         applyDamageSkill(
             skill,
             usage,
@@ -1274,113 +1336,68 @@
                 ) * masteryMultiplier
             );
 
-            const baseCalculation =
-                Aethra.BattleSystem
-                    ?.calculateDamage?.(
-                        target,
-                        {
-                            details: true
-                        }
-                    );
-
-            const enemyDefense = Math.max(
-                0,
-                safeNumber(
-                    target.stats?.defense ??
-                    target.defense,
-                    baseCalculation
-                        ?.enemyDefense ?? 0
-                )
-            );
-
-            const damageBeforeDefense =
-                baseCalculation
-                    ? Math.max(
-                        1,
-                        Math.round(
-                            baseCalculation
-                                .damageBeforeDefense *
-                            skillMultiplier
-                        )
-                    )
-                    : Math.max(
-                        1,
-                        Math.round(
-                            safeNumber(
-                                Aethra.GameState.hero
-                                    ?.stats?.damage,
-                                1
-                            ) *
-                            skillMultiplier
-                        )
-                    );
-
-            const amount = Math.max(
-                1,
-                Math.round(
-                    damageBeforeDefense -
-                    enemyDefense
-                )
-            );
-
-            target.hp = Math.max(
-                0,
-                safeNumber(target.hp, 0) -
-                amount
-            );
-
             const targetName =
                 target.name ||
                 target.id ||
                 "inimigo";
 
-            const message =
-                `${skill.name} causou `
-                + `${amount} de dano em `
-                + `${targetName}!`;
+            const magicBaseDamage = String(effect.damageType || "").toLowerCase() === "magic"
+                ? Math.max(
+                    2,
+                    Math.round(
+                        2 + safeNumber(Aethra.GameState.hero?.stats?.mag, 0) *
+                        Math.max(0.35, safeNumber(effect.magicScaling, 0.65))
+                    )
+                )
+                : null;
+
+            // Habilidades ofensivas participam do mesmo teste de acerto,
+            // crítico, esquiva e bloqueio que ataques primários.
+            const attackResult = Aethra.BattleSystem?.resolveAttack?.(
+                Aethra.BattleSystem.getHeroCombatant(),
+                target,
+                "hero",
+                {
+                    damageMultiplier: skillMultiplier,
+                    skillId: skill.id,
+                    attackLabel: skill.name,
+                    disciplineId: skill.disciplineId || null,
+                    baseDamage: magicBaseDamage
+                }
+            );
+
+            const fallbackAmount = Math.max(
+                1,
+                Math.round(
+                    safeNumber(Aethra.GameState.hero?.stats?.damage, 1) * skillMultiplier -
+                    safeNumber(target.stats?.defense ?? target.defense, 0)
+                )
+            );
 
             const result = {
+                ...(attackResult || {
+                    hit: true,
+                    side: "hero",
+                    amount: fallbackAmount,
+                    attacker: "hero",
+                    target: target.id || "enemy",
+                    targetName,
+                    message: `${skill.name} causou ${fallbackAmount} de dano em ${targetName}!`
+                }),
                 action: "attack",
-                hit: true,
-                side: "hero",
-                amount,
-                attacker: "hero",
-                attackerName:
-                    Aethra.GameState.hero
-                        ?.name ||
-                    "Herói",
-                target:
-                    target.id ||
-                    "enemy",
-                targetName,
-                skillId:
-                    skill.id,
-                skillName:
-                    skill.name,
-                damageMultiplier:
-                    skillMultiplier,
+                skillId: skill.id,
+                skillName: skill.name,
+                damageMultiplier: skillMultiplier,
                 masteryMultiplier,
-                masteryLevel:
-                    Aethra.SkillSystem?.getSkillProgression?.(skill.id)?.level || 1,
-                isCrit: Boolean(baseCalculation?.isCrit),
-                criticalChance:
-                    baseCalculation?.criticalChance ?? null,
-                criticalMultiplier:
-                    baseCalculation?.criticalMultiplier ?? 1,
-                enemyDefense,
-                damageBeforeDefense,
-                weaponId:
-                    baseCalculation
-                        ?.weaponId || null,
-                weaponName:
-                    baseCalculation
-                        ?.weaponName || null,
-                damageBreakdown:
-                    baseCalculation
-                        ? clone(baseCalculation)
-                        : null,
-                message
+                masteryLevel: Aethra.SkillSystem?.getSkillProgression?.(skill.id)?.level || 1
             };
+
+            if (result.hit) {
+                target.hp = Math.max(
+                    0,
+                    safeNumber(target.hp, 0) - safeNumber(result.amount, 0)
+                );
+            }
 
             if (
                 Aethra.BattleSystem

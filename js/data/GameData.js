@@ -332,6 +332,43 @@
                     "Uma espada simples e confiável para aventureiros iniciantes."
             },
 
+            training_sword: {
+                id: "training_sword", name: "Espada de Recruta", image: "sword_iron.png",
+                type: "weapon", slot: "weapon", weaponFamily: "sword", tier: 1, levelReq: 1,
+                damage: 4, damageMin: 3, damageMax: 5, price: 5, rarity: "Comum", stackable: false,
+                description: "Uma lâmina simples para aprender os fundamentos de Espadas."
+            },
+            training_axe: {
+                id: "training_axe", name: "Machado de Recruta", image: "starter_axe.svg",
+                type: "weapon", slot: "weapon", weaponFamily: "axe", tier: 1, levelReq: 1,
+                damage: 4, damageMin: 3, damageMax: 5, price: 5, rarity: "Comum", stackable: false,
+                description: "Pesado o bastante para ensinar que todo impacto cobra um risco."
+            },
+            training_mace: {
+                id: "training_mace", name: "Maça de Recruta", image: "starter_mace.svg",
+                type: "weapon", slot: "weapon", weaponFamily: "mace", tier: 1, levelReq: 1,
+                damage: 4, damageMin: 3, damageMax: 5, price: 5, rarity: "Comum", stackable: false,
+                description: "Uma arma contundente feita para aprender a quebrar defesas."
+            },
+            training_dagger: {
+                id: "training_dagger", name: "Adaga de Recruta", image: "starter_dagger.svg",
+                type: "weapon", slot: "weapon", weaponFamily: "dagger", tier: 1, levelReq: 1,
+                damage: 4, damageMin: 3, damageMax: 5, price: 5, rarity: "Comum", stackable: false,
+                description: "Lâmina leve para explorar velocidade, abertura e oportunismo."
+            },
+            training_bow: {
+                id: "training_bow", name: "Arco de Recruta", image: "starter_bow.svg",
+                type: "weapon", slot: "weapon", weaponFamily: "bow", tier: 1, levelReq: 1,
+                damage: 4, damageMin: 3, damageMax: 5, price: 5, rarity: "Comum", stackable: false,
+                description: "Um arco curto para dominar distância e precisão."
+            },
+            novice_focus: {
+                id: "novice_focus", name: "Foco do Iniciado", image: "starter_focus.svg",
+                type: "weapon", slot: "weapon", weaponFamily: "focus", tier: 1, levelReq: 1,
+                damage: 3, damageMin: 2, damageMax: 4, mag: 1, price: 5, rarity: "Comum", stackable: false,
+                description: "Canaliza as primeiras fórmulas de Fogo, Gelo e Trevas."
+            },
+
             potion_health: {
                 id: "potion_health",
                 name: "Poção de Vida",

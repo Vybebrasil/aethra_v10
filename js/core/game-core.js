@@ -30,16 +30,24 @@ window.Aethra = window.Aethra || {};
         const playerEquipment = createEmptyEquipment();
 
         const baseStats = {
-            str: 14,
-            mag: 10,
-            damageMin: 3,
-            damageMax: 5,
-            damage: 4,
+            str: 6,
+            mag: 4,
+            precision: 2,
+            vitality: 0,
+            agility: 0,
+            damageMin: 2,
+            damageMax: 4,
+            damage: 3,
             defense: 0,
-            maxHp: 100,
-            hp: 100,
-            maxMana: 50,
-            mana: 50
+            critical: 0.04,
+            criticalMultiplier: 1.75,
+            evasion: 0,
+            maxHp: 46,
+            hp: 46,
+            maxMana: 26,
+            mana: 26,
+            maxEnergy: 72,
+            energy: 72
         };
 
         return {
@@ -51,10 +59,21 @@ window.Aethra = window.Aethra || {};
             playerEquipment,
 
             hero: {
-                name: "Aethra",
-                gold: 301,
+                name: "Novo Herói",
+                characterCreated: false,
+                level: 1,
+                xpCurrent: 0,
+                xpTotal: 0,
+                skillPoints: 0,
+                gold: 100,
                 baseStats: clone(baseStats),
                 stats: clone(baseStats),
+                hp: baseStats.hp,
+                maxHp: baseStats.maxHp,
+                mana: baseStats.mana,
+                maxMana: baseStats.maxMana,
+                energy: baseStats.energy,
+                maxEnergy: baseStats.maxEnergy,
                 bag: [],
                 equipment: playerEquipment
             },

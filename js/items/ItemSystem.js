@@ -634,6 +634,7 @@ window.Aethra = window.Aethra || {};
                 baseName: template.name,
                 description: template.description || "",
                 image: template.image || template.icon || null,
+                weaponFamily: template.weaponFamily || template.family || null,
                 type: template.type || "misc",
                 itemType: String(
                     template.itemType ||

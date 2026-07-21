@@ -6,7 +6,12 @@
         throw new Error('[SaveManager] game-core.js deve ser carregado antes de SaveManager.js.');
     }
 
-    const SAVE_KEY = 'aethra_save_v68';
+    const configuredSaveKey = typeof window.AETHRA_SAVE_KEY === 'string'
+        ? window.AETHRA_SAVE_KEY.trim()
+        : '';
+    // A mudança para combate por rodadas e criação distribuída inaugura um
+    // formato de progressão novo. O save anterior permanece preservado.
+    const SAVE_KEY = configuredSaveKey || 'aethra_save_v71_disciplines';
     const AUTO_SAVE_DELAY = 120;
 
     let initialized = false;
@@ -185,6 +190,9 @@
                 'itemObtained',
                 'xpChanged',
                 'levelUp',
+                'character:created',
+                'skill-point:spent',
+                'hero:death-penalty',
                 'goldChanged',
                 'statsChanged',
                 'itemEquipped',
@@ -193,6 +201,14 @@
                 'bag:item-removed',
                 'hunt:started',
                 'hunt:ended',
+                'hunt:supply-used',
+                'hunt:record-updated',
+                'coliseum:match-resolved',
+                'coliseum:wager-locked',
+                'coliseum:wager-cancelled',
+                'coliseum:wager-settled',
+                'item-ranking:updated',
+                'item-ranking:removed',
                 'questUpdated'
             ];
 

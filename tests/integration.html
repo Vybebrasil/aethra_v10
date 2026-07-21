@@ -3,39 +3,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="../">
     <title>Aethra — Integration Test</title>
-    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="css/style.css?v=2">
+    <link rel="stylesheet" href="css/style-stability.css">
+    <link rel="stylesheet" href="css/ui-fluidity.css">
+    <link rel="stylesheet" href="css/actionbar-workspace.css">
+    <link rel="stylesheet" href="css/hunt-analyzer-workspace.css">
+    <link rel="stylesheet" href="css/combat-hud-modern.css">
+    <link rel="stylesheet" href="css/encounter-combat-hud.css?v=6">
+    <link rel="stylesheet" href="css/player-hud-workspace.css?v=1">
+    <link rel="stylesheet" href="css/character-creation.css?v=4">
+    <style>
+        .integration-test-report {
+            position: fixed;
+            z-index: 100000;
+            top: 16px;
+            right: 16px;
+            width: min(420px, calc(100vw - 32px));
+            max-height: calc(100vh - 32px);
+            overflow: auto;
+            padding: 18px;
+            border: 1px solid #4f5d73;
+            border-radius: 14px;
+            background: rgba(13, 18, 27, 0.96);
+            color: #edf2f7;
+            box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+            font: 14px/1.45 system-ui, sans-serif;
+        }
+
+        .integration-test-report header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .integration-test-report h1 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .integration-test-report [data-test-state] {
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: #6b7280;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+        }
+
+        .integration-test-report[data-test-status="passed"] [data-test-state] {
+            background: #15803d;
+        }
+
+        .integration-test-report[data-test-status="failed"] [data-test-state] {
+            background: #b91c1c;
+        }
+
+        .integration-test-report p {
+            margin: 10px 0 0;
+            color: #cbd5e1;
+        }
+
+        .integration-test-report ul {
+            display: grid;
+            gap: 6px;
+            margin: 14px 0 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .integration-test-report li {
+            display: grid;
+            gap: 2px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .integration-test-report li[data-passed="false"] strong {
+            color: #fca5a5;
+        }
+
+        .integration-test-report li[data-passed="true"] strong {
+            color: #86efac;
+        }
+
+        .integration-test-report li span {
+            color: #94a3b8;
+            font-size: 12px;
+        }
+    </style>
+    <script>
+        window.AETHRA_SAVE_KEY = "aethra_integration_test_v68";
+        window.AETHRA_INTEGRATION_TEST = true;
+        window.AETHRA_SETTINGS_KEY = "aethra.integration-test.settings";
+
+        try {
+            window.localStorage.removeItem(window.AETHRA_SAVE_KEY);
+        } catch (error) {
+            console.warn("Não foi possível limpar o save isolado de teste.", error);
+        }
+    </script>
 </head>
 <body>
+    <aside
+        id="integration-test-report"
+        class="integration-test-report"
+        data-test-status="running"
+        aria-live="polite"
+    >
+        <header>
+            <h1>Teste de integração</h1>
+            <span id="integration-test-state" data-test-state>Carregando</span>
+        </header>
+        <p id="integration-test-summary">Inicializando a engine isolada.</p>
+        <ul id="integration-test-checks"></ul>
+    </aside>
     <main id="game-container" class="app-shell">
-        <header class="topbar"><div><h1>Integration Test</h1><p>Abra o Console do navegador.</p></div><strong id="engine-status">Carregando</strong></header>
+        <header class="topbar"><div><h1>Integration Test</h1><p>O resultado aparece no painel de diagnóstico.</p></div><strong id="engine-status">Carregando</strong></header>
         <section id="city-view" class="game-window" data-aethra-window><div id="city-grid"></div></section>
         <section id="inventory-view" class="game-window hidden" data-aethra-window><div id="inventory-grid"></div><div id="equipment-grid"></div></section>
+        <section id="skills-view" class="game-window hidden" data-aethra-window aria-hidden="true">
+            <header class="window-header"><div><small>ActionBar e sobrevivência</small><h2>Skills e Prioridades</h2></div><button type="button" class="window-close" data-close-window="skills-view">×</button></header>
+            <div class="skills-priority-guide"></div>
+            <div id="skills-priority-status" class="skills-priority-status"></div>
+            <div id="skills-config-list" class="skills-config-list"></div>
+        </section>
         <section id="quests-view" class="game-window hidden" data-aethra-window><div id="quests-list"></div></section>
         <div id="stats-display"></div><div id="hunt-display"></div><div id="combat-display"></div><div id="boss-list"></div><div id="boss-weekly-reward"></div><div id="professions-grid"></div><div id="dungeon-list"></div><div id="hero-sprite" hidden></div>
     </main>
-    <script src="../js/core/game-core.js" defer></script>
-    <script src="../js/data/GameData.js" defer></script>
-    <script src="../js/infrastructure/SaveManager.js" defer></script>
-    <script src="../js/infrastructure/SettingsManager.js" defer></script>
-    <script src="../js/ui/WindowManager.js" defer></script>
-    <script src="../js/items/ItemSystem.js" defer></script>
-    <script src="../js/items/BagSystem.js" defer></script>
-    <script src="../js/items/EquipSystem.js" defer></script>
-    <script src="../js/progression/XPSystem.js" defer></script>
-    <script src="../js/items/LootSystem.js" defer></script>
-    <script src="../js/combat/CombatSystem.js" defer></script>
-    <script src="../js/combat/SkillSystem.js" defer></script>
-    <script src="../js/world/CityScene.js" defer></script>
-    <script src="../js/world/HuntSystem.js" defer></script>
-    <script src="../js/progression/ProfessionSystem.js" defer></script>
-    <script src="../js/combat/BossSystem.js" defer></script>
-    <script src="../js/progression/QuestSystem.js" defer></script>
-    <script src="../js/world/DungeonSystem.js" defer></script>
-    <script src="../js/market/MarketplaceSystem.js" defer></script>
-    <script src="../js/ui/RenderEngine.js" defer></script>
-    <script src="../js/ui/UI_Renderer.js" defer></script>
-    <script src="../js/tests/IntegrationTest.js" defer></script>
-    <script src="../js/core/GameLoader.js" defer></script>
+    <script src="js/core/game-core.js?v=3" defer></script>
+    <script src="js/data/GameData.js?v=2" defer></script>
+    <script src="js/data/monsters/CreatureBalanceConfig.js" defer></script>
+    <script src="js/data/monsters/MonsterAbilityParser.js" defer></script>
+    <script src="js/data/loot/LootProfileRegistry.js" defer></script>
+    <script src="js/data/monsters/MonsterCatalogAdapter.js" defer></script>
+    <script src="js/data/monsters/MonsterCatalogData.js" defer></script>
+    <script src="js/data/monsters/MonsterCatalog.js" defer></script>
+    <script src="js/data/hunts/HuntCatalog.js" defer></script>
+    <script src="js/world/EntityManager.js" defer></script>
+    <script src="js/infrastructure/SaveManager.js?v=3" defer></script>
+    <script src="js/infrastructure/SettingsManager.js?v=2" defer></script>
+    <script src="js/economy/EconomyRNGManager.js" defer></script>
+    <script src="js/ui/WindowManager.js" defer></script>
+    <script src="js/ui/TooltipManager.js?v=2" defer></script>
+    <script src="js/items/ItemSystem.js?v=2" defer></script>
+    <script src="js/items/BagSystem.js" defer></script>
+    <script src="js/items/EquipSystem.js" defer></script>
+    <script src="js/progression/XPSystem.js?v=2" defer></script>
+    <script src="js/items/LootSystem.js" defer></script>
+    <script src="js/data/items/EarlyGameItemCatalog.js?v=1" defer></script>
+    <script src="js/economy/ItemRankingSystem.js?v=3" defer></script>
+    <script src="js/combat/CombatSystem.js" defer></script>
+    <script src="js/combat/SkillSystem.js?v=4" defer></script>
+    <script src="js/progression/DisciplineSystem.js?v=1" defer></script>
+    <script src="js/combat/SkillController.js?v=4" defer></script>
+    <script src="js/combat/BattleSystem.js?v=5" defer></script>
+    <script src="js/pvp/ColiseumSystem.js?v=5" defer></script>
+    <script src="js/world/HuntSystem.js?v=3" defer></script>
+    <script src="js/progression/ProfessionSystem.js" defer></script>
+    <script src="js/progression/CharacterBuildSystem.js?v=4" defer></script>
+    <script src="js/world/ExplorationSystem.js" defer></script>
+    <script src="js/combat/BossSystem.js" defer></script>
+    <script src="js/progression/QuestSystem.js" defer></script>
+    <script src="js/world/DungeonSystem.js" defer></script>
+    <script src="js/market/MarketplaceSystem.js" defer></script>
+    <script src="js/ui/RenderEngine.js?v=3" defer></script>
+    <script src="js/ui/UI_Renderer.js" defer></script>
+    <script src="js/ui/UIManager.js" defer></script>
+    <script src="js/ui/HudExperience.js" defer></script>
+    <script src="js/ui/HudWorldMapAndDrops.js" defer></script>
+    <script src="js/ui/EncounterInteractionPass.js" defer></script>
+    <script src="js/ui/UIStabilityPass.js" defer></script>
+    <script src="js/ui/UIFluidityPass.js" defer></script>
+    <script src="js/ui/ActionBarWorkspace.js" defer></script>
+    <script src="js/ui/HuntAnalyzerWorkspace.js" defer></script>
+    <script src="js/ui/CombatHudModernizer.js?v=2" defer></script>
+    <script src="js/ui/EncounterCombatHUD.js?v=5" defer></script>
+    <script src="js/ui/PlayerHudWorkspace.js?v=3" defer></script>
+    <script src="js/ui/CharacterCreationUI.js?v=4" defer></script>
+    <script src="js/tests/IntegrationTest.js?v=11" defer></script>
+    <script src="js/core/GameLoader.js?v=2" defer></script>
 </body>
 </html>

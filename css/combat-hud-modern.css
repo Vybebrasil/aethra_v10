@@ -1,0 +1,716 @@
+/* Modern combat command bar and survival/loadout control center. */
+body.aethra-combat-hud-modern.aethra-actionbar-workspace {
+    --stable-actionbar-height: 154px;
+    --actionbar-slot-size: 76px;
+    --actionbar-toolbar-height: 23px;
+}
+
+body.aethra-combat-hud-modern #battle-actionbar-layer,
+body.aethra-combat-hud-modern #battle-actionbar-layer.battle-actionbar-overlay {
+    height: var(--stable-actionbar-height) !important;
+    min-height: var(--stable-actionbar-height) !important;
+    max-height: var(--stable-actionbar-height) !important;
+    border-top-color: rgba(110, 153, 169, 0.24) !important;
+    background: linear-gradient(180deg, rgba(10, 19, 24, 0.985), rgba(4, 10, 13, 0.995)) !important;
+    box-shadow: 0 -14px 38px rgba(0, 0, 0, 0.48) !important;
+}
+
+body.aethra-combat-hud-modern #battle-actionbar-layer > .battle-panel--actionbar {
+    grid-template-rows: 32px minmax(0, 1fr) !important;
+}
+
+body.aethra-combat-hud-modern #battle-actionbar-layer > .battle-panel--actionbar > .battle-panel__header {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    min-height: 32px !important;
+    height: 32px !important;
+    padding: 3px 10px !important;
+    border-bottom: 1px solid rgba(94, 133, 149, 0.17) !important;
+    background: rgba(11, 21, 26, 0.88) !important;
+}
+
+body.aethra-combat-hud-modern #battle-actionbar-layer .battle-panel__header > div:first-child {
+    flex: 0 0 auto;
+}
+
+body.aethra-combat-hud-modern #battle-actionbar-layer .battle-panel__header > div:first-child small {
+    display: none !important;
+}
+
+body.aethra-combat-hud-modern #battle-actionbar-layer .battle-panel__header h2 {
+    color: #ead89e !important;
+    font: 700 14px/1 "Cinzel", serif !important;
+    letter-spacing: 0.025em !important;
+}
+
+.combat-survival-strip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1 1 auto;
+    gap: 6px;
+    min-width: 0;
+}
+
+.modern-resource {
+    --resource-tone: #de5964;
+    display: grid;
+    grid-template-columns: auto minmax(30px, 1fr) auto;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+    outline: none;
+}
+
+.combat-survival-strip .modern-resource {
+    flex: 0 1 126px;
+    max-width: 150px;
+    min-height: 22px;
+    padding: 0 7px;
+    border: 1px solid rgba(99, 135, 149, 0.18);
+    border-radius: 6px;
+    background: rgba(6, 14, 18, 0.72);
+}
+
+.modern-resource--mana { --resource-tone: #64b9e7; }
+.modern-resource--energy { --resource-tone: #d7ad49; }
+.modern-resource small {
+    color: #8498a1;
+    font: 800 8px/1 "Outfit", sans-serif !important;
+    text-transform: uppercase;
+}
+
+.modern-resource > i {
+    position: relative;
+    display: block;
+    min-width: 28px;
+    height: 4px;
+    overflow: hidden;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.075);
+}
+
+.modern-resource > i > u {
+    position: absolute;
+    inset: 0 auto 0 0;
+    display: block;
+    border-radius: inherit;
+    background: var(--resource-tone);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--resource-tone) 52%, transparent);
+    text-decoration: none;
+    transition: width 180ms ease;
+}
+
+.modern-resource > b {
+    color: #dce7eb;
+    font: 800 9px/1 "Outfit", sans-serif;
+    font-variant-numeric: tabular-nums;
+}
+
+.combat-survival-strip__automation {
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-rows: auto auto;
+    align-items: center;
+    gap: 0 4px;
+    min-width: 42px;
+    color: #69dda0;
+}
+
+.combat-survival-strip__automation > i {
+    grid-row: 1 / 3;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #51e291;
+    box-shadow: 0 0 8px rgba(81, 226, 145, 0.65);
+}
+
+.combat-survival-strip__automation b { font: 850 9px/1 "Outfit", sans-serif; }
+.combat-survival-strip__automation small { color: #668078; font: 800 6px/1 "Outfit", sans-serif; }
+
+body.aethra-combat-hud-modern.aethra-actionbar-workspace #battle-actionbar-layer .combat-action-deck {
+    grid-template-columns: 292px minmax(0, 1fr) !important;
+    width: 100% !important;
+    gap: 9px !important;
+    padding: 5px 9px 7px !important;
+    overflow: hidden !important;
+}
+
+body.aethra-combat-hud-modern #battle-actionbar-layer .primary-attack-deck,
+body.aethra-combat-hud-modern #battle-actionbar-layer .skill-action-deck--workspace {
+    grid-template-rows: var(--actionbar-toolbar-height) minmax(0, 1fr) !important;
+    min-height: 0 !important;
+}
+
+body.aethra-combat-hud-modern #battle-actionbar-layer .combat-action-deck__label {
+    height: var(--actionbar-toolbar-height) !important;
+    min-height: var(--actionbar-toolbar-height) !important;
+    padding-inline: 2px !important;
+}
+
+body.aethra-combat-hud-modern #battle-actionbar-layer .combat-action-deck__label span {
+    color: #b8c6cc !important;
+    font-size: 8px !important;
+    letter-spacing: 0.08em !important;
+}
+
+body.aethra-combat-hud-modern.aethra-actionbar-workspace #battle-actionbar-layer .primary-attack-bar {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    height: var(--actionbar-slot-size) !important;
+    min-height: var(--actionbar-slot-size) !important;
+    max-height: var(--actionbar-slot-size) !important;
+    overflow: visible !important;
+}
+
+body.aethra-combat-hud-modern.aethra-actionbar-workspace #battle-actionbar-layer .primary-attack-card,
+body.aethra-combat-hud-modern.aethra-actionbar-workspace #battle-actionbar-layer .primary-attack-card--modern {
+    display: grid !important;
+    grid-template-rows: minmax(0, 1fr) 21px !important;
+    width: 100% !important;
+    height: var(--actionbar-slot-size) !important;
+    min-height: var(--actionbar-slot-size) !important;
+    max-height: var(--actionbar-slot-size) !important;
+    overflow: hidden !important;
+    border-radius: 9px !important;
+    background: linear-gradient(150deg, rgba(17, 30, 36, 0.98), rgba(5, 12, 16, 0.99)) !important;
+}
+
+body.aethra-combat-hud-modern.aethra-actionbar-workspace #battle-actionbar-layer .primary-attack-card__button {
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: 29px minmax(0, 1fr) auto !important;
+    grid-template-rows: 16px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 0 6px !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: 5px 6px !important;
+    overflow: hidden !important;
+}
+
+body.aethra-combat-hud-modern #battle-actionbar-layer .primary-attack-card__mouse {
+    position: static !important;
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    display: grid !important;
+    place-items: center !important;
+    width: 29px !important;
+    height: 16px !important;
+    min-width: 29px !important;
+    padding: 0 !important;
+    font-size: 7px !important;
+}
+
+body.aethra-combat-hud-modern #battle-actionbar-layer .primary-attack-card__icon {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    align-self: center !important;
+    width: 29px !important;
+    height: 29px !important;
+    margin: 0 !important;
+    font-size: 16px !important;
+}
+
+body.aethra-combat-hud-modern #battle-actionbar-layer .primary-attack-card__copy {
+    grid-column: 2 / 4 !important;
+    grid-row: 1 / 3 !important;
+    align-self: center !important;
+    min-width: 0 !important;
+    padding: 0 22px 0 0 !important;
+}
+
+body.aethra-combat-hud-modern #battle-actionbar-layer .primary-attack-card__copy b,
+body.aethra-combat-hud-modern #battle-actionbar-layer .primary-attack-card__copy small {
+    display: block !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+body.aethra-combat-hud-modern #battle-actionbar-layer .primary-attack-card__copy b {
+    color: #e8eff1 !important;
+    font-size: 10px !important;
+}
+
+body.aethra-combat-hud-modern #battle-actionbar-layer .primary-attack-card__copy small {
+    margin-top: 3px !important;
+    color: #718791 !important;
+    font-size: 7px !important;
+}
+
+body.aethra-combat-hud-modern #battle-actionbar-layer .primary-attack-card__interval {
+    position: absolute !important;
+    inset: 6px 6px auto auto !important;
+    color: #d9bd67 !important;
+    font-size: 7px !important;
+}
+
+body.aethra-combat-hud-modern #battle-actionbar-layer .primary-attack-card__cooldown {
+    display: none !important;
+}
+
+body.aethra-combat-hud-modern #battle-actionbar-layer .primary-attack-card__auto {
+    display: grid !important;
+    place-items: center !important;
+    height: 21px !important;
+    min-height: 21px !important;
+    max-height: 21px !important;
+}
+
+body.aethra-combat-hud-modern #battle-actionbar-layer .primary-attack-card__auto span {
+    gap: 5px !important;
+    font-size: 7px !important;
+}
+
+body.aethra-combat-hud-modern #battle-actionbar-layer .primary-attack-card__auto i {
+    width: 22px !important;
+    height: 10px !important;
+}
+
+body.aethra-combat-hud-modern #battle-actionbar-layer .primary-attack-card__auto i::after {
+    top: 1px !important;
+    left: 1px !important;
+}
+
+body.aethra-combat-hud-modern #battle-actionbar-layer .primary-attack-card__auto input:checked + span i::after {
+    transform: translateX(12px) !important;
+}
+
+body.aethra-combat-hud-modern.aethra-actionbar-workspace #battle-actionbar-layer #skill-action-bar,
+body.aethra-combat-hud-modern.aethra-actionbar-workspace #battle-actionbar-layer #skill-action-bar .battle-action-slot,
+body.aethra-combat-hud-modern.aethra-actionbar-workspace #battle-actionbar-layer #skill-action-bar .battle-action-slot.is-empty,
+body.aethra-combat-hud-modern.aethra-actionbar-workspace #battle-actionbar-layer .skill-action-deck #skill-action-bar .battle-action-slot.is-filled {
+    height: var(--actionbar-slot-size) !important;
+    min-height: var(--actionbar-slot-size) !important;
+    max-height: var(--actionbar-slot-size) !important;
+}
+
+body.aethra-combat-hud-modern .actionbar-workspace__toolbar {
+    height: var(--actionbar-toolbar-height) !important;
+}
+
+body.aethra-combat-hud-modern #battle-actionbar-layer #skill-action-bar .battle-action-slot__skill {
+    border-radius: 9px !important;
+    background: linear-gradient(150deg, rgba(17, 30, 36, 0.98), rgba(5, 12, 16, 0.99)) !important;
+}
+
+/* Skills and survival window */
+#skills-view.skills-view--modern {
+    width: min(1000px, calc(100vw - 24px)) !important;
+    height: min(720px, calc(100vh - 24px)) !important;
+    max-width: calc(100vw - 24px) !important;
+    max-height: calc(100vh - 24px) !important;
+    grid-template-rows: auto auto minmax(0, 1fr) !important;
+    overflow: hidden !important;
+    border-color: rgba(111, 150, 165, 0.26) !important;
+    background: linear-gradient(145deg, rgba(10, 20, 25, 0.99), rgba(4, 10, 14, 0.995)) !important;
+    box-shadow: 0 24px 74px rgba(0, 0, 0, 0.66) !important;
+}
+
+#skills-view.skills-view--modern .window-header {
+    min-height: 62px !important;
+    padding: 10px 16px !important;
+    border-bottom-color: rgba(105, 143, 158, 0.19) !important;
+    background: rgba(13, 24, 30, 0.96) !important;
+}
+
+#skills-view.skills-view--modern .window-header small {
+    color: #6c8590 !important;
+    font-size: 8px !important;
+    letter-spacing: 0.11em !important;
+}
+
+#skills-view.skills-view--modern .window-header h2 {
+    color: #ead596 !important;
+    font-size: 21px !important;
+}
+
+#skills-view.skills-view--modern .skills-priority-guide,
+#skills-view.skills-view--modern .skills-priority-guide[hidden] {
+    display: none !important;
+}
+
+#skills-view.skills-view--modern .actionbar-loadout-editor {
+    display: none !important;
+}
+
+#skills-view.skills-view--modern .skills-priority-status {
+    margin: 0 !important;
+    padding: 10px 12px 8px !important;
+}
+
+.modern-combat-summary {
+    display: grid;
+    grid-template-columns: minmax(220px, 0.8fr) minmax(420px, 1.4fr);
+    gap: 8px;
+}
+
+.modern-combat-summary__state {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 3px 9px;
+    min-width: 0;
+    padding: 9px 11px;
+    border: 1px solid rgba(84, 154, 114, 0.2);
+    border-radius: 9px;
+    background: linear-gradient(100deg, rgba(14, 47, 32, 0.46), rgba(8, 18, 22, 0.86));
+}
+
+.modern-combat-summary__state > span {
+    grid-row: 1 / 3;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #68dfa0;
+    font: 850 8px/1 "Outfit", sans-serif;
+    letter-spacing: 0.08em;
+}
+
+.modern-combat-summary__state > span i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #51e291;
+    box-shadow: 0 0 9px rgba(81, 226, 145, 0.62);
+}
+
+.modern-combat-summary__state strong {
+    min-width: 0;
+    overflow: hidden;
+    color: #dce8eb;
+    font: 750 12px/1.1 "Outfit", sans-serif !important;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.modern-combat-summary__state small {
+    min-width: 0;
+    overflow: hidden;
+    color: #71868f !important;
+    font: 600 9px/1.1 "Outfit", sans-serif !important;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.modern-combat-summary__resources {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.modern-combat-summary__resources .modern-resource {
+    grid-template-columns: auto minmax(35px, 1fr);
+    grid-template-rows: auto auto;
+    min-height: 58px;
+    padding: 8px 10px;
+    border: 1px solid rgba(99, 136, 150, 0.2);
+    border-radius: 9px;
+    background: rgba(8, 17, 22, 0.82);
+}
+
+.modern-combat-summary__resources .modern-resource > i { grid-column: 1 / -1; height: 5px; }
+.modern-combat-summary__resources .modern-resource > b { justify-self: end; font-size: 11px; }
+
+#skills-view.skills-view--modern .skills-config-list {
+    min-height: 0 !important;
+    padding: 0 12px 12px !important;
+    overflow: hidden !important;
+}
+
+.modern-combat-config {
+    display: grid;
+    grid-template-columns: 322px minmax(0, 1fr);
+    gap: 9px;
+    height: 100%;
+    min-height: 0;
+}
+
+.modern-loadout-panel,
+.modern-rules-panel {
+    min-width: 0;
+    min-height: 0;
+    border: 1px solid rgba(98, 136, 151, 0.2);
+    border-radius: 11px;
+    background: rgba(7, 15, 19, 0.86);
+}
+
+.modern-loadout-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    overflow: hidden;
+}
+
+.modern-loadout-panel > header,
+.modern-rules-panel > header,
+.modern-skill-library > header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.modern-loadout-panel > header > div,
+.modern-rules-panel > header > div {
+    display: grid;
+    gap: 2px;
+}
+
+.modern-loadout-panel > header small,
+.modern-rules-panel > header small {
+    color: #667e89;
+    font: 800 8px/1 "Outfit", sans-serif;
+    letter-spacing: 0.09em;
+}
+
+.modern-loadout-panel > header strong,
+.modern-rules-panel > header strong {
+    color: #e5d093;
+    font: 700 14px/1.1 "Cinzel", serif !important;
+}
+
+.modern-loadout-panel > header nav { display: flex; gap: 3px; }
+.modern-loadout-panel > header nav button,
+.modern-skill-library > header button {
+    display: grid;
+    place-items: center;
+    width: 25px;
+    height: 25px;
+    padding: 0;
+    border: 1px solid rgba(98, 137, 151, 0.21);
+    border-radius: 6px;
+    background: rgba(12, 23, 29, 0.92);
+    color: #8198a2;
+    font: 800 10px/1 "Outfit", sans-serif;
+    cursor: pointer;
+}
+
+.modern-loadout-panel > header nav button.is-active {
+    border-color: rgba(224, 187, 91, 0.55);
+    color: #efd37d;
+    background: rgba(189, 144, 43, 0.13);
+    box-shadow: inset 0 -2px #d4ae4e;
+}
+
+.modern-loadout-panel > header nav button:disabled { opacity: 0.28; cursor: not-allowed; }
+.modern-loadout-panel > p { margin: 0; color: #71858e; font: 600 9px/1.2 "Outfit", sans-serif; }
+
+.modern-loadout-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 5px;
+}
+
+.modern-loadout-slot {
+    position: relative;
+    display: grid;
+    grid-template-rows: 1fr auto;
+    place-items: center;
+    min-width: 0;
+    height: 58px;
+    padding: 6px 4px 5px;
+    overflow: hidden;
+    border: 1px solid rgba(91, 129, 144, 0.2);
+    border-radius: 8px;
+    background: linear-gradient(145deg, rgba(17, 29, 35, 0.96), rgba(6, 13, 17, 0.96));
+    color: #d8c471;
+    cursor: pointer;
+    transition: transform 140ms ease, border-color 140ms ease, background-color 140ms ease;
+}
+
+.modern-loadout-slot:hover { transform: translateY(-1px); border-color: rgba(121, 180, 203, 0.48); }
+.modern-loadout-slot.is-selected { border-color: rgba(226, 189, 91, 0.75); background: linear-gradient(145deg, rgba(54, 46, 26, 0.9), rgba(8, 16, 19, 0.98)); box-shadow: 0 0 0 1px rgba(225, 185, 82, 0.08), 0 0 15px rgba(192, 145, 43, 0.1); }
+.modern-loadout-slot.is-empty { border-style: dashed; color: #516b76; }
+.modern-loadout-slot kbd { position: absolute; top: 4px; left: 5px; color: #79909a; font: 800 8px/1 "Outfit", sans-serif; }
+.modern-loadout-slot > strong { margin-top: 4px; font: 500 18px/1 "Outfit", sans-serif; }
+.modern-loadout-slot > span { width: 100%; overflow: hidden; color: #80949d; font: 650 7px/1 "Outfit", sans-serif; text-overflow: ellipsis; white-space: nowrap; }
+.modern-loadout-slot > i { position: absolute; right: 4px; bottom: 4px; display: grid; place-items: center; width: 13px; height: 13px; border: 1px solid rgba(83, 220, 142, 0.4); border-radius: 50%; background: rgba(10, 54, 34, 0.9); color: #68e39c; font: 850 7px/1 "Outfit", sans-serif; font-style: normal; }
+
+.modern-skill-library {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 0;
+    padding-top: 3px;
+    border-top: 1px solid rgba(93, 130, 144, 0.15);
+}
+
+.modern-skill-library > header span { display: grid; gap: 2px; }
+.modern-skill-library > header strong { color: #cbd8dd; font: 800 10px/1 "Outfit", sans-serif; text-transform: uppercase; }
+.modern-skill-library > header small { color: #6f858f; font: 650 8px/1 "Outfit", sans-serif; }
+.modern-skill-library > header button { width: auto; padding: 0 8px; color: #cb8a85; }
+.modern-skill-library > div { display: grid; gap: 4px; min-height: 0; overflow-y: auto; scrollbar-width: thin; }
+
+.modern-skill-pick {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    align-items: center;
+    gap: 7px;
+    min-height: 43px;
+    padding: 4px 7px;
+    border: 1px solid rgba(91, 128, 142, 0.16);
+    border-radius: 7px;
+    background: rgba(10, 20, 25, 0.82);
+    color: #d7e1e5;
+    text-align: left;
+    cursor: pointer;
+}
+
+.modern-skill-pick:hover,
+.modern-skill-pick.is-current { border-color: rgba(221, 184, 89, 0.46); background: rgba(42, 36, 21, 0.62); }
+.modern-skill-pick > strong { display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid rgba(196, 157, 62, 0.23); border-radius: 7px; background: rgba(6, 13, 16, 0.8); font-size: 16px; }
+.modern-skill-pick > span { display: grid; gap: 3px; min-width: 0; }
+.modern-skill-pick b { overflow: hidden; font: 750 10px/1 "Outfit", sans-serif; text-overflow: ellipsis; white-space: nowrap; }
+.modern-skill-pick small { overflow: hidden; color: #70858e; font: 600 8px/1 "Outfit", sans-serif; text-overflow: ellipsis; white-space: nowrap; }
+
+.modern-decision-guide { flex: 0 0 auto; border-top: 1px solid rgba(93, 130, 144, 0.15); }
+.modern-decision-guide summary { padding: 8px 1px 2px; color: #8298a2; font: 750 9px/1 "Outfit", sans-serif; cursor: pointer; }
+.modern-decision-guide ol { display: grid; gap: 4px; margin: 7px 0 0; padding: 0; list-style: none; }
+.modern-decision-guide li { display: grid; grid-template-columns: 18px 1fr; align-items: center; gap: 5px; color: #71858e; font: 600 8px/1.2 "Outfit", sans-serif; }
+.modern-decision-guide li b { display: grid; place-items: center; width: 17px; height: 17px; border-radius: 5px; background: rgba(207, 167, 68, 0.1); color: #d4b75c; }
+
+.modern-rules-panel {
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    gap: 8px;
+    padding: 10px;
+    overflow: hidden;
+}
+
+.modern-rules-panel > header > span { padding: 4px 7px; border-radius: 999px; background: rgba(255, 255, 255, 0.04); color: #80959e; font: 750 8px/1 "Outfit", sans-serif; }
+
+.modern-primary-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5px;
+}
+
+.modern-primary-control {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 30px;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    min-height: 52px;
+    padding: 6px 8px;
+    border: 1px solid rgba(92, 140, 160, 0.24);
+    border-radius: 8px;
+    background: rgba(10, 22, 27, 0.88);
+    cursor: pointer;
+}
+
+.modern-primary-control.is-unavailable { opacity: 0.5; filter: saturate(0.45); }
+.modern-primary-control > span { position: relative; display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 2px 7px; min-width: 0; }
+.modern-primary-control kbd { grid-row: 1 / 3; display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid rgba(100, 176, 205, 0.32); border-radius: 6px; color: #8fcae0; background: rgba(12, 31, 38, 0.82); font: 800 8px/1 "Outfit", sans-serif; }
+.modern-primary-control strong { overflow: hidden; color: #dbe6ea; font: 750 10px/1 "Outfit", sans-serif !important; text-overflow: ellipsis; white-space: nowrap; }
+.modern-primary-control small { overflow: hidden; color: #6e838c; font: 600 8px/1 "Outfit", sans-serif; text-overflow: ellipsis; white-space: nowrap; }
+.modern-primary-control input { position: absolute; opacity: 0; pointer-events: none; }
+.modern-primary-control > i { position: relative; width: 28px; height: 14px; border: 1px solid #40545c; border-radius: 99px; background: #132127; }
+.modern-primary-control > i::after { content: ""; position: absolute; top: 2px; left: 2px; width: 8px; height: 8px; border-radius: 50%; background: #6b7d84; transition: transform 150ms ease; }
+.modern-primary-control input:checked + i { border-color: #35955c; background: rgba(25, 104, 57, 0.48); }
+.modern-primary-control input:checked + i::after { transform: translateX(14px); background: #6ce49c; }
+
+.modern-rules-list {
+    display: grid;
+    align-content: start;
+    gap: 6px;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 2px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(201, 165, 77, 0.38) transparent;
+}
+
+.modern-skill-rule {
+    --rule-tone: #b777e5;
+    display: grid;
+    grid-template-columns: 43px minmax(140px, 1.15fr) minmax(92px, 0.75fr) 94px 76px;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+    min-height: 70px;
+    padding: 7px;
+    border: 1px solid rgba(100, 137, 151, 0.2);
+    border-left: 3px solid var(--rule-tone);
+    border-radius: 9px;
+    background: linear-gradient(100deg, rgba(16, 27, 33, 0.96), rgba(7, 14, 18, 0.94));
+}
+
+.modern-skill-rule.is-damage { --rule-tone: #d66f58; }
+.modern-skill-rule.is-support { --rule-tone: #55d68f; }
+.modern-skill-rule__priority { display: grid; grid-template-columns: 1fr; gap: 4px; }
+.modern-skill-rule__priority > span { display: grid; place-items: center; width: 35px; height: 31px; border: 1px solid rgba(205, 165, 66, 0.22); border-radius: 6px; background: rgba(6, 13, 16, 0.72); }
+.modern-skill-rule__priority small { color: #756f5b; font: 800 6px/1 "Outfit", sans-serif; }
+.modern-skill-rule__priority b { color: #e3c466; font: 850 12px/1 "Outfit", sans-serif; }
+.modern-skill-rule__priority > div { display: flex; gap: 3px; }
+.modern-skill-rule__priority button { display: grid; place-items: center; width: 16px; height: 16px; padding: 0; border: 1px solid rgba(104, 139, 151, 0.2); border-radius: 4px; background: rgba(7, 14, 18, 0.8); color: #8298a1; font-size: 8px; cursor: pointer; }
+.modern-skill-rule__priority button:disabled { opacity: 0.22; cursor: not-allowed; }
+
+.modern-skill-rule__identity { display: grid; grid-template-columns: 39px minmax(0, 1fr); align-items: center; gap: 8px; min-width: 0; }
+.modern-skill-rule__identity > span { display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid color-mix(in srgb, var(--rule-tone) 42%, #33464e); border-radius: 8px; background: rgba(5, 12, 15, 0.76); font-size: 20px; }
+.modern-skill-rule__identity > div { display: grid; gap: 4px; min-width: 0; }
+.modern-skill-rule__identity strong { overflow: hidden; color: #e2eaed; font: 750 11px/1 "Outfit", sans-serif !important; text-overflow: ellipsis; white-space: nowrap; }
+.modern-skill-rule__identity small { overflow: hidden; color: #71858e; font: 600 8px/1 "Outfit", sans-serif; text-overflow: ellipsis; white-space: nowrap; }
+
+.modern-skill-rule__facts { display: flex; align-items: center; gap: 5px; min-width: 0; color: #80949d; font: 650 8px/1.2 "Outfit", sans-serif; }
+.modern-skill-rule__facts i { width: 3px; height: 3px; flex: 0 0 3px; border-radius: 50%; background: #526a74; }
+
+.modern-auto-switch { cursor: pointer; }
+.modern-auto-switch input { position: absolute; opacity: 0; pointer-events: none; }
+.modern-auto-switch > span { display: flex; align-items: center; gap: 6px; min-height: 29px; padding: 4px 7px; border: 1px solid rgba(101, 137, 150, 0.19); border-radius: 7px; color: #7d9098; background: rgba(5, 12, 15, 0.66); }
+.modern-auto-switch i { position: relative; width: 25px; height: 12px; flex: 0 0 25px; border: 1px solid #40535b; border-radius: 99px; background: #132027; }
+.modern-auto-switch i::after { content: ""; position: absolute; top: 2px; left: 2px; width: 6px; height: 6px; border-radius: 50%; background: #6d7c82; transition: transform 150ms ease; }
+.modern-auto-switch b { font: 750 8px/1 "Outfit", sans-serif; white-space: nowrap; }
+.modern-auto-switch input:checked + span { border-color: rgba(68, 185, 111, 0.32); color: #64de98; background: rgba(14, 62, 36, 0.32); }
+.modern-auto-switch input:checked + span i { border-color: #319154; background: rgba(25, 105, 56, 0.48); }
+.modern-auto-switch input:checked + span i::after { transform: translateX(13px); background: #6ce49c; }
+
+.modern-use-now { min-height: 29px; padding: 0 7px; border: 1px solid rgba(201, 166, 79, 0.3); border-radius: 7px; background: rgba(83, 61, 20, 0.16); color: #d6bb6c; font: 750 8px/1 "Outfit", sans-serif; cursor: pointer; }
+.modern-use-now:hover { border-color: rgba(226, 188, 92, 0.65); background: rgba(105, 76, 23, 0.25); }
+
+.modern-heal-rule { grid-column: 2 / -1; display: grid; grid-template-columns: 120px minmax(0, 1fr); align-items: center; gap: 9px; padding: 6px 8px; border: 1px solid rgba(69, 180, 109, 0.18); border-radius: 7px; background: rgba(10, 45, 28, 0.28); }
+.modern-heal-rule > span { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.modern-heal-rule small { color: #71907d; font: 800 7px/1 "Outfit", sans-serif; }
+.modern-heal-rule output { color: #68e49c; font: 850 11px/1 "Outfit", sans-serif; }
+.modern-heal-rule input[type="range"] { width: 100%; height: 5px; appearance: none; border-radius: 99px; background: linear-gradient(90deg, #4edb8f var(--threshold), rgba(255, 255, 255, 0.08) var(--threshold)); cursor: pointer; }
+.modern-heal-rule input[type="range"]::-webkit-slider-thumb { width: 14px; height: 14px; appearance: none; border: 2px solid #0c1c16; border-radius: 50%; background: #77e9aa; box-shadow: 0 0 0 1px rgba(92, 219, 146, 0.35); }
+
+.modern-rules-empty { display: grid; place-items: center; gap: 5px; min-height: 180px; border: 1px dashed rgba(97, 134, 148, 0.2); border-radius: 9px; color: #6e838c; text-align: center; }
+.modern-rules-empty strong { color: #aebdc3; font: 750 12px/1 "Outfit", sans-serif !important; }
+.modern-rules-empty span { font: 600 9px/1.3 "Outfit", sans-serif; }
+
+@media (max-width: 900px) {
+    body.aethra-combat-hud-modern.aethra-actionbar-workspace #battle-actionbar-layer .combat-action-deck { grid-template-columns: 252px minmax(0, 1fr) !important; }
+    .combat-survival-strip .modern-resource { flex-basis: 92px; }
+    .modern-combat-config { grid-template-columns: 292px minmax(0, 1fr); }
+    .modern-skill-rule { grid-template-columns: 40px minmax(120px, 1fr) 90px 74px; }
+    .modern-skill-rule__facts { display: none; }
+    .modern-heal-rule { grid-column: 2 / -1; }
+}
+
+@media (max-width: 720px) {
+    #skills-view.skills-view--modern { overflow-y: auto !important; }
+    .modern-combat-summary { grid-template-columns: 1fr; }
+    .modern-combat-config { grid-template-columns: 1fr; height: auto; }
+    #skills-view.skills-view--modern .skills-config-list { overflow-y: auto !important; }
+    .modern-loadout-panel { min-height: 520px; }
+    .modern-rules-panel { min-height: 420px; }
+    .combat-survival-strip .modern-resource--mana,
+    .combat-survival-strip .modern-resource--energy { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .modern-resource > i > u,
+    .modern-loadout-slot,
+    .modern-primary-control > i::after,
+    .modern-auto-switch i::after { transition: none; }
+}

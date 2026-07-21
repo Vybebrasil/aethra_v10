@@ -78,6 +78,7 @@ window.Aethra = window.Aethra || {};
             primarySlot: "left",
             cost: { resource: "energy", amount: 0 },
             cooldown: 1,
+            cooldownRounds: 0,
             effect: {
                 type: "damage",
                 damageMultiplier: 1,
@@ -96,6 +97,7 @@ window.Aethra = window.Aethra || {};
             primarySlot: "right",
             cost: { resource: "energy", amount: 0 },
             cooldown: 1.8,
+            cooldownRounds: 0,
             effect: {
                 type: "damage",
                 damageMultiplier: 0.7,
@@ -110,13 +112,80 @@ window.Aethra = window.Aethra || {};
             description: "Um golpe lento que causa dano físico elevado.",
             icon: "🗡",
             type: "damage",
+            disciplineId: "unarmed",
             cost: { resource: "energy", amount: 10 },
             cooldown: 3,
+            cooldownRounds: 3,
             effect: {
                 type: "damage",
                 damageMultiplier: 2.5,
                 damageType: "physical"
             }
+        },
+
+        precise_strike: {
+            id: "precise_strike",
+            name: "Corte Preciso",
+            description: "Técnica de espada confiável que privilegia acerto e consistência.",
+            icon: "⚔",
+            type: "damage",
+            disciplineId: "sword",
+            cost: { resource: "energy", amount: 8 },
+            cooldown: 2,
+            cooldownRounds: 2,
+            effect: { type: "damage", damageMultiplier: 1.45, damageType: "physical" }
+        },
+
+        brutal_cleave: {
+            id: "brutal_cleave",
+            name: "Talho Brutal",
+            description: "Ataque de machado impreciso, pesado e com grande teto de dano.",
+            icon: "🪓",
+            type: "damage",
+            disciplineId: "axe",
+            cost: { resource: "energy", amount: 12 },
+            cooldown: 3,
+            cooldownRounds: 3,
+            effect: { type: "damage", damageMultiplier: 2.05, damageType: "physical" }
+        },
+
+        armor_breaker: {
+            id: "armor_breaker",
+            name: "Quebra-Armadura",
+            description: "Impacto de maça que atravessa parte da Defesa do alvo.",
+            icon: "◆",
+            type: "damage",
+            disciplineId: "mace",
+            cost: { resource: "energy", amount: 10 },
+            cooldown: 3,
+            cooldownRounds: 3,
+            effect: { type: "damage", damageMultiplier: 1.7, damageType: "physical" }
+        },
+
+        twin_fang: {
+            id: "twin_fang",
+            name: "Presa Dupla",
+            description: "Ataque rápido de adaga com alta chance de abrir um segundo corte.",
+            icon: "†",
+            type: "damage",
+            disciplineId: "dagger",
+            cost: { resource: "energy", amount: 7 },
+            cooldown: 2,
+            cooldownRounds: 2,
+            effect: { type: "damage", damageMultiplier: 1.28, damageType: "physical" }
+        },
+
+        aimed_shot: {
+            id: "aimed_shot",
+            name: "Tiro Mirado",
+            description: "Disparo paciente que procura um ponto vital do inimigo.",
+            icon: "➶",
+            type: "damage",
+            disciplineId: "bow",
+            cost: { resource: "energy", amount: 9 },
+            cooldown: 2,
+            cooldownRounds: 2,
+            effect: { type: "damage", damageMultiplier: 1.55, damageType: "physical" }
         },
 
         heal: {
@@ -125,9 +194,11 @@ window.Aethra = window.Aethra || {};
             description: "Restaura parte da vida do herói.",
             icon: "✚",
             type: "heal",
+            disciplineId: "restoration",
             hpThreshold: 50,
             cost: { resource: "mana", amount: 15 },
             cooldown: 5,
+            cooldownRounds: 3,
             effect: {
                 type: "heal",
                 baseAmount: 18,
@@ -142,8 +213,10 @@ window.Aethra = window.Aethra || {};
             description: "Aumenta temporariamente a defesa e o bloqueio.",
             icon: "🛡",
             type: "buff",
+            disciplineId: "shield",
             cost: { resource: "energy", amount: 8 },
             cooldown: 6,
+            cooldownRounds: 3,
             effect: {
                 type: "buff",
                 stat: "defense",
@@ -159,18 +232,47 @@ window.Aethra = window.Aethra || {};
             description: "Ataque mágico com chance de causar queimadura.",
             icon: "🔥",
             type: "damage",
+            disciplineId: "fire",
             cost: { resource: "mana", amount: 12 },
             cooldown: 2.5,
+            cooldownRounds: 2,
             effect: {
                 type: "damage",
                 damageMultiplier: 1.8,
                 damageType: "magic",
+                magicScaling: 0.7,
                 status: {
                     id: "burn",
                     chance: 0.25,
                     duration: 3000
                 }
             }
+        },
+
+        ice_shard: {
+            id: "ice_shard",
+            name: "Estilhaço de Gelo",
+            description: "Projétil estável que pode congelar e enfraquecer a próxima ação inimiga.",
+            icon: "❄",
+            type: "damage",
+            disciplineId: "ice",
+            cost: { resource: "mana", amount: 10 },
+            cooldown: 2,
+            cooldownRounds: 2,
+            effect: { type: "damage", damageMultiplier: 1.55, damageType: "magic", magicScaling: 0.72 }
+        },
+
+        shadow_bolt: {
+            id: "shadow_bolt",
+            name: "Seta Sombria",
+            description: "Magia arriscada que pode drenar a vitalidade do alvo.",
+            icon: "☾",
+            type: "damage",
+            disciplineId: "shadow",
+            cost: { resource: "mana", amount: 11 },
+            cooldown: 2,
+            cooldownRounds: 2,
+            effect: { type: "damage", damageMultiplier: 1.7, damageType: "magic", magicScaling: 0.78 }
         }
     };
 
@@ -188,6 +290,7 @@ window.Aethra = window.Aethra || {};
 
             Aethra.EventBus.on("BattleStarted", () => {
                 this.resetPrimaryAttackCooldowns();
+                this.resetRoundCooldowns();
             });
 
             Aethra.EventBus.on("game:reset", () => {
@@ -242,6 +345,10 @@ window.Aethra = window.Aethra || {};
 
             if (forceReset || !hero.cooldowns || typeof hero.cooldowns !== "object") {
                 hero.cooldowns = {};
+            }
+
+            if (forceReset || !hero.roundCooldowns || typeof hero.roundCooldowns !== "object") {
+                hero.roundCooldowns = {};
             }
 
             if (forceReset || !Array.isArray(hero.actionBars)) {
@@ -363,7 +470,10 @@ window.Aethra = window.Aethra || {};
             if (!skill) return 0;
 
             const cost = normalizeCost(skill.cost);
-            const cooldownSeconds = normalizeCooldown(skill.cooldown) / 1000;
+            const cooldownSeconds = Math.max(
+                normalizeCooldown(skill.cooldown) / 1000,
+                safeNumber(skill.cooldownRounds, 0)
+            );
             let reward = skillId === "basic_attack" ? 2 : 3;
 
             reward += Math.min(4, Math.floor(cost.amount / 5));
@@ -929,13 +1039,16 @@ window.Aethra = window.Aethra || {};
 
         setResource(resourceName, value, reason = "skill-system") {
             this.ensureState();
-            const stats = Aethra.GameState.hero.stats;
+            const hero = Aethra.GameState.hero;
+            const stats = hero.stats;
             const maximumKey = `max${resourceName.charAt(0).toUpperCase()}${resourceName.slice(1)}`;
             const maximum = Math.max(0, safeNumber(stats[maximumKey], Infinity));
             const previous = Math.max(0, safeNumber(stats[resourceName], 0));
             const next = clamp(safeNumber(value, previous), 0, maximum);
 
             stats[resourceName] = next;
+            hero[resourceName] = next;
+            if (Number.isFinite(maximum)) hero[maximumKey] = maximum;
 
             Aethra.EventBus.emit("resourceChanged", {
                 resource: resourceName,
@@ -959,6 +1072,10 @@ window.Aethra = window.Aethra || {};
 
         getCooldownRemaining(skillId, now = Date.now()) {
             this.ensureState();
+            if (Aethra.GameState.battle?.isFighting) {
+                const rounds = this.getCooldownRoundsRemaining(skillId);
+                return rounds * Math.max(100, safeNumber(Aethra.BattleSystem?.config?.roundMs, 1800));
+            }
             const readyAt = safeNumber(
                 Aethra.GameState.hero.cooldowns[skillId],
                 0
@@ -967,7 +1084,40 @@ window.Aethra = window.Aethra || {};
         },
 
         isOnCooldown(skillId) {
+            if (Aethra.GameState.battle?.isFighting) {
+                return this.getCooldownRoundsRemaining(skillId) > 0;
+            }
             return this.getCooldownRemaining(skillId) > 0;
+        },
+
+        getCooldownRounds(skillOrId) {
+            const skill = typeof skillOrId === "string"
+                ? this.skills[skillOrId]
+                : skillOrId;
+            if (!skill) return 0;
+            return Math.max(0, Math.floor(safeNumber(
+                skill.cooldownRounds,
+                Math.ceil(normalizeCooldown(skill.cooldown) / 1800)
+            )));
+        },
+
+        getCooldownRoundsRemaining(skillId, round = Aethra.GameState.battle?.round || 0) {
+            this.ensureState();
+            const readyRound = Math.max(0, Math.floor(safeNumber(
+                Aethra.GameState.hero.roundCooldowns?.[skillId],
+                0
+            )));
+            if (readyRound <= round) return 0;
+            return Math.max(0, readyRound - Math.max(0, Math.floor(safeNumber(round, 0))));
+        },
+
+        resetRoundCooldowns() {
+            this.ensureState();
+            Aethra.GameState.hero.roundCooldowns = {};
+            Aethra.EventBus.emit("skill:round-cooldowns-reset", {
+                battleId: Aethra.GameState.battle?.battleId || null
+            });
+            return true;
         },
 
         cleanupCooldowns(now = Date.now()) {
@@ -977,6 +1127,14 @@ window.Aethra = window.Aethra || {};
             Object.keys(cooldowns).forEach((skillId) => {
                 if (safeNumber(cooldowns[skillId], 0) <= now) {
                     delete cooldowns[skillId];
+                }
+            });
+
+            const currentRound = Math.max(0, Math.floor(safeNumber(Aethra.GameState.battle?.round, 0)));
+            const roundCooldowns = Aethra.GameState.hero.roundCooldowns || {};
+            Object.keys(roundCooldowns).forEach((skillId) => {
+                if (safeNumber(roundCooldowns[skillId], 0) <= currentRound) {
+                    delete roundCooldowns[skillId];
                 }
             });
         },
@@ -996,14 +1154,21 @@ window.Aethra = window.Aethra || {};
 
             const cost = normalizeCost(skill.cost);
             const currentResource = this.getResource(cost.resource);
-            const cooldownRemaining = this.getCooldownRemaining(skillId);
+            const roundCombat = Boolean(Aethra.GameState.battle?.isFighting);
+            const cooldownRoundsRemaining = roundCombat
+                ? this.getCooldownRoundsRemaining(skillId)
+                : 0;
+            const cooldownRemaining = roundCombat
+                ? cooldownRoundsRemaining * Math.max(100, safeNumber(Aethra.BattleSystem?.config?.roundMs, 1800))
+                : this.getCooldownRemaining(skillId);
 
             if (cooldownRemaining > 0) {
                 return {
                     ok: false,
                     reason: "cooldown",
                     skillId,
-                    cooldownRemaining
+                    cooldownRemaining,
+                    cooldownRoundsRemaining
                 };
             }
 
@@ -1059,6 +1224,12 @@ window.Aethra = window.Aethra || {};
             const usedAt = Date.now();
             const cooldownMs = normalizeCooldown(skill.cooldown);
             const readyAt = usedAt + cooldownMs;
+            const roundCombat = Boolean(Aethra.GameState.battle?.isFighting);
+            const cooldownRounds = this.getCooldownRounds(skill);
+            const currentRound = Math.max(0, Math.floor(safeNumber(Aethra.GameState.battle?.round, 0)));
+            const readyRound = roundCombat && cooldownRounds > 0
+                ? currentRound + cooldownRounds
+                : 0;
 
             if (cost.amount > 0) {
                 this.setResource(
@@ -1068,7 +1239,16 @@ window.Aethra = window.Aethra || {};
                 );
             }
 
-            if (cooldownMs > 0) {
+            if (roundCombat && cooldownRounds > 0) {
+                Aethra.GameState.hero.roundCooldowns[skillId] = readyRound;
+
+                Aethra.EventBus.emit("skill:round-cooldown-started", {
+                    skillId,
+                    cooldownRounds,
+                    readyRound,
+                    currentRound
+                });
+            } else if (cooldownMs > 0) {
                 Aethra.GameState.hero.cooldowns[skillId] = readyAt;
 
                 Aethra.EventBus.emit("skill:cooldown-started", {
@@ -1088,6 +1268,8 @@ window.Aethra = window.Aethra || {};
                 cost: clone(cost),
                 cooldownMs,
                 readyAt,
+                cooldownRounds,
+                readyRound,
                 usedAt,
                 source: options.source || "manual",
                 actionBarIndex: Number.isInteger(options.actionBarIndex)

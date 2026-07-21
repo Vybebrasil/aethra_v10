@@ -14,6 +14,14 @@
     const clone = (value) => JSON.parse(JSON.stringify(value));
     const sum = (values = {}) => Object.values(values).reduce((total, value) => total + Number(value || 0), 0);
 
+    const getStarterWeaponBonus = (entry) => {
+        const item = Aethra.GameData?.items?.[entry.starterItemId] || {};
+        if (!item.name) return "Equipamento padrão";
+        const damage = `${item.damageMin}–${item.damageMax}`;
+        const extra = item.mag ? `, +${item.mag} Magia` : "";
+        return `${item.name} (Dano: ${damage}${extra})`;
+    };
+
     const STEP_META = [
         { id: 1, label: "Origem", title: "Escolha sua fantasia", copy: "Seu arquétipo define o ponto de partida, não o seu destino." },
         { id: 2, label: "Atributos", title: "Modele o corpo e a mente", copy: "Cada ponto muda números que você verá durante o combate." },
@@ -132,13 +140,17 @@
     function renderHeroPreview() {
         const selected = archetype();
         const preview = previewData();
+        const starterItem = selected ? (Aethra.GameData?.items?.[selected.starterItemId] || {}) : null;
+        const avatarTooltip = starterItem 
+            ? `data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="EQUIPAMENTO INICIAL" data-tooltip-title="${esc(starterItem.name)}" data-tooltip-body="${esc(starterItem.description || '')} Dano: ${starterItem.damageMin}-${starterItem.damageMax}."`
+            : "";
         return `
             <aside class="creation-hero-preview">
                 <div class="creation-hero-preview__identity">
                     <small>SEU PERSONAGEM</small>
                     <label><span>Nome</span><input type="text" maxlength="18" value="${esc(draft.name)}" data-character-name autocomplete="off" spellcheck="false"></label>
                 </div>
-                <div class="creation-avatar ${selected ? "has-archetype" : ""}">
+                <div class="creation-avatar ${selected ? "has-archetype" : ""}" ${avatarTooltip}>
                     <i></i><i></i><i></i>
                     <div class="creation-avatar__sigil">${esc(selected?.icon || "A")}</div>
                     <img src="assets/entities/player_idle.png" alt="Prévia do herói" draggable="false">
@@ -150,21 +162,21 @@
                     <p>${esc(selected?.title || "Escolha uma origem para revelar sua função.")}</p>
                 </div>
                 <div class="creation-vitals">
-                    <span class="is-hp"><small>HP</small><i><b style="width:${Math.min(100, preview.stats.maxHp)}%"></b></i><strong>${fmt(preview.stats.maxHp)}</strong></span>
-                    <span class="is-mana"><small>MP</small><i><b style="width:${Math.min(100, preview.stats.maxMana)}%"></b></i><strong>${fmt(preview.stats.maxMana)}</strong></span>
-                    <span class="is-vigor"><small>VIG</small><i><b style="width:${Math.min(100, preview.stats.maxEnergy)}%"></b></i><strong>${fmt(preview.stats.maxEnergy)}</strong></span>
+                    <span class="is-hp" data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="RECURSO VITAL" data-tooltip-title="Vida Máxima (HP)" data-tooltip-body="Sua reserva de sobrevivência. Se cair a zero durante uma caçada, você será derrotado, perderá ouro e XP, e retornará para a cidade."><small>HP</small><i><b style="width:${Math.min(100, preview.stats.maxHp)}%"></b></i><strong>${fmt(preview.stats.maxHp)}</strong></span>
+                    <span class="is-mana" data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="RECURSO MÁGICO" data-tooltip-title="Mana Máxima (MP)" data-tooltip-body="Consumido para conjurar magias de ataque elementais (Fogo, Gelo, Trevas) e habilidades de suporte/cura."><small>MP</small><i><b style="width:${Math.min(100, preview.stats.maxMana)}%"></b></i><strong>${fmt(preview.stats.maxMana)}</strong></span>
+                    <span class="is-vigor" data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="RECURSO FÍSICO" data-tooltip-title="Vigor Máximo (VIG)" data-tooltip-body="Consumido para deferir golpes físicos e manter posturas corporais de combate."><small>VIG</small><i><b style="width:${Math.min(100, preview.stats.maxEnergy)}%"></b></i><strong>${fmt(preview.stats.maxEnergy)}</strong></span>
                 </div>
                 <div class="creation-combat-stats">
                     <header><small>ATRIBUTOS DE COMBATE</small></header>
                     <div class="creation-vitals">
-                        <span class="is-atk"><small>ATK</small><i><b style="width:${Math.min(100, (preview.stats.damage / 10) * 100)}%"></b></i><strong>${fmt(preview.stats.damageMin)}–${fmt(preview.stats.damageMax)}</strong></span>
-                        <span class="is-def"><small>DEF</small><i><b style="width:${Math.min(100, (preview.stats.defense / 10) * 100)}%"></b></i><strong>${fmt(preview.stats.defense)}</strong></span>
-                        <span class="is-crit"><small>CRT</small><i><b style="width:${Math.min(100, (preview.crit / 10) * 100)}%"></b></i><strong>${preview.crit.toFixed(1)}%</strong></span>
-                        <span class="is-esq"><small>ESQ</small><i><b style="width:${Math.min(100, (preview.evade / 10) * 100)}%"></b></i><strong>${preview.evade.toFixed(1)}%</strong></span>
-                        <span class="is-act"><small>ACT</small><i><b style="width:${preview.hit}%"></b></i><strong>${preview.hit.toFixed(0)}%</strong></span>
+                        <span class="is-atk" data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="ATRIBUTO DE COMBATE" data-tooltip-title="Ataque (ATK)" data-tooltip-body="Faixa de dano físico e mágico base causado pelo herói com a arma inicial selecionada."><small>ATK</small><i><b style="width:${Math.min(100, (preview.stats.damage / 10) * 100)}%"></b></i><strong>${fmt(preview.stats.damageMin)}–${fmt(preview.stats.damageMax)}</strong></span>
+                        <span class="is-def" data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="ATRIBUTO DE COMBATE" data-tooltip-title="Defesa (DEF)" data-tooltip-body="Reduz diretamente o dano físico sofrido de ataques e habilidades inimigas antes da aplicação de bloqueios."><small>DEF</small><i><b style="width:${Math.min(100, (preview.stats.defense / 10) * 100)}%"></b></i><strong>${fmt(preview.stats.defense)}</strong></span>
+                        <span class="is-crit" data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="ATRIBUTO DE COMBATE" data-tooltip-title="Chance de Crítico (CRT)" data-tooltip-body="Chance de causar dano crítico aumentado (175% do dano normal)."><small>CRT</small><i><b style="width:${Math.min(100, (preview.crit / 10) * 100)}%"></b></i><strong>${preview.crit.toFixed(1)}%</strong></span>
+                        <span class="is-esq" data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="ATRIBUTO DE COMBATE" data-tooltip-title="Esquiva (ESQ)" data-tooltip-body="Chance de evitar totalmente qualquer ataque direcionado ao seu herói, sem receber dano."><small>ESQ</small><i><b style="width:${Math.min(100, (preview.evade / 10) * 100)}%"></b></i><strong>${preview.evade.toFixed(1)}%</strong></span>
+                        <span class="is-act" data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="ATRIBUTO DE COMBATE" data-tooltip-title="Precisão (ACT)" data-tooltip-body="Sua chance base de acertar golpes físicos ou mágicos antes de ser reduzida pela esquiva do alvo."><small>ACT</small><i><b style="width:${preview.hit}%"></b></i><strong>${preview.hit.toFixed(0)}%</strong></span>
                     </div>
                 </div>
-                <div class="creation-death-rule"><span>☠</span><p><strong>A morte deixa marcas</strong><small>Derrota: −10% XP do nível, −10% Gold e retorno à cidade.</small></p></div>
+                <div class="creation-death-rule" data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="REGRA DE DERROTA" data-tooltip-title="A Morte Deixa Marcas" data-tooltip-body="Se a vida cair a zero durante uma caçada, você ressucita na cidade perdendo 10% de ouro e 10% de XP."><span>☠</span><p><strong>A morte deixa marcas</strong><small>Derrota: −10% XP do nível, −10% Gold e retorno à cidade.</small></p></div>
             </aside>`;
     }
 
@@ -174,8 +186,14 @@
             .sort((a, b) => Number(b[1]) - Number(a[1]))
             .map(([id]) => system().masteries[id])
             .find(Boolean);
+        const starterItem = Aethra.GameData?.items?.[entry.starterItemId] || {};
+        const masteryNames = Object.entries(entry.masteries)
+            .sort((a, b) => b[1] - a[1])
+            .map(([id, val]) => `${system().masteries[id]?.name || id} (+${val})`)
+            .join(", ");
         return `
-            <button type="button" class="creation-archetype ${selected ? "is-selected" : ""}" data-select-archetype="${esc(entry.id)}" style="--archetype-accent:${esc(entry.accent)}">
+            <button type="button" class="creation-archetype ${selected ? "is-selected" : ""}" data-select-archetype="${esc(entry.id)}" style="--archetype-accent:${esc(entry.accent)}"
+                data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="ORIGEM DISPONÍVEL" data-tooltip-title="${esc(entry.name)} · ${esc(entry.title)}" data-tooltip-body="Este arquétipo inicia com a arma: ${esc(starterItem.name || 'Arma Iniciante')} (Dano: ${starterItem.damageMin}-${starterItem.damageMax}${starterItem.mag ? ', +1 Magia' : ''}). Suas disciplinas focadas são: ${esc(masteryNames)}. Especialidade: ${esc(mainDiscipline?.procName || 'Nenhuma')}.">
                 <span class="creation-archetype__icon">${esc(entry.icon)}</span>
                 <small>${esc(entry.title)}</small>
                 <strong>${esc(entry.name)}</strong>
@@ -190,7 +208,7 @@
                         }).join(" · ")}
                 </div>
                 <div>${entry.tags.map((tag) => `<em>${esc(tag)}</em>`).join("")}</div>
-                <footer><span>${selected ? "ARQUÉTIPO ESCOLHIDO" : "ESCOLHER ARQUÉTIPO"}</span><b>${esc(mainDiscipline?.procName || mainDiscipline?.role || "Evolução livre")}</b></footer>
+                <footer><span>${selected ? "ARQUÉTIPO ESCOLHIDO" : "ESCOLHER ARQUÉTIPO"}</span><b>${esc(getStarterWeaponBonus(entry))}</b></footer>
             </button>`;
     }
 
@@ -207,7 +225,8 @@
         const value = Number(draft.attributes[definition.id] || 0);
         const pips = Array.from({ length: system().maxInitialAttribute }, (_, index) => `<i class="${index < value ? "is-filled" : ""}"></i>`).join("");
         return `
-            <article class="creation-attribute ${value > 0 ? "is-invested" : ""}" data-creation-attribute-card="${esc(definition.id)}">
+            <article class="creation-attribute ${value > 0 ? "is-invested" : ""}" data-creation-attribute-card="${esc(definition.id)}"
+                data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="ATRIBUTO BÁSICO" data-tooltip-title="${esc(definition.name)} (${esc(definition.short)})" data-tooltip-body="${esc(definition.description)} Benefício por ponto: ${esc(definition.perPoint)}">
                 <span class="creation-attribute__icon">${esc(definition.icon)}</span>
                 <div class="creation-attribute__copy"><header><strong>${esc(definition.name)}</strong><em>${esc(definition.short)}</em></header><p>${esc(definition.description)}</p><small>${esc(definition.perPoint)}</small><div class="creation-pips">${pips}</div></div>
                 <div class="creation-stepper"><button type="button" data-creation-adjust="attribute" data-id="${esc(definition.id)}" data-delta="-1" aria-label="Remover ponto de ${esc(definition.name)}">−</button><b>${value}</b><button type="button" data-creation-adjust="attribute" data-id="${esc(definition.id)}" data-delta="1" aria-label="Adicionar ponto de ${esc(definition.name)}">+</button></div>
@@ -241,7 +260,8 @@
             ? `${Math.round(Number(definition.procChance) * 100)}% · ${definition.procName}`
             : definition.professionId ? "Evolui em ações do mundo" : "Especialização passiva";
         return `
-            <article class="creation-discipline ${value > 0 ? "is-invested" : ""}" data-discipline-group="${esc(definition.group)}">
+            <article class="creation-discipline ${value > 0 ? "is-invested" : ""}" data-discipline-group="${esc(definition.group)}"
+                data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="DISCIPLINA DISPONÍVEL" data-tooltip-title="${esc(definition.name)} (${esc(definition.category)})" data-tooltip-body="${esc(definition.description)} Especialização ativa: ${esc(proc)}.">
                 <span class="creation-discipline__icon">${esc(definition.icon)}</span>
                 <div class="creation-discipline__copy"><small>${esc(definition.category)} · ${esc(definition.role)}</small><strong>${esc(definition.name)}</strong><p>${esc(definition.description)}</p><em>${esc(proc)}</em></div>
                 ${mode === "creation" ? `<div class="creation-stepper"><button type="button" data-creation-adjust="mastery" data-id="${esc(definition.id)}" data-delta="-1">−</button><b>${value}</b><button type="button" data-creation-adjust="mastery" data-id="${esc(definition.id)}" data-delta="1">+</button></div>` : `<div class="creation-discipline__runtime"><small>NV. ${fmt(runtime?.level || 1)}</small><i><b style="width:${fmt(runtime?.progressPercent || 0)}%"></b></i><em>${fmt(runtime?.xpCurrent || 0)}/${fmt(runtime?.xpNext || 1)} XP</em></div><button type="button" class="creation-discipline__spend" data-spend-skill-point="${esc(definition.id)}" ${available ? "" : "disabled"}>+1</button>`}

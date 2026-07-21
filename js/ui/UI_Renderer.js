@@ -2281,6 +2281,10 @@
             const sell = getSellPrice(merged);
             const inspection =
                 Aethra.ItemSystem?.getItemInspection?.(merged) || null;
+            const worldRanking =
+                Aethra.ItemRankingSystem?.getItemRanking?.(merged) ||
+                merged.worldRanking ||
+                null;
 
             return {
                 name:
@@ -2322,6 +2326,7 @@
                     inspection?.attributeRolls || [],
                 affixRolls:
                     inspection?.affixRolls || [],
+                worldRanking,
                 resaleValue: sell.price,
                 resaleLabel: sell.label,
                 ...extra
@@ -2634,6 +2639,19 @@
                 `
                 : "";
 
+            const worldRankingHTML = data.worldRanking
+                ? `
+                    <div class="aethra-item-tooltip__world-rank">
+                        <span>${Number(data.worldRanking.rank || 0) <= 3 ? ["", "Ⅰ", "Ⅱ", "Ⅲ"][Number(data.worldRanking.rank || 0)] : `#${Number(data.worldRanking.rank || 0)}`}</span>
+                        <div>
+                            <small>RANKING VIVO · ${escapeHTML(String(data.worldRanking.categoryLabel || "EQUIPAMENTOS").toUpperCase())}</small>
+                            <strong>${escapeHTML(data.worldRanking.rankLabel || "Não ranqueado")} do servidor</strong>
+                        </div>
+                        <em>${formatNumber(data.worldRanking.score || 0)} poder<br>recorde #${formatNumber(data.worldRanking.bestRank || data.worldRanking.rank || 0)}</em>
+                    </div>
+                `
+                : "";
+
             this.tooltip.style.setProperty(
                 "--item-rarity-color",
                 data.rarityColor || "#c7c7c7"
@@ -2655,6 +2673,8 @@
                         </b>
                     </div>
                 </header>
+
+                ${worldRankingHTML}
 
                 ${stackHTML}
 

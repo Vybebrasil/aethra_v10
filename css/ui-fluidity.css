@@ -1,0 +1,745 @@
+/* Aethra UI Fluidity Pass
+   Loaded last: clearer hierarchy, contextual information and light motion. */
+
+:root {
+    --stable-actionbar-height: 150px !important;
+    --stable-left-column: clamp(318px, 19vw, 356px);
+    --stable-right-column: clamp(330px, 19vw, 374px);
+    --fluid-surface-0: #050a0d;
+    --fluid-surface-1: rgba(9, 16, 21, 0.94);
+    --fluid-surface-2: rgba(15, 25, 31, 0.84);
+    --fluid-border: rgba(116, 151, 165, 0.14);
+    --fluid-gold: #e4c46f;
+    --fluid-cyan: #71d4f5;
+    --fluid-green: #62e39a;
+    --fluid-red: #ff626d;
+    --fluid-purple: #b993ff;
+    --fluid-ease: cubic-bezier(0.2, 0.72, 0.2, 1);
+}
+
+body.aethra-fluid-ui {
+    color: #dce8ed;
+    background:
+        radial-gradient(circle at 50% -15%, rgba(47, 95, 105, 0.13), transparent 42%),
+        var(--fluid-surface-0) !important;
+}
+
+/* The world layer has an older, more specific bottom inset; keep both layers aligned. */
+body.aethra-fluid-ui.aethra-battle-mode #world-layer > #city-view.world-scene,
+body.aethra-fluid-ui.aethra-battle-mode #world-layer > .world-scene {
+    position: absolute !important;
+    inset: var(--stable-topbar-height) 0 var(--stable-actionbar-height) 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 8px !important;
+}
+
+/* Softer depth: surface contrast carries more of the hierarchy than outlines. */
+.aethra-fluid-ui .battle-panel,
+.aethra-fluid-ui .combatant-card,
+.aethra-fluid-ui .hero-attribute,
+.aethra-fluid-ui .expedition-event-stream,
+.aethra-fluid-ui .expedition-live-stats span,
+.aethra-fluid-ui .analyzer-live-card,
+.aethra-fluid-ui .analyzer-primary-kpis article {
+    border-color: var(--fluid-border) !important;
+    background-color: var(--fluid-surface-1) !important;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28), inset 0 1px rgba(255, 255, 255, 0.025) !important;
+}
+
+.aethra-fluid-ui .battle-panel:hover,
+.aethra-fluid-ui .combatant-card:hover {
+    border-color: rgba(126, 168, 183, 0.22) !important;
+    box-shadow: 0 13px 32px rgba(0, 0, 0, 0.34), inset 0 1px rgba(255, 255, 255, 0.035) !important;
+}
+
+.aethra-fluid-ui .battle-panel__header,
+.aethra-fluid-ui .combatant-card__header,
+.aethra-fluid-ui .hero-hub__header,
+.aethra-fluid-ui .hero-hub__accordion-heading {
+    border-color: rgba(200, 158, 67, 0.13) !important;
+    background: linear-gradient(180deg, rgba(24, 35, 42, 0.62), rgba(12, 20, 25, 0.36)) !important;
+}
+
+/* The encounter receives the recovered vertical space from the compact ActionBar. */
+.aethra-fluid-ui .battle-main-column--world-loop .battle-stage-panel {
+    position: relative !important;
+    flex: 0 0 306px !important;
+    min-height: 306px !important;
+    max-height: 306px !important;
+    height: 306px !important;
+    isolation: isolate;
+}
+
+.aethra-fluid-ui .battle-card-arena {
+    position: relative !important;
+    padding: 10px !important;
+    gap: 10px !important;
+    background:
+        linear-gradient(180deg, rgba(2, 8, 10, 0.24), rgba(2, 7, 10, 0.78)),
+        radial-gradient(circle at 50% 110%, var(--biome-glow, rgba(68, 125, 91, 0.2)), transparent 54%) !important;
+}
+
+.aethra-fluid-ui .battle-card-arena::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.56;
+    background:
+        linear-gradient(115deg, transparent 0 31%, rgba(255, 255, 255, 0.025) 31.5% 32%, transparent 32.5% 68%, rgba(255, 255, 255, 0.018) 68.5% 69%, transparent 69.5%),
+        radial-gradient(ellipse at 20% 120%, var(--biome-near, rgba(38, 100, 71, 0.2)), transparent 50%),
+        radial-gradient(ellipse at 82% 110%, var(--biome-far, rgba(21, 77, 62, 0.17)), transparent 48%);
+}
+
+.aethra-fluid-ui .battle-stage-panel[data-biome="forest"] {
+    --biome-glow: rgba(52, 144, 88, 0.26);
+    --biome-near: rgba(31, 111, 70, 0.26);
+    --biome-far: rgba(71, 114, 56, 0.18);
+}
+
+.aethra-fluid-ui .battle-stage-panel[data-biome="crypt"] {
+    --biome-glow: rgba(104, 88, 148, 0.25);
+    --biome-near: rgba(64, 50, 103, 0.28);
+    --biome-far: rgba(43, 81, 91, 0.18);
+}
+
+.aethra-fluid-ui .battle-stage-panel[data-biome="cavern"] {
+    --biome-glow: rgba(155, 105, 52, 0.22);
+    --biome-near: rgba(98, 66, 38, 0.28);
+    --biome-far: rgba(77, 92, 82, 0.16);
+}
+
+.aethra-fluid-ui .battle-stage-panel[data-biome="frost"] {
+    --biome-glow: rgba(86, 176, 205, 0.25);
+    --biome-near: rgba(69, 137, 165, 0.24);
+    --biome-far: rgba(114, 147, 192, 0.17);
+}
+
+.aethra-fluid-ui .battle-stage-panel[data-biome="ember"] {
+    --biome-glow: rgba(202, 82, 39, 0.26);
+    --biome-near: rgba(151, 54, 28, 0.27);
+    --biome-far: rgba(152, 104, 35, 0.17);
+}
+
+.aethra-fluid-ui .battle-stage-panel[data-biome="coast"] {
+    --biome-glow: rgba(35, 139, 167, 0.25);
+    --biome-near: rgba(30, 108, 137, 0.25);
+    --biome-far: rgba(47, 116, 106, 0.18);
+}
+
+.aethra-fluid-ui .battle-stage-panel[data-biome="arcane"] {
+    --biome-glow: rgba(135, 82, 200, 0.27);
+    --biome-near: rgba(89, 54, 151, 0.28);
+    --biome-far: rgba(49, 101, 144, 0.18);
+}
+
+.aethra-fluid-ui .battle-card-arena > * {
+    position: relative;
+    z-index: 1;
+}
+
+.aethra-fluid-ui .battle-card-arena .combatant-card {
+    position: relative !important;
+    isolation: isolate;
+    background: linear-gradient(155deg, rgba(13, 23, 28, 0.9), rgba(4, 10, 13, 0.78)) !important;
+}
+
+.aethra-fluid-ui .battle-card-arena .combatant-card::before {
+    content: "";
+    position: absolute;
+    inset: 40px 0 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse at 16% 100%, var(--biome-near, rgba(38, 100, 71, 0.16)), transparent 52%),
+        linear-gradient(180deg, transparent, rgba(2, 7, 9, 0.34));
+}
+
+.aethra-fluid-ui .battle-stage-panel--compact .combatant-card__body,
+.aethra-fluid-ui .battle-stage-panel--compact .combatant-card__body--hero,
+.aethra-fluid-ui .battle-stage-panel--compact .combatant-card__body--enemy,
+.aethra-fluid-ui .battle-stage-panel--compact .combatant-card__body--event {
+    grid-template-columns: 116px minmax(0, 1fr) !important;
+    gap: 10px !important;
+    padding: 10px !important;
+}
+
+.aethra-fluid-ui .battle-stage-panel--compact .combatant-card__portrait--standalone,
+.aethra-fluid-ui .battle-stage-panel--compact .combatant-card__event-icon {
+    min-height: 132px !important;
+    height: 100% !important;
+    border: 1px solid rgba(210, 173, 83, 0.16) !important;
+    background: radial-gradient(circle at 50% 70%, rgba(194, 158, 73, 0.12), rgba(3, 9, 12, 0.58) 68%) !important;
+}
+
+.aethra-fluid-ui .battle-stage-panel--compact .combatant-card__portrait--standalone img {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 108px !important;
+    max-height: 128px !important;
+    object-fit: contain !important;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 12px 9px rgba(0, 0, 0, 0.56));
+    transform: translateY(2px) scale(1.08);
+    transform-origin: 50% 100%;
+}
+
+.aethra-fluid-ui .combatant-card__fallback[hidden] {
+    display: none !important;
+}
+
+.aethra-fluid-ui .combatant-card__header h3 {
+    font-size: 17px !important;
+}
+
+.aethra-fluid-ui .combatant-card__state-pill,
+.aethra-fluid-ui .combatant-card__location,
+.aethra-fluid-ui .combatant-resource span,
+.aethra-fluid-ui .combatant-card__event-copy p {
+    font-size: 11px !important;
+}
+
+.aethra-fluid-ui .combatant-card__activity strong,
+.aethra-fluid-ui .combatant-card__mini-metrics b,
+.aethra-fluid-ui .combatant-card__event-metrics b {
+    font-size: 13px !important;
+}
+
+.aethra-fluid-ui .combatant-resource progress,
+.aethra-fluid-ui .hero-resource progress {
+    height: 7px !important;
+}
+
+.aethra-fluid-ui progress::-webkit-progress-value {
+    transition: inline-size 220ms var(--fluid-ease), background-color 180ms ease;
+}
+
+.aethra-fluid-ui progress::-moz-progress-bar {
+    transition: width 220ms var(--fluid-ease), background-color 180ms ease;
+}
+
+/* The pending event lives in the encounter card; history starts only after resolution. */
+.aethra-fluid-ui.has-pending-world-event .encounter-context-dock,
+.aethra-fluid-ui.has-pending-world-event .expedition-current-card {
+    display: none !important;
+}
+
+.aethra-fluid-ui.has-pending-world-event .expedition-live-main {
+    grid-template-rows: minmax(0, 1fr) !important;
+}
+
+.aethra-fluid-ui .expedition-current-card__copy strong,
+.aethra-fluid-ui .expedition-event-row strong {
+    font-size: 12px !important;
+}
+
+.aethra-fluid-ui .expedition-current-card__copy p,
+.aethra-fluid-ui .expedition-event-row small,
+.aethra-fluid-ui .expedition-event-row time,
+.aethra-fluid-ui .expedition-event-empty {
+    font-size: 11px !important;
+}
+
+.aethra-fluid-ui .expedition-event-row:first-child {
+    animation: fluid-event-in 190ms var(--fluid-ease) both;
+}
+
+/* Hero summary stays visible; secondary attributes become a compact 3-column scan. */
+.aethra-fluid-ui .hero-attributes-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+}
+
+.aethra-fluid-ui .hero-attribute {
+    min-height: 52px !important;
+    padding: 6px !important;
+    grid-template-columns: 25px minmax(0, 1fr) !important;
+    gap: 5px !important;
+}
+
+.aethra-fluid-ui .hero-attribute__icon {
+    width: 25px !important;
+    height: 25px !important;
+    font-size: 11px !important;
+}
+
+.aethra-fluid-ui .hero-attribute__copy {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto auto !important;
+    gap: 1px !important;
+}
+
+.aethra-fluid-ui .hero-attribute__copy small {
+    font-size: 9px !important;
+    letter-spacing: 0.04em !important;
+}
+
+.aethra-fluid-ui .hero-attribute__copy strong {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    font-size: 18px !important;
+}
+
+.aethra-fluid-ui .hero-attribute__copy em {
+    display: none !important;
+}
+
+.aethra-fluid-ui .hero-attribute.is-zero {
+    opacity: 0.43;
+    filter: saturate(0.45);
+}
+
+.aethra-fluid-ui .hero-resource header span,
+.aethra-fluid-ui .hero-resource header strong {
+    font-size: 11px !important;
+}
+
+/* Loot, progression and analyzer become one contextual surface with tabs. */
+.aethra-fluid-ui .battle-sidebar--combat {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    height: 100% !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(201, 154, 61, 0.14);
+    border-radius: 12px;
+    background: rgba(6, 12, 16, 0.78);
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.34);
+}
+
+.aethra-fluid-ui .intelligence-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    flex: 0 0 48px;
+    gap: 4px;
+    padding: 5px;
+    border-bottom: 1px solid rgba(201, 154, 61, 0.13);
+    background: rgba(13, 22, 28, 0.9);
+}
+
+.aethra-fluid-ui .intelligence-tabs button {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    place-items: center;
+    gap: 5px;
+    min-width: 0;
+    padding: 0 7px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #78909b;
+    font: 700 11px/1 'Outfit', sans-serif;
+    cursor: pointer;
+    transition: color 170ms ease, background-color 170ms ease, transform 170ms var(--fluid-ease);
+}
+
+.aethra-fluid-ui .intelligence-tabs button::after {
+    content: "";
+    position: absolute;
+    inset: auto 10px 0;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--fluid-gold);
+    opacity: 0;
+    transform: scaleX(0.45);
+    transition: opacity 170ms ease, transform 170ms var(--fluid-ease);
+}
+
+.aethra-fluid-ui .intelligence-tabs button:hover,
+.aethra-fluid-ui .intelligence-tabs button:focus-visible {
+    color: #dce8ed;
+    background: rgba(255, 255, 255, 0.035);
+    outline: none;
+}
+
+.aethra-fluid-ui .intelligence-tabs button.is-active {
+    color: #f0d889;
+    background: rgba(204, 164, 68, 0.08);
+}
+
+.aethra-fluid-ui .intelligence-tabs button.is-active::after {
+    opacity: 1;
+    transform: scaleX(1);
+}
+
+.aethra-fluid-ui .intelligence-tabs button > span {
+    color: currentColor;
+    font-size: 13px;
+}
+
+.aethra-fluid-ui .intelligence-tabs button > b {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.aethra-fluid-ui .intelligence-tabs button > em {
+    min-width: 19px;
+    padding: 3px 5px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.055);
+    color: #91a7b1;
+    font-size: 9px;
+    font-style: normal;
+}
+
+.aethra-fluid-ui .intelligence-tabs button.has-incoming-loot > em {
+    color: #062314;
+    background: var(--fluid-green);
+    animation: fluid-badge-pop 480ms var(--fluid-ease);
+}
+
+.aethra-fluid-ui .battle-sidebar--combat > .battle-panel[data-intelligence-panel] {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    animation: fluid-panel-in 180ms var(--fluid-ease) both;
+}
+
+.aethra-fluid-ui .battle-sidebar--combat > .battle-panel[data-intelligence-panel][hidden] {
+    display: none !important;
+}
+
+.aethra-fluid-ui .battle-sidebar--combat .battle-panel__header h2 {
+    font-size: 17px !important;
+}
+
+.aethra-fluid-ui .battle-sidebar--combat .battle-panel__header small,
+.aethra-fluid-ui .stackable-loot-entry small,
+.aethra-fluid-ui .special-drop-entry small,
+.aethra-fluid-ui .progression-log-entry small,
+.aethra-fluid-ui .hunt-analyzer small {
+    font-size: 10px !important;
+}
+
+.aethra-fluid-ui .battle-sidebar--combat strong,
+.aethra-fluid-ui .progression-log-entry strong,
+.aethra-fluid-ui .hunt-analyzer strong {
+    font-size: 12px;
+}
+
+/* The bottom HUD is a quick command strip; empty slots remain in Configurar. */
+.aethra-fluid-ui #battle-actionbar-layer,
+.aethra-fluid-ui #battle-actionbar-layer.battle-actionbar-overlay {
+    height: var(--stable-actionbar-height) !important;
+    min-height: var(--stable-actionbar-height) !important;
+    max-height: var(--stable-actionbar-height) !important;
+}
+
+.aethra-fluid-ui #battle-actionbar-layer > .battle-panel--actionbar {
+    grid-template-rows: 34px minmax(0, 1fr) !important;
+}
+
+.aethra-fluid-ui #battle-actionbar-layer .battle-panel__header {
+    min-height: 34px !important;
+    height: 34px !important;
+    padding: 3px 10px !important;
+}
+
+.aethra-fluid-ui #battle-actionbar-layer .battle-panel__header small {
+    font-size: 9px !important;
+}
+
+.aethra-fluid-ui #battle-actionbar-layer .battle-panel__header h2 {
+    font-size: 15px !important;
+}
+
+.aethra-fluid-ui .combat-action-deck {
+    grid-template-columns: minmax(246px, 278px) minmax(0, 1fr) !important;
+    gap: 8px !important;
+    padding: 0 8px 5px !important;
+}
+
+.aethra-fluid-ui .primary-attack-deck,
+.aethra-fluid-ui .skill-action-deck {
+    grid-template-rows: 16px minmax(0, 1fr) !important;
+}
+
+.aethra-fluid-ui .primary-attack-bar,
+.aethra-fluid-ui #skill-action-bar {
+    height: 93px !important;
+    min-height: 93px !important;
+    max-height: 93px !important;
+}
+
+.aethra-fluid-ui #skill-action-bar {
+    grid-template-columns: repeat(4, minmax(122px, 1fr)) !important;
+    gap: 7px !important;
+    overflow: hidden !important;
+}
+
+.aethra-fluid-ui #skill-action-bar .battle-action-slot.is-empty,
+.aethra-fluid-ui #skill-action-bar .battle-action-slot.is-fluid-overflow {
+    display: none !important;
+}
+
+.aethra-fluid-ui .primary-attack-card,
+.aethra-fluid-ui #skill-action-bar .battle-action-slot {
+    width: 100% !important;
+    max-width: none !important;
+    height: 93px !important;
+    min-height: 93px !important;
+    max-height: 93px !important;
+    grid-template-rows: minmax(0, 1fr) 21px !important;
+}
+
+body.aethra-fluid-ui #battle-actionbar-layer .skill-action-deck #skill-action-bar .battle-action-slot.is-filled {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+}
+
+.aethra-fluid-ui #skill-action-bar .battle-action-slot__skill {
+    position: relative !important;
+    display: grid !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    justify-self: stretch !important;
+    grid-template-columns: 34px minmax(0, 1fr) !important;
+    grid-template-rows: minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 7px !important;
+    height: 72px !important;
+    min-height: 0 !important;
+    max-height: 72px !important;
+    padding: 3px 5px !important;
+}
+
+.aethra-fluid-ui #skill-action-bar .battle-action-slot__controls {
+    width: 100% !important;
+    min-width: 100% !important;
+    justify-self: stretch !important;
+}
+
+.aethra-fluid-ui #skill-action-bar .battle-action-slot__topline {
+    position: absolute !important;
+    inset: 3px 5px auto !important;
+    z-index: 2;
+}
+
+.aethra-fluid-ui #skill-action-bar .battle-action-slot__icon {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    align-self: center !important;
+    width: 23px !important;
+    height: 23px !important;
+    line-height: 23px !important;
+    margin: 8px 0 0 !important;
+    font-size: 13px !important;
+}
+
+.aethra-fluid-ui #skill-action-bar .battle-action-slot__copy {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    align-self: center !important;
+    align-items: flex-start !important;
+    min-width: 0 !important;
+    margin-top: 8px !important;
+    text-align: left !important;
+}
+
+.aethra-fluid-ui #skill-action-bar .battle-action-slot__meta-line {
+    justify-content: flex-start !important;
+    gap: 8px !important;
+}
+
+.aethra-fluid-ui #skill-action-bar .battle-action-slot__name,
+.aethra-fluid-ui .primary-attack-card__copy b {
+    font-size: 11px !important;
+}
+
+.aethra-fluid-ui #skill-action-bar .battle-action-slot__meta-line small,
+.aethra-fluid-ui #skill-action-bar .battle-action-slot__condition,
+.aethra-fluid-ui .primary-attack-card__copy small {
+    font-size: 9px !important;
+}
+
+.aethra-fluid-ui #skill-action-bar .battle-action-slot__controls,
+.aethra-fluid-ui .primary-attack-card__auto {
+    min-height: 21px !important;
+    height: 21px !important;
+    max-height: 21px !important;
+}
+
+.aethra-fluid-ui .battle-action-slot__skill,
+.aethra-fluid-ui .primary-attack-card__button,
+.aethra-fluid-ui .combatant-card__event-button,
+.aethra-fluid-ui .hunt-launcher button {
+    transition: transform 150ms var(--fluid-ease), border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease !important;
+}
+
+.aethra-fluid-ui .battle-action-slot__skill:hover:not(:disabled),
+.aethra-fluid-ui .primary-attack-card__button:hover:not(:disabled),
+.aethra-fluid-ui .combatant-card__event-button:hover,
+.aethra-fluid-ui .hunt-launcher button:hover {
+    transform: translateY(-1px) !important;
+}
+
+.aethra-fluid-ui .is-fluid-actionable {
+    animation: fluid-action-pulse 1.9s ease-in-out infinite;
+}
+
+.aethra-fluid-ui .combatant-card.is-fluid-hit {
+    animation: fluid-hit 260ms ease-out;
+}
+
+.aethra-fluid-ui .combatant-card.is-fluid-critical {
+    animation: fluid-critical-hit 330ms ease-out;
+}
+
+.fluid-loot-orb {
+    position: fixed;
+    z-index: 5000;
+    display: grid;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    pointer-events: none;
+    color: #ffe08a;
+    text-shadow: 0 0 10px rgba(255, 207, 92, 0.88);
+    animation: fluid-loot-fly 720ms var(--fluid-ease) var(--loot-delay, 0ms) both;
+}
+
+/* Stable semantic accents. */
+.aethra-fluid-ui .combatant-resource--hp b,
+.aethra-fluid-ui .is-danger,
+.aethra-fluid-ui .damage-number {
+    color: var(--fluid-red) !important;
+}
+
+.aethra-fluid-ui .combatant-resource--mana b,
+.aethra-fluid-ui .combatant-card__inspect-button {
+    color: var(--fluid-cyan) !important;
+}
+
+.aethra-fluid-ui .battle-live-dot,
+.aethra-fluid-ui .is-success,
+.aethra-fluid-ui .expedition-panel__live {
+    color: var(--fluid-green) !important;
+}
+
+.aethra-fluid-ui .hero-resource--xp,
+.aethra-fluid-ui .progression-log-entry,
+.aethra-fluid-ui .is-xp {
+    --accent-color: var(--fluid-purple);
+}
+
+@keyframes fluid-panel-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fluid-event-in {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fluid-action-pulse {
+    0%, 72%, 100% { box-shadow: 0 0 0 0 rgba(226, 190, 99, 0); }
+    84% { box-shadow: 0 0 0 5px rgba(226, 190, 99, 0.12), 0 0 18px rgba(226, 190, 99, 0.2); }
+}
+
+@keyframes fluid-hit {
+    0%, 100% { filter: brightness(1); transform: translateX(0); }
+    35% { filter: brightness(1.42) saturate(1.3); transform: translateX(-2px); }
+    58% { transform: translateX(2px); }
+}
+
+@keyframes fluid-critical-hit {
+    0%, 100% { filter: brightness(1); transform: translateX(0) scale(1); }
+    28% { filter: brightness(1.65) saturate(1.65); transform: translateX(-3px) scale(1.008); }
+    52% { transform: translateX(3px) scale(1.008); }
+}
+
+@keyframes fluid-loot-fly {
+    0% { opacity: 0; transform: translate3d(0, 8px, 0) scale(0.65) rotate(0deg); }
+    18% { opacity: 1; transform: translate3d(0, -14px, 0) scale(1.15) rotate(50deg); }
+    100% { opacity: 0; transform: translate3d(var(--loot-x), var(--loot-y), 0) scale(0.3) rotate(220deg); }
+}
+
+@keyframes fluid-badge-pop {
+    0%, 100% { transform: scale(1); }
+    45% { transform: scale(1.2); }
+}
+
+@media (max-width: 1450px) {
+    :root {
+        --stable-actionbar-height: 146px !important;
+        --stable-left-column: 306px;
+        --stable-right-column: 324px;
+    }
+
+    .aethra-fluid-ui .battle-main-column--world-loop .battle-stage-panel {
+        flex-basis: 286px !important;
+        min-height: 286px !important;
+        max-height: 286px !important;
+        height: 286px !important;
+    }
+
+    .aethra-fluid-ui .combat-action-deck {
+        grid-template-columns: 244px minmax(0, 1fr) !important;
+    }
+
+    .aethra-fluid-ui .battle-stage-panel--compact .combatant-card__body,
+    .aethra-fluid-ui .battle-stage-panel--compact .combatant-card__body--hero,
+    .aethra-fluid-ui .battle-stage-panel--compact .combatant-card__body--enemy,
+    .aethra-fluid-ui .battle-stage-panel--compact .combatant-card__body--event {
+        grid-template-columns: 92px minmax(0, 1fr) !important;
+    }
+
+    .aethra-fluid-ui .intelligence-tabs button {
+        padding-inline: 5px;
+        font-size: 10px;
+    }
+}
+
+@media (max-height: 820px) {
+    :root {
+        --stable-actionbar-height: 144px !important;
+    }
+
+    .aethra-fluid-ui .battle-main-column--world-loop .battle-stage-panel {
+        flex-basis: 254px !important;
+        min-height: 254px !important;
+        max-height: 254px !important;
+        height: 254px !important;
+    }
+
+    .aethra-fluid-ui .primary-attack-bar,
+    .aethra-fluid-ui #skill-action-bar,
+    .aethra-fluid-ui .primary-attack-card,
+    .aethra-fluid-ui #skill-action-bar .battle-action-slot {
+        height: 88px !important;
+        min-height: 88px !important;
+        max-height: 88px !important;
+    }
+
+    .aethra-fluid-ui #skill-action-bar .battle-action-slot__skill {
+        height: 67px !important;
+        max-height: 67px !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .aethra-fluid-ui *,
+    .aethra-fluid-ui *::before,
+    .aethra-fluid-ui *::after,
+    .fluid-loot-orb {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

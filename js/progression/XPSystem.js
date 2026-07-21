@@ -83,6 +83,8 @@ window.Aethra = window.Aethra || {};
             state.hero.level = Math.min(state.hero.level, this.getMaxLevel());
             state.hero.xpTotal = Math.max(0, toSafeNumber(state.hero.xpTotal, 0));
             state.hero.xpCurrent = Math.max(0, toSafeNumber(state.hero.xpCurrent, 0));
+            state.hero.skillPoints = Math.max(0, Math.floor(toSafeNumber(state.hero.skillPoints, 0)));
+            state.hero.skillPointsEarned = Math.max(0, Math.floor(toSafeNumber(state.hero.skillPointsEarned, 0)));
             state.hero.xpNext = state.hero.level >= this.getMaxLevel()
                 ? 0
                 : this.getXPRequired(state.hero.level);
@@ -162,17 +164,28 @@ window.Aethra = window.Aethra || {};
             const previousXpNext = hero.xpNext;
 
             hero.level += 1;
+            hero.skillPoints += 1;
+            hero.skillPointsEarned += 1;
             hero.xpNext = hero.level >= maxLevel
                 ? 0
                 : this.getXPRequired(hero.level);
 
             // Crescimento controlado: atributos avançam em marcos, evitando números inflados.
-            if (hero.level % 5 === 0) hero.stats.str += 1;
+            hero.baseStats = hero.baseStats || clone(hero.stats);
+            if (hero.level % 5 === 0) {
+                hero.stats.str += 1;
+                hero.baseStats.str = toSafeNumber(hero.baseStats.str, hero.stats.str - 1) + 1;
+            }
             hero.stats.maxHp += 1;
-            if (hero.level % 10 === 0) hero.stats.maxFocus += 1;
+            hero.baseStats.maxHp = toSafeNumber(hero.baseStats.maxHp, hero.stats.maxHp - 1) + 1;
+            if (hero.level % 10 === 0) {
+                hero.stats.maxFocus = toSafeNumber(hero.stats.maxFocus, 50) + 1;
+                hero.baseStats.maxFocus = toSafeNumber(hero.baseStats.maxFocus, hero.stats.maxFocus - 1) + 1;
+            }
 
             if (Object.prototype.hasOwnProperty.call(hero, "hp")) {
                 hero.hp = hero.stats.maxHp;
+                hero.maxHp = hero.stats.maxHp;
             }
 
             if (Object.prototype.hasOwnProperty.call(hero, "focus")) {
@@ -186,6 +199,8 @@ window.Aethra = window.Aethra || {};
                 xpNext: hero.xpNext,
                 xpCurrent: hero.xpCurrent,
                 xpTotal: hero.xpTotal,
+                skillPointsAwarded: 1,
+                skillPoints: hero.skillPoints,
                 stats: clone(hero.stats),
                 source: options.source || null
             };
@@ -198,6 +213,38 @@ window.Aethra = window.Aethra || {};
             });
 
             if (options.save !== false) this.save();
+            return payload;
+        },
+
+        loseXP(amountOrRate = 0.10, source = {}) {
+            this.ensureState();
+
+            const hero = Aethra.GameState.hero;
+            const current = Math.max(0, Math.floor(toSafeNumber(hero.xpCurrent, 0)));
+            const numeric = Math.max(0, toSafeNumber(amountOrRate, 0));
+            const requested = numeric > 0 && numeric < 1
+                ? Math.max(current > 0 ? 1 : 0, Math.floor(current * numeric))
+                : Math.floor(numeric);
+            const lost = Math.min(current, requested);
+
+            if (lost <= 0) {
+                return { lost: 0, ...this.getSnapshot() };
+            }
+
+            hero.xpCurrent -= lost;
+            hero.xpTotal = Math.max(0, hero.xpTotal - lost);
+
+            const snapshot = this.getSnapshot();
+            const payload = {
+                amount: -lost,
+                lost,
+                source,
+                ...snapshot
+            };
+
+            Aethra.EventBus.emit("xpChanged", payload);
+            Aethra.EventBus.emit("hero:xp-lost", payload);
+            this.save();
             return payload;
         },
 

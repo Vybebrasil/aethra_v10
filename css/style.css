@@ -1569,6 +1569,8 @@ body > :not(
 ):not(
     #aethra-ui-tooltip
 ):not(
+    #aethra-shop-tooltip
+):not(
     script
 ):not(
     style

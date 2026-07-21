@@ -280,6 +280,7 @@
             const cost = getSkillCost(skill);
             const power = getSkillPower(skill);
             const cooldown = getCooldownSeconds(skill);
+            const cooldownRounds = Aethra.SkillSystem?.getCooldownRounds?.(skill) || 0;
             const type = getSkillType(skill);
             const resourceLabel = cost.resource === "energy"
                 ? "Vigor"
@@ -291,6 +292,9 @@
                 0
             );
             const remaining = Math.max(0, readyAt - Date.now()) / 1000;
+            const remainingRounds = Aethra.GameState.battle?.isFighting
+                ? Aethra.SkillSystem?.getCooldownRoundsRemaining?.(skillId) || 0
+                : 0;
             const settings = Aethra.SkillController?.getSettings?.() || {};
             const autoEnabled = settings[skillId]?.auto === true;
             const ordered = Aethra.SkillController?.getOrderedSkills?.() || [];
@@ -325,13 +329,17 @@
                         </div>
                         <div>
                             <small>Cooldown (CD)</small>
-                            <b>${cooldown > 0
+                            <b>${cooldownRounds > 0
+                                ? `${cooldownRounds} rodada${cooldownRounds === 1 ? "" : "s"}`
+                                : cooldown > 0
                                 ? `${cooldown.toFixed(cooldown % 1 === 0 ? 0 : 1)}s`
                                 : "Sem recarga"}</b>
                         </div>
                         <div>
                             <small>Disponibilidade</small>
-                            <b>${remaining > 0
+                            <b>${remainingRounds > 0
+                                ? `Pronta em ${remainingRounds} rodada${remainingRounds === 1 ? "" : "s"}`
+                                : remaining > 0
                                 ? `Pronta em ${remaining.toFixed(1)}s`
                                 : "Pronta para usar"}</b>
                         </div>

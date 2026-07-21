@@ -1,0 +1,246 @@
+/* Coliseu: arena global e índice vivo de relíquias. */
+#coliseum-view {
+    width: min(94vw, 1560px);
+    height: min(88vh, 960px);
+    max-width: none;
+    overflow: hidden;
+    border-color: rgba(208, 168, 66, .42);
+    background:
+        radial-gradient(circle at 12% -10%, rgba(54, 149, 151, .14), transparent 35%),
+        radial-gradient(circle at 86% 0%, rgba(208, 168, 66, .1), transparent 32%),
+        #071116;
+}
+
+#coliseum-view > .window-header {
+    padding: 16px 20px;
+    border-bottom-color: rgba(208, 168, 66, .3);
+    background: linear-gradient(90deg, rgba(16, 34, 40, .98), rgba(7, 17, 22, .98));
+}
+
+#coliseum-view > .window-header h2 { color: #f0d98f; }
+#coliseum-workspace { height: calc(100% - 74px); overflow: auto; padding: 16px; }
+
+.coliseum-profile {
+    display: grid;
+    grid-template-columns: auto minmax(260px, 1fr) minmax(480px, 1.35fr);
+    gap: 16px;
+    align-items: center;
+    min-height: 112px;
+    padding: 16px 18px;
+    border: 1px solid color-mix(in srgb, var(--division-color) 46%, #223740);
+    border-radius: 16px;
+    background: linear-gradient(115deg, color-mix(in srgb, var(--division-color) 8%, #0c1a20), rgba(7, 15, 19, .96));
+    box-shadow: inset 0 1px rgba(255,255,255,.025), 0 12px 34px rgba(0,0,0,.24);
+}
+
+.coliseum-profile__crest {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 72px;
+    height: 78px;
+    color: var(--division-color);
+    border: 1px solid color-mix(in srgb, var(--division-color) 65%, transparent);
+    clip-path: polygon(50% 0, 94% 18%, 87% 76%, 50% 100%, 13% 76%, 6% 18%);
+    background: color-mix(in srgb, var(--division-color) 14%, #091318);
+}
+.coliseum-profile__crest span { font: 800 25px/1 Cinzel, serif; }
+.coliseum-profile__identity small,
+.coliseum-matchmaker header small,
+.coliseum-wager header small,
+.coliseum-gatekeepers header small,
+.coliseum-leaderboard header small,
+.coliseum-history header small,
+.relic-ranking > header small { color: #76909b; font-size: 11px; font-weight: 800; letter-spacing: .12em; }
+.coliseum-profile__identity h3 { margin: 3px 0; color: #f0eadc; font: 700 26px/1.1 Cinzel, serif; }
+.coliseum-profile__identity h3 em { display: inline-flex; margin-left: 9px; padding: 5px 8px; color: var(--division-color); border: 1px solid color-mix(in srgb, var(--division-color) 46%, transparent); border-radius: 7px; background: rgba(0,0,0,.25); font: 800 10px/1 Outfit, sans-serif; letter-spacing: .08em; vertical-align: middle; }
+.coliseum-profile__identity p { margin: 0; color: #8fa4ae; font-size: 13px; }
+.coliseum-profile__metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.coliseum-profile__metrics > span { display: flex; flex-direction: column; min-height: 66px; padding: 10px 12px; border: 1px solid #1b3038; border-radius: 11px; background: rgba(5, 14, 18, .7); }
+.coliseum-profile__metrics small { color: #6f8792; font-size: 9px; font-weight: 800; letter-spacing: .1em; }
+.coliseum-profile__metrics strong { color: #e7eef0; font-size: 21px; }
+.coliseum-profile__metrics em { color: var(--division-color); font-size: 10px; font-style: normal; }
+
+.coliseum-notice { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 10px 12px; border: 1px solid #285167; border-radius: 10px; background: #0a202a; color: #b9dce8; }
+.coliseum-notice.is-success { border-color: #277254; background: #082119; color: #72e2ae; }
+.coliseum-notice.is-error { border-color: #7f3640; background: #251015; color: #ff8692; }
+.coliseum-notice span { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: currentColor; color: #061014; font-weight: 900; }
+.coliseum-notice p { flex: 1; margin: 0; }
+.coliseum-notice button { border: 0; background: transparent; color: currentColor; font-size: 20px; }
+
+.coliseum-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0; padding: 6px; border: 1px solid #162a32; border-radius: 13px; background: #08151a; }
+.coliseum-tabs button { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 10px; align-items: center; min-height: 52px; padding: 8px 14px; text-align: left; color: #80949e; border: 1px solid transparent; border-radius: 9px; background: transparent; transition: .18s ease; }
+.coliseum-tabs button > span { grid-row: 1 / 3; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 8px; background: #101f25; color: #d7bd6b; }
+.coliseum-tabs button strong { font-size: 13px; }
+.coliseum-tabs button small { color: #5f7681; font-size: 10px; }
+.coliseum-tabs button:hover { color: #dbe6e9; background: #0d1d23; }
+.coliseum-tabs button.is-active { color: #f1db92; border-color: rgba(208,168,66,.42); background: linear-gradient(100deg, rgba(208,168,66,.12), rgba(16,35,41,.7)); }
+.coliseum-tabs button.is-active > span { background: #352c16; }
+
+.coliseum-view-body { min-height: 520px; }
+.coliseum-arena-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(320px, .8fr); gap: 12px; }
+.coliseum-matchmaker,
+.coliseum-wager,
+.coliseum-gatekeepers,
+.coliseum-leaderboard,
+.coliseum-history,
+.relic-ranking { border: 1px solid #1a3038; border-radius: 14px; background: rgba(7, 17, 22, .9); overflow: hidden; }
+.coliseum-matchmaker > header,
+.coliseum-wager > header,
+.coliseum-gatekeepers > header,
+.coliseum-leaderboard > header,
+.coliseum-history > header,
+.relic-ranking > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 14px 16px; border-bottom: 1px solid #172b33; background: linear-gradient(90deg, #0d1d23, #09161b); }
+.coliseum-matchmaker h3,
+.coliseum-wager h3,
+.coliseum-gatekeepers h3,
+.coliseum-leaderboard h3,
+.coliseum-history h3,
+.relic-ranking h3 { margin: 2px 0 0; color: #e9e3d6; font-size: 17px; }
+.coliseum-live { color: #64dca3; font-size: 10px; font-weight: 800; letter-spacing: .08em; }
+.coliseum-live i { display: inline-block; width: 7px; height: 7px; margin-right: 5px; border-radius: 50%; background: #4cf09a; box-shadow: 0 0 10px #4cf09a; }
+
+.coliseum-versus { display: grid; grid-template-columns: 1fr auto 1fr; gap: 14px; align-items: center; min-height: 215px; padding: 18px 24px; background: radial-gradient(circle, rgba(203,159,57,.08), transparent 56%); }
+.coliseum-fighter { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.coliseum-fighter > span { display: grid; place-items: center; width: 72px; height: 72px; margin-bottom: 8px; color: #efcf70; border: 1px solid #735c24; border-radius: 16px 16px 28px 28px; background: #1c211c; font: 800 29px Cinzel, serif; box-shadow: 0 12px 30px rgba(0,0,0,.35); }
+.coliseum-fighter.is-player > span { color: #69d8f0; border-color: #286d80; background: #0d2730; }
+.coliseum-fighter small { color: #728994; font-size: 9px; font-weight: 800; letter-spacing: .1em; }
+.coliseum-fighter strong { margin: 3px 0; color: #ecf0ed; font-size: 17px; }
+.coliseum-fighter em { color: #8da4ae; font-size: 11px; font-style: normal; }
+.coliseum-versus > b { color: #d6b85c; font: 800 20px Cinzel, serif; text-align: center; }
+.coliseum-versus > b small { display: block; margin-top: 4px; color: #7f8e91; font: 800 8px Outfit, sans-serif; letter-spacing: .12em; }
+.coliseum-search-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 215px; padding: 30px; text-align: center; }
+.coliseum-search-empty > span { display: grid; place-items: center; width: 58px; height: 58px; margin-bottom: 10px; color: #e3c765; border: 1px solid #665220; border-radius: 50%; background: #1c2119; font-size: 23px; }
+.coliseum-search-empty strong { color: #dbe5e7; font-size: 17px; }
+.coliseum-search-empty p { max-width: 550px; margin: 7px 0 0; color: #8097a1; }
+.coliseum-matchmaker__actions { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 16px; border-top: 1px solid #172a32; }
+.coliseum-matchmaker button,
+.coliseum-wager > button,
+.coliseum-gatekeepers article button { min-height: 38px; padding: 0 15px; border: 1px solid #29434e; border-radius: 8px; background: #101f25; color: #b9c9ce; font-weight: 800; }
+.coliseum-matchmaker button.is-primary { border-color: #8c7028; background: linear-gradient(#5b4718, #33280f); color: #f3d672; box-shadow: 0 0 20px rgba(210,168,63,.12); }
+.coliseum-matchmaker button:hover,
+.coliseum-wager > button:hover,
+.coliseum-gatekeepers article button:hover { filter: brightness(1.18); }
+.coliseum-matchmaker button:disabled,
+.coliseum-wager button:disabled { opacity: .38; cursor: not-allowed; }
+.coliseum-matchmaker > footer { display: grid; grid-template-columns: auto auto 1fr; gap: 8px; padding: 10px 16px; color: #708792; border-top: 1px solid #172a32; font-size: 10px; }
+.coliseum-matchmaker > footer strong { color: #a9bbc1; }
+.coliseum-matchmaker > footer small { text-align: right; }
+
+.coliseum-wager { padding-bottom: 14px; }
+.coliseum-wager > header > span { padding: 5px 7px; color: #cdb760; border: 1px solid #56491f; border-radius: 6px; font-size: 9px; font-weight: 800; }
+.coliseum-wager > p { margin: 12px 14px; color: #78909a; font-size: 12px; }
+.coliseum-wager > button { width: calc(100% - 28px); margin: 4px 14px 0; }
+.coliseum-wager.is-locked { border-color: #6d5c26; box-shadow: inset 0 0 28px rgba(204,166,56,.04); }
+.coliseum-wager-items { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; max-height: 190px; padding: 0 14px; overflow: auto; }
+.coliseum-wager-items button { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; gap: 0 8px; min-width: 0; padding: 8px; text-align: left; border: 1px solid #1c323a; border-radius: 8px; background: #09161b; color: #aebec3; }
+.coliseum-wager-items button > span { grid-row: 1 / 3; display: grid; place-items: center; width: 32px; height: 32px; color: var(--rarity); border: 1px solid color-mix(in srgb, var(--rarity) 45%, #23343a); border-radius: 7px; background: #0e1c21; }
+.coliseum-wager-items button strong { overflow: hidden; color: #dbe4e5; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.coliseum-wager-items button small { color: #6c838d; font-size: 9px; }
+.coliseum-wager-items button.is-selected { border-color: #b89739; background: #251f0d; box-shadow: inset 3px 0 #e0c15f; }
+.coliseum-wager-empty { grid-column: 1 / -1; padding: 24px 10px; color: #6e858f; text-align: center; }
+.coliseum-escrow { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding: 14px; }
+.coliseum-escrow article { display: flex; flex-direction: column; min-width: 0; min-height: 94px; justify-content: center; padding: 10px; border: 1px solid #53471f; border-radius: 9px; background: #17170e; }
+.coliseum-escrow small { color: #837742; font-size: 8px; font-weight: 800; letter-spacing: .08em; }
+.coliseum-escrow strong { overflow: hidden; color: #ead98d; font-size: 12px; text-overflow: ellipsis; }
+.coliseum-escrow em { color: #a99858; font-size: 10px; font-style: normal; }
+
+.coliseum-gatekeepers { margin-top: 12px; }
+.coliseum-gatekeepers > header p { max-width: 460px; margin: 0; color: #738a94; font-size: 11px; text-align: right; }
+.coliseum-gatekeepers > div { display: grid; grid-template-columns: repeat(5, minmax(170px, 1fr)); gap: 8px; padding: 12px; overflow-x: auto; }
+.coliseum-gatekeepers article { position: relative; display: flex; flex-direction: column; min-height: 155px; padding: 12px; border: 1px solid color-mix(in srgb, var(--gate-color) 30%, #1a3038); border-radius: 10px; background: linear-gradient(145deg, color-mix(in srgb, var(--gate-color) 7%, #0b181d), #081318); }
+.coliseum-gatekeepers article > span { display: grid; place-items: center; width: 35px; height: 35px; margin-bottom: 8px; color: var(--gate-color); border: 1px solid color-mix(in srgb, var(--gate-color) 48%, #1c2f36); border-radius: 50%; font: 800 12px Cinzel, serif; }
+.coliseum-gatekeepers article small { color: #708793; font-size: 8px; font-weight: 800; letter-spacing: .08em; }
+.coliseum-gatekeepers article strong { color: #d8e1e2; font-size: 12px; }
+.coliseum-gatekeepers article p { margin: 5px 0 10px; color: #708690; font-size: 9px; }
+.coliseum-gatekeepers article button { min-height: 30px; margin-top: auto; padding: 0 8px; font-size: 9px; }
+.coliseum-gatekeepers article.is-defeated::after { content: "VENCIDO"; position: absolute; top: 12px; right: 10px; color: #54d69a; font-size: 8px; font-weight: 900; }
+
+.coliseum-rank-layout { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(300px, .55fr); gap: 12px; }
+.coliseum-leaderboard > header > span { color: #6f8791; font-size: 11px; }
+.coliseum-table { max-height: 570px; overflow: auto; }
+.coliseum-table__head,
+.coliseum-table article { display: grid; grid-template-columns: 50px minmax(190px, 1fr) 90px 90px 80px; gap: 8px; align-items: center; min-height: 46px; padding: 0 14px; border-bottom: 1px solid #13262d; }
+.coliseum-table__head { position: sticky; top: 0; z-index: 2; min-height: 35px; color: #687f89; background: #09161b; font-size: 9px; font-weight: 800; letter-spacing: .07em; }
+.coliseum-table article > b { color: #d0b75e; font: 800 13px Cinzel, serif; }
+.coliseum-table article > span { display: flex; flex-direction: column; }
+.coliseum-table article strong { color: #dce5e6; font-size: 12px; }
+.coliseum-table article small { color: #6c838d; font-size: 9px; }
+.coliseum-table article em { color: #a6b8bd; font-size: 11px; font-style: normal; }
+.coliseum-table article.is-player { background: linear-gradient(90deg, rgba(58,167,191,.13), transparent); box-shadow: inset 3px 0 #43bbd6; }
+.coliseum-table article.is-bot { background-color: rgba(204,166,58,.035); }
+.coliseum-history { align-self: start; }
+.coliseum-history > article { display: grid; grid-template-columns: auto 1fr auto; gap: 9px; align-items: center; padding: 11px 13px; border-bottom: 1px solid #15282f; }
+.coliseum-history > article > span { display: grid; place-items: center; width: 27px; height: 27px; color: #66dfa6; border: 1px solid #245e47; border-radius: 7px; background: #0b241b; font-weight: 900; }
+.coliseum-history > article.is-loss > span { color: #ff7f8b; border-color: #71323b; background: #291116; }
+.coliseum-history article div { display: flex; flex-direction: column; min-width: 0; }
+.coliseum-history article strong { overflow: hidden; color: #d8e2e3; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.coliseum-history article small { color: #69818b; font-size: 9px; }
+.coliseum-history article em { color: #65dba3; font-size: 11px; font-style: normal; font-weight: 800; }
+.coliseum-history article.is-loss em { color: #ff7e89; }
+.coliseum-history__empty { padding: 32px 18px; color: #708791; text-align: center; }
+.coliseum-history > footer { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; padding: 12px; }
+.coliseum-history > footer span { display: flex; flex-direction: column; padding: 10px; border: 1px solid #1c3139; border-radius: 8px; background: #09161b; }
+.coliseum-history > footer small { color: #657d87; font-size: 9px; }
+.coliseum-history > footer strong { color: #e1c86f; font-size: 16px; }
+
+.relic-ranking > header p { margin: 3px 0 0; color: #748b95; font-size: 11px; }
+.relic-ranking > header > span { color: #5bdd9e; font-size: 9px; font-weight: 900; }
+.relic-ranking > header > span i { display: inline-block; width: 6px; height: 6px; margin-right: 4px; border-radius: 50%; background: #53e899; box-shadow: 0 0 8px #53e899; }
+.relic-ranking > nav { display: flex; gap: 6px; padding: 10px 12px; overflow-x: auto; border-bottom: 1px solid #172a31; }
+.relic-ranking > nav button { flex: 0 0 auto; min-height: 32px; padding: 0 10px; color: #7f949d; border: 1px solid #1d333c; border-radius: 7px; background: #0a171c; font-size: 10px; font-weight: 700; }
+.relic-ranking > nav button b { margin-left: 5px; color: #a9bac0; }
+.relic-ranking > nav button.is-active { color: #ecd377; border-color: #755f25; background: #251f0d; }
+.relic-ranking__table { max-height: 510px; overflow: auto; }
+.relic-ranking__head,
+.relic-ranking__table article { display: grid; grid-template-columns: 82px minmax(240px, 1fr) minmax(130px, .5fr) 110px 90px; gap: 10px; align-items: center; min-height: 49px; padding: 0 16px; border-bottom: 1px solid #13262d; }
+.relic-ranking__head { position: sticky; top: 0; z-index: 2; min-height: 34px; color: #657c86; background: #09161b; font-size: 9px; font-weight: 800; letter-spacing: .07em; }
+.relic-ranking__table article > b { color: #e2c562; font: 800 14px Cinzel, serif; }
+.relic-ranking__table article > span { display: flex; flex-direction: column; min-width: 0; }
+.relic-ranking__table article strong { overflow: hidden; color: var(--rarity); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.relic-ranking__table article small { color: #667e88; font-size: 9px; }
+.relic-ranking__table article em { color: #9eafb4; font-size: 11px; font-style: normal; }
+.relic-ranking__table article i { color: #667e87; font-size: 10px; font-style: normal; }
+.relic-ranking__table article i.is-up { color: #5adb9d; }
+.relic-ranking__table article i.is-down { color: #ff7c86; }
+.relic-ranking__table article.is-owned { background: linear-gradient(90deg, rgba(58,173,194,.12), transparent); box-shadow: inset 3px 0 #47bad1; }
+.relic-ranking > footer { display: flex; align-items: center; gap: 12px; padding: 11px 15px; color: #718892; background: #09161b; }
+.relic-ranking > footer strong { color: #c2d0d3; font-size: 10px; }
+.relic-ranking > footer p { margin: 0; font-size: 10px; }
+
+.player-hud-rank-tag { display: inline-flex; align-items: center; width: fit-content; margin-top: 3px; padding: 3px 6px; color: var(--rank-color, #e3c765); border: 1px solid color-mix(in srgb, var(--rank-color, #e3c765) 45%, transparent); border-radius: 5px; background: color-mix(in srgb, var(--rank-color, #e3c765) 9%, #081318); font-size: 8px; font-weight: 900; letter-spacing: .07em; }
+
+.aethra-item-tooltip__world-rank { display: grid; grid-template-columns: auto 1fr auto; gap: 9px; align-items: center; margin: 9px 0; padding: 9px 10px; color: #dec56c; border: 1px solid #665324; border-radius: 8px; background: linear-gradient(90deg, #211d0d, #0d1719); }
+.aethra-item-tooltip__world-rank > span { display: grid; place-items: center; width: 29px; height: 29px; border: 1px solid #7b6528; border-radius: 50%; font: 800 11px Cinzel, serif; }
+.aethra-item-tooltip__world-rank div { display: flex; flex-direction: column; }
+.aethra-item-tooltip__world-rank small { color: #887e54; font-size: 8px; font-weight: 900; letter-spacing: .08em; }
+.aethra-item-tooltip__world-rank strong { color: #ead889; font-size: 11px; }
+.aethra-item-tooltip__world-rank > em { color: #a89d72; font-size: 9px; font-style: normal; text-align: right; }
+
+@media (max-width: 1100px) {
+    .coliseum-profile { grid-template-columns: auto 1fr; }
+    .coliseum-profile__metrics { grid-column: 1 / -1; }
+    .coliseum-arena-grid,
+    .coliseum-rank-layout { grid-template-columns: 1fr; }
+    .coliseum-gatekeepers > div { grid-template-columns: repeat(5, 190px); }
+}
+
+@media (max-width: 720px) {
+    #coliseum-view { width: calc(100vw - 12px); height: calc(100vh - 18px); }
+    #coliseum-workspace { padding: 9px; }
+    .coliseum-profile { grid-template-columns: 1fr; text-align: center; }
+    .coliseum-profile__crest { margin: auto; }
+    .coliseum-profile__metrics { grid-template-columns: repeat(2, 1fr); }
+    .coliseum-tabs button { display: flex; justify-content: center; }
+    .coliseum-tabs button small { display: none; }
+    .coliseum-tabs button > span { width: 26px; height: 26px; }
+    .coliseum-versus { grid-template-columns: 1fr auto 1fr; padding: 12px 6px; }
+    .coliseum-table__head,
+    .coliseum-table article { grid-template-columns: 38px minmax(150px, 1fr) 70px; }
+    .coliseum-table__head span:nth-child(n+4),
+    .coliseum-table article em:nth-last-child(-n+2) { display: none; }
+    .relic-ranking__head,
+    .relic-ranking__table article { grid-template-columns: 58px minmax(180px, 1fr) 80px; }
+    .relic-ranking__head span:nth-child(3), .relic-ranking__head span:nth-child(5),
+    .relic-ranking__table article em:first-of-type, .relic-ranking__table article i { display: none; }
+}

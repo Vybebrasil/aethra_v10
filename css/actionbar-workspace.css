@@ -1,0 +1,775 @@
+/* Multi ActionBar workspace — compact MMO grid with scalable loadouts. */
+
+body.aethra-actionbar-workspace {
+    --actionbar-slot-size: clamp(64px, 6vw, 82px);
+    --actionbar-toolbar-height: 24px;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer,
+body.aethra-actionbar-workspace #battle-actionbar-layer > .battle-panel--actionbar,
+body.aethra-actionbar-workspace #battle-actionbar-layer .combat-action-deck {
+    overflow: visible !important;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer .combat-action-deck {
+    grid-template-columns: 216px minmax(0, 1fr) !important;
+    width: min(100%, 1440px) !important;
+    margin-inline: auto !important;
+    gap: 10px !important;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer .primary-attack-deck,
+body.aethra-actionbar-workspace #battle-actionbar-layer .skill-action-deck--workspace {
+    grid-template-rows: var(--actionbar-toolbar-height) minmax(0, 1fr) !important;
+    overflow: visible !important;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer .battle-priority-legend.is-workspace-hidden {
+    display: none !important;
+}
+
+/* Bar selector */
+body.aethra-actionbar-workspace .actionbar-workspace__toolbar {
+    position: relative;
+    z-index: 8;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    height: var(--actionbar-toolbar-height);
+    color: #8298a3;
+    font: 600 10px/1 'Outfit', sans-serif;
+}
+
+.actionbar-workspace__identity {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 132px;
+    height: 21px;
+    padding: 0 7px;
+    border: 1px solid rgba(201, 162, 67, 0.18);
+    border-radius: 6px;
+    background: rgba(10, 18, 23, 0.76);
+}
+
+.actionbar-workspace__identity .actionbar-workspace__eyebrow {
+    color: #607985;
+    font-size: 7px;
+    font-weight: 800;
+    letter-spacing: 0.07em;
+}
+
+.actionbar-workspace__identity strong {
+    min-width: 0;
+    overflow: hidden;
+    color: #dce8ed;
+    font-size: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.actionbar-workspace__identity small {
+    margin-left: auto;
+    color: #d9bc6a;
+    font-size: 9px;
+}
+
+.actionbar-workspace__arrow,
+.actionbar-workspace__tool,
+.actionbar-workspace__bar-tabs button {
+    display: grid;
+    place-items: center;
+    flex: 0 0 21px;
+    width: 21px;
+    height: 21px;
+    min-height: 21px;
+    padding: 0;
+    border: 1px solid rgba(103, 139, 154, 0.2);
+    border-radius: 5px;
+    background: rgba(10, 18, 23, 0.76);
+    color: #8298a3;
+    font: 800 11px/1 'Outfit', sans-serif;
+    cursor: pointer;
+    transition: color 150ms ease, border-color 150ms ease, background-color 150ms ease, transform 150ms var(--fluid-ease);
+}
+
+.actionbar-workspace__arrow:hover,
+.actionbar-workspace__tool:hover:not(:disabled),
+.actionbar-workspace__bar-tabs button:hover,
+.actionbar-workspace__bar-tabs button.is-active,
+.actionbar-workspace__tool.is-active {
+    border-color: rgba(225, 190, 99, 0.56);
+    background: rgba(191, 148, 54, 0.12);
+    color: #f0d47c;
+}
+
+.actionbar-workspace__arrow:active,
+.actionbar-workspace__tool:active:not(:disabled),
+.actionbar-workspace__bar-tabs button:active {
+    transform: translateY(1px);
+}
+
+.actionbar-workspace__tool:disabled {
+    opacity: 0.28;
+    cursor: not-allowed;
+}
+
+.actionbar-workspace__bar-tabs {
+    display: flex;
+    gap: 3px;
+    padding: 0 2px;
+}
+
+.actionbar-workspace__bar-tabs button.is-active {
+    box-shadow: inset 0 -2px #d9b85f, 0 0 9px rgba(210, 170, 69, 0.1);
+}
+
+.actionbar-workspace__hint {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+    margin-left: 6px;
+    overflow: hidden;
+    color: #5f7782;
+    font-size: 9px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.actionbar-workspace__hint kbd {
+    padding: 2px 5px;
+    border: 1px solid rgba(111, 148, 162, 0.2);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.035);
+    color: #a9bbc3;
+    font: inherit;
+}
+
+.actionbar-workspace__hint i {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: #546b75;
+}
+
+/* Ten compact slots remain available; larger bars scroll horizontally. */
+body.aethra-actionbar-workspace #battle-actionbar-layer #skill-action-bar {
+    display: grid !important;
+    grid-template-columns: repeat(var(--actionbar-slot-count, 10), var(--actionbar-slot-size)) !important;
+    justify-content: start !important;
+    gap: 4px !important;
+    width: 100% !important;
+    height: var(--actionbar-slot-size) !important;
+    min-height: var(--actionbar-slot-size) !important;
+    max-height: var(--actionbar-slot-size) !important;
+    padding: 0 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: none;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer #skill-action-bar::-webkit-scrollbar {
+    display: none !important;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer #skill-action-bar .battle-action-slot,
+body.aethra-actionbar-workspace #battle-actionbar-layer #skill-action-bar .battle-action-slot.is-empty,
+body.aethra-actionbar-workspace #battle-actionbar-layer #skill-action-bar .battle-action-slot.is-fluid-overflow,
+body.aethra-actionbar-workspace #battle-actionbar-layer .skill-action-deck #skill-action-bar .battle-action-slot.is-filled {
+    position: relative !important;
+    display: block !important;
+    width: var(--actionbar-slot-size) !important;
+    min-width: var(--actionbar-slot-size) !important;
+    max-width: var(--actionbar-slot-size) !important;
+    height: var(--actionbar-slot-size) !important;
+    min-height: var(--actionbar-slot-size) !important;
+    max-height: var(--actionbar-slot-size) !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer #skill-action-bar .battle-action-slot__skill {
+    position: relative !important;
+    display: grid !important;
+    grid-template: 1fr / 1fr !important;
+    place-items: center !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    max-height: 100% !important;
+    padding: 8px !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(91, 126, 141, 0.24) !important;
+    border-radius: 8px !important;
+    background:
+        linear-gradient(145deg, rgba(19, 31, 38, 0.94), rgba(5, 11, 15, 0.98)) !important;
+    box-shadow: inset 0 1px rgba(255, 255, 255, 0.025), 0 5px 12px rgba(0, 0, 0, 0.22) !important;
+    cursor: pointer !important;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer #skill-action-bar .battle-action-slot.is-empty .battle-action-slot__skill {
+    border-style: dashed !important;
+    border-color: rgba(94, 127, 139, 0.16) !important;
+    background: rgba(7, 13, 17, 0.52) !important;
+    box-shadow: none !important;
+    cursor: pointer !important;
+    opacity: 0.7;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer #skill-action-bar .battle-action-slot__skill:hover:not(:disabled),
+body.aethra-actionbar-workspace #battle-actionbar-layer #skill-action-bar .battle-action-slot.is-empty .battle-action-slot__skill:hover {
+    z-index: 3;
+    border-color: rgba(221, 186, 94, 0.56) !important;
+    background: linear-gradient(145deg, rgba(36, 42, 38, 0.96), rgba(11, 18, 20, 0.98)) !important;
+    box-shadow: 0 0 0 1px rgba(221, 186, 94, 0.08), 0 7px 18px rgba(0, 0, 0, 0.38) !important;
+    transform: translateY(-2px) !important;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer #skill-action-bar .battle-action-slot__copy,
+body.aethra-actionbar-workspace #battle-actionbar-layer #skill-action-bar .battle-action-slot__controls,
+body.aethra-actionbar-workspace #battle-actionbar-layer #skill-action-bar .battle-action-slot__condition,
+body.aethra-actionbar-workspace #battle-actionbar-layer #skill-action-bar .battle-action-slot__meta-line {
+    display: none !important;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer #skill-action-bar .battle-action-slot__topline {
+    position: absolute !important;
+    inset: 4px 5px auto !important;
+    z-index: 5;
+    display: flex !important;
+    justify-content: space-between !important;
+    width: auto !important;
+    height: 16px !important;
+    pointer-events: none;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer #skill-action-bar .battle-action-slot__key,
+body.aethra-actionbar-workspace #battle-actionbar-layer #skill-action-bar .battle-action-slot__priority {
+    display: grid !important;
+    place-items: center !important;
+    min-width: 17px !important;
+    height: 17px !important;
+    padding: 0 4px !important;
+    border: 1px solid rgba(102, 144, 161, 0.24) !important;
+    border-radius: 4px !important;
+    background: rgba(5, 11, 14, 0.86) !important;
+    color: #83a0ac !important;
+    font-size: 9px !important;
+    line-height: 1 !important;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer #skill-action-bar .battle-action-slot.is-empty .battle-action-slot__key {
+    position: absolute !important;
+    top: 4px !important;
+    left: 5px !important;
+    z-index: 5 !important;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer #skill-action-bar .battle-action-slot.is-empty .battle-action-slot__skill > small {
+    display: none !important;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer #skill-action-bar .battle-action-slot__priority {
+    color: #d7b85e !important;
+    font-size: 8px;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer #skill-action-bar .battle-action-slot__icon,
+body.aethra-actionbar-workspace #battle-actionbar-layer #skill-action-bar .battle-action-slot__empty {
+    position: static !important;
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    align-self: center !important;
+    width: 38px !important;
+    height: 38px !important;
+    margin: 7px 0 0 !important;
+    border: 1px solid rgba(210, 173, 78, 0.24) !important;
+    border-radius: 9px !important;
+    background: radial-gradient(circle, rgba(203, 166, 68, 0.11), rgba(4, 9, 12, 0.42)) !important;
+    color: #f0d17a !important;
+    font-size: 21px !important;
+    line-height: 38px !important;
+    text-align: center !important;
+    filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.42));
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer #skill-action-bar .battle-action-slot__empty {
+    border-color: rgba(101, 137, 150, 0.16) !important;
+    background: rgba(255, 255, 255, 0.018) !important;
+    color: #536b76 !important;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer #skill-action-bar .battle-action-slot.is-auto::before {
+    content: "A";
+    position: absolute;
+    z-index: 7;
+    left: 5px;
+    bottom: 5px;
+    display: grid;
+    place-items: center;
+    width: 15px;
+    height: 15px;
+    border: 1px solid rgba(93, 224, 146, 0.42);
+    border-radius: 50%;
+    background: rgba(9, 54, 33, 0.94);
+    color: #72e9a4;
+    font: 800 8px/1 'Outfit', sans-serif;
+    box-shadow: 0 0 8px rgba(75, 216, 132, 0.15);
+    pointer-events: none;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer #skill-action-bar .battle-action-slot.is-auto .battle-action-slot__skill {
+    border-color: rgba(59, 168, 106, 0.36) !important;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer #skill-action-bar .battle-action-slot__drag-handle {
+    right: 4px !important;
+    bottom: 4px !important;
+    z-index: 8 !important;
+    display: grid !important;
+    place-items: center !important;
+    width: 16px !important;
+    height: 16px !important;
+    border: 0 !important;
+    background: transparent !important;
+    color: #5e7883 !important;
+    font-size: 9px !important;
+    opacity: 0.72;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer #skill-action-bar .battle-action-slot__cooldown-time {
+    z-index: 9 !important;
+    color: #fff0c0 !important;
+    font-size: 11px !important;
+    text-shadow: 0 1px 4px #000;
+}
+
+/* Primary attacks use the same density without clipping their names. */
+body.aethra-actionbar-workspace #battle-actionbar-layer .combat-action-deck__label {
+    height: var(--actionbar-toolbar-height) !important;
+    min-height: var(--actionbar-toolbar-height) !important;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer .combat-action-deck__label span {
+    font-size: 9px !important;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer .combat-action-deck__label small {
+    display: none !important;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer .primary-attack-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 5px !important;
+    height: var(--actionbar-slot-size) !important;
+    min-height: var(--actionbar-slot-size) !important;
+    max-height: var(--actionbar-slot-size) !important;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer .primary-attack-card {
+    grid-template-rows: minmax(0, 1fr) 19px !important;
+    width: 100% !important;
+    height: var(--actionbar-slot-size) !important;
+    min-height: var(--actionbar-slot-size) !important;
+    max-height: var(--actionbar-slot-size) !important;
+    border-radius: 8px !important;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer .primary-attack-card__button {
+    display: grid !important;
+    grid-template-columns: 27px minmax(0, 1fr) !important;
+    grid-template-rows: 16px minmax(0, 1fr) !important;
+    gap: 0 5px !important;
+    padding: 4px 5px !important;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer .primary-attack-card__mouse {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    position: static !important;
+    width: 27px !important;
+    height: 16px !important;
+    font-size: 8px !important;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer .primary-attack-card__icon {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    width: 27px !important;
+    height: 27px !important;
+    font-size: 16px !important;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer .primary-attack-card__copy {
+    grid-column: 2 !important;
+    grid-row: 1 / 3 !important;
+    align-self: center !important;
+    min-width: 0 !important;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer .primary-attack-card__copy b {
+    display: block !important;
+    overflow: hidden !important;
+    font-size: 10px !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer .primary-attack-card__copy small {
+    display: none !important;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer .primary-attack-card__interval {
+    right: 4px !important;
+    bottom: 3px !important;
+    font-size: 8px !important;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer .primary-attack-card__cooldown {
+    display: none !important;
+}
+
+body.aethra-actionbar-workspace #battle-actionbar-layer .primary-attack-card__auto {
+    height: 19px !important;
+    min-height: 19px !important;
+    max-height: 19px !important;
+}
+
+/* RuneScape-like stacked overview opens upward without resizing the game. */
+.actionbar-stack-drawer {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 8px);
+    z-index: 1400;
+    width: min(940px, calc(100vw - 32px));
+    max-height: min(330px, calc(100vh - 210px));
+    padding: 8px;
+    overflow: auto;
+    border: 1px solid rgba(206, 168, 74, 0.27);
+    border-radius: 11px;
+    background: rgba(5, 11, 14, 0.97);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.64), inset 0 1px rgba(255, 255, 255, 0.035);
+    backdrop-filter: blur(14px);
+    animation: actionbar-drawer-in 170ms var(--fluid-ease) both;
+}
+
+.actionbar-stack-drawer[hidden] {
+    display: none !important;
+}
+
+.actionbar-stack-drawer > header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 28px;
+    padding: 0 4px 6px;
+    border-bottom: 1px solid rgba(204, 164, 68, 0.14);
+}
+
+.actionbar-stack-drawer > header div {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.actionbar-stack-drawer > header small {
+    color: #65808b;
+    font: 800 8px/1 'Outfit', sans-serif;
+    letter-spacing: 0.09em;
+}
+
+.actionbar-stack-drawer > header strong {
+    color: #e4c973;
+    font: 700 12px/1 'Cinzel', serif;
+}
+
+.actionbar-stack-drawer > header > span {
+    color: #8299a3;
+    font: 700 10px/1 'Outfit', sans-serif;
+}
+
+.actionbar-stack-drawer__rows {
+    display: grid;
+    gap: 5px;
+    padding-top: 7px;
+}
+
+.actionbar-stack-row {
+    display: grid;
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 6px;
+    padding: 4px;
+    border: 1px solid rgba(91, 125, 139, 0.13);
+    border-radius: 8px;
+    background: rgba(13, 22, 27, 0.64);
+}
+
+.actionbar-stack-row.is-active {
+    border-color: rgba(211, 174, 78, 0.36);
+    background: rgba(44, 38, 22, 0.54);
+}
+
+.actionbar-stack-row__label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    padding: 0 6px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #9cb0b8;
+    cursor: pointer;
+}
+
+.actionbar-stack-row__label b {
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    background: rgba(211, 174, 78, 0.12);
+    color: #e5c66e;
+}
+
+.actionbar-stack-row__label span {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.actionbar-stack-row__slots {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 38px;
+    justify-content: start;
+    gap: 3px;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.actionbar-stack-slot {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: 1px solid rgba(93, 128, 143, 0.2);
+    border-radius: 6px;
+    background: rgba(5, 11, 14, 0.82);
+    color: #d9c270;
+    cursor: pointer;
+}
+
+.actionbar-stack-slot:hover {
+    border-color: rgba(222, 187, 95, 0.55);
+    transform: translateY(-1px);
+}
+
+.actionbar-stack-slot.is-empty {
+    border-style: dashed;
+    color: #455c66;
+}
+
+.actionbar-stack-slot small {
+    position: absolute;
+    top: 2px;
+    left: 3px;
+    color: #6e8792;
+    font-size: 7px;
+}
+
+.actionbar-stack-slot strong {
+    margin-top: 4px;
+    font-size: 16px;
+}
+
+/* Loadout editor lives inside the existing Skills window. */
+.actionbar-loadout-editor {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 11px;
+    border: 1px solid rgba(211, 174, 78, 0.22);
+    border-radius: 11px;
+    background: linear-gradient(145deg, rgba(20, 30, 35, 0.94), rgba(7, 13, 17, 0.96));
+    box-shadow: 0 9px 24px rgba(0, 0, 0, 0.3);
+}
+
+.actionbar-loadout-editor__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.actionbar-loadout-editor__header > div {
+    display: grid;
+    gap: 2px;
+}
+
+.actionbar-loadout-editor__header small {
+    color: #708893;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+}
+
+.actionbar-loadout-editor__header strong {
+    color: #ead07a;
+    font: 700 15px/1.1 'Cinzel', serif;
+}
+
+.actionbar-loadout-editor__header nav {
+    display: flex;
+    gap: 4px;
+}
+
+.actionbar-loadout-editor__header button {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid rgba(99, 134, 148, 0.24);
+    border-radius: 6px;
+    background: rgba(7, 14, 18, 0.8);
+    color: #8199a3;
+    cursor: pointer;
+}
+
+.actionbar-loadout-editor__header button.is-active {
+    border-color: rgba(218, 180, 83, 0.52);
+    background: rgba(188, 144, 46, 0.12);
+    color: #efd27a;
+}
+
+.actionbar-loadout-editor__header button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.actionbar-loadout-editor > p {
+    margin: 0;
+    color: #78909a;
+    font-size: 11px;
+}
+
+.actionbar-loadout-editor__grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(116px, 1fr));
+    gap: 6px;
+}
+
+.actionbar-loadout-slot {
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr);
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+    padding: 5px;
+    border: 1px solid rgba(91, 125, 138, 0.17);
+    border-radius: 7px;
+    background: rgba(5, 11, 14, 0.64);
+}
+
+.actionbar-loadout-slot.is-filled {
+    border-color: rgba(207, 169, 75, 0.23);
+}
+
+.actionbar-loadout-slot > span {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.035);
+}
+
+.actionbar-loadout-slot kbd {
+    position: absolute;
+    top: 2px;
+    left: 3px;
+    color: #718994;
+    font: 700 8px/1 'Outfit', sans-serif;
+}
+
+.actionbar-loadout-slot i {
+    color: #e5c66d;
+    font-size: 17px;
+    font-style: normal;
+}
+
+.actionbar-loadout-slot select {
+    min-width: 0;
+    width: 100%;
+    height: 31px;
+    padding: 0 24px 0 7px;
+    border: 1px solid rgba(104, 139, 153, 0.2);
+    border-radius: 6px;
+    background: #0b1419;
+    color: #bfd0d7;
+    font: 600 10px/1 'Outfit', sans-serif;
+}
+
+@keyframes actionbar-drawer-in {
+    from { opacity: 0; transform: translateY(7px) scale(0.99); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 1250px) {
+    body.aethra-actionbar-workspace {
+        --actionbar-slot-size: clamp(61px, 6vw, 72px);
+    }
+
+    body.aethra-actionbar-workspace #battle-actionbar-layer .combat-action-deck {
+        grid-template-columns: 204px minmax(0, 1fr) !important;
+        gap: 7px !important;
+    }
+
+    .actionbar-workspace__hint {
+        display: none;
+    }
+
+    .actionbar-workspace__identity {
+        min-width: 112px;
+    }
+
+    .actionbar-workspace__identity .actionbar-workspace__eyebrow {
+        display: none;
+    }
+}
+
+@media (max-height: 820px) {
+    body.aethra-actionbar-workspace {
+        --actionbar-slot-size: clamp(60px, 6vw, 76px);
+        --actionbar-toolbar-height: 22px;
+    }
+}
+
+@media (max-width: 760px) {
+    .actionbar-loadout-editor__grid {
+        grid-template-columns: repeat(2, minmax(116px, 1fr));
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .actionbar-stack-drawer,
+    .actionbar-stack-slot,
+    .actionbar-workspace__arrow,
+    .actionbar-workspace__tool,
+    .actionbar-workspace__bar-tabs button {
+        animation: none !important;
+        transition: none !important;
+    }
+}

@@ -24,7 +24,7 @@
             speed: 1000,
             isRunning: false,
             isPaused: false,
-            encounterResolveDelay: 350,
+            encounterResolveDelay: 1200,
             combatEngine: "BattleSystem",
             useBattleSystem: true,
             useCombatSystem: false,
@@ -91,6 +91,11 @@
                 0,
                 Math.floor(number(state.hunt.supplyCost, 0))
             );
+            state.hunt.supplyBreakdown = state.hunt.supplyBreakdown
+                && typeof state.hunt.supplyBreakdown === "object"
+                && !Array.isArray(state.hunt.supplyBreakdown)
+                ? clone(state.hunt.supplyBreakdown)
+                : {};
             state.hunt.lastRewards = state.hunt.lastRewards || null;
             state.hunt.elapsedTicks = Math.max(0, Math.floor(number(state.hunt.elapsedTicks, 0)));
             state.hunt.elapsedMs = Math.max(0, number(state.hunt.elapsedMs, 0));
@@ -328,6 +333,21 @@
                 return false;
             }
 
+            const previousSession = this.getSnapshot();
+            if (previousSession.huntId && (
+                previousSession.elapsedMs > 0
+                || previousSession.xp > 0
+                || previousSession.kills > 0
+                || previousSession.gold > 0
+                || previousSession.lootValue > 0
+                || previousSession.supplyCost > 0
+            )) {
+                Aethra.EventBus.emit("hunt:session-finalizing", {
+                    reason: "new-hunt",
+                    ...previousSession
+                });
+            }
+
             this.clearTimers();
             this.sessionToken += 1;
             this.config.speed = Math.max(100, Math.floor(number(options.speed, this.config.speed)));
@@ -349,6 +369,7 @@
                 lootCount: 0,
                 lootValue: 0,
                 supplyCost: 0,
+                supplyBreakdown: {},
                 lastRewards: null,
                 elapsedTicks: 0,
                 elapsedMs: 0,
@@ -379,6 +400,11 @@
                 this.config.isRunning || state.isActive
             );
 
+            Aethra.EventBus.emit("hunt:session-finalizing", {
+                reason: "analyzer-reset",
+                ...this.getSnapshot()
+            });
+
             Object.assign(state, {
                 kills: 0,
                 xp: 0,
@@ -386,6 +412,7 @@
                 lootCount: 0,
                 lootValue: 0,
                 supplyCost: 0,
+                supplyBreakdown: {},
                 lastRewards: null,
                 lastEnemy: null,
                 elapsedTicks: 0,
@@ -448,6 +475,57 @@
             return true;
         },
 
+        recordSupplyUse(itemOrId, quantity = 1, options = {}) {
+            this.ensureState();
+
+            const state = Aethra.GameState.hunt;
+            if (!state.isActive && options.allowInactive !== true) return false;
+
+            const item = typeof itemOrId === "object" && itemOrId
+                ? itemOrId
+                : Aethra.GameData.items?.[itemOrId]
+                    || Aethra.ItemSystem?.templates?.[itemOrId]
+                    || { id: itemOrId };
+            const itemId = String(
+                options.itemId
+                || item.templateId
+                || item.id
+                || "unknown_supply"
+            );
+            const amount = Math.max(1, Math.floor(number(quantity, 1)));
+            const unitCost = Math.max(0, number(
+                options.unitCost,
+                item.price ?? item.basePrice ?? item.value ?? 0
+            ));
+            const totalCost = Math.max(0, number(
+                options.totalCost,
+                unitCost * amount
+            ));
+            const current = state.supplyBreakdown[itemId] || {};
+
+            state.supplyBreakdown[itemId] = {
+                itemId,
+                name: String(options.name || item.name || current.name || itemId),
+                quantity: Math.max(0, Math.floor(number(current.quantity, 0))) + amount,
+                totalCost: Math.max(0, number(current.totalCost, 0)) + totalCost
+            };
+            state.supplyCost = Math.max(0, number(state.supplyCost, 0) + totalCost);
+
+            const payload = {
+                ...clone(state.supplyBreakdown[itemId]),
+                amount,
+                unitCost,
+                cost: totalCost,
+                source: options.source || "hunt-system",
+                huntId: state.huntId,
+                supplyCost: state.supplyCost
+            };
+
+            Aethra.EventBus.emit("hunt:supply-used", payload);
+            Aethra.EventBus.emit("hunt:updated", this.getSnapshot());
+            return payload;
+        },
+
         scheduleNextTick(token, delay = this.config.speed) {
             this.clearTickTimer();
             this.timerId = window.setTimeout(() => {
@@ -477,7 +555,9 @@
                 state: this.getSnapshot()
             });
 
-            if (!state.currentEnemy) {
+            // Durante a curta resolução visual do combate anterior, não cria
+            // um encontro que seria recusado e deixaria a Hunt travada.
+            if (!state.currentEnemy && !Aethra.BattleSystem?.isFighting) {
                 const explorationTriggered = Boolean(
                     Aethra.ExplorationSystem?.tryTrigger?.({
                         huntId: state.huntId,
@@ -806,6 +886,7 @@
                 lootCount: state.lootCount,
                 lootValue: state.lootValue,
                 supplyCost: state.supplyCost,
+                supplyBreakdown: clone(state.supplyBreakdown || {}),
                 lastRewards: state.lastRewards
                     ? clone(state.lastRewards)
                     : null,

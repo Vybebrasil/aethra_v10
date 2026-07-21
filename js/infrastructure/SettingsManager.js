@@ -8,11 +8,18 @@
         );
     }
 
-    const DEFAULT_STORAGE_KEY = "aethra.settings";
-    const LEGACY_BATTLE_MODE_KEY = "aethra.battleMode";
+    const configuredStorageKey = typeof window.AETHRA_SETTINGS_KEY === "string"
+        ? window.AETHRA_SETTINGS_KEY.trim()
+        : "";
+    const DEFAULT_STORAGE_KEY = configuredStorageKey || "aethra.settings";
+    const LEGACY_BATTLE_MODE_KEY = configuredStorageKey
+        ? `${configuredStorageKey}.battleMode`
+        : "aethra.battleMode";
     const VALID_BATTLE_MODES = Object.freeze(["cards", "map2d"]);
+    const VALID_COMBAT_SPEEDS = Object.freeze([1, 2, 4]);
     const DEFAULT_SETTINGS = Object.freeze({
-        battleMode: "cards"
+        battleMode: "cards",
+        combatSpeed: 1
     });
 
     function clone(value) {
@@ -47,6 +54,13 @@
         return VALID_BATTLE_MODES.includes(mode)
             ? mode
             : DEFAULT_SETTINGS.battleMode;
+    }
+
+    function normalizeCombatSpeed(value) {
+        const speed = Number(value);
+        return VALID_COMBAT_SPEEDS.includes(speed)
+            ? speed
+            : DEFAULT_SETTINGS.combatSpeed;
     }
 
     Aethra.SettingsManager = {
@@ -99,11 +113,13 @@
             const battleMode = normalizeBattleMode(
                 storedSettings.battleMode ?? legacyBattleMode
             );
+            const combatSpeed = normalizeCombatSpeed(storedSettings.combatSpeed);
 
             this.settings = {
                 ...DEFAULT_SETTINGS,
                 ...storedSettings,
-                battleMode
+                battleMode,
+                combatSpeed
             };
 
             this.syncGameState();
@@ -140,6 +156,10 @@
 
         getBattleMode() {
             return normalizeBattleMode(this.settings.battleMode);
+        },
+
+        getCombatSpeed() {
+            return normalizeCombatSpeed(this.settings.combatSpeed);
         },
 
         isValidBattleMode(mode) {
@@ -182,6 +202,30 @@
             );
 
             return nextMode;
+        },
+
+        setCombatSpeed(speed, options = {}) {
+            const nextSpeed = normalizeCombatSpeed(speed);
+            const previousSpeed = this.getCombatSpeed();
+
+            this.settings.combatSpeed = nextSpeed;
+            this.syncGameState();
+            this.save();
+            this.syncUI();
+
+            const payload = {
+                key: "combatSpeed",
+                value: nextSpeed,
+                combatSpeed: nextSpeed,
+                previousValue: previousSpeed,
+                changed: previousSpeed !== nextSpeed,
+                source: options.source || "combat-hud",
+                timestamp: Date.now()
+            };
+
+            Aethra.EventBus.emit("settings:changed", clone(payload));
+            Aethra.EventBus.emit("settings:combat-speed-changed", clone(payload));
+            return nextSpeed;
         },
 
         bindUIWhenReady() {
@@ -237,6 +281,7 @@
             if (!root?.querySelectorAll) return false;
 
             const currentMode = this.getBattleMode();
+            const currentCombatSpeed = this.getCombatSpeed();
 
             root.querySelectorAll("[data-battle-mode-option]")
                 .forEach((input) => {
@@ -272,6 +317,13 @@
                     : "Modo ativo: 3D/Mapa. Visualização em desenvolvimento.";
                 status.dataset.mode = currentMode;
             }
+
+            root.querySelectorAll("[data-battle-speed]")
+                .forEach((button) => {
+                    const active = Number(button.dataset.battleSpeed) === currentCombatSpeed;
+                    button.classList.toggle("is-active", active);
+                    button.setAttribute("aria-pressed", active ? "true" : "false");
+                });
 
             return true;
         }

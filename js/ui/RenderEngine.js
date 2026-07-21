@@ -750,7 +750,14 @@
                                     <small>Encontro atual</small>
                                     <h2>Cartas de Combate</h2>
                                 </div>
-                                <span id="battle-round-indicator">Aguardando</span>
+                                <div class="battle-stage-panel__status">
+                                    <div class="battle-speed-controls" aria-label="Velocidade da apresentação das rodadas">
+                                        <button type="button" data-battle-speed="1" aria-label="Velocidade normal" aria-pressed="true">1×</button>
+                                        <button type="button" data-battle-speed="2" aria-label="Velocidade dupla" aria-pressed="false">2×</button>
+                                        <button type="button" data-battle-speed="4" aria-label="Velocidade quádrupla" aria-pressed="false">4×</button>
+                                    </div>
+                                    <span id="battle-round-indicator">Aguardando</span>
+                                </div>
                             </header>
 
                             <div class="battle-card-arena">
@@ -761,7 +768,7 @@
 
                                 <div class="battle-versus" aria-hidden="true">
                                     <span>VS</span>
-                                    <small>AUTO TICK</small>
+                                    <small>POR RODADAS</small>
                                 </div>
 
                                 <article
@@ -776,7 +783,7 @@
                         <section class="battle-panel battle-panel--actionbar">
                             <header class="battle-panel__header">
                                 <div>
-                                    <small>Combate em duas camadas</small>
+                                    <small>Combate tático por rodadas</small>
                                     <h2>Ataques & Habilidades</h2>
                                 </div>
                                 <div class="battle-panel__tools">
@@ -793,10 +800,10 @@
                                         aria-label="Entender ActionBar"
                                         data-ui-tooltip
                                         data-tooltip-kind="hud"
-                                        data-tooltip-eyebrow="AUTOMAÇÃO DE COMBATE"
-                                        data-tooltip-title="Combate em duas camadas"
-                                        data-tooltip-body="Os ataques da mão principal e secundária funcionam continuamente. A fila de habilidades usa Mana ou Vigor em paralelo quando cada cooldown fica pronto."
-                                        data-tooltip-hint="Arraste as habilidades para mudar a prioridade. Ataques primários não ocupam a fila de skills."
+                                        data-tooltip-eyebrow="AUTOMAÇÃO POR RODADAS"
+                                        data-tooltip-title="Uma decisão por rodada"
+                                        data-tooltip-body="Em cada rodada o herói executa uma habilidade ou um ataque primário; depois o inimigo responde. Cooldowns são contados em rodadas."
+                                        data-tooltip-hint="A ordem da ActionBar define qual ação automática será tentada primeiro."
                                     >?</button>
                                 </div>
                             </header>
@@ -805,7 +812,7 @@
                                 <section class="primary-attack-deck" aria-label="Ataques primários">
                                     <div class="combat-action-deck__label">
                                         <span>Ataques primários</span>
-                                        <small>independentes da fila</small>
+                                        <small>fallback da rodada</small>
                                     </div>
                                     <div id="primary-attack-bar" class="primary-attack-bar"></div>
                                 </section>
@@ -866,8 +873,8 @@
                                     data-tooltip-kind="hud"
                                     data-tooltip-eyebrow="EFICIÊNCIA DA CAÇADA"
                                     data-tooltip-title="Hunt Analyzer"
-                                    data-tooltip-body="Converte os resultados da sessão em taxas por hora, tempo médio por abate e lucro líquido."
-                                    data-tooltip-hint="Valores por hora ficam mais estáveis conforme a sessão ganha duração e kills."
+                                    data-tooltip-body="Mostra XP, entradas, gastos por supply, profit, combate e recordes persistentes do herói por Hunt."
+                                    data-tooltip-hint="DPS de pico usa uma janela de 5 segundos; recordes de taxa começam após 10 segundos de sessão."
                                 >?</button>
                             </header>
                             <div id="hunt-display"></div>
@@ -1328,7 +1335,7 @@
                 versus.hidden = !combatActive && !hasEventCard;
                 versus.innerHTML = hasEventCard
                     ? '<span>✦</span><small>EVENTO</small>'
-                    : '<span>VS</span><small>AUTO TICK</small>';
+                    : '<span>VS</span><small>POR RODADAS</small>';
             }
 
             const heroHp = Number(hero.hp ?? stats.hp ?? 0);
@@ -1629,7 +1636,7 @@
 
             if (indicator) {
                 indicator.textContent = active
-                    ? `Turno ${formatNumber(round)}`
+                    ? `Rodada ${formatNumber(round)}`
                     : hasEventCard
                         ? 'Evento ativo'
                         : hunt.isActive
@@ -1673,15 +1680,22 @@
 
             const now = Date.now();
             let activeCooldowns = 0;
+            let realtimeCooldowns = 0;
             const slots = roots.flatMap((root) => [
                 ...root.querySelectorAll("[data-ready-at]")
             ]);
 
             slots.forEach((slot) => {
+                const roundMode = slot.dataset.cooldownMode === "rounds";
+                const skillId = slot.dataset.skillId || null;
                 const readyAt = Number(slot.dataset.readyAt || 0);
                 const duration = Math.max(1, Number(slot.dataset.cooldownMs || 1));
-                const remaining = Math.max(0, readyAt - now);
-                const progress = Math.min(1, remaining / duration);
+                const remainingRounds = roundMode && skillId
+                    ? Number(Aethra.SkillSystem?.getCooldownRoundsRemaining?.(skillId) || 0)
+                    : 0;
+                const remaining = roundMode ? remainingRounds : Math.max(0, readyAt - now);
+                const roundDuration = Math.max(1, Number(slot.dataset.cooldownRounds || 1));
+                const progress = Math.min(1, remaining / (roundMode ? roundDuration : duration));
                 const button = slot.querySelector(
                     "[data-actionbar-skill], [data-primary-attack]"
                 );
@@ -1692,8 +1706,8 @@
                 slot.style.setProperty("--cooldown-progress", progress.toFixed(4));
                 slot.style.setProperty("--cooldown-angle", `${Math.round(progress * 360)}deg`);
                 slot.dataset.cooldownRemaining = remaining > 0
-                    ? (remaining / 1000).toFixed(1)
-                    : "0.0";
+                    ? (roundMode ? String(remainingRounds) : (remaining / 1000).toFixed(1))
+                    : "0";
                 slot.classList.toggle("is-cooldown", remaining > 0);
 
                 if (button) {
@@ -1707,14 +1721,17 @@
 
                 if (countdown) {
                     countdown.textContent = remaining > 0
-                        ? `${(remaining / 1000).toFixed(1)}s`
+                        ? (roundMode ? `${remainingRounds}R` : `${(remaining / 1000).toFixed(1)}s`)
                         : "PRONTO";
                 }
 
-                if (remaining > 0) activeCooldowns += 1;
+                if (remaining > 0) {
+                    activeCooldowns += 1;
+                    if (!roundMode) realtimeCooldowns += 1;
+                }
             });
 
-            if (activeCooldowns > 0) {
+            if (realtimeCooldowns > 0) {
                 this.cooldownAnimationFrame = requestAnimationFrame(() => {
                     this.updateActionBarCooldownVisuals();
                 });
@@ -1784,10 +1801,10 @@
                         <span class="primary-attack-card__mouse">${mouseLabel}</span>
                         <strong class="primary-attack-card__icon">${escapeHTML(displayIcon)}</strong>
                         <span class="primary-attack-card__copy">
-                            <b>${escapeHTML(skill.shortName || skill.name)}</b>
+                            <b>${isRight ? "Secundária" : "Principal"}</b>
                             <small>${escapeHTML(weaponName)}</small>
                         </span>
-                        <span class="primary-attack-card__interval">${(intervalMs / 1000).toFixed(1)}s</span>
+                        <span class="primary-attack-card__interval">1 ação/rodada</span>
                         <span class="primary-attack-card__cooldown">${remaining > 0
                             ? `${(remaining / 1000).toFixed(1)}s`
                             : available ? "PRONTO" : "BLOQUEADO"}</span>
@@ -1874,6 +1891,7 @@
                 ])
             );
             const cooldowns = Aethra.GameState.hero?.cooldowns || {};
+            const roundCombat = Boolean(Aethra.GameState.battle?.isFighting);
             const now = Date.now();
 
             this.stopActionBarCooldownTicker();
@@ -1896,7 +1914,13 @@
                     1,
                     getSkillCooldownMs(skill)
                 );
-                const remaining = Math.max(0, readyAt - now);
+                const cooldownRounds = Aethra.SkillSystem?.getCooldownRounds?.(skill) || 0;
+                const remainingRounds = roundCombat
+                    ? Aethra.SkillSystem?.getCooldownRoundsRemaining?.(skillId) || 0
+                    : 0;
+                const remaining = roundCombat
+                    ? remainingRounds
+                    : Math.max(0, readyAt - now);
 
                 wrapper.className = [
                     "battle-action-slot",
@@ -1912,7 +1936,9 @@
                             type="button"
                             class="battle-action-slot__skill"
                             data-slot-index="${slotIndex}"
-                            disabled
+                            data-open-window="skills-view"
+                            aria-label="Configurar slot ${slotIndex + 1}"
+                            title="Slot vazio · clique para configurar"
                         >
                             <span class="battle-action-slot__key">${slotIndex + 1}</span>
                             <span class="battle-action-slot__empty">+</span>
@@ -1932,13 +1958,17 @@
                         ? "MANA"
                         : cost.resource.toUpperCase();
                 const baseCooldownSeconds = cooldownMs / 1000;
-                const cooldownLabel = baseCooldownSeconds > 0
-                    ? `CD ${baseCooldownSeconds.toFixed(1)}s`
+                const cooldownLabel = cooldownRounds > 0
+                    ? `CD ${cooldownRounds} rodada${cooldownRounds === 1 ? "" : "s"}`
+                    : baseCooldownSeconds > 0
+                        ? `CD ${baseCooldownSeconds.toFixed(1)}s`
                     : "SEM CD";
                 const autoEnabled = setting?.auto === true;
 
                 wrapper.dataset.readyAt = String(readyAt);
                 wrapper.dataset.cooldownMs = String(cooldownMs);
+                wrapper.dataset.cooldownMode = roundCombat ? "rounds" : "time";
+                wrapper.dataset.cooldownRounds = String(cooldownRounds);
                 wrapper.dataset.uiTooltip = "true";
                 wrapper.dataset.tooltipKind = "skill";
                 wrapper.dataset.skillId = skillId;
@@ -1982,7 +2012,7 @@
                         <span class="battle-action-slot__cooldown-mask" aria-hidden="true"></span>
                         <span class="battle-action-slot__cooldown-ring" aria-hidden="true"></span>
                         <span class="battle-action-slot__cooldown-time" aria-live="polite">${remaining > 0
-                            ? `${(remaining / 1000).toFixed(1)}s`
+                            ? (roundCombat ? `${remainingRounds}R` : `${(remaining / 1000).toFixed(1)}s`)
                             : ""}</span>
                     </button>
 
@@ -3686,7 +3716,7 @@
                             <h3>${escapeHTML(enemy.name || enemy.id || "Inimigo")}</h3>
                         </div>
 
-                        <strong>Turno ${formatNumber(combat.round)}</strong>
+                        <strong>Rodada ${formatNumber(combat.round)}</strong>
                     </header>
 
                     <div class="aethra-resource">

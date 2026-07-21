@@ -29,8 +29,13 @@
         randomSource: Math.random,
 
         config: {
-            tickMs: 1000,
+            tickMs: 1800,
+            roundMs: 1800,
+            introMs: 1200,
+            resolutionMs: 1200,
+            minimumCombatMs: 4000,
             hardcoreGoldPenalty: 0.10,
+            hardcoreXPPenalty: 0.10,
             autoStartOnEnemyEncountered: false,
             mirrorCombatState: true,
             defaultCriticalMultiplier: 1.75
@@ -116,7 +121,9 @@
                 lastLog: state.battle.lastLog || null,
                 lastRewards: state.battle.lastRewards || null,
                 lastEnemy: state.battle.lastEnemy || null,
-                lastHeroAction: state.battle.lastHeroAction || null
+                lastHeroAction: state.battle.lastHeroAction || null,
+                phase: state.battle.phase || "waiting",
+                roundStartedAt: state.battle.roundStartedAt || null
             });
 
             this.isFighting = Boolean(state.battle.isFighting);
@@ -319,6 +326,9 @@
                 round: 0,
                 creature,
                 source: options.source || "manual",
+                matchId: options.matchId || null,
+                nonLethal: options.nonLethal === true,
+                noRewards: options.noRewards === true,
                 huntId: options.huntId || creature.huntId || null,
                 encounterId: options.encounterId || creature.encounterId || null,
                 startedAt: new Date().toISOString(),
@@ -330,6 +340,8 @@
                 lastLog: null,
                 lastRewards: null,
                 lastHeroAction: null,
+                enemyDamageModifier: 1,
+                heroGuard: null,
                 queuedPrimaryAttacks: []
             });
 
@@ -349,7 +361,8 @@
             Aethra.EventBus.emit("CombatStarted", payload);
             Aethra.EventBus.emit("battle:started", payload);
 
-            this.scheduleNextTick(this.battleToken, 0);
+            state.phase = "intro";
+            this.scheduleNextTick(this.battleToken, this.config.introMs);
             return true;
         },
 
@@ -364,13 +377,13 @@
             return true;
         },
 
-        scheduleNextTick(token, delay = this.config.tickMs) {
+        scheduleNextTick(token, delay = this.config.roundMs) {
             this.cancelTimer();
 
             this.timerId = window.setTimeout(() => {
                 if (token !== this.battleToken || !this.isFighting) return;
                 this.tick(token);
-            }, Math.max(0, integer(delay, this.config.tickMs)));
+            }, Math.max(0, integer(delay, this.config.roundMs)));
         },
 
         queuePrimaryAttack(slot = "left") {
@@ -428,6 +441,7 @@
             const weapon = this.getPrimaryWeapon(slot);
             const requiresWeapon = Boolean(primary.skill?.effect?.requiresWeapon);
             const readyAt = Math.max(0, number(primary.nextReadyAt, 0));
+            const roundCombat = Boolean(Aethra.GameState.battle?.isFighting);
 
             return {
                 ...primary,
@@ -435,9 +449,9 @@
                 weapon,
                 available: !requiresWeapon || Boolean(weapon),
                 reason: requiresWeapon && !weapon ? "offhand-weapon-required" : null,
-                readyAt,
-                cooldownRemaining: Math.max(0, readyAt - now),
-                ready: readyAt <= now
+                readyAt: roundCombat ? 0 : readyAt,
+                cooldownRemaining: roundCombat ? 0 : Math.max(0, readyAt - now),
+                ready: roundCombat || readyAt <= now
             };
         },
 
@@ -504,18 +518,19 @@
             const results = [];
             const now = options.now || Date.now();
 
-            ["left", "right"].forEach((slot) => {
-                if (creature.hp <= 0) return;
-                const attack = primaryAttacks[slot];
-                const shouldUse = queued.has(slot) || attack?.auto === true;
-                if (!shouldUse) return;
+            // Uma rodada concede uma única ação ao herói. A mão secundária pode
+            // ser escolhida manualmente, mas não mantém um segundo relógio paralelo.
+            const requestedSlot = ["left", "right"].find((slot) => queued.has(slot));
+            const automaticSlot = ["left", "right"].find((slot) => primaryAttacks[slot]?.auto === true);
+            const selectedSlot = requestedSlot || automaticSlot || null;
 
-                const result = this.executePrimaryAttack(slot, creature, {
+            if (selectedSlot && creature.hp > 0) {
+                const result = this.executePrimaryAttack(selectedSlot, creature, {
                     now,
-                    source: queued.has(slot) ? "primary-manual" : "primary-auto"
+                    source: requestedSlot ? "primary-manual" : "primary-auto"
                 });
                 if (result) results.push(result);
-            });
+            }
 
             return results;
         },
@@ -602,17 +617,28 @@
             }
 
             battle.round += 1;
+            battle.phase = "round-start";
+            battle.roundStartedAt = wallClockNow;
+            Aethra.SkillSystem?.cleanupCooldowns?.();
+
+            Aethra.EventBus.emit("battle:round-started", {
+                battleId: battle.battleId,
+                round: battle.round,
+                creature: clone(creature),
+                hero: this.getHeroSnapshot()
+            });
 
             /*
-             * Duas camadas independentes:
-             * 1. SkillController usa suporte/magia/vigor conforme prioridade.
-             * 2. Ataques primários continuam no próprio intervalo, sem ocupar a fila.
+             * Uma rodada possui duas decisões legíveis:
+             * 1. O herói executa uma skill OU um ataque primário.
+             * 2. Se sobreviver, o inimigo executa uma ação.
              */
             let supportHealingLog = null;
             let controllerAction = null;
             let skillResult = null;
 
             const skillController = hero.skillController || Aethra.SkillController;
+            battle.phase = "hero-action";
             if (skillController && typeof skillController.update === "function") {
                 controllerAction = skillController.update(deltaTime, {
                     battle,
@@ -676,9 +702,11 @@
                 return;
             }
 
-            const primaryResults = this.processPrimaryAttacks(creature, {
-                now: wallClockNow
-            });
+            const primaryResults = controllerAction?.executed === true
+                ? []
+                : this.processPrimaryAttacks(creature, {
+                    now: wallClockNow
+                });
 
             const actionMessages = [
                 skillResult?.message,
@@ -725,13 +753,16 @@
             }
 
             const creatureAbility = this.selectCreatureAbility(creature);
+            battle.phase = "enemy-action";
+            const disciplineEnemyModifier = clamp(number(battle.enemyDamageModifier, 1), 0.1, 1);
+            battle.enemyDamageModifier = 1;
             const creatureAttack = this.resolveAttack(
                 creature,
                 this.getHeroCombatant(),
                 "creature",
                 {
                     attackLabel: creatureAbility.name,
-                    damageMultiplier: creatureAbility.damageMultiplier,
+                    damageMultiplier: creatureAbility.damageMultiplier * disciplineEnemyModifier,
                     monsterAbility: creatureAbility.ability
                 }
             );
@@ -741,21 +772,43 @@
                     0,
                     integer(hero.stats.hp, 0) - creatureAttack.amount
                 );
+                hero.hp = hero.stats.hp;
             }
 
             const creatureAttackResult = this.emitAttackResult(creatureAttack);
+            if (battle.heroGuard) {
+                Aethra.EventBus.emit("battle:guard-consumed", {
+                    ...clone(battle.heroGuard),
+                    battleId: battle.battleId,
+                    round: battle.round,
+                    attackHit: creatureAttackResult.hit,
+                    blocked: creatureAttackResult.isBlocked
+                });
+                battle.heroGuard = null;
+            }
             this.emitCombatTick(heroCycleResult, creatureAttackResult);
 
             if (supportHealingLog) this.emitBattleLog(supportHealingLog);
 
             this.syncCombatMirror();
 
+            battle.phase = "round-end";
+            Aethra.EventBus.emit("battle:round-resolved", {
+                battleId: battle.battleId,
+                round: battle.round,
+                heroAction: clone(heroCycleResult),
+                enemyAction: clone(creatureAttackResult),
+                heroHp: hero.stats.hp,
+                creatureHp: creature.hp,
+                durationMs: Math.max(0, Date.now() - wallClockNow)
+            });
+
             if (hero.stats.hp <= 0) {
                 this.defeat();
                 return;
             }
 
-            this.scheduleNextTick(token, this.config.tickMs);
+            this.scheduleNextTick(token, this.config.roundMs);
         },
 
         recordHeroAction(action = {}) {
@@ -1204,7 +1257,7 @@
                 )
             );
 
-            const enemyDefense = Math.max(
+            const rawEnemyDefense = Math.max(
                 0,
                 number(
                     defender?.stats?.defense ??
@@ -1212,6 +1265,8 @@
                     0
                 )
             );
+            const defenseMultiplier = clamp(number(options.defenseMultiplier, 1), 0, 1);
+            const enemyDefense = rawEnemyDefense * defenseMultiplier;
 
             let finalDamage = Math.max(
                 1,
@@ -1256,6 +1311,8 @@
                 criticalMultiplier,
                 damageBeforeDefense,
                 enemyDefense,
+                rawEnemyDefense,
+                armorPenetration: 1 - defenseMultiplier,
                 blockReduction,
                 weaponId: profile.weaponId,
                 weaponName: profile.weaponName,
@@ -1348,6 +1405,18 @@
         resolveAttack(attacker, defender, side, options = {}) {
             const attackerStats = attacker.stats || {};
             const defenderStats = defender.stats || {};
+            const attackWeapon = side === "hero"
+                ? (options.weapon || this.getEquippedWeapon())
+                : null;
+            const disciplineId = side === "hero"
+                ? Aethra.DisciplineSystem?.resolveAttackDiscipline?.({
+                    ...options,
+                    weapon: attackWeapon
+                }) || null
+                : null;
+            const disciplineProfile = disciplineId
+                ? Aethra.DisciplineSystem?.getCombatProfile?.(disciplineId)
+                : null;
 
             const precision = number(attackerStats.precision, 0);
             const evasion = number(defenderStats.evasion, 0);
@@ -1356,7 +1425,7 @@
                 : evasion * 0.005;
 
             const hitChance = clamp(
-                0.85 + precision * 0.01 - normalizedEvasion,
+                0.85 + precision * 0.01 - normalizedEvasion + number(disciplineProfile?.hitBonus, 0),
                 0.10,
                 0.98
             );
@@ -1373,10 +1442,7 @@
                 defender.name || (side === "hero" ? "O inimigo" : "Você");
 
             if (!hit) {
-                const weapon =
-                    side === "hero"
-                        ? (options.weapon || this.getEquippedWeapon())
-                        : null;
+                const weapon = attackWeapon;
 
                 const result = {
                     hit: false,
@@ -1406,6 +1472,10 @@
                     skillName: options.attackLabel || null,
                     attackLabel: options.attackLabel || null,
                     damageMultiplier: Math.max(0.05, number(options.damageMultiplier, 1)),
+                    disciplineId,
+                    disciplineName: disciplineProfile?.name || null,
+                    disciplineLevel: disciplineProfile?.level || null,
+                    disciplineProc: null,
                     monsterAbility: options.monsterAbility ? clone(options.monsterAbility) : null
                 };
 
@@ -1414,7 +1484,7 @@
             }
 
             const criticalChance = clamp(
-                number(attackerStats.critical, 0.05),
+                number(attackerStats.critical, 0.05) + number(disciplineProfile?.criticalBonus, 0),
                 0,
                 0.75
             );
@@ -1444,6 +1514,9 @@
 
             let amount;
             let damageBreakdown = null;
+            const disciplineProc = side === "hero" && disciplineId
+                ? Aethra.DisciplineSystem?.rollCombatProc?.(disciplineId, this.randomSource) || null
+                : null;
 
             if (side === "hero") {
                 damageBreakdown = this.calculateDamage(
@@ -1453,13 +1526,17 @@
                         isCrit,
                         isBlocked,
                         blockReduction,
-                        weapon: options.weapon || this.getEquippedWeapon()
+                        weapon: attackWeapon,
+                        baseDamage: options.baseDamage,
+                        defenseMultiplier: 1 - clamp(number(disciplineProfile?.armorPenetration, 0), 0, 0.9)
                     }
                 );
 
                 const attackMultiplier = Math.max(
                     0.05,
-                    number(options.damageMultiplier, 1)
+                    number(options.damageMultiplier, 1) *
+                    Math.max(1, number(disciplineProfile?.powerMultiplier, 1)) *
+                    Math.max(1, number(disciplineProc?.damageMultiplier, 1))
                 );
                 if (Math.abs(attackMultiplier - 1) > 0.0001) {
                     damageBreakdown.damageBeforeDefense = Math.max(
@@ -1598,6 +1675,11 @@
                 skillName: options.attackLabel || null,
                 attackLabel: options.attackLabel || null,
                 damageMultiplier: Math.max(0.05, number(options.damageMultiplier, 1)),
+                disciplineId,
+                disciplineName: disciplineProfile?.name || null,
+                disciplineLevel: disciplineProfile?.level || null,
+                disciplinePowerMultiplier: Math.max(1, number(disciplineProfile?.powerMultiplier, 1)),
+                disciplineProc: disciplineProc ? clone(disciplineProc) : null,
                 monsterAbility: options.monsterAbility ? clone(options.monsterAbility) : null
             };
 
@@ -1636,14 +1718,17 @@
                 const blocked = result.isBlocked
                     ? " O golpe foi parcialmente bloqueado."
                     : "";
+                const proc = result.disciplineProc?.triggered
+                    ? ` ${result.disciplineProc.name}!`
+                    : "";
 
                 if (attackLabel) {
-                    return `${attackLabel} causou ${integer(result.amount, 0)} de dano no ${targetName}!${critical}${blocked}`;
+                    return `${attackLabel} causou ${integer(result.amount, 0)} de dano no ${targetName}!${proc}${critical}${blocked}`;
                 }
 
                 return weaponName === "Ataque desarmado"
-                    ? `Seu ataque causou ${integer(result.amount, 0)} de dano no ${targetName}!${critical}${blocked}`
-                    : `Sua ${weaponName} causou ${integer(result.amount, 0)} de dano no ${targetName}!${critical}${blocked}`;
+                    ? `Seu ataque causou ${integer(result.amount, 0)} de dano no ${targetName}!${proc}${critical}${blocked}`
+                    : `Sua ${weaponName} causou ${integer(result.amount, 0)} de dano no ${targetName}!${proc}${critical}${blocked}`;
             }
 
             const enemyName =
@@ -1756,6 +1841,18 @@
                 });
             }
 
+            if (result.disciplineProc?.triggered) {
+                logs.push({
+                    type: "discipline-proc-analysis",
+                    color: "#e9c96f",
+                    message:
+                        `${String(result.disciplineProc.name || "PROC").toUpperCase()}! ` +
+                        `${result.disciplineName || result.disciplineId} NV. ${result.disciplineLevel || 1}` +
+                        ` | chance ${(number(result.disciplineProc.chance, 0) * 100).toFixed(0)}%` +
+                        ` | dano ${integer(result.amount, 0)}`
+                });
+            }
+
             return logs.map((entry) => ({
                 ...entry,
                 battleId: Aethra.GameState.battle?.battleId || null,
@@ -1787,6 +1884,39 @@
                 Aethra.EventBus.emit("AttackMissed", payload);
                 Aethra.EventBus.emit("battle:attack-missed", clone(payload));
                 return payload;
+            }
+
+
+            if (payload.side === "hero" && payload.disciplineProc?.triggered) {
+                const proc = payload.disciplineProc;
+                if (number(proc.leechRate, 0) > 0) {
+                    const hero = Aethra.GameState.hero || {};
+                    const stats = hero.stats || {};
+                    const maxHp = Math.max(1, integer(stats.maxHp ?? hero.maxHp, 1));
+                    const previousHp = clamp(integer(stats.hp ?? hero.hp, maxHp), 0, maxHp);
+                    const healed = Math.min(
+                        maxHp - previousHp,
+                        Math.max(1, Math.round(integer(payload.amount, 0) * number(proc.leechRate, 0)))
+                    );
+                    if (healed > 0) {
+                        stats.hp = previousHp + healed;
+                        hero.hp = stats.hp;
+                        proc.healed = healed;
+                        Aethra.EventBus.emit("HealingReceived", {
+                            amount: healed,
+                            skillName: proc.name,
+                            source: "discipline-proc",
+                            round: Aethra.GameState.battle?.round || 0
+                        });
+                    }
+                }
+                if (number(proc.enemyDamageModifier, 1) < 1 && Aethra.GameState.battle) {
+                    Aethra.GameState.battle.enemyDamageModifier = Math.min(
+                        number(Aethra.GameState.battle.enemyDamageModifier, 1),
+                        number(proc.enemyDamageModifier, 1)
+                    );
+                }
+                Aethra.EventBus.emit("discipline:proc", clone(payload));
             }
 
             Aethra.EventBus.emit("DamageDealt", payload);
@@ -1836,6 +1966,43 @@
             if (!this.isFighting) return false;
 
             const battle = Aethra.GameState.battle;
+            const isColiseumBattle = battle.source === "coliseum" || Boolean(battle.matchId);
+
+            if (isColiseumBattle) {
+                const matchResult = Aethra.ColiseumSystem?.resolveActiveMatch?.("win", {
+                    battleId: battle.battleId,
+                    creatureId: creature.id
+                }) || null;
+                const payload = {
+                    battleId: battle.battleId,
+                    matchId: battle.matchId,
+                    enemyId: creature.id,
+                    source: "coliseum",
+                    result: "win",
+                    rewards: { xp: 0, gold: 0, items: [], lootCount: 0, lootValue: 0 },
+                    ratingDelta: Number(matchResult?.ratingDelta || 0),
+                    message: `Vitória no Coliseu! ${Number(matchResult?.ratingDelta || 0) >= 0 ? "+" : ""}${Number(matchResult?.ratingDelta || 0)} pontos de rating.`
+                };
+                battle.lastRewards = clone(payload.rewards);
+                battle.lastMessage = payload.message;
+                battle.lastResult = clone(payload);
+                battle.phase = "victory-resolution";
+                Aethra.EventBus.emit("coliseum:battle-victory", clone(payload));
+                Aethra.EventBus.emit("battle:resolution-started", {
+                    battleId: battle.battleId,
+                    reason: "victory",
+                    durationMs: this.config.resolutionMs,
+                    result: clone(payload)
+                });
+                this.cancelTimer();
+                const resolutionToken = this.battleToken;
+                const resolvedBattleId = battle.battleId;
+                this.timerId = window.setTimeout(() => {
+                    if (resolutionToken !== this.battleToken || !this.isFighting || Aethra.GameState.battle?.battleId !== resolvedBattleId) return;
+                    this.endBattle("victory", payload);
+                }, Math.max(0, integer(this.config.resolutionMs, 1200)));
+                return payload;
+            }
             const isHuntBattle = Boolean(
                 battle.source === "hunt" ||
                 battle.huntId ||
@@ -1978,7 +2145,37 @@
 
             console.log(payload.message);
 
-            this.endBattle("victory", payload);
+            /*
+             * Mantém o resultado legível antes de liberar outro encontro.
+             * A recompensa já foi calculada, mas a arena continua em estado de
+             * resolução durante 1,2 s para o jogador enxergar o golpe final.
+             */
+            battle.phase = "victory-resolution";
+            this.cancelTimer();
+            const resolutionToken = this.battleToken;
+            const resolvedBattleId = battle.battleId;
+            const combatElapsedMs = Math.max(
+                0,
+                Date.now() - (Date.parse(battle.startedAt) || Date.now())
+            );
+            const resolutionDelayMs = Math.max(
+                integer(this.config.resolutionMs, 1200),
+                integer(this.config.minimumCombatMs, 4000) - combatElapsedMs
+            );
+            Aethra.EventBus.emit("battle:resolution-started", {
+                battleId: resolvedBattleId,
+                reason: "victory",
+                durationMs: resolutionDelayMs,
+                result: clone(payload)
+            });
+            this.timerId = window.setTimeout(() => {
+                if (
+                    resolutionToken !== this.battleToken ||
+                    !this.isFighting ||
+                    Aethra.GameState.battle?.battleId !== resolvedBattleId
+                ) return;
+                this.endBattle("victory", payload);
+            }, Math.max(0, resolutionDelayMs));
             return payload;
         },
 
@@ -2040,10 +2237,49 @@
 
             const hero = Aethra.GameState.hero;
             const battle = Aethra.GameState.battle;
+            const isColiseumBattle = battle.source === "coliseum" || Boolean(battle.matchId);
+
+            if (isColiseumBattle && battle.nonLethal !== false) {
+                const stats = hero.stats || {};
+                stats.hp = Math.max(1, integer(stats.maxHp ?? hero.maxHp, 1));
+                stats.mana = Math.max(0, integer(stats.maxMana ?? hero.maxMana ?? stats.mana, 0));
+                stats.energy = Math.max(0, integer(stats.maxEnergy ?? hero.maxEnergy ?? stats.energy, 0));
+                hero.hp = stats.hp;
+                hero.maxHp = stats.maxHp;
+                hero.mana = stats.mana;
+                hero.maxMana = stats.maxMana;
+                hero.energy = stats.energy;
+                hero.maxEnergy = stats.maxEnergy;
+                const matchResult = Aethra.ColiseumSystem?.resolveActiveMatch?.("loss", {
+                    battleId: battle.battleId,
+                    creatureId: battle.creature?.id || null
+                }) || null;
+                const payload = {
+                    battleId: battle.battleId,
+                    matchId: battle.matchId,
+                    creatureId: battle.creature?.id || null,
+                    source: "coliseum",
+                    result: "loss",
+                    nonLethal: true,
+                    goldLost: 0,
+                    xpLost: 0,
+                    ratingDelta: Number(matchResult?.ratingDelta || 0),
+                    message: `Derrota no Coliseu. ${Number(matchResult?.ratingDelta || 0)} pontos de rating. Nenhum XP ou Gold perdido.`
+                };
+                battle.lastMessage = payload.message;
+                Aethra.EventBus.emit("coliseum:battle-defeat", clone(payload));
+                this.endBattle("defeat", payload);
+                Aethra.RenderEngine?.renderAll?.();
+                return payload;
+            }
             const currentGold = Math.max(0, integer(hero.gold, 0));
-            const penalty = Math.floor(
-                currentGold * clamp(this.config.hardcoreGoldPenalty, 0, 1)
-            );
+            const penalty = currentGold > 0
+                ? Math.max(1, Math.floor(currentGold * clamp(this.config.hardcoreGoldPenalty, 0, 1)))
+                : 0;
+            const xpPenalty = Aethra.XPSystem?.loseXP?.(
+                clamp(this.config.hardcoreXPPenalty, 0, 1),
+                { source: "hero-defeated", battleId: battle.battleId }
+            ) || { lost: 0 };
 
             hero.gold = Math.max(0, currentGold - penalty);
 
@@ -2052,9 +2288,21 @@
             }
 
             hero.stats.hp = Math.max(1, integer(hero.stats.maxHp, 100));
+            hero.stats.mana = Math.max(0, integer(hero.stats.maxMana, hero.stats.mana || 0));
+            hero.stats.energy = Math.max(0, integer(hero.stats.maxEnergy, hero.stats.energy || 0));
+            hero.hp = hero.stats.hp;
+            hero.maxHp = hero.stats.maxHp;
+            hero.mana = hero.stats.mana;
+            hero.maxMana = hero.stats.maxMana;
+            hero.energy = hero.stats.energy;
+            hero.maxEnergy = hero.stats.maxEnergy;
+            hero.deaths = Math.max(0, integer(hero.deaths, 0)) + 1;
+
+            Aethra.GameState.ui = Aethra.GameState.ui || {};
+            Aethra.GameState.ui.primaryView = "city";
 
             const defeatMessage =
-                `Você foi derrotado! Perdeu ${penalty} de ouro.`;
+                `Você foi derrotado! Perdeu ${xpPenalty.lost || 0} XP e ${penalty} de ouro. Retornando à cidade.`;
 
             battle.lastMessage = defeatMessage;
 
@@ -2062,9 +2310,15 @@
                 battleId: battle.battleId,
                 creatureId: battle.creature?.id || null,
                 penalty,
+                goldLost: penalty,
+                xpLost: Math.max(0, integer(xpPenalty.lost, 0)),
                 goldBefore: currentGold,
                 goldAfter: hero.gold,
                 restoredHp: hero.stats.hp,
+                restoredMana: hero.stats.mana,
+                restoredEnergy: hero.stats.energy,
+                deaths: hero.deaths,
+                returnTo: "city",
                 source: battle.source || "battle",
                 message: defeatMessage
             };
@@ -2078,10 +2332,15 @@
             Aethra.EventBus.emit("PlayerDefeated", payload);
             Aethra.EventBus.emit("HeroDefeated", payload);
             Aethra.EventBus.emit("battle:player-defeated", payload);
+            Aethra.EventBus.emit("hero:death-penalty", payload);
 
             console.warn(defeatMessage);
 
             this.endBattle("defeat", payload);
+            Aethra.UIManager?.setPrimaryView?.("city", {
+                source: "hero-defeated"
+            });
+            Aethra.RenderEngine?.renderAll?.();
             return payload;
         },
 
@@ -2107,6 +2366,7 @@
             const endedCreature = battle.creature ? clone(battle.creature) : null;
 
             battle.isFighting = false;
+            battle.phase = reason === "defeat" ? "defeat" : reason === "victory" ? "victory" : "ended";
             battle.endedAt = new Date().toISOString();
             battle.lastResult = result ? clone(result) : battle.lastResult;
             battle.lastMessage =
@@ -2176,14 +2436,24 @@
 
         getHeroCombatant() {
             const hero = Aethra.GameState.hero;
+            const stats = { ...(hero.stats || {}) };
+            const armorLevel = Math.max(1, integer(Aethra.DisciplineSystem?.getState?.("armor")?.level, 1));
+            stats.defense = Math.max(0, number(stats.defense, 0)) + Math.max(0, armorLevel - 1) * 0.5;
+
+            const guard = Aethra.GameState.battle?.heroGuard;
+            if (guard) {
+                stats.defense += Math.max(0, number(guard.defenseBonus, 0));
+                stats.blockChance = Math.max(number(stats.blockChance, 0), number(guard.blockChance, 0));
+                stats.blockReduction = Math.max(number(stats.blockReduction, 0.35), number(guard.blockReduction, 0.5));
+            }
 
             return {
                 id: hero.id || "hero",
                 name: hero.name || "Aethra",
-                hp: hero.stats.hp,
-                maxHp: hero.stats.maxHp,
-                damage: hero.stats.damage,
-                stats: hero.stats
+                hp: stats.hp,
+                maxHp: stats.maxHp,
+                damage: stats.damage,
+                stats
             };
         },
 
@@ -2264,8 +2534,9 @@
         },
 
         setTickSpeed(milliseconds) {
-            const speed = Math.max(100, integer(milliseconds, 1000));
+            const speed = Math.max(400, integer(milliseconds, 1800));
             this.config.tickMs = speed;
+            this.config.roundMs = speed;
             return speed;
         },
 

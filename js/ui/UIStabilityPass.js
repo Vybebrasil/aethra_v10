@@ -15,7 +15,7 @@
         .replaceAll("'", "&#039;");
     const fmt = (value) => new Intl.NumberFormat("pt-BR").format(Number(value || 0));
 
-    function getEntries() {
+    function getEntries(pending = null) {
         const activities = Array.isArray(Aethra.GameState.ui?.worldActivity)
             ? Aethra.GameState.ui.worldActivity
             : [];
@@ -29,9 +29,19 @@
             tone: entry.tone || entry.category || "event"
         }));
 
+        const pendingId = String(pending?.eventId || pending?.id || "");
+        const pendingTitle = String(pending?.title || "").trim().toLocaleLowerCase("pt-BR");
+
         return [...activities, ...events]
             .sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0))
             .filter((entry, index, list) => list.findIndex((item) => item.id === entry.id) === index)
+            .filter((entry) => {
+                if (!pending) return true;
+                const entryId = String(entry?.id || entry?.eventId || "");
+                const entryTitle = String(entry?.title || "").trim().toLocaleLowerCase("pt-BR");
+                if (pendingId && entryId === pendingId) return false;
+                return !pendingTitle || entryTitle !== pendingTitle;
+            })
             .slice(0, 8);
     }
 
@@ -84,7 +94,7 @@
         };
         const pending = snapshot.pendingEvent || Aethra.GameState.exploration?.pendingEvent || null;
         const totals = snapshot.totals || {};
-        const entries = getEntries();
+        const entries = getEntries(pending);
         const region = Aethra.HuntSystem?.hunts?.[hunt.huntId];
         const regionName = region?.name || "Nenhuma Hunt ativa";
         const ambient = getAmbient(hunt, pending);
@@ -105,21 +115,19 @@
         root.innerHTML = `
             <div class="expedition-live-layout">
                 <section class="expedition-live-main">
-                    <article class="expedition-current-card">
+                    ${pending ? "" : `<article class="expedition-current-card">
                         <span class="expedition-current-card__icon">${esc(ambient.icon)}</span>
                         <div class="expedition-current-card__copy">
                             <small>${esc(ambient.kicker)}</small>
                             <strong>${esc(ambient.title)}</strong>
                             <p>${esc(ambient.detail)}</p>
                         </div>
-                        ${pending ? `
-                            <button type="button" class="expedition-current-card__action" data-stable-resolve-event="${esc(pending.eventId)}">${esc(ambient.action)}</button>
-                        ` : !hunt.isActive ? `
+                        ${!hunt.isActive ? `
                             <button type="button" class="expedition-current-card__action" data-stable-open-map>${esc(ambient.action)}</button>
                         ` : `
                             <span class="expedition-current-card__state">LOOP ATIVO</span>
                         `}
-                    </article>
+                    </article>`}
 
                     <div class="expedition-event-stream">
                         ${entries.length ? entries.map((entry) => `

@@ -14,8 +14,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=2">
     <link rel="stylesheet" href="css/style-stability.css">
+    <link rel="stylesheet" href="css/ui-fluidity.css">
+    <link rel="stylesheet" href="css/actionbar-workspace.css">
+    <link rel="stylesheet" href="css/hunt-analyzer-workspace.css">
+    <link rel="stylesheet" href="css/combat-hud-modern.css">
+    <link rel="stylesheet" href="css/encounter-combat-hud.css?v=6">
+    <link rel="stylesheet" href="css/player-hud-workspace.css?v=1">
+    <link rel="stylesheet" href="css/character-creation.css?v=4">
+    <link rel="stylesheet" href="css/coliseum-workspace.css?v=1">
 </head>
 
 <body>
@@ -47,6 +55,9 @@
                 </button>
                 <button type="button" data-open-window="player-market-view" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="ECONOMIA" data-tooltip-title="Mercado" data-tooltip-body="Compra e vende itens entre jogadores com preços e taxas do mercado.">
                     <span class="hud-menu-icon" aria-hidden="true">⚖</span><span>Mercado</span>
+                </button>
+                <button type="button" data-open-window="coliseum-view" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="PVP GLOBAL" data-tooltip-title="Coliseu" data-tooltip-body="Busca duelos, acompanha o ranking global e inspeciona as relíquias mais fortes do servidor.">
+                    <span class="hud-menu-icon" aria-hidden="true">⚜</span><span>Coliseu</span>
                 </button>
                 <button type="button" data-open-window="social-view" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="COMUNIDADE" data-tooltip-title="Social" data-tooltip-body="Centraliza recursos sociais e interação com outros jogadores.">
                     <span class="hud-menu-icon" aria-hidden="true">👥</span><span>Social</span>
@@ -95,6 +106,33 @@
             <div id="combat-display"></div>
             <div id="boss-weekly-reward"></div>
             <div id="boss-list"></div>
+        </section>
+
+        <!-- Coliseu global, matchmaking e ranking vivo de relíquias -->
+        <section
+            id="coliseum-view"
+            class="game-window hidden"
+            data-aethra-window
+            data-window-size="large"
+            aria-hidden="true"
+        >
+            <header class="window-header">
+                <div>
+                    <small>PvP 1×1, gladiadores e prestígio</small>
+                    <h2>Coliseu de Aethra</h2>
+                </div>
+
+                <button
+                    type="button"
+                    class="window-close"
+                    data-close-window="coliseum-view"
+                    aria-label="Fechar Coliseu"
+                >
+                    ×
+                </button>
+            </header>
+
+            <div id="coliseum-workspace"></div>
         </section>
 
         <!-- Inventário Tibia Style -->
@@ -530,8 +568,8 @@
     </main>
 
     <!-- Core e dados -->
-    <script src="js/core/game-core.js" defer></script>
-    <script src="js/data/GameData.js" defer></script>
+    <script src="js/core/game-core.js?v=3" defer></script>
+    <script src="js/data/GameData.js?v=2" defer></script>
     <script src="js/data/monsters/CreatureBalanceConfig.js" defer></script>
     <script src="js/data/monsters/MonsterAbilityParser.js" defer></script>
     <script src="js/data/loot/LootProfileRegistry.js" defer></script>
@@ -540,28 +578,33 @@
     <script src="js/data/monsters/MonsterCatalog.js" defer></script>
     <script src="js/data/hunts/HuntCatalog.js" defer></script>
     <script src="js/world/EntityManager.js" defer></script>
-    <script src="js/infrastructure/SaveManager.js" defer></script>
-    <script src="js/infrastructure/SettingsManager.js" defer></script>
+    <script src="js/infrastructure/SaveManager.js?v=6" defer></script>
+    <script src="js/infrastructure/SettingsManager.js?v=2" defer></script>
     <script src="js/economy/EconomyRNGManager.js" defer></script>
 
     <!-- UI base -->
     <script src="js/ui/WindowManager.js" defer></script>
-    <script src="js/ui/TooltipManager.js" defer></script>
+    <script src="js/ui/TooltipManager.js?v=2" defer></script>
 
     <!-- Itens e progressão -->
-    <script src="js/items/ItemSystem.js" defer></script>
+    <script src="js/items/ItemSystem.js?v=2" defer></script>
     <script src="js/items/BagSystem.js" defer></script>
     <script src="js/items/EquipSystem.js" defer></script>
-    <script src="js/progression/XPSystem.js" defer></script>
+    <script src="js/progression/XPSystem.js?v=2" defer></script>
     <script src="js/items/LootSystem.js" defer></script>
+    <script src="js/data/items/EarlyGameItemCatalog.js?v=1" defer></script>
+    <script src="js/economy/ItemRankingSystem.js?v=3" defer></script>
 
     <!-- Combate e mundo -->
     <script src="js/combat/CombatSystem.js" defer></script>
-    <script src="js/combat/SkillSystem.js" defer></script>
-    <script src="js/combat/SkillController.js" defer></script>
-    <script src="js/combat/BattleSystem.js" defer></script>
-    <script src="js/world/HuntSystem.js" defer></script>
+    <script src="js/combat/SkillSystem.js?v=4" defer></script>
+    <script src="js/progression/DisciplineSystem.js?v=1" defer></script>
+    <script src="js/combat/SkillController.js?v=4" defer></script>
+    <script src="js/combat/BattleSystem.js?v=5" defer></script>
+    <script src="js/pvp/ColiseumSystem.js?v=5" defer></script>
+    <script src="js/world/HuntSystem.js?v=3" defer></script>
     <script src="js/progression/ProfessionSystem.js" defer></script>
+    <script src="js/progression/CharacterBuildSystem.js?v=4" defer></script>
     <script src="js/world/ExplorationSystem.js" defer></script>
     <script src="js/combat/BossSystem.js" defer></script>
     <script src="js/progression/QuestSystem.js" defer></script>
@@ -569,15 +612,23 @@
 
     <!-- Mercado e renderização -->
     <script src="js/market/MarketplaceSystem.js" defer></script>
-    <script src="js/ui/RenderEngine.js" defer></script>
+    <script src="js/ui/RenderEngine.js?v=3" defer></script>
     <script src="js/ui/UI_Renderer.js" defer></script>
     <script src="js/ui/UIManager.js" defer></script>
     <script src="js/ui/HudExperience.js" defer></script>
     <script src="js/ui/HudWorldMapAndDrops.js" defer></script>
     <script src="js/ui/EncounterInteractionPass.js" defer></script>
     <script src="js/ui/UIStabilityPass.js" defer></script>
+    <script src="js/ui/UIFluidityPass.js" defer></script>
+    <script src="js/ui/ActionBarWorkspace.js" defer></script>
+    <script src="js/ui/HuntAnalyzerWorkspace.js" defer></script>
+    <script src="js/ui/CombatHudModernizer.js?v=2" defer></script>
+    <script src="js/ui/EncounterCombatHUD.js?v=5" defer></script>
+    <script src="js/ui/PlayerHudWorkspace.js?v=3" defer></script>
+    <script src="js/ui/CharacterCreationUI.js?v=4" defer></script>
+    <script src="js/ui/ColiseumWorkspace.js?v=5" defer></script>
 
     <!-- Inicialização final -->
-    <script src="js/core/GameLoader.js" defer></script>
+    <script src="js/core/GameLoader.js?v=2" defer></script>
 </body>
 </html>
