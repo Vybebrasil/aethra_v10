@@ -904,6 +904,7 @@
     background: rgba(42, 114, 146, 0.08);
     color: #89cce9;
     font-size: 12px;
+    filter: grayscale(1) brightness(1.7) contrast(1.2);
 }
 
 .player-skill-row > div {

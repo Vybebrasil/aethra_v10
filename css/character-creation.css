@@ -646,3 +646,13 @@ body.is-allocating-skills { overflow: hidden; }
     .character-creation *,
     .character-creation-backdrop * { scroll-behavior: auto !important; animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
 }
+
+/* Grayscale filters to standardize colored emojis into flat monochrome icons */
+.creation-archetype__icon,
+.creation-archetype__dna span,
+.creation-archetype__skill-row div b,
+.creation-discipline__icon,
+.creation-tooltip__item span,
+.creation-tooltip__masteries span {
+    filter: grayscale(1) brightness(1.7) contrast(1.2);
+}
