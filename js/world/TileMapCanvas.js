@@ -1,4 +1,4 @@
-// TileMapCanvas.js — Visor de Arena 2D Tibia/Baiak Idle com Hordas de Criaturas, Magias e Troca de Andares
+// TileMapCanvas.js — Tibia Hunt State Machine (Caminhada, Hordas, Magias, Abates e Escadas)
 (function initTileMapCanvas(Aethra) {
     "use strict";
 
@@ -11,40 +11,39 @@
     let canvas = null;
     let ctx = null;
     let animationFrameId = null;
-    let autoCombatInterval = null;
     let isRunning = false;
     let isTransitioningFloor = false;
 
-    // Progression State
+    // Progression & Floor State
     let waveState = {
         currentWave: 1,
         maxWaves: 5,
         currentFloor: 1,
-        floorsCleared: 0,
-        isBossWave: false
+        floorsCleared: 0
     };
 
-    // Hero Entity
+    // Hero Entity State
     const player = {
-        x: 6,
+        x: 4,
         y: 8,
-        targetX: 6,
+        targetX: 4,
         targetY: 8,
+        moveSpeed: 0.12, // Smooth Tibia tile walking speed
         animFrame: 0,
         animTimer: 0,
-        state: "idle", // idle, move, cast, attack
+        state: "idle", // idle, walking, attacking, climbing
         attackTimer: 0,
         spellText: "",
         spellTextTimer: 0
     };
 
-    // Horde of Creatures (Array of active monsters in current room)
+    // Horde of Creatures in current room
     let horde = [];
+    let currentTargetIndex = -1;
 
-    // Staircase Position (Right side of the room)
-    const STAIRS_POS = { x: 21, y: 7 };
+    // Staircase position
+    const STAIRS_POS = { x: 21, y: 8 };
 
-    // Floating Combat Text array
     const floatingTexts = [];
     const chatLogs = [];
 
@@ -61,13 +60,13 @@
         { key: "wolf",     name: "Lobo Feroz",    hp: 85,  maxHp: 85 },
         { key: "skeleton", name: "Esqueleto",    hp: 110, maxHp: 110 },
         { key: "rat",      name: "Rato Gigante", hp: 45,  maxHp: 45 },
-        { key: "boss",     name: "👹 DEMÔNIO ANCIÃO (MINI-BOSS)", hp: 300, maxHp: 300 }
+        { key: "boss",     name: "👹 DEMÔNIO ANCIÃO (MINI-BOSS)", hp: 320, maxHp: 320 }
     ];
 
     function addFloatingText(text, x, y, color = "#ff4d4d", fontSize = 14) {
         floatingTexts.push({
             text,
-            x: x + (Math.random() * 14 - 7),
+            x: x + (Math.random() * 12 - 6),
             y,
             vy: -1.2,
             alpha: 1.0,
@@ -90,58 +89,74 @@
         }
     }
 
-    // Rich Tibia Room Map Grid Generation
-    // 0: grass, 1: dirt path, 2: wood log wall, 3: water, 4: tree, 5: flower/bush, 6: stone floor, 7: spiral stairs
     function buildRoomGrid() {
         return Array.from({ length: MAP_ROWS }, (_, r) =>
             Array.from({ length: MAP_COLS }, (_, c) => {
-                // Outer wooden log wall border
-                if (r === 0 || r === MAP_ROWS - 1 || c === 0 || c === MAP_COLS - 1) return 2;
-                // Staircase tile on right
-                if (r === STAIRS_POS.y && c === STAIRS_POS.x) return 7;
-                // Stone path on right side near stairs
-                if (c >= 20 && Math.abs(r - 7) <= 2) return 6;
-                // Dense grass & trees
-                if ((r === 1 || r === 2) && (c >= 2 && c <= 8)) return 4; // Top trees
-                if ((r === 1 || r === 2) && (c >= 12 && c <= 17)) return 5; // Flower garden
-                if (r >= 4 && r <= 12 && c >= 3 && c <= 18) return 0; // Central grass arena
-                return 0;
+                if (r === 0 || r === MAP_ROWS - 1 || c === 0 || c === MAP_COLS - 1) return 2; // Wood log wall
+                if (r === STAIRS_POS.y && c === STAIRS_POS.x) return 7; // Spiral Stone Staircase
+                if (c >= 19 && Math.abs(r - STAIRS_POS.y) <= 2) return 6; // Stone floor near stairs
+                if ((r === 1 || r === 2) && (c >= 2 && c <= 8)) return 4; // Tree patch
+                if ((r === 1 || r === 2) && (c >= 12 && c <= 17)) return 5; // Flowers
+                if (r >= 5 && r <= 11 && c >= 4 && c <= 18) return 1; // Dirt path
+                return 0; // Grass
             })
         );
     }
 
     let mapGrid = buildRoomGrid();
 
-    function spawnHorde() {
+    function spawnRoomHorde() {
         horde = [];
-        const isBoss = waveState.currentWave === waveState.maxWaves;
-        const monsterCount = isBoss ? 1 : Math.floor(Math.random() * 3 + 3); // 3 to 5 monsters!
+        const isBossFloor = waveState.currentWave === waveState.maxWaves;
+        const count = isBossFloor ? 1 : Math.floor(Math.random() * 2 + 3); // 3 to 5 monsters scattered
 
-        for (let i = 0; i < monsterCount; i++) {
-            const spec = isBoss
-                ? MONSTER_SPECIES[4]
-                : MONSTER_SPECIES[Math.floor(Math.random() * 4)];
+        const spawnPositions = [
+            { x: 9, y: 5 },
+            { x: 14, y: 7 },
+            { x: 11, y: 11 },
+            { x: 17, y: 5 },
+            { x: 16, y: 10 }
+        ];
 
-            // Position monsters in a cluster on the right side of room
-            const posX = 12 + Math.floor(Math.random() * 6);
-            const posY = 4 + Math.floor(Math.random() * 7);
+        for (let i = 0; i < count; i++) {
+            const spec = isBossFloor ? MONSTER_SPECIES[4] : MONSTER_SPECIES[Math.floor(Math.random() * 4)];
+            const pos = spawnPositions[i] || { x: 10 + i * 2, y: 6 };
 
             horde.push({
                 id: `m_${i}_${Date.now()}`,
                 key: spec.key,
                 name: spec.name,
-                hp: spec.hp + (waveState.currentFloor * 10),
-                maxHp: spec.maxHp + (waveState.currentFloor * 10),
-                x: posX,
-                y: posY,
-                baseX: posX,
-                baseY: posY,
+                hp: spec.hp + (waveState.currentFloor * 12),
+                maxHp: spec.maxHp + (waveState.currentFloor * 12),
+                x: pos.x,
+                y: pos.y,
+                baseX: pos.x,
+                baseY: pos.y,
                 hurtTimer: 0,
-                isBoss
+                isBoss: isBossFloor,
+                isDead: false
             });
         }
 
+        currentTargetIndex = 0;
+        selectNextAliveTarget();
         renderWaveProgress();
+    }
+
+    function selectNextAliveTarget() {
+        for (let i = 0; i < horde.length; i++) {
+            if (!horde[i].isDead && horde[i].hp > 0) {
+                currentTargetIndex = i;
+                // Walk player towards this target creature
+                const target = horde[i];
+                player.targetX = Math.max(2, target.x - 1);
+                player.targetY = target.y;
+                player.state = "walking";
+                return true;
+            }
+        }
+        currentTargetIndex = -1;
+        return false;
     }
 
     function renderWaveProgress() {
@@ -169,7 +184,6 @@
         const py = r * TILE_SIZE;
 
         if (tileType === 2) {
-            // Wood Log Wall (Tibia border)
             ctx.fillStyle = "#4a321a";
             ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
             ctx.fillStyle = "#2c1c0c";
@@ -180,7 +194,6 @@
         }
 
         if (tileType === 6 || tileType === 7) {
-            // Stone floor
             ctx.fillStyle = "#48525a";
             ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
             ctx.strokeStyle = "rgba(0,0,0,0.3)";
@@ -198,14 +211,13 @@
                 ctx.arc(px + 16, py + 16, 10, 0, Math.PI * 1.5);
                 ctx.stroke();
                 ctx.fillStyle = "#ffd700";
-                ctx.font = "bold 9px Outfit, sans-serif";
+                ctx.font = "bold 8.5px Outfit, sans-serif";
                 ctx.textAlign = "center";
                 ctx.fillText("▲ ANDAR", px + 16, py - 4);
             }
             return;
         }
 
-        // Base Grass / Path
         ctx.fillStyle = tileType === 1 ? "#5e4b33" : "#2a5427";
         ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
 
@@ -218,7 +230,6 @@
             ctx.fillRect(px + 6, py + 8, 4, 3);
             ctx.fillRect(px + 18, py + 20, 3, 4);
         } else if (tileType === 4) {
-            // Tree
             ctx.fillStyle = "#3a2618";
             ctx.fillRect(px + 12, py + 18, 8, 14);
             ctx.fillStyle = "#1c4a18";
@@ -226,7 +237,6 @@
             ctx.arc(px + 16, py + 12, 13, 0, Math.PI * 2);
             ctx.fill();
         } else if (tileType === 5) {
-            // Bush / Flowers
             ctx.fillStyle = "#255a20";
             ctx.beginPath();
             ctx.arc(px + 16, py + 16, 11, 0, Math.PI * 2);
@@ -239,9 +249,8 @@
     function drawPlayer(time) {
         const px = player.x * TILE_SIZE;
         const py = player.y * TILE_SIZE;
-        const bob = Math.sin(time * 0.006) * 2;
+        const bob = player.state === "walking" ? Math.sin(time * 0.015) * 3 : Math.sin(time * 0.006) * 2;
 
-        // Selection highlight ring
         ctx.strokeStyle = "rgba(120, 200, 255, 0.5)";
         ctx.lineWidth = 1.5;
         ctx.beginPath();
@@ -262,7 +271,6 @@
             ctx.fillRect(px + 13, py + 8 + bob, 6, 2);
         }
 
-        // Spell chant text overhead (e.g., "exori infir pug")
         if (player.spellTextTimer > 0) {
             ctx.save();
             ctx.fillStyle = "#ffe066";
@@ -274,7 +282,6 @@
             ctx.restore();
         }
 
-        // Overhead HP bar
         const curHp = hero.hp || hero.stats?.hp || 50;
         const maxHp = hero.maxHp || hero.stats?.maxHp || 50;
         const hpPct = Math.max(0, Math.min(1, curHp / maxHp));
@@ -292,7 +299,7 @@
 
     function drawHorde(time) {
         horde.forEach((m) => {
-            if (m.hp <= 0) return; // Monster dead
+            if (m.isDead || m.hp <= 0) return;
 
             const px = m.x * TILE_SIZE;
             const py = m.y * TILE_SIZE;
@@ -310,13 +317,11 @@
                 ctx.fillRect(px + 18 + shake, py + 13 + bob, 3, 3);
             }
 
-            // Overhead HP bar
             ctx.fillStyle = "rgba(0,0,0,0.7)";
             ctx.fillRect(px + 2, py - 10, 28, 4);
             ctx.fillStyle = m.isBoss ? "#ffd700" : "#e54d4d";
             ctx.fillRect(px + 2, py - 10, 28 * hpPct, 4);
 
-            // Name tag overhead
             ctx.fillStyle = m.isBoss ? "#ffd700" : "#ff8888";
             ctx.font = "bold 8.5px Outfit, sans-serif";
             ctx.textAlign = "center";
@@ -349,18 +354,17 @@
     }
 
     function updatePhysics() {
-        // Player smooth movement
+        // Smooth player grid movement
         const dx = player.targetX - player.x;
         const dy = player.targetY - player.y;
-        if (Math.abs(dx) > 0.05) player.x += dx * 0.22;
-        else player.x = player.targetX;
 
-        if (Math.abs(dy) > 0.05) player.y += dy * 0.22;
-        else player.y = player.targetY;
-
-        if (player.attackTimer > 0) {
-            player.attackTimer--;
-            if (player.attackTimer === 0) {
+        if (Math.abs(dx) > 0.08 || Math.abs(dy) > 0.08) {
+            player.x += dx * player.moveSpeed;
+            player.y += dy * player.moveSpeed;
+        } else {
+            player.x = player.targetX;
+            player.y = player.targetY;
+            if (player.state === "walking") {
                 player.state = "idle";
             }
         }
@@ -392,92 +396,117 @@
         animationFrameId = requestAnimationFrame(renderLoop);
     }
 
-    function triggerHordeAttack() {
+    // Active Hunt Tick — Hero Walks, Engages Target, Casts Spells & Collects Loot
+    function executeHuntTick() {
         if (isTransitioningFloor) return;
 
-        const aliveMonsters = horde.filter(m => m.hp > 0);
+        const aliveMonsters = horde.filter(m => !m.isDead && m.hp > 0);
+
         if (aliveMonsters.length === 0) {
-            // Wave cleared!
-            if (waveState.currentWave < waveState.maxWaves) {
-                waveState.currentWave++;
-                addChatLog(`Horda eliminada! Avançando para a Onda ${waveState.currentWave}/5...`, "wave");
-                spawnHorde();
-            } else {
-                // All 5 waves cleared on this floor → Walk to stairs & climb floor!
-                triggerFloorTransition();
+            // Room cleared! Walk hero to the spiral stone stairs
+            if (player.targetX !== STAIRS_POS.x || player.targetY !== STAIRS_POS.y) {
+                player.targetX = STAIRS_POS.x;
+                player.targetY = STAIRS_POS.y;
+                player.state = "walking";
+                addChatLog("Sala limpa! Caminhando para a escada de pedra...", "wave");
+            } else if (Math.abs(player.x - STAIRS_POS.x) < 0.2 && Math.abs(player.y - STAIRS_POS.y) < 0.2) {
+                triggerFloorClimb();
             }
             return;
         }
 
-        // Target nearest alive monster
-        const target = aliveMonsters[0];
+        // Get current target monster
+        let target = horde[currentTargetIndex];
+        if (!target || target.isDead || target.hp <= 0) {
+            if (!selectNextAliveTarget()) return;
+            target = horde[currentTargetIndex];
+        }
 
-        // Move player towards target
-        player.targetX = Math.max(2, target.x - 2);
-        player.targetY = target.y;
-        player.state = "attack";
-        player.attackTimer = 16;
+        // Walk hero towards target if not yet in melee/spell range
+        const dist = Math.hypot(player.x - target.x, player.y - target.y);
+        if (dist > 2.5) {
+            player.targetX = Math.max(2, target.x - 1);
+            player.targetY = target.y;
+            player.state = "walking";
+            return;
+        }
 
-        // Spell chant
+        // Hero is in range -> Execute Attack / Spell Chant
+        player.state = "attacking";
         const spell = SPELL_LIST[Math.floor(Math.random() * SPELL_LIST.length)];
         player.spellText = spell;
-        player.spellTextTimer = 45;
-        addChatLog(`Magia: "${spell}"`, "spell");
+        player.spellTextTimer = 40;
 
-        // Damage all alive monsters in horde (AoE spell hit!)
-        aliveMonsters.forEach((m) => {
-            m.hurtTimer = 16;
-            const dmg = Math.floor(Math.random() * 30 + 20);
-            const isCrit = Math.random() < 0.3;
+        addChatLog(`Conjuras "${spell}"!`, "spell");
 
-            m.hp = Math.max(0, m.hp - dmg);
+        // Damage target monster
+        target.hurtTimer = 16;
+        const dmg = Math.floor(Math.random() * 30 + 20);
+        const isCrit = Math.random() < 0.3;
 
-            const px = m.x * TILE_SIZE + 16;
-            const py = m.y * TILE_SIZE;
+        target.hp = Math.max(0, target.hp - dmg);
 
-            if (isCrit) {
-                addFloatingText(`💥 ${dmg}!`, px, py - 6, "#ffcc00", 17);
-            } else {
-                addFloatingText(`-${dmg}`, px, py, "#ff4d4d", 14);
-            }
+        const px = target.x * TILE_SIZE + 16;
+        const py = target.y * TILE_SIZE;
 
-            if (m.hp === 0) {
-                addChatLog(`☠ ${m.name} foi derrotado!`, "kill");
-            }
-        });
+        if (isCrit) {
+            addFloatingText(`💥 ${dmg}!`, px, py - 6, "#ffcc00", 17);
+            addChatLog(`Acerto crítico de ${dmg} em ${target.name}!`, "crit");
+        } else {
+            addFloatingText(`-${dmg}`, px, py, "#ff4d4d", 14);
+            addChatLog(`Causou ${dmg} de dano em ${target.name}.`, "atk");
+        }
+
+        if (target.hp <= 0) {
+            target.isDead = true;
+            const goldLoot = Math.floor(Math.random() * 15 + 8);
+            addFloatingText(`+${goldLoot} 🪙`, px, py - 18, "#ffd700", 13);
+            addChatLog(`☠ ${target.name} foi derrotado! Loot: +${goldLoot} Ouro.`, "kill");
+
+            // Dispatch loot event to backend GameState
+            Aethra.EventBus.emit("goldChanged", { amount: goldLoot, total: (Aethra.GameState?.hero?.gold || 0) + goldLoot });
+
+            // Select next target in horde
+            selectNextAliveTarget();
+        }
     }
 
-    function triggerFloorTransition() {
+    function triggerFloorClimb() {
+        if (isTransitioningFloor) return;
         isTransitioningFloor = true;
-        waveState.floorsCleared++;
-        waveState.currentFloor++;
-        waveState.currentWave = 1;
 
-        addChatLog(`🏆 Sala e Mini-Boss derrotados! Subindo para o Andar ${waveState.currentFloor}...`, "boss");
+        if (waveState.currentWave < waveState.maxWaves) {
+            waveState.currentWave++;
+        } else {
+            waveState.floorsCleared++;
+            waveState.currentFloor++;
+            waveState.currentWave = 1;
+        }
 
-        // Walk player to stairs
-        player.targetX = STAIRS_POS.x;
-        player.targetY = STAIRS_POS.y;
+        const bannerTitle = waveState.currentWave === waveState.maxWaves
+            ? `👹 SALA DO MINI-BOSS (ANDAR ${waveState.currentFloor})`
+            : `▲ SUBINDO PARA A SALA ${waveState.currentWave}/5 (ANDAR ${waveState.currentFloor})`;
 
         const container = document.getElementById("tilemap-canvas-root");
         if (container) {
             const banner = document.createElement("div");
             banner.className = "floor-transition-banner";
             banner.innerHTML = `
-                <div class="floor-banner-title">▲ SUBINDO PARA O ANDAR ${waveState.currentFloor}</div>
-                <div class="floor-banner-sub">Novas hordas de criaturas aguardam...</div>
+                <div class="floor-banner-title">${bannerTitle}</div>
+                <div class="floor-banner-sub">Subindo escadas de pedra... Novas criaturas encontradas!</div>
             `;
             container.appendChild(banner);
             setTimeout(() => banner.remove(), 2200);
         }
 
         setTimeout(() => {
-            player.x = 6;
+            player.x = 4;
             player.y = 8;
-            player.targetX = 6;
+            player.targetX = 4;
             player.targetY = 8;
+            player.state = "idle";
             isTransitioningFloor = false;
-            spawnHorde();
+            spawnRoomHorde();
         }, 2200);
     }
 
@@ -504,9 +533,9 @@
                     <canvas id="tilemap-canvas" width="${MAP_COLS * TILE_SIZE}" height="${MAP_ROWS * TILE_SIZE}"></canvas>
                     
                     <div class="tilemap-chat-dock">
-                        <header><span>Log de Combate & Chat</span></header>
+                        <header><span>Log de Caçada em Tempo Real</span></header>
                         <div class="tilemap-chat-log" id="tilemap-chat-log">
-                            <div class="tilemap-chat-line"><small>[Sessão]</small> <span>Caçada iniciada em ${zoneName}...</span></div>
+                            <div class="tilemap-chat-line"><small>[Caçada]</small> <span>Iniciada no ${zoneName}... Herói em movimento!</span></div>
                         </div>
                     </div>
                 </div>
@@ -517,27 +546,27 @@
         if (!canvas) return;
         ctx = canvas.getContext("2d");
 
-        spawnHorde();
+        spawnRoomHorde();
 
         isRunning = true;
         animationFrameId = requestAnimationFrame(renderLoop);
 
-        // Continuous active combat tick simulation every 1.6 seconds
+        // Continuous active hunt loop — hero walks, targets creatures, casts spells & climbs floors!
         clearInterval(autoCombatInterval);
         autoCombatInterval = setInterval(() => {
-            if (isRunning) triggerHordeAttack();
-        }, 1600);
+            if (isRunning) executeHuntTick();
+        }, 1200);
     }
 
     // Event bus listeners
-    Aethra.EventBus.on("battle:damage-dealt", triggerHordeAttack);
-    Aethra.EventBus.on("battle:round-processed", triggerHordeAttack);
-    Aethra.EventBus.on("combat:hit", triggerHordeAttack);
+    Aethra.EventBus.on("battle:damage-dealt", executeHuntTick);
+    Aethra.EventBus.on("battle:round-processed", executeHuntTick);
+    Aethra.EventBus.on("combat:hit", executeHuntTick);
 
     Aethra.TileMapCanvas = {
         start: startEngine,
-        triggerAttack: triggerHordeAttack,
-        triggerFloorTransition
+        triggerAttack: executeHuntTick,
+        triggerFloorClimb
     };
 
     Aethra.EventBus.on("EngineReady", () => setTimeout(startEngine, 100));
