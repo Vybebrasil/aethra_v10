@@ -389,6 +389,22 @@ body.is-allocating-skills { overflow: hidden; }
     color: #eff6f7;
     font-size: 8px;
     font-weight: 700;
+}.creation-archetype__tags {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 8px;
+}
+.creation-archetype__tags em,
+.creation-review-card em {
+    padding: 3px 6px;
+    border-radius: 99px;
+    color: color-mix(in srgb, var(--archetype-accent) 72%, #eaf4f5);
+    background: color-mix(in srgb, var(--archetype-accent) 10%, #0b181c);
+    font-size: 7px;
+    font-style: normal;
+    font-weight: 800;
 }
 
 .creation-archetype footer { position: relative; display: grid; gap: 2px; margin-top: auto; padding-top: 9px; border-top: 1px solid rgba(112, 145, 155, .14); }

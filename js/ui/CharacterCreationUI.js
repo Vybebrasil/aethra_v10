@@ -293,7 +293,7 @@
                     </div>
                 </div>
 
-                <div>${entry.tags.map((tag) => `<em>${esc(tag)}</em>`).join("")}</div>
+                <div class="creation-archetype__tags">${entry.tags.map((tag) => `<em>${esc(tag)}</em>`).join("")}</div>
                 <footer><span>${selected ? "ARQUÉTIPO ESCOLHIDO" : "ESCOLHER ARQUÉTIPO"}</span><b>${esc(getStarterWeaponBonus(entry))}</b></footer>
             </button>`;
     }
