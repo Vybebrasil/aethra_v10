@@ -398,23 +398,26 @@
             const effect = trigger.dataset.tooltipEffect || "";
             const formula = trigger.dataset.tooltipFormula || "";
             const hint = trigger.dataset.tooltipHint || "";
+            const isHtml = trigger.dataset.tooltipHtml === "true";
+
+            const esc = isHtml ? (x) => x : escapeHTML;
 
             return `
                 <article class="aethra-ui-tooltip__hud">
                     <small>${escapeHTML(eyebrow)}</small>
                     <header>
                         <strong>${escapeHTML(title)}</strong>
-                        ${value ? `<b>${escapeHTML(value)}</b>` : ""}
+                        ${value ? `<b>${esc(value)}</b>` : ""}
                     </header>
-                    ${body ? `<p>${escapeHTML(body)}</p>` : ""}
+                    ${body ? `<div class="aethra-ui-tooltip__body">${esc(body)}</div>` : ""}
                     ${effect ? `
                         <div class="aethra-ui-tooltip__impact">
                             <small>RESULTADO ATUAL</small>
-                            <strong>${escapeHTML(effect)}</strong>
+                            <strong>${esc(effect)}</strong>
                         </div>
                     ` : ""}
-                    ${formula ? `<code class="aethra-ui-tooltip__formula">${escapeHTML(formula)}</code>` : ""}
-                    ${hint ? `<footer>${escapeHTML(hint)}</footer>` : ""}
+                    ${formula ? `<code class="aethra-ui-tooltip__formula">${esc(formula)}</code>` : ""}
+                    ${hint ? `<footer>${esc(hint)}</footer>` : ""}
                 </article>
             `;
         },

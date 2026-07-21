@@ -187,13 +187,48 @@
             .map(([id]) => system().masteries[id])
             .find(Boolean);
         const starterItem = Aethra.GameData?.items?.[entry.starterItemId] || {};
-        const masteryNames = Object.entries(entry.masteries)
-            .sort((a, b) => b[1] - a[1])
-            .map(([id, val]) => `${system().masteries[id]?.name || id} (+${val})`)
-            .join(", ");
+        
+        const weaponDmg = `${starterItem.damageMin}–${starterItem.damageMax}`;
+        const weaponExtra = starterItem.mag ? `, +${starterItem.mag} Magia` : "";
+        const weaponName = starterItem.name || "Nenhuma";
+        const weaponIcon = entry.id === "vanguard" ? "⚔️" : entry.id === "berserker" ? "🪓" : entry.id === "arcanist" ? "✦" : entry.id === "ranger" ? "➶" : "☾";
+
+        const tooltipBodyHtml = `
+            <div class="creation-tooltip">
+                <p class="creation-tooltip__desc">${esc(entry.description)}</p>
+                <div class="creation-tooltip__section">
+                    <small>EQUIPAMENTO INICIAL</small>
+                    <div class="creation-tooltip__item">
+                        <span>${esc(weaponIcon)}</span>
+                        <strong>${esc(weaponName)}</strong>
+                        <em>Dano: ${esc(weaponDmg)}${esc(weaponExtra)}</em>
+                    </div>
+                </div>
+                <div class="creation-tooltip__section">
+                    <small>DISTRIBUIÇÃO DE MAESTRIAS</small>
+                    <div class="creation-tooltip__masteries">
+                        ${Object.entries(entry.masteries)
+                            .sort((a, b) => b[1] - a[1])
+                            .slice(0, 3)
+                            .map(([id, val]) => {
+                                const mastery = system().masteries[id];
+                                return `<span>${esc(mastery?.icon || "✦")} ${esc(mastery?.name || id)} +${val}</span>`;
+                            }).join("")}
+                    </div>
+                </div>
+                <div class="creation-tooltip__section">
+                    <small>PROCS E PASSIVAS DE COMBATE</small>
+                    <div class="creation-tooltip__proc">
+                        <strong>✨ ${esc(mainDiscipline?.procName || "Aprimoramento")}</strong>
+                        <p>${esc(mainDiscipline?.role || "Evolução livre por uso de habilidades no combate.")}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+
         return `
             <button type="button" class="creation-archetype ${selected ? "is-selected" : ""}" data-select-archetype="${esc(entry.id)}" style="--archetype-accent:${esc(entry.accent)}"
-                data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="ORIGEM DISPONÍVEL" data-tooltip-title="${esc(entry.name)} · ${esc(entry.title)}" data-tooltip-body="Este arquétipo inicia com a arma: ${esc(starterItem.name || 'Arma Iniciante')} (Dano: ${starterItem.damageMin}-${starterItem.damageMax}${starterItem.mag ? ', +1 Magia' : ''}). Suas disciplinas focadas são: ${esc(masteryNames)}. Especialidade: ${esc(mainDiscipline?.procName || 'Nenhuma')}.">
+                data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-html="true" data-tooltip-eyebrow="ORIGEM DISPONÍVEL" data-tooltip-title="${esc(entry.name)} · ${esc(entry.title)}" data-tooltip-body="${esc(tooltipBodyHtml)}">
                 <span class="creation-archetype__icon">${esc(entry.icon)}</span>
                 <small>${esc(entry.title)}</small>
                 <strong>${esc(entry.name)}</strong>
@@ -283,7 +318,7 @@
     function renderStarterBar() {
         return starterSkills().map((skillId, index) => {
             const skill = Aethra.SkillSystem?.getSkill?.(skillId) || {};
-            return `<span><small>${index + 1}</small><b>${esc(skill.icon || "+")}</b><em>${esc(skill.name || skillId)}</em></span>`;
+            return `<span data-ui-tooltip="true" data-tooltip-kind="skill" data-skill-id="${esc(skillId)}"><small>${index + 1}</small><b>${esc(skill.icon || "+")}</b><em>${esc(skill.name || skillId)}</em></span>`;
         }).join("");
     }
 
@@ -295,9 +330,9 @@
             <section class="creation-step-content creation-step-content--review">
                 <header class="creation-step-heading"><div><small>RESUMO DA JORNADA</small><h2>${esc(draft.name)}, ${esc(selected?.name || "Aventureiro")}</h2><p>Esta é a sua abertura. Equipamentos, decisões e disciplinas usadas poderão transformar completamente a build.</p></div><span class="creation-ready-seal">PRONTO</span></header>
                 <div class="creation-review-grid">
-                    <article class="creation-review-card creation-review-card--origin"><small>ARQUÉTIPO</small><span>${esc(selected?.icon || "A")}</span><div><strong>${esc(selected?.name || "—")}</strong><p>${esc(selected?.description || "")}</p><div>${selected?.tags?.map((tag) => `<em>${esc(tag)}</em>`).join("") || ""}</div></div></article>
-                    <article class="creation-review-card creation-review-card--stats"><small>ATRIBUTOS FINAIS</small><div><span><b>${fmt(preview.stats.maxHp)}</b><em>HP</em></span><span><b>${fmt(preview.stats.maxMana)}</b><em>Mana</em></span><span><b>${fmt(preview.stats.maxEnergy)}</b><em>Vigor</em></span><span><b>${fmt(preview.hit)}%</b><em>Acerto</em></span><span><b>${fmt(preview.crit)}%</b><em>Crítico</em></span><span><b>${fmt(preview.evade)}%</b><em>Esquiva</em></span></div></article>
-                    <article class="creation-review-card creation-review-card--disciplines"><small>DISCIPLINAS INICIAIS</small><div>${disciplines.map((entry) => `<span><b>${esc(entry.icon)}</b><p><strong>${esc(entry.name)}</strong><small>${esc(entry.role)}</small></p><em>+${fmt(draft.masteries[entry.id])}</em></span>`).join("")}</div></article>
+                    <article class="creation-review-card creation-review-card--origin" data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="RESUMO DA CLASSE" data-tooltip-title="${esc(selected?.name)}" data-tooltip-body="${esc(selected?.description)}"><small>ARQUÉTIPO</small><span>${esc(selected?.icon || "A")}</span><div><strong>${esc(selected?.name || "—")}</strong><p>${esc(selected?.description || "")}</p><div>${selected?.tags?.map((tag) => `<em>${esc(tag)}</em>`).join("") || ""}</div></div></article>
+                    <article class="creation-review-card creation-review-card--stats" data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="RESUMO DE COMBATE" data-tooltip-title="Atributos de Combate" data-tooltip-body="Os atributos calculados que seu personagem usará em batalha (HP, MP, Vigor e modificadores)."><small>ATRIBUTOS FINAIS</small><div><span><b>${fmt(preview.stats.maxHp)}</b><em>HP</em></span><span><b>${fmt(preview.stats.maxMana)}</b><em>Mana</em></span><span><b>${fmt(preview.stats.maxEnergy)}</b><em>Vigor</em></span><span><b>${fmt(preview.hit)}%</b><em>Acerto</em></span><span><b>${fmt(preview.crit)}%</b><em>Crítico</em></span><span><b>${fmt(preview.evade)}%</b><em>Esquiva</em></span></div></article>
+                    <article class="creation-review-card creation-review-card--disciplines" data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="RESUMO DE DISCIPLINAS" data-tooltip-title="Suas Disciplinas Iniciais" data-tooltip-body="A distribuição inicial de maestria que impulsiona suas procs e passivas de combate."><small>DISCIPLINAS INICIAIS</small><div>${disciplines.map((entry) => `<span><b>${esc(entry.icon)}</b><p><strong>${esc(entry.name)}</strong><small>${esc(entry.role)}</small></p><em>+${fmt(draft.masteries[entry.id])}</em></span>`).join("")}</div></article>
                     <article class="creation-review-card creation-review-card--bar"><small>ACTIONBAR INICIAL</small><div>${renderStarterBar()}</div><p>As técnicas escolhidas entram prontas; novas combinações podem ocupar até quatro barras.</p></article>
                 </div>
                 <label class="creation-oath"><input type="checkbox" data-creation-oath ${draft.oath ? "checked" : ""}><span>✓</span><p><strong>Eu aceito que Aethra tem risco real.</strong><small>Posso errar ataques, falhar em eventos e morrer. A derrota custa XP e Ouro.</small></p></label>

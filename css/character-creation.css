@@ -247,7 +247,23 @@ body.is-allocating-skills { overflow: hidden; }
 .creation-step-heading p { max-width: 720px; margin: 0; color: #90a8b2; font-size: 11px; line-height: 1.45; }
 .creation-step-heading > span:not(.creation-point-orb) { flex: 0 0 auto; padding: 6px 10px; border: 1px solid rgba(104, 144, 156, .23); border-radius: 99px; color: #77919b; font-size: 8px; font-weight: 900; letter-spacing: .1em; }
 
-.creation-archetype-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); gap: 9px; min-height: 0; }
+.creation-archetype-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 9px; min-height: 0; align-content: center; }
+
+/* Custom game-like tooltips for Character Creation */
+.creation-tooltip { display: grid; gap: 10px; padding: 2px 0; max-width: 280px; }
+.creation-tooltip__desc { color: #92a8b1; font-size: 10px; line-height: 1.4; margin: 0; }
+.creation-tooltip__section { display: grid; gap: 4px; }
+.creation-tooltip__section > small { color: #8199a2; font-size: 7px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.creation-tooltip__item { display: grid; grid-template-columns: auto 1fr; gap: 8px; padding: 6px 8px; border: 1px solid rgba(121, 201, 232, 0.15); border-radius: 7px; background: rgba(121, 201, 232, 0.04); }
+.creation-tooltip__item span { font-size: 12px; }
+.creation-tooltip__item strong { color: #eff6f7; font-size: 9px; font-weight: 700; align-self: center; }
+.creation-tooltip__item em { grid-column: 2; color: #efd070; font-size: 8px; font-style: normal; font-weight: 600; }
+.creation-tooltip__masteries { display: flex; flex-wrap: wrap; gap: 4px; }
+.creation-tooltip__masteries span { font-size: 8px; padding: 2px 5px; border-radius: 4px; background: rgba(18, 35, 40, 0.7); border: 1px solid rgba(112, 145, 155, 0.15); color: #aec0c6; font-weight: 600; }
+.creation-tooltip__proc { padding: 6px 8px; border: 1px solid rgba(229, 197, 105, 0.15); border-radius: 7px; background: rgba(229, 197, 105, 0.04); }
+.creation-tooltip__proc strong { color: #eccb62; font-size: 9px; display: block; }
+.creation-tooltip__proc p { margin: 2px 0 0; color: #92a8b1; font-size: 8px; line-height: 1.35; }
+
 .creation-archetype {
     --archetype-accent: #d9b85f;
     position: relative;
