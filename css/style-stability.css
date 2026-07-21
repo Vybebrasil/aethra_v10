@@ -3,9 +3,9 @@
 
 :root {
     --stable-topbar-height: 56px;
-    --stable-actionbar-height: 176px;
-    --stable-left-column: clamp(270px, 17vw, 310px);
-    --stable-right-column: clamp(260px, 16vw, 300px);
+    --stable-actionbar-height: 72px;
+    --stable-left-column: clamp(260px, 17vw, 300px);
+    --stable-right-column: clamp(250px, 16vw, 290px);
     --stable-gap: 8px;
     --stable-panel-radius: 12px;
 }
@@ -194,27 +194,28 @@ body.aethra-battle-mode #city-view {
     border-top-right-radius: 0 !important;
 }
 
+.battle-panel--actionbar,
 .battle-main-column--world-loop .battle-panel--actionbar {
-    flex: 0 0 var(--stable-actionbar-height) !important;
-    min-height: var(--stable-actionbar-height) !important;
-    max-height: var(--stable-actionbar-height) !important;
-    margin-top: 8px !important;
+    flex: 0 0 72px !important;
+    min-height: 72px !important;
+    max-height: 72px !important;
+    height: 72px !important;
+    margin-top: 6px !important;
+    padding: 4px 10px !important;
+    overflow: hidden !important;
 }
 
-@media (max-height: 790px) {
-    .battle-main-column--world-loop .battle-stage-panel {
-        flex: 0 0 240px !important;
-        min-height: 240px !important;
-        max-height: 240px !important;
-        height: 240px !important;
-    }
+.battle-panel--actionbar .battle-panel__header {
+    display: none !important;
 }
 
 .battle-stage-panel {
-    display: grid !important;
-    grid-template-rows: 40px minmax(0, 1fr) auto !important;
+    display: flex !important;
+    flex-direction: column !important;
     height: 100% !important;
     min-height: 0 !important;
+    max-height: none !important;
+    flex: 1 1 0 !important;
     overflow: hidden !important;
 }
 

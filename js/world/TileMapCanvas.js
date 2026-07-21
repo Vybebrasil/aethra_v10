@@ -560,6 +560,12 @@
         if (!canvas) return;
         ctx = canvas.getContext("2d");
 
+        const canvasParent = canvas.parentElement;
+        if (canvasParent) {
+            canvas.width = canvasParent.clientWidth || 768;
+            canvas.height = canvasParent.clientHeight || 512;
+        }
+
         spawnRoomHorde();
 
         isRunning = true;
