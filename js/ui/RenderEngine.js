@@ -4271,21 +4271,9 @@
         if (stageHeading) stageHeading.textContent = "Encontro";
         if (stageEyebrow) stageEyebrow.textContent = "Combate e interação atual";
 
-        if (!document.getElementById("exploration-feed")) {
-            const explorationPanel = document.createElement("section");
-            explorationPanel.className = "battle-panel battle-panel--exploration";
-            explorationPanel.innerHTML = `
-                <header class="battle-panel__header exploration-panel__header">
-                    <div>
-                        <small>Exploração e eventos</small>
-                        <h2>Atividade da Expedição</h2>
-                    </div>
-                    <span class="exploration-panel__live"><i></i>MUNDO ATIVO</span>
-                </header>
-                <div id="exploration-feed" class="exploration-feed" aria-live="polite"></div>
-            `;
-            stage.insertAdjacentElement("afterend", explorationPanel);
-        }
+        // Exploration feed is handled inside sidebars or overlays
+        const oldFeed = document.querySelector(".battle-panel--exploration");
+        if (oldFeed) oldFeed.remove();
 
         const backpackView = document.querySelector('[data-hero-panel-view="backpack"]');
         if (backpackView && !backpackView.querySelector("[data-backpack-filters]")) {

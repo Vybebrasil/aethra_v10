@@ -4,8 +4,8 @@
 :root {
     --stable-topbar-height: 56px;
     --stable-actionbar-height: 176px;
-    --stable-left-column: clamp(300px, 21vw, 360px);
-    --stable-right-column: clamp(290px, 19vw, 340px);
+    --stable-left-column: clamp(270px, 17vw, 310px);
+    --stable-right-column: clamp(260px, 16vw, 300px);
     --stable-gap: 8px;
     --stable-panel-radius: 12px;
 }
@@ -1722,6 +1722,36 @@ textarea,
     max-height: none !important;
     gap: 8px !important;
     grid-template-rows: none !important;
+}
+
+/* Force central column and 2D map stage to fill 100% height down to Actionbar */
+.battle-main-column {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    flex: 1 1 0 !important;
+}
+
+.battle-stage-panel {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 0 !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+.map2d-active-root {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 0 !important;
+    height: 100% !important;
+    min-height: 0 !important;
+}
+
+.battle-panel--exploration {
+    display: none !important;
 }
 
 
