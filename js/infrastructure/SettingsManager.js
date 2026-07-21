@@ -154,6 +154,32 @@
             return clone(this.settings);
         },
 
+        set(key, value, options = {}) {
+            const settingKey = String(key || "").trim();
+            if (!settingKey) return false;
+            if (settingKey === "battleMode") {
+                return this.setBattleMode(value, options);
+            }
+            if (settingKey === "combatSpeed") {
+                return this.setCombatSpeed(value, options);
+            }
+
+            const previousValue = clone(this.settings[settingKey]);
+            this.settings[settingKey] = clone(value);
+            this.syncGameState();
+            this.save();
+            const payload = {
+                key: settingKey,
+                value: clone(value),
+                previousValue,
+                changed: JSON.stringify(previousValue) !== JSON.stringify(value),
+                source: options.source || "settings-ui",
+                timestamp: Date.now()
+            };
+            Aethra.EventBus.emit("settings:changed", clone(payload));
+            return clone(value);
+        },
+
         getBattleMode() {
             return normalizeBattleMode(this.settings.battleMode);
         },
@@ -313,8 +339,8 @@
 
             if (status) {
                 status.textContent = currentMode === "cards"
-                    ? "Modo ativo: Cartas"
-                    : "Modo ativo: 3D/Mapa. Visualização em desenvolvimento.";
+                    ? "Modo ativo: Cartas táticas"
+                    : "Modo ativo: Mapa 2D em tempo real";
                 status.dataset.mode = currentMode;
             }
 

@@ -155,8 +155,8 @@
             category: "resource"
         },
         moonleaf: {
-            templateId: "moonleaf",
-            name: "Folha Lunar",
+            templateId: "wild_herb",
+            name: "Erva Silvestre",
             itemType: "MATERIAL",
             type: "MATERIAL",
             rarity: "Incomum",
@@ -420,7 +420,8 @@
                         Number(entry.weight || 1) * Math.max(0, Number(weights[entry.id] ?? Aethra.HuntSystem?.getEventWeightMultiplier?.(entry.id) ?? 1))
                     )
                 }))
-                .filter((entry) => entry.effectiveWeight > 0);
+                .filter((entry) => entry.effectiveWeight > 0)
+                .filter((entry) => entry.category !== "gathering" || Aethra.ProfessionSystem?.canPerformFieldAction?.(entry.professionId)?.allowed);
             const total = entries.reduce((sum, entry) => sum + entry.effectiveWeight, 0);
             if (total <= 0) return null;
             let roll = this.randomSource() * total;
@@ -462,6 +463,19 @@
                 Aethra.EventBus.emit("exploration:event-skipped", clone(event));
                 Aethra.EventBus.emit("exploration:updated", this.getSnapshot());
                 return clone(event);
+            }
+
+            if (event.category === "gathering") {
+                const permission = Aethra.ProfessionSystem?.canPerformFieldAction?.(event.professionId);
+                if (!permission?.allowed) {
+                    event.status = "skipped";
+                    event.resolvedAt = new Date().toISOString();
+                    event.skipReason = permission?.reason || "profession-disabled";
+                    state.pendingEvent = null;
+                    Aethra.EventBus.emit("exploration:event-skipped", clone(event));
+                    Aethra.EventBus.emit("exploration:updated", this.getSnapshot());
+                    return clone(event);
+                }
             }
 
             const requiresCheck = Boolean(event.requiresManual || event.requiredLevel > 1);
@@ -512,7 +526,7 @@
                 event.professionId,
                 baseXp,
                 event.actionType || event.id,
-                { source: `exploration:${event.id}` }
+                { source: `exploration:${event.id}`, difficulty: event.requiredLevel || 1 }
             );
             const xpGain = Math.max(0, Number(xpPayload?.amount || 0));
             const rewards = this.generateRewards(event, { skillCheck, manual: Boolean(options.manual) });
@@ -591,6 +605,9 @@
             if (event.id === "trap") state.totals.traps += 1;
             if (event.id === "forge") state.totals.forges += 1;
             if (event.category === "rare") state.totals.rareEvents += 1;
+            if (event.category === "gathering") {
+                Aethra.HuntSystem?.addProfessionDelay?.(1, event.professionId);
+            }
 
             this.pushFeed({
                 type: "event-resolved",
@@ -607,16 +624,21 @@
         },
 
         generateRewards(event, context = {}) {
-            const createItem = (template, quantity = 1) => ({
-                ...clone(template),
-                id: template.templateId,
-                instanceId: `${template.templateId}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
-                quantity
+            const createItem = (template, quantity = 1) => Aethra.ItemSystem?.generateItem?.(template.templateId, {
+                quantity,
+                source: `exploration:${event.id}`,
+                professionId: event.professionId,
+                huntId: Aethra.GameState.hunt?.huntId || null,
+                quality: 20,
+                potential: 20
             });
             const quantityMultiplier = Math.max(0, Number(Aethra.HuntSystem?.getModifier?.("resourceQuantity", 1) ?? 1));
             const goldMultiplier = Math.max(0, Number(Aethra.HuntSystem?.getModifier?.("gold", 1) ?? 1));
-            const scaleQuantity = (value) => {
-                const scaled = Math.max(0, Number(value || 0) * quantityMultiplier);
+            const scaleQuantity = (value, professionId = null) => {
+                const skillMultiplier = professionId
+                    ? 1 + (Math.max(0, Number(Aethra.ProfessionSystem?.getYieldBonus?.(professionId) || 0)) / 100)
+                    : 1;
+                const scaled = Math.max(0, Number(value || 0) * quantityMultiplier * skillMultiplier);
                 const floor = Math.floor(scaled);
                 return Math.max(1, floor + (this.randomSource() < scaled - floor ? 1 : 0));
             };
@@ -624,18 +646,18 @@
             const checkBonus = Math.max(0, Number(context.skillCheck?.level || 1) - Number(context.skillCheck?.requiredLevel || 1));
 
             if (event.id === "mining") {
-                const quantity = scaleQuantity(1 + (this.randomSource() < 0.25 ? 1 : 0));
-                return { items: [createItem(RESOURCE_ITEMS.iron_ore, quantity)], gold: 0, summary: `${quantity}x Minério de Ferro` };
+                const quantity = scaleQuantity(1 + (this.randomSource() < 0.25 ? 1 : 0), "mining");
+                return { items: [createItem(RESOURCE_ITEMS.iron_ore, quantity)].filter(Boolean), gold: 0, summary: `${quantity}x Minério de Ferro` };
             }
 
             if (event.id === "forge") {
                 const quantity = scaleQuantity(1 + (this.randomSource() < 0.2 + Math.min(0.25, checkBonus * 0.025) ? 1 : 0));
-                return { items: [createItem(RESOURCE_ITEMS.refined_ingot, quantity)], gold: 0, summary: `${quantity}x Lingote Refinado` };
+                return { items: [createItem(RESOURCE_ITEMS.refined_ingot, quantity)].filter(Boolean), gold: 0, summary: `${quantity}x Lingote Refinado` };
             }
 
             if (event.id === "herb") {
-                const quantity = scaleQuantity(1 + (this.randomSource() < 0.3 ? 1 : 0));
-                return { items: [createItem(RESOURCE_ITEMS.moonleaf, quantity)], gold: 0, summary: `${quantity}x Folha Lunar` };
+                const quantity = scaleQuantity(1 + (this.randomSource() < 0.3 ? 1 : 0), "herbalism");
+                return { items: [createItem(RESOURCE_ITEMS.moonleaf, quantity)].filter(Boolean), gold: 0, summary: `${quantity}x Erva Silvestre` };
             }
 
             if (event.id === "chest") {
@@ -643,14 +665,15 @@
                 const items = this.randomSource() < 0.32
                     ? [createItem(RESOURCE_ITEMS.ancient_token, 1)]
                     : [];
-                return { items, gold, summary: `${gold} Gold${items.length ? " + Símbolo Antigo" : ""}` };
+                return { items: items.filter(Boolean), gold, summary: `${gold} Gold${items.filter(Boolean).length ? " + Símbolo Antigo" : ""}` };
             }
 
             if (event.id === "locked_chest") {
                 const gold = scaleGold(16 + integer(this.randomSource() * 29) + checkBonus * 2);
-                const items = [createItem(RESOURCE_ITEMS.thieves_mark, scaleQuantity(1))];
+                const items = [createItem(RESOURCE_ITEMS.thieves_mark, scaleQuantity(1))].filter(Boolean);
                 if (this.randomSource() < Math.min(0.55, 0.14 + checkBonus * 0.035)) {
-                    items.push(createItem(RESOURCE_ITEMS.hidden_map_fragment, 1));
+                    const map = createItem(RESOURCE_ITEMS.hidden_map_fragment, 1);
+                    if (map) items.push(map);
                 }
                 return { items, gold, summary: `${gold} Gold · Marca dos Ladrões${items.length > 1 ? " · Mapa Oculto" : ""}` };
             }
@@ -659,7 +682,7 @@
                 const gold = scaleGold(10 + integer(this.randomSource() * 21));
                 const quantity = scaleQuantity(1 + (checkBonus >= 4 && this.randomSource() < 0.3 ? 1 : 0));
                 return {
-                    items: [createItem(RESOURCE_ITEMS.hidden_map_fragment, quantity)],
+                    items: [createItem(RESOURCE_ITEMS.hidden_map_fragment, quantity)].filter(Boolean),
                     gold,
                     summary: `${quantity}x Fragmento de Mapa Oculto · ${gold} Gold`
                 };
@@ -668,7 +691,7 @@
             if (event.id === "trap") {
                 const quantity = scaleQuantity(1 + (this.randomSource() < 0.35 ? 1 : 0));
                 return {
-                    items: [createItem(RESOURCE_ITEMS.trap_components, quantity)],
+                    items: [createItem(RESOURCE_ITEMS.trap_components, quantity)].filter(Boolean),
                     gold: 0,
                     summary: `${quantity}x Componentes de Armadilha`
                 };
@@ -817,6 +840,15 @@
                 return;
             }
 
+            const permission = Aethra.ProfessionSystem?.canPerformFieldAction?.("skinning");
+            if (!permission?.allowed) {
+                this.pushFeed({
+                    type: "combat", icon: "⚔", title: `${enemyName} derrotado`,
+                    detail: `${integer(payload.xp)} XP · Esfolamento ignorado pela sua política`, tone: "combat"
+                });
+                return;
+            }
+
             const harvestMultiplier = Math.max(0, Number(Aethra.HuntSystem?.getModifier?.("harvestChance", 1) ?? 1));
             const baseHarvestChance = 0.38;
             if (this.randomSource() > clamp(baseHarvestChance * harvestMultiplier, 0, 0.95)) {
@@ -832,17 +864,18 @@
 
             const quantityMultiplier = Math.max(0, Number(Aethra.HuntSystem?.getModifier?.("resourceQuantity", 1) ?? 1));
             const baseQuantity = 1 + (this.randomSource() < 0.18 ? 1 : 0);
-            const scaledQuantity = Math.max(1, baseQuantity * quantityMultiplier);
+            const yieldMultiplier = 1 + (Math.max(0, Number(Aethra.ProfessionSystem?.getYieldBonus?.("skinning") || 0)) / 100);
+            const scaledQuantity = Math.max(1, baseQuantity * quantityMultiplier * yieldMultiplier);
             const quantity = Math.max(1, Math.floor(scaledQuantity) + (this.randomSource() < scaledQuantity - Math.floor(scaledQuantity) ? 1 : 0));
-            const item = {
-                ...clone(RESOURCE_ITEMS.beast_hide),
-                id: "beast_hide",
-                instanceId: `beast_hide_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
-                quantity
-            };
+            const item = Aethra.ItemSystem?.generateItem?.("beast_hide", {
+                quantity, source: "exploration:skinning", professionId: "skinning",
+                huntId: Aethra.GameState.hunt?.huntId || null, quality: 20, potential: 20
+            });
+            if (!item) return;
             Aethra.BagSystem?.addItem?.(item, "exploration:skinning");
             const baseXp = 5 + integer(this.randomSource() * 7);
-            const xpPayload = Aethra.ProfessionSystem?.grantActionXP?.("skinning", baseXp, "skin", { source: "creature-harvest" });
+            const creatureDifficulty = Math.max(1, integer(creature.level || payload.level || 1, 1));
+            const xpPayload = Aethra.ProfessionSystem?.grantActionXP?.("skinning", baseXp, "skin", { source: "creature-harvest", difficulty: creatureDifficulty });
             const xpGain = Math.max(0, Number(xpPayload?.amount || 0));
             state.totals.hides += quantity;
             state.totals.resources += quantity;
@@ -852,7 +885,7 @@
                 type: "gathering",
                 icon: "◒",
                 title: `${enemyName}: material aproveitado`,
-                detail: `${quantity}x Couro de Fera · +${xpGain} XP de Couraria`,
+                detail: `${quantity}x Pele de Fera · +${xpGain} XP de Esfolamento`,
                 tone: "reward"
             });
             Aethra.EventBus.emit("exploration:resource-collected", {
@@ -863,6 +896,7 @@
             });
             Aethra.EventBus.emit("exploration:updated", this.getSnapshot());
             Aethra.EventBus.emit("inventory:changed", { source: "exploration:skinning" });
+            Aethra.HuntSystem?.addProfessionDelay?.(1, "skinning");
         },
 
         pushFeed(entry) {

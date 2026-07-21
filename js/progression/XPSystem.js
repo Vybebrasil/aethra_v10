@@ -6,6 +6,9 @@ window.Aethra = window.Aethra || {};
 
     const DEFAULT_XP_NEXT = 100;
     const FALLBACK_XP_MULTIPLIER = 1.0057337263598426;
+    const SKILL_XP_BASE = 45;
+    const SKILL_XP_SCALE = 20;
+    const SKILL_XP_EXPONENT = 1.72;
 
     function toSafeNumber(value, fallback = 0) {
         const number = Number(value);
@@ -67,6 +70,138 @@ window.Aethra = window.Aethra || {};
                     DEFAULT_XP_NEXT * FALLBACK_XP_MULTIPLIER ** (safeLevel - 1)
                 )
             );
+        },
+
+        // Skills não possuem nível máximo. A curva polinomial continua crescendo
+        // sem tornar os níveis altos matematicamente impossíveis como uma curva
+        // exponencial faria.
+        getSkillXPRequired(level) {
+            const safeLevel = Math.max(1, Math.floor(toSafeNumber(level, 1)));
+            const required = SKILL_XP_BASE + SKILL_XP_SCALE * ((safeLevel - 1) ** SKILL_XP_EXPONENT);
+            return Math.max(1, Math.min(Number.MAX_SAFE_INTEGER, Math.round(required)));
+        },
+
+        // Bônus sem teto fixo: cresce para sempre, mas cada nível novo acrescenta
+        // menos que o anterior. O retorno efetivo pode ser calibrado por domínio.
+        getDiminishingSkillBonus(level, options = {}) {
+            const safeLevel = Math.max(1, Math.floor(toSafeNumber(level, 1)));
+            const scale = Math.max(0, toSafeNumber(options.scale, 12));
+            const interval = Math.max(1, toSafeNumber(options.interval, 10));
+            return Number((scale * Math.log1p((safeLevel - 1) / interval)).toFixed(4));
+        },
+
+        getSkillState(skillId) {
+            Aethra.DisciplineSystem?.ensureState?.();
+            return Aethra.GameState.hero?.disciplines?.[skillId] || null;
+        },
+
+        setSkillTrainingMode(skillId, mode = "training", source = "player-command") {
+            const state = this.getSkillState(skillId);
+            if (!state) return false;
+            const normalized = mode === "locked" ? "locked" : "training";
+            if (state.trainingMode === normalized) return clone(state);
+            state.trainingMode = normalized;
+            const payload = {
+                skillId,
+                mode: normalized,
+                source,
+                state: clone(state)
+            };
+            Aethra.EventBus.emit("skill:training-mode-changed", payload);
+            Aethra.EventBus.emit("discipline:updated", payload);
+            this.save();
+            return clone(state);
+        },
+
+        grantSkillXP(skillId, amount, context = {}) {
+            const definition = Aethra.DisciplineSystem?.definitions?.[skillId];
+            const state = this.getSkillState(skillId);
+            if (!definition || !state) {
+                return { accepted: false, amount: 0, skillId, reason: "unknown-skill" };
+            }
+
+            const occurredAt = new Date().toISOString();
+            const discoveredNow = state.discovered !== true;
+            if (discoveredNow) {
+                state.discovered = true;
+                state.discoveredAt = occurredAt;
+                Aethra.EventBus.emit("skill:discovered", {
+                    skillId,
+                    definition: clone(definition),
+                    state: clone(state),
+                    source: context.source || "skill-action",
+                    occurredAt
+                });
+            }
+
+            if (state.trainingMode === "locked") {
+                const rejected = {
+                    accepted: false,
+                    amount: 0,
+                    skillId,
+                    discoveredNow,
+                    reason: "training-locked",
+                    source: context.source || "skill-action",
+                    state: clone(state)
+                };
+                Aethra.EventBus.emit("skill:xp-rejected", rejected);
+                if (discoveredNow) this.save();
+                return rejected;
+            }
+
+            const baseAmount = Math.max(0, Math.floor(toSafeNumber(amount, 0)));
+            if (baseAmount <= 0) {
+                return { accepted: false, amount: 0, skillId, discoveredNow, reason: "no-xp" };
+            }
+
+            const difficulty = Math.max(1, Math.floor(toSafeNumber(context.difficulty, state.level)));
+            const levelDelta = state.level - difficulty;
+            let challengeMultiplier = 1;
+            if (levelDelta > 100) challengeMultiplier = 0.05;
+            else if (levelDelta > 40) challengeMultiplier = 0.15;
+            else if (levelDelta > 20) challengeMultiplier = 0.4;
+            else if (levelDelta < 0) challengeMultiplier = Math.min(1.5, 1 + Math.abs(levelDelta) * 0.03);
+
+            const multiplier = Math.max(0, toSafeNumber(context.multiplier, 1)) * challengeMultiplier;
+            const gain = Math.max(1, Math.floor(baseAmount * multiplier));
+            state.xpCurrent += gain;
+            state.xpTotal += gain;
+            state.uses = Math.max(0, Math.floor(toSafeNumber(state.uses, 0))) + 1;
+            state.lastUsedAt = occurredAt;
+
+            const levelUps = [];
+            while (state.xpCurrent >= state.xpNext) {
+                state.xpCurrent -= state.xpNext;
+                state.level += 1;
+                state.xpNext = this.getSkillXPRequired(state.level);
+                levelUps.push(state.level);
+            }
+
+            const payload = {
+                accepted: true,
+                skillId,
+                id: skillId,
+                amount: gain,
+                baseAmount,
+                multiplier,
+                challengeMultiplier,
+                difficulty,
+                discoveredNow,
+                levelsGained: levelUps.length,
+                levelUps,
+                source: context.source || "skill-action",
+                occurredAt,
+                state: clone(state)
+            };
+            Aethra.EventBus.emit("skill:xp-changed", payload);
+            Aethra.EventBus.emit("skillXPChanged", payload);
+            Aethra.EventBus.emit("discipline:xp-changed", payload);
+            if (levelUps.length > 0) {
+                Aethra.EventBus.emit("skill:level-up", payload);
+                Aethra.EventBus.emit("discipline:level-up", payload);
+            }
+            this.save();
+            return clone(payload);
         },
 
         ensureState() {

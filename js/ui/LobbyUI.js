@@ -12,7 +12,7 @@
 
     const ARCHETYPE_ICONS = {
         vanguard:   "⚔",
-        berserker:  "🪓",
+        berserker:  "✕",
         arcanist:   "✦",
         ranger:     "➶",
         nightblade: "†",
@@ -118,7 +118,7 @@
                     </div>
                     <div class="lobby-slot__stat">
                         <span>Ouro</span>
-                        <strong>🪙 ${fmt(gold)}</strong>
+                        <strong>${fmt(gold)} G</strong>
                     </div>
                     <div class="lobby-slot__stat">
                         <span>Última zona</span>
@@ -137,7 +137,7 @@
                         ▶ Jogar
                     </button>
                     <button type="button" class="lobby-delete-btn" data-lobby-delete="${n}"
-                        title="Apagar personagem">🗑</button>
+                        title="Apagar personagem" aria-label="Apagar ${esc(hero.name || "personagem")}">Excluir</button>
                 </div>
             </div>`;
         }
@@ -166,7 +166,7 @@
             ${slotHTML(2)}
         </div>
 
-        <p class="lobby-footer">Aethra Engine · Seus dados são salvos localmente</p>`;
+        <p class="lobby-footer">Aethra Engine · Slots salvos localmente neste dispositivo</p>`;
 
         bindLobbyEvents(view);
     }
@@ -222,7 +222,7 @@
         modal.className = "lobby-confirm";
         modal.innerHTML = `
         <div class="lobby-confirm__box">
-            <div class="lobby-confirm__icon">🗑</div>
+            <div class="lobby-confirm__icon">×</div>
             <div class="lobby-confirm__title">Apagar Personagem?</div>
             <p class="lobby-confirm__body">
                 <span class="lobby-confirm__name">${esc(hero.name)}</span><br>

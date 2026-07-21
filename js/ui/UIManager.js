@@ -53,20 +53,23 @@
             const cityView = document.getElementById("city-view");
             if (!cityView) return false;
 
-            if (battleMode === "map2d") {
-                Aethra.RenderEngine?.activateMap2DPlaceholder?.();
-                cityView.classList.remove("battle-overlay-root");
-                cityView.setAttribute(
-                    "aria-label",
-                    "Modo Mapa 2D em desenvolvimento"
-                );
-                this.battleRoot = cityView;
-                return false;
+            const hasBattleLayout = Boolean(
+                cityView.querySelector("[data-battle-mode-layout]")
+            );
+            if (!hasBattleLayout) {
+                if (battleMode === "map2d") {
+                    Aethra.RenderEngine?.activateMap2DPlaceholder?.();
+                } else {
+                    Aethra.RenderEngine?.activateBattleMode?.();
+                }
+            } else {
+                Aethra.RenderEngine?.syncStageMode?.(battleMode);
             }
-
-            Aethra.RenderEngine?.activateBattleMode?.();
             cityView.classList.add("battle-overlay-root");
-            cityView.setAttribute("aria-label", "Painel de batalha");
+            cityView.setAttribute(
+                "aria-label",
+                battleMode === "map2d" ? "Painel de batalha no Mapa 2D" : "Painel de batalha em Cartas táticas"
+            );
 
             const arena = cityView.querySelector(".battle-card-arena");
             const heroCard = document.getElementById("battle-hero-card");
@@ -237,6 +240,7 @@
                 layer.appendChild(actionPanel);
             }
 
+            Aethra.RenderEngine?.renderActionBar?.();
             this.updateSkillUI(layer);
             return true;
         },
@@ -297,6 +301,10 @@
 
                 if (primaryViewControl) {
                     event.preventDefault();
+                    Aethra.WindowManager?.closeAll?.({
+                        modalOnly: true,
+                        source: "primary-view-navigation"
+                    });
                     this.setPrimaryView(
                         primaryViewControl.dataset.primaryView,
                         { source: "navigation" }
@@ -378,11 +386,6 @@
             this.layoutObserver = new MutationObserver(() => {
                 if (!document.getElementById("battle-actionbar-layer")) {
                     this.ensureActionBarLayer();
-                }
-
-                if (this.getBattleMode() !== "cards") {
-                    this.actionBarLayer?.replaceChildren();
-                    return;
                 }
 
                 if (

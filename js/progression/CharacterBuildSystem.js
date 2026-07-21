@@ -15,7 +15,7 @@
     const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
     const ATTRIBUTE_POINTS = 14;
-    const INITIAL_SKILL_POINTS = 8;
+    const INITIAL_SKILL_POINTS = 0;
     const MAX_INITIAL_ATTRIBUTE = 6;
     const MAX_INITIAL_MASTERY = 3;
 
@@ -169,6 +169,7 @@
         archetypes: clone(ARCHETYPES),
         recommendedAttributes: clone(RECOMMENDED_ATTRIBUTES),
         recommendedMasteries: clone(RECOMMENDED_MASTERIES),
+        introProfessions: clone(Aethra.ProfessionSystem?.introPaths || {}),
 
         init() {
             this.ensureState();
@@ -187,6 +188,7 @@
             hero.skillPointsEarned = Math.max(0, integer(hero.skillPointsEarned, 0));
             hero.deaths = Math.max(0, integer(hero.deaths, 0));
             hero.archetypeId = ARCHETYPES[hero.archetypeId] ? hero.archetypeId : null;
+            hero.introProfessionId = Aethra.ProfessionSystem?.introPaths?.[hero.introProfessionId] ? hero.introProfessionId : null;
             Aethra.DisciplineSystem?.ensureState?.();
             return hero;
         },
@@ -232,21 +234,23 @@
         validateCreation(input = {}) {
             const name = String(input.name || "").trim().slice(0, 18);
             const attributePreview = this.previewAttributes(input.attributes);
-            const masteries = normalizeAllocation(input.masteries, MASTERIES, MAX_INITIAL_MASTERY);
-            const masterySpent = allocationTotal(masteries);
+            const masteries = emptyAllocation(MASTERIES);
+            const masterySpent = 0;
             const archetypeId = ARCHETYPES[input.archetypeId] ? input.archetypeId : null;
+            const introProfessionId = Aethra.ProfessionSystem?.introPaths?.[input.introProfessionId] ? input.introProfessionId : null;
             const errors = [];
 
             if (name.length < 3) errors.push("Escolha um nome com pelo menos 3 caracteres.");
             if (!archetypeId) errors.push("Escolha um arquétipo inicial.");
+            if (!introProfessionId) errors.push("Escolha o ofício que vai orientar sua primeira missão.");
             if (attributePreview.spent !== ATTRIBUTE_POINTS) errors.push(`Distribua exatamente ${ATTRIBUTE_POINTS} pontos de atributo.`);
-            if (masterySpent !== INITIAL_SKILL_POINTS) errors.push(`Distribua exatamente ${INITIAL_SKILL_POINTS} pontos iniciais de skill.`);
 
             return {
                 valid: errors.length === 0,
                 errors,
                 name,
                 archetypeId,
+                introProfessionId,
                 attributes: attributePreview.attributes,
                 stats: attributePreview.stats,
                 masteries,
@@ -285,6 +289,9 @@
             state.playerEquipment = emptyEquipment;
             hero.equipment = emptyEquipment;
             state.professions = {};
+            state.professionPolicies = {};
+            state.crafting = null;
+            hero.introProfessionId = null;
             state.hunt = {
                 isActive: false,
                 isPaused: false,
@@ -364,6 +371,7 @@
             hero.name = validation.name;
             hero.characterCreated = true;
             hero.archetypeId = validation.archetypeId;
+            hero.introProfessionId = validation.introProfessionId;
             hero.attributeAllocation = clone(validation.attributes);
             hero.masteryInvestment = emptyAllocation(MASTERIES);
             hero.baseStats = clone(validation.stats);
@@ -377,13 +385,11 @@
 
             Aethra.DisciplineSystem?.ensureState?.(true);
             Aethra.SkillSystem?.ensureState?.(true);
-            Aethra.ProfessionSystem?.ensureState?.();
-            Object.entries(validation.masteries).forEach(([masteryId, amount]) => {
-                if (amount > 0) this.raiseMastery(masteryId, amount);
-            });
-            Aethra.DisciplineSystem?.configureStarterLoadout?.(validation.masteries);
+            Aethra.ProfessionSystem?.ensureState?.(true);
+            Aethra.CraftingSystem?.ensureState?.(true);
 
             const archetype = ARCHETYPES[validation.archetypeId];
+            Aethra.DisciplineSystem?.configureStarterLoadout?.(archetype?.masteries || {});
             const generateStarter = (templateId, options = {}) => {
                 if (!templateId) return null;
                 return Aethra.ItemSystem?.generateItem?.(templateId, {
@@ -415,6 +421,7 @@
                 Aethra.EquipSystem?.equip?.(item.instanceId, slot);
             });
             Aethra.EquipSystem?.recalculateStats?.({ emit: false, save: false, source: "character-created" });
+            Aethra.ProfessionSystem?.startIntroPath?.(validation.introProfessionId);
 
             Aethra.GameState.ui = Aethra.GameState.ui || {};
             Aethra.GameState.ui.primaryView = "city";
@@ -424,6 +431,8 @@
                 name: hero.name,
                 archetypeId: hero.archetypeId,
                 archetype: clone(ARCHETYPES[hero.archetypeId]),
+                introProfessionId: hero.introProfessionId,
+                introProfession: clone(Aethra.ProfessionSystem?.introPaths?.[hero.introProfessionId] || null),
                 attributes: clone(hero.attributeAllocation),
                 masteries: clone(hero.masteryInvestment),
                 stats: clone(hero.stats)

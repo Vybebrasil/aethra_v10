@@ -12,6 +12,7 @@
     // A mudança para combate por rodadas e criação distribuída inaugura um
     // formato de progressão novo. O save anterior permanece preservado.
     const SAVE_KEY = configuredSaveKey || 'aethra_save_v71_disciplines';
+    const CURRENT_SCHEMA_VERSION = 72;
     const AUTO_SAVE_DELAY = 120;
 
     let initialized = false;
@@ -48,6 +49,14 @@
         return result;
     }
 
+    function migrateSave(saved) {
+        const migrated = clone(saved);
+        migrated.meta = isObject(migrated.meta) ? migrated.meta : {};
+        const fromVersion = Math.max(71, Math.floor(Number(migrated.meta.schemaVersion) || 71));
+        migrated.meta.schemaVersion = CURRENT_SCHEMA_VERSION;
+        return { state: migrated, fromVersion, toVersion: CURRENT_SCHEMA_VERSION };
+    }
+
     // Atualiza o mesmo objeto GameState para não quebrar referências usadas por HUDs e sistemas.
     function replaceState(target, source) {
         Object.keys(target).forEach((key) => {
@@ -80,6 +89,8 @@
 
         save(reason = 'manual') {
             try {
+                Aethra.GameState.meta = Aethra.GameState.meta || {};
+                Aethra.GameState.meta.schemaVersion = CURRENT_SCHEMA_VERSION;
                 const data = JSON.stringify(Aethra.GameState);
                 localStorage.setItem(SAVE_KEY, data);
 
@@ -118,8 +129,13 @@
                     throw new Error('O conteúdo do save não representa um GameState válido.');
                 }
 
-                const restoredState = mergeState(defaultState, parsedData);
+                const migration = migrateSave(parsedData);
+                const restoredState = mergeState(defaultState, migration.state);
                 replaceState(Aethra.GameState, restoredState);
+
+                if (migration.fromVersion !== migration.toVersion) {
+                    Aethra.EventBus.emit('save:migrated', migration);
+                }
 
                 Aethra.EventBus.emit('save:loaded', {
                     key: SAVE_KEY,
@@ -192,6 +208,10 @@
                 'levelUp',
                 'character:created',
                 'skill-point:spent',
+                'skill:training-mode-changed',
+                'discipline:xp-changed',
+                'profession:policy-changed',
+                'crafting:completed',
                 'hero:death-penalty',
                 'goldChanged',
                 'statsChanged',

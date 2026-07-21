@@ -204,11 +204,16 @@
 
     function clampFloatingWindow(windowId) {
         const element = document.getElementById(windowId);
-        if (!element || element.classList.contains("hidden")) return false;
+        if (
+            !element ||
+            element.classList.contains("hidden") ||
+            Aethra.WindowManager?.isWorldWindow?.(windowId)
+        ) return false;
 
         const viewportPadding = 8;
+        const safeTop = Aethra.WindowManager?.getSafeTopOffset?.() || 64;
         const maxWidth = Math.max(320, window.innerWidth - viewportPadding * 2);
-        const maxHeight = Math.max(240, window.innerHeight - viewportPadding * 2);
+        const maxHeight = Math.max(240, window.innerHeight - safeTop - viewportPadding);
         const preferredSizes = {
             "inventory-view": { width: 780, height: 680 },
             "skills-view": { width: 900, height: maxHeight },
@@ -234,7 +239,7 @@
 
         rect = element.getBoundingClientRect();
         const left = Math.max(viewportPadding, Math.min(rect.left, window.innerWidth - rect.width - viewportPadding));
-        const top = Math.max(viewportPadding, Math.min(rect.top, window.innerHeight - rect.height - viewportPadding));
+        const top = Math.max(safeTop, Math.min(rect.top, window.innerHeight - rect.height - viewportPadding));
         element.style.setProperty("left", `${Math.round(left)}px`, "important");
         element.style.setProperty("top", `${Math.round(top)}px`, "important");
         element.style.setProperty("right", "auto", "important");
@@ -242,11 +247,32 @@
         return true;
     }
 
+    function releaseWorldWindowConstraints() {
+        const worldWindowIds = Aethra.WindowManager?.config?.worldWindowIds || [];
+        worldWindowIds.forEach((windowId) => {
+            const element = document.getElementById(windowId);
+            if (!element) return;
+            [
+                "width",
+                "height",
+                "max-height",
+                "left",
+                "top",
+                "right",
+                "bottom",
+                "inset",
+                "transform"
+            ].forEach((property) => element.style.removeProperty(property));
+            delete element.dataset.floatingPositioned;
+        });
+    }
+
     function hideActiveTooltip() {
         Aethra.TooltipManager?.hide?.();
     }
 
     function stabilizeAll() {
+        releaseWorldWindowConstraints();
         syncContextTitles();
         stabilizeEncounterDock();
         stabilizeHeroSections();
@@ -261,6 +287,7 @@
     });
 
     window.addEventListener("resize", () => {
+        releaseWorldWindowConstraints();
         Aethra.WindowManager?.activeWindows?.forEach?.((windowId) => clampFloatingWindow(windowId));
     });
 
@@ -335,6 +362,11 @@
         const btn = event.target.closest("[data-set-stage-mode]");
         if (!btn) return;
         const mode = btn.dataset.setStageMode;
+        if (!Aethra.SettingsManager?.isValidBattleMode?.(mode)) return;
+
+        Aethra.SettingsManager.setBattleMode(mode, {
+            source: "central-stage-toggle"
+        });
         
         const mapRoot = document.getElementById("tilemap-canvas-root");
         const cardsRoot = document.getElementById("battle-card-arena-container");
@@ -357,7 +389,7 @@
         } else if (mode === "cards") {
             if (mapRoot) mapRoot.hidden = true;
             if (cardsRoot) cardsRoot.hidden = false;
-            if (titleEl) titleEl.textContent = "Jogo de Cartas Por Rodadas";
+            if (titleEl) titleEl.textContent = "Combate em Cartas Táticas";
             Aethra.RenderEngine?.renderBattleHeroCard?.();
             Aethra.RenderEngine?.renderBattleEnemyCard?.();
         }

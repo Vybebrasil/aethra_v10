@@ -22,7 +22,7 @@
 
 .death-box {
     position: relative;
-    width: min(460px, 92vw);
+    width: min(520px, 92vw);
     padding: 32px 28px;
     border: 1px solid rgba(220, 50, 50, 0.4);
     border-radius: 20px;
@@ -114,11 +114,49 @@
 .death-recap-msg {
     color: rgba(180, 160, 165, 0.85);
     font: 500 11.5px/1.5 "Outfit", sans-serif;
-    margin-bottom: 26px;
+    margin-bottom: 12px;
     padding: 10px;
     border-radius: 8px;
     background: rgba(15, 5, 8, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.death-counterplay {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 20px;
+    padding: 11px;
+    border: 1px solid rgba(211, 151, 105, 0.16);
+    border-radius: 10px;
+    background: rgba(28, 13, 12, 0.62);
+    text-align: left;
+}
+
+.death-counterplay > small {
+    color: rgba(231, 178, 137, 0.72);
+    font: 800 9px/1 "Outfit", sans-serif;
+    letter-spacing: .1em;
+}
+
+.death-counterplay > div {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.death-counterplay span {
+    display: grid;
+    gap: 3px;
+    padding: 8px;
+    border-radius: 7px;
+    background: rgba(9, 4, 6, 0.58);
+    color: rgba(201, 180, 181, 0.78);
+    font: 600 9px/1.25 "Outfit", sans-serif;
+}
+
+.death-counterplay b {
+    color: #f1c09d;
+    font-size: 11px;
 }
 
 .death-resurrect-btn {

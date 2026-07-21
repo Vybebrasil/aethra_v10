@@ -100,8 +100,8 @@
             role: "Minérios e gemas", description: "Evolui extraindo veios e recursos metálicos.", benefit: "Melhora rendimento e raridade.", professionId: "mining"
         },
         skinning: {
-            id: "skinning", name: "Couraria", icon: "◒", group: "world", category: "Coleta",
-            role: "Peles e ossos", description: "Evolui aproveitando criaturas derrotadas.", benefit: "Melhora quantidade e qualidade.", professionId: "skinning"
+            id: "skinning", name: "Esfolamento", icon: "◒", group: "world", category: "Coleta",
+            role: "Peles e ossos", description: "Evolui extraindo materiais de criaturas derrotadas.", benefit: "Melhora quantidade e qualidade.", professionId: "skinning"
         },
         herbalism: {
             id: "herbalism", name: "Herbalismo", icon: "❧", group: "world", category: "Coleta",
@@ -119,6 +119,10 @@
             id: "blacksmithing", name: "Forjaria", icon: "⚒", group: "world", category: "Criação",
             role: "Armas e reforços", description: "Evolui criando, refinando e reparando equipamentos.", benefit: "Melhora reforços e potencial.", professionId: "blacksmithing"
         },
+        leatherworking: {
+            id: "leatherworking", name: "Couraria", icon: "◈", group: "world", category: "Criação",
+            role: "Couros e armaduras leves", description: "Evolui curtindo peles e criando equipamentos de couro.", benefit: "Melhora qualidade, rendimento e técnicas de couro.", professionId: "leatherworking"
+        },
         thievery: {
             id: "thievery", name: "Ladinagem", icon: "⚿", group: "world", category: "Utilidade",
             role: "Fechaduras e armadilhas", description: "Evolui superando mecanismos, segredos e armadilhas.", benefit: "Aumenta sucesso e loot especial.", professionId: "thievery"
@@ -126,7 +130,8 @@
     });
 
     function xpRequired(level) {
-        return Math.max(18, Math.round(26 * (1.19 ** Math.max(0, integer(level, 1) - 1))));
+        return Aethra.XPSystem?.getSkillXPRequired?.(level)
+            || Math.max(45, Math.round(45 + (20 * (Math.max(1, integer(level, 1)) ** 1.72))));
     }
 
     function inferByText(value = "") {
@@ -160,15 +165,19 @@
             }
             Object.keys(DEFINITIONS).forEach((id) => {
                 const current = hero.disciplines[id] || {};
-                const level = clamp(integer(current.level, 1) || 1, 1, 100);
+                const level = Math.max(1, integer(current.level, 1) || 1);
+                const xpNext = xpRequired(level);
                 hero.disciplines[id] = {
                     level,
-                    xpCurrent: clamp(integer(current.xpCurrent, 0), 0, xpRequired(level) - 1),
+                    xpCurrent: clamp(integer(current.xpCurrent, 0), 0, xpNext - 1),
                     xpTotal: integer(current.xpTotal, 0),
-                    xpNext: xpRequired(level),
+                    xpNext,
                     uses: integer(current.uses, 0),
                     invested: integer(current.invested ?? hero.masteryInvestment?.[id], 0),
-                    lastUsedAt: current.lastUsedAt || null
+                    lastUsedAt: current.lastUsedAt || null,
+                    trainingMode: current.trainingMode === "locked" ? "locked" : "training",
+                    discovered: Boolean(current.discovered || current.uses > 0 || current.xpTotal > 0 || current.level > 1),
+                    discoveredAt: current.discoveredAt || null
                 };
             });
             return hero.disciplines;
@@ -196,14 +205,8 @@
                         if (armorType) {
                             this.addUseXP(armorType, 2, { source: "defense-hit", payload });
                         }
-                    } else {
-                        this.addUseXP("leather_armor", 1, { source: "defense-unarmored", payload });
                     }
                 }
-            });
-            Aethra.EventBus.on("profession:xpChanged", (payload = {}) => {
-                const id = Object.keys(DEFINITIONS).find((key) => DEFINITIONS[key].professionId === payload.professionId);
-                if (id) this.addUseXP(id, Math.max(1, Math.floor(number(payload.amount, 1) / 3)), { source: "profession-use", payload });
             });
             Aethra.EventBus.on("game:reset", () => this.ensureState(true));
             Aethra.EventBus.on("save:loaded", () => this.ensureState());
@@ -264,7 +267,9 @@
 
         getPowerMultiplier(id) {
             const level = this.getState(id)?.level || 1;
-            return Number((1 + Math.max(0, level - 1) * 0.02).toFixed(4));
+            const bonusPercent = Aethra.XPSystem?.getDiminishingSkillBonus?.(level, { scale: 12, interval: 10 })
+                ?? (12 * Math.log1p(Math.max(0, level - 1) / 10));
+            return Number((1 + (bonusPercent / 100)).toFixed(4));
         },
 
         getCombatProfile(id) {
@@ -308,22 +313,9 @@
             this.ensureState();
             const points = Math.max(1, integer(amount, 1));
             const state = hero.disciplines[id];
-            state.level = clamp(state.level + points, 1, 100);
             state.invested += points;
-            state.xpNext = xpRequired(state.level);
-            state.xpCurrent = Math.min(state.xpCurrent, state.xpNext - 1);
             hero.masteryInvestment = hero.masteryInvestment || {};
             hero.masteryInvestment[id] = state.invested;
-
-            const professionId = DEFINITIONS[id].professionId;
-            if (professionId) {
-                Aethra.ProfessionSystem?.ensureState?.();
-                const profession = Aethra.GameState.professions?.[professionId];
-                if (profession) {
-                    profession.level += points;
-                    profession.xpNext = Aethra.ProfessionSystem.getXPRequired(profession.level);
-                }
-            }
             Aethra.EventBus.emit("discipline:invested", { id, amount: points, state: this.getState(id) });
             return this.getState(id);
         },
@@ -331,23 +323,22 @@
         addUseXP(id, amount, options = {}) {
             if (!DEFINITIONS[id]) return false;
             this.ensureState();
-            const state = Aethra.GameState.hero.disciplines[id];
-            const gain = Math.max(1, integer(amount, 1));
-            state.xpCurrent += gain;
-            state.xpTotal += gain;
-            state.uses += 1;
-            state.lastUsedAt = new Date().toISOString();
-            let levelsGained = 0;
-            while (state.level < 100 && state.xpCurrent >= state.xpNext) {
-                state.xpCurrent -= state.xpNext;
-                state.level += 1;
-                state.xpNext = xpRequired(state.level);
-                levelsGained += 1;
-            }
-            const payload = { id, amount: gain, levelsGained, source: options.source || "use", state: this.getState(id) };
-            Aethra.EventBus.emit("discipline:xp-changed", payload);
-            if (levelsGained > 0) Aethra.EventBus.emit("discipline:level-up", payload);
-            return payload;
+            return Aethra.XPSystem?.grantSkillXP?.(id, amount, {
+                ...options,
+                source: options.source || "use",
+                difficulty: options.difficulty ?? Aethra.GameState.hero.disciplines[id].level
+            }) || false;
+        },
+
+        setTrainingMode(id, mode, source = "discipline-ui") {
+            if (!DEFINITIONS[id]) return false;
+            return Aethra.XPSystem?.setSkillTrainingMode?.(id, mode, source) || false;
+        },
+
+        getDiminishingBonus(id, options = {}) {
+            const level = this.getState(id)?.level || 1;
+            return Aethra.XPSystem?.getDiminishingSkillBonus?.(level, options)
+                ?? Number((12 * Math.log1p(Math.max(0, level - 1) / 10)).toFixed(3));
         },
 
         getStarterSkills(investments = {}) {

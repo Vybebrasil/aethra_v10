@@ -789,18 +789,20 @@ body.is-allocating-skills { overflow: hidden; }
 .creation-archetype[data-select-archetype="ranger"] .creation-archetype__icon { font-size: 22px; }
 .creation-archetype[data-select-archetype="nightblade"] .creation-archetype__icon { font-size: 22px; }
 
-/* Scale down emojis in DNA badges & active skills & tooltips */
-[data-mastery="axe"], [data-mastery="unarmed"], [data-mastery="fire"], [data-mastery="ice"], [data-mastery="survival"], [data-mastery="thievery"], [data-mastery="exploration"], [data-mastery="mining"], [data-mastery="skinning"],
-[data-discipline-id="axe"], [data-discipline-id="unarmed"], [data-discipline-id="fire"], [data-discipline-id="ice"], [data-discipline-id="survival"], [data-discipline-id="thievery"], [data-discipline-id="exploration"], [data-discipline-id="mining"], [data-discipline-id="skinning"],
-[data-skill-id="brutal_cleave"], [data-skill-id="fire_bolt"], [data-skill-id="ice_shard"], [data-skill-id="shadow_bolt"], [data-item-type="axe"] {
+/* Scale only creation/tooltip icons; gameplay cards reuse these data attributes. */
+.character-creation :is([data-mastery="axe"], [data-mastery="unarmed"], [data-mastery="fire"], [data-mastery="ice"], [data-mastery="survival"], [data-mastery="thievery"], [data-mastery="exploration"], [data-mastery="mining"], [data-mastery="skinning"]),
+.character-creation :is(.creation-discipline__icon[data-discipline-id="axe"], .creation-discipline__icon[data-discipline-id="unarmed"], .creation-discipline__icon[data-discipline-id="fire"], .creation-discipline__icon[data-discipline-id="ice"], .creation-discipline__icon[data-discipline-id="survival"], .creation-discipline__icon[data-discipline-id="thievery"], .creation-discipline__icon[data-discipline-id="exploration"], .creation-discipline__icon[data-discipline-id="mining"], .creation-discipline__icon[data-discipline-id="skinning"]),
+.character-creation :is([data-skill-id="brutal_cleave"], [data-skill-id="fire_bolt"], [data-skill-id="ice_shard"], [data-skill-id="shadow_bolt"]) b,
+:is(.aethra-ui-tooltip__icon[data-skill-id="brutal_cleave"], .aethra-ui-tooltip__icon[data-skill-id="fire_bolt"], .aethra-ui-tooltip__icon[data-skill-id="ice_shard"], .aethra-ui-tooltip__icon[data-skill-id="shadow_bolt"], .aethra-ui-tooltip__item-icon[data-item-type="axe"]) {
     font-size: 10px;
     transform: scale(0.85);
 }
 
-/* Scale up unicode characters in DNA badges & active skills */
-[data-mastery="sword"], [data-mastery="armor"], [data-mastery="shield"], [data-mastery="shadow"], [data-mastery="restoration"], [data-mastery="bow"], [data-mastery="dagger"],
-[data-discipline-id="sword"], [data-discipline-id="armor"], [data-discipline-id="shield"], [data-discipline-id="shadow"], [data-discipline-id="restoration"], [data-discipline-id="bow"], [data-discipline-id="dagger"],
-[data-skill-id="precise_strike"], [data-skill-id="aimed_shot"], [data-skill-id="twin_fang"], [data-skill-id="heal"], [data-skill-id="guard"] {
+/* Scale up only the matching creation/tooltip glyphs. */
+.character-creation :is([data-mastery="sword"], [data-mastery="armor"], [data-mastery="shield"], [data-mastery="shadow"], [data-mastery="restoration"], [data-mastery="bow"], [data-mastery="dagger"]),
+.character-creation :is(.creation-discipline__icon[data-discipline-id="sword"], .creation-discipline__icon[data-discipline-id="armor"], .creation-discipline__icon[data-discipline-id="shield"], .creation-discipline__icon[data-discipline-id="shadow"], .creation-discipline__icon[data-discipline-id="restoration"], .creation-discipline__icon[data-discipline-id="bow"], .creation-discipline__icon[data-discipline-id="dagger"]),
+.character-creation :is([data-skill-id="precise_strike"], [data-skill-id="aimed_shot"], [data-skill-id="twin_fang"], [data-skill-id="heal"], [data-skill-id="guard"]) b,
+:is(.aethra-ui-tooltip__icon[data-skill-id="precise_strike"], .aethra-ui-tooltip__icon[data-skill-id="aimed_shot"], .aethra-ui-tooltip__icon[data-skill-id="twin_fang"], .aethra-ui-tooltip__icon[data-skill-id="heal"], .aethra-ui-tooltip__icon[data-skill-id="guard"]) {
     font-size: 13px;
     transform: scale(1.15);
 }

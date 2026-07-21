@@ -224,6 +224,9 @@
         const overall = recordsState().overall;
         const supplies = supplyRows(current);
         const attacks = integer(current.combat.attacks);
+        const expanded = current.hunt.isActive
+            ? Boolean(Aethra.GameState.ui?.huntAnalyzerExpanded)
+            : true;
         const supplyHTML = supplies.length
             ? supplies.map((entry) => `
                 <div class="analyzer-supply-row">
@@ -248,6 +251,9 @@
                     ${metricCard({ tone: "kill", label: "Abates", value: format(current.kills), detail: current.kills ? `${formatDuration(current.seconds / current.kills)} por abate` : "sem abates", attribute: 'data-analyzer-value="kills"', tooltipData: { title: "Criaturas derrotadas", value: format(current.kills), body: "Quantidade de inimigos eliminados desde o início desta medição." } })}
                 </div>
 
+                <details class="analyzer-extended" data-analyzer-extended ${expanded ? "open" : ""}>
+                    <summary><span><strong>Análise completa</strong><small>Economia, combate, recordes e exploração</small></span><b>${current.hunt.isActive ? "Durante a Hunt" : "Resumo da sessão"}</b></summary>
+                    <div class="analyzer-extended__body">
                 <div class="analyzer-section-heading"><div><strong>Economia da sessão</strong><small>de onde entrou e para onde saiu</small></div><em>${current.profit >= 0 ? "POSITIVO" : "NEGATIVO"}</em></div>
                 <div class="analyzer-ledger-lines">
                     <span><i class="is-gain">＋</i><b>Gold coletado</b><strong>${format(current.gold)} G</strong></span>
@@ -287,9 +293,15 @@
                 </div>
 
                 <button type="button" class="hunt-analyzer__reset" data-reset-hunt-analyzer>Resetar apenas esta medição</button>
+                    </div>
+                </details>
             </section>`;
 
         root.querySelector("[data-reset-hunt-analyzer]")?.addEventListener("click", () => Aethra.HuntAnalyzerWorkspace.resetMeasurement());
+        root.querySelector("[data-analyzer-extended]")?.addEventListener("toggle", (event) => {
+            Aethra.GameState.ui = Aethra.GameState.ui || {};
+            Aethra.GameState.ui.huntAnalyzerExpanded = Boolean(event.currentTarget.open);
+        });
         return true;
     }
 

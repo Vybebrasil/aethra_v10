@@ -12,11 +12,13 @@
     <link rel="stylesheet" href="css/hunt-analyzer-workspace.css">
     <link rel="stylesheet" href="css/combat-hud-modern.css">
     <link rel="stylesheet" href="css/encounter-combat-hud.css?v=6">
-    <link rel="stylesheet" href="css/player-hud-workspace.css?v=1">
-    <link rel="stylesheet" href="css/character-creation.css?v=4">
+    <link rel="stylesheet" href="css/player-hud-workspace.css?v=5">
+    <link rel="stylesheet" href="css/profession-workshop.css?v=1">
+    <link rel="stylesheet" href="css/character-creation.css?v=5">
     <link rel="stylesheet" href="css/tilemap-canvas.css?v=5">
-    <link rel="stylesheet" href="css/idle-loop.css?v=1004">
+    <link rel="stylesheet" href="css/idle-loop.css?v=1008">
     <link rel="stylesheet" href="css/npc-shop.css?v=3">
+    <link rel="stylesheet" href="css/hud-modernization.css?v=15">
     <style>
         .integration-test-report {
             position: fixed;
@@ -129,8 +131,10 @@
 
         try {
             window.localStorage.removeItem(window.AETHRA_SAVE_KEY);
+            window.localStorage.removeItem(window.AETHRA_SETTINGS_KEY);
+            window.localStorage.removeItem(`${window.AETHRA_SETTINGS_KEY}.battleMode`);
         } catch (error) {
-            console.warn("Não foi possível limpar o save isolado de teste.", error);
+            console.warn("Não foi possível limpar o estado isolado de teste.", error);
         }
     </script>
 </head>
@@ -173,10 +177,10 @@
     <script src="js/data/hunts/HuntCatalog.js" defer></script>
     <script src="js/world/EntityManager.js" defer></script>
     <script src="js/infrastructure/SaveManager.js?v=3" defer></script>
-    <script src="js/infrastructure/SettingsManager.js?v=2" defer></script>
+    <script src="js/infrastructure/SettingsManager.js?v=3" defer></script>
     <script src="js/infrastructure/AuthorityGateway.js?v=1" defer></script>
     <script src="js/economy/EconomyRNGManager.js" defer></script>
-    <script src="js/ui/WindowManager.js?v=2" defer></script>
+    <script src="js/ui/WindowManager.js?v=3" defer></script>
     <script src="js/ui/TooltipManager.js?v=2" defer></script>
     <script src="js/items/ItemSystem.js?v=3" defer></script>
     <script src="js/items/BagSystem.js?v=2" defer></script>
@@ -194,32 +198,35 @@
     <script src="js/items/ConsumableSystem.js?v=1" defer></script>
     <script src="js/pvp/ColiseumSystem.js?v=6" defer></script>
     <script src="js/world/HuntSystem.js?v=4" defer></script>
-    <script src="js/progression/ProfessionSystem.js" defer></script>
+    <script src="js/progression/ProfessionSystem.js?v=2" defer></script>
+    <script src="js/items/CraftingSystem.js?v=1" defer></script>
     <script src="js/progression/CharacterBuildSystem.js?v=5" defer></script>
     <script src="js/world/ExplorationSystem.js" defer></script>
     <script src="js/combat/BossSystem.js?v=2" defer></script>
     <script src="js/progression/QuestSystem.js" defer></script>
     <script src="js/world/DungeonSystem.js" defer></script>
     <script src="js/market/MarketplaceSystem.js?v=2" defer></script>
-    <script src="js/ui/RenderEngine.js?v=4" defer></script>
+    <script src="js/ui/RenderEngine.js?v=7" defer></script>
     <script src="js/ui/UI_Renderer.js" defer></script>
-    <script src="js/ui/UIManager.js" defer></script>
+    <script src="js/ui/UIManager.js?v=6" defer></script>
     <script src="js/ui/HudExperience.js?v=2" defer></script>
     <script src="js/ui/HudWorldMapAndDrops.js?v=2" defer></script>
     <script src="js/ui/EncounterInteractionPass.js?v=2" defer></script>
-    <script src="js/ui/UIStabilityPass.js?v=2" defer></script>
+    <script src="js/ui/UIStabilityPass.js?v=5" defer></script>
     <script src="js/ui/UIFluidityPass.js" defer></script>
     <script src="js/ui/ActionBarWorkspace.js" defer></script>
-    <script src="js/ui/HuntAnalyzerWorkspace.js" defer></script>
+    <script src="js/ui/HuntAnalyzerWorkspace.js?v=2" defer></script>
     <script src="js/ui/CombatHudModernizer.js?v=2" defer></script>
     <script src="js/ui/EncounterCombatHUD.js?v=7" defer></script>
-    <script src="js/ui/PlayerHudWorkspace.js?v=4" defer></script>
-    <script src="js/ui/CharacterCreationUI.js?v=5" defer></script>
+    <script src="js/ui/PlayerHudWorkspace.js?v=11" defer></script>
+    <script src="js/ui/ProfessionWorkshopUI.js?v=2" defer></script>
+    <script src="js/ui/CharacterCreationUI.js?v=6" defer></script>
     <script src="js/ui/NpcShopUI.js?v=2" defer></script>
     <script src="js/world/SpriteLoader.js?v=2" defer></script>
-    <script src="js/world/TileMapCanvas.js?v=4" defer></script>
-    <script src="js/economy/IdleLoopSystem.js?v=2" defer></script>
-    <script src="js/tests/IntegrationTest.js?v=13" defer></script>
+    <script src="js/world/TileMapCanvas.js?v=6" defer></script>
+    <script src="js/economy/IdleLoopSystem.js?v=8" defer></script>
+    <script src="js/ui/HudModernization.js?v=4" defer></script>
+    <script src="js/tests/IntegrationTest.js?v=30" defer></script>
     <script src="js/core/GameLoader.js?v=2" defer></script>
 </body>
 </html>

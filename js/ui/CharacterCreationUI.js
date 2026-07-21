@@ -109,7 +109,7 @@
     const STEP_META = [
         { id: 1, label: "Origem", title: "Escolha sua fantasia", copy: "Seu arquétipo define o ponto de partida, não o seu destino." },
         { id: 2, label: "Atributos", title: "Modele o corpo e a mente", copy: "Cada ponto muda números que você verá durante o combate." },
-        { id: 3, label: "Disciplinas", title: "Defina como você joga", copy: "Armas e escolas evoluem conforme são usadas; pontos iniciais aceleram sua identidade." },
+        { id: 3, label: "Ofício", title: "Escolha seu primeiro caminho", copy: "O ofício só orienta sua missão inicial. Todas as skills começam no nível 1 e evoluem pelo uso." },
         { id: 4, label: "Juramento", title: "Confirme sua jornada", copy: "Revise seu equipamento, técnicas e os riscos antes de entrar em Aethra." }
     ];
     const FILTERS = [
@@ -146,6 +146,7 @@
         return {
             name: "Aethra",
             archetypeId: null,
+            introProfessionId: null,
             attributes: emptyFor(system().attributes),
             masteries: emptyFor(system().masteries)
         };
@@ -166,7 +167,7 @@
         const remaining = points();
         if (step === 1) return Boolean(archetype()) && String(draft.name || "").trim().length >= 3;
         if (step === 2) return remaining.attributes === 0;
-        if (step === 3) return remaining.masteries === 0;
+        if (step === 3) return Boolean(system().introProfessions?.[draft.introProfessionId]);
         return system().validateCreation(draft).valid;
     }
 
@@ -445,14 +446,20 @@
     }
 
     function renderDisciplineStep() {
-        const remaining = points().masteries;
-        const entries = Object.values(system().masteries).filter((entry) => entry.group === activeFilter);
+        const entries = Object.values(system().introProfessions || {});
         return `
             <section class="creation-step-content creation-step-content--disciplines">
-                <header class="creation-step-heading"><div><small>MAESTRIA PELO USO</small><h2>Escolha suas primeiras disciplinas</h2><p>Pontos dão níveis imediatos. Durante o jogo, cada acerto, magia ou ação de mundo também concede XP à disciplina usada.</p></div><span class="creation-point-orb ${remaining === 0 ? "is-complete" : ""}"><b>${remaining}</b><small>PONTOS</small></span></header>
-                <nav class="creation-discipline-tabs">${FILTERS.map((filter) => `<button type="button" data-discipline-filter="${filter.id}" class="${activeFilter === filter.id ? "is-active" : ""}"><span>${filter.icon}</span>${filter.label}<b>${Object.values(system().masteries).filter((entry) => entry.group === filter.id).length}</b></button>`).join("")}</nav>
-                <div class="creation-discipline-grid">${entries.map((entry) => disciplineCard(entry)).join("")}</div>
-                <div class="creation-use-xp"><span>∞</span><div><strong>Use para evoluir</strong><small>Espadas sobem com golpes de espada. Fogo sobe ao lançar Fogo. Ladinagem sobe ao superar fechaduras e armadilhas.</small></div><em>Pontos por nível continuam existindo como aceleração da build.</em></div>
+                <header class="creation-step-heading"><div><small>DIREÇÃO, NÃO CLASSE</small><h2>Qual atividade você quer conhecer primeiro?</h2><p>Você receberá uma ferramenta vinculada e uma missão curta. Nenhuma escolha concede nível, XP ou bônus permanente.</p></div><span class="creation-point-orb ${draft.introProfessionId ? "is-complete" : ""}"><b>${draft.introProfessionId ? "✓" : "1"}</b><small>ESCOLHA</small></span></header>
+                <div class="creation-discipline-grid">${entries.map((path) => {
+                    const definition = Aethra.ProfessionSystem?.professions?.[path.id] || {};
+                    const selected = draft.introProfessionId === path.id;
+                    return `<button type="button" class="creation-discipline ${selected ? "is-invested is-selected" : ""}" data-select-intro-profession="${esc(path.id)}">
+                        <span class="creation-discipline__icon">${esc(definition.icon || "◇")}</span>
+                        <span class="creation-discipline__copy"><small>MISSÃO DE APRENDIZ</small><strong>${esc(path.title)}</strong><p>${esc(path.summary)}</p><span class="creation-discipline__benefit">${esc(path.objective)}</span><em>Skill começa no NV. 1 · sem vantagem permanente</em></span>
+                        <span class="creation-ready-seal">${selected ? "ESCOLHIDO" : "ESCOLHER"}</span>
+                    </button>`;
+                }).join("")}</div>
+                <div class="creation-use-xp"><span>∞</span><div><strong>Seu destino continua aberto</strong><small>Depois da introdução, você pode treinar qualquer skill, trocar de atividade ou travar o XP do que não quer evoluir.</small></div><em>A curva não possui nível máximo.</em></div>
             </section>`;
     }
 
@@ -467,13 +474,15 @@
         const selected = archetype();
         const preview = previewData();
         const disciplines = selectedDisciplines();
+        const introPath = system().introProfessions?.[draft.introProfessionId] || null;
+        const introDefinition = Aethra.ProfessionSystem?.professions?.[draft.introProfessionId] || {};
         return `
             <section class="creation-step-content creation-step-content--review">
                 <header class="creation-step-heading"><div><small>RESUMO DA JORNADA</small><h2>${esc(draft.name)}, ${esc(selected?.name || "Aventureiro")}</h2><p>Esta é a sua abertura. Equipamentos, decisões e disciplinas usadas poderão transformar completamente a build.</p></div><span class="creation-ready-seal">PRONTO</span></header>
                 <div class="creation-review-grid">
                     <article class="creation-review-card creation-review-card--origin" data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="RESUMO DA CLASSE" data-tooltip-title="${esc(selected?.name)}" data-tooltip-body="${esc(selected?.description)}"><small>ARQUÉTIPO</small><span>${esc(selected?.icon || "A")}</span><div><strong>${esc(selected?.name || "—")}</strong><p>${esc(selected?.description || "")}</p><div>${selected?.tags?.map((tag) => `<em>${esc(tag)}</em>`).join("") || ""}</div></div></article>
                     <article class="creation-review-card creation-review-card--stats" data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="RESUMO DE COMBATE" data-tooltip-title="Atributos de Combate" data-tooltip-body="Os atributos calculados que seu personagem usará em batalha (HP, MP, Vigor e modificadores)."><small>ATRIBUTOS FINAIS</small><div><span><b>${fmt(preview.stats.maxHp)}</b><em>HP</em></span><span><b>${fmt(preview.stats.maxMana)}</b><em>Mana</em></span><span><b>${fmt(preview.stats.maxEnergy)}</b><em>Vigor</em></span><span><b>${fmt(preview.hit)}%</b><em>Acerto</em></span><span><b>${fmt(preview.crit)}%</b><em>Crítico</em></span><span><b>${fmt(preview.evade)}%</b><em>Esquiva</em></span></div></article>
-                    <article class="creation-review-card creation-review-card--disciplines" data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="RESUMO DE DISCIPLINAS" data-tooltip-title="Suas Disciplinas Iniciais" data-tooltip-body="A distribuição inicial de maestria que impulsiona suas procs e passivas de combate."><small>DISCIPLINAS INICIAIS</small><div>${disciplines.map((entry) => `<span><b>${esc(entry.icon)}</b><p><strong>${esc(entry.name)}</strong><small>${esc(entry.role)}</small></p><em>+${fmt(draft.masteries[entry.id])}</em></span>`).join("")}</div></article>
+                    <article class="creation-review-card creation-review-card--disciplines"><small>PRIMEIRO OFÍCIO</small><div><span><b>${esc(introDefinition.icon || "◇")}</b><p><strong>${esc(introPath?.title || "—")}</strong><small>${esc(introPath?.objective || "")}</small></p><em>NV. 1</em></span></div><p>É apenas o rumo da missão inicial; nenhuma skill recebeu níveis grátis.</p></article>
                     <article class="creation-review-card creation-review-card--bar"><small>ACTIONBAR INICIAL</small><div>${renderStarterBar()}</div><p>As técnicas escolhidas entram prontas; novas combinações podem ocupar até quatro barras.</p></article>
                 </div>
                 <label class="creation-oath"><input type="checkbox" data-creation-oath ${draft.oath ? "checked" : ""}><span>✓</span><p><strong>Eu aceito que Aethra tem risco real.</strong><small>Posso errar ataques, falhar em eventos e morrer. A derrota custa XP e Ouro.</small></p></label>
@@ -562,7 +571,7 @@
     function createCharacter() {
         const result = system().createCharacter(draft);
         if (!result.valid) {
-            activeStep = result.errors.some((error) => error.includes("atributo")) ? 2 : result.errors.some((error) => error.includes("skill")) ? 3 : 1;
+            activeStep = result.errors.some((error) => error.includes("atributo")) ? 2 : result.errors.some((error) => error.includes("ofício")) ? 3 : 1;
             renderCreation();
             return false;
         }
@@ -589,6 +598,13 @@
 
         const archetypeButton = event.target.closest("[data-select-archetype]");
         if (archetypeButton) return selectArchetype(archetypeButton.dataset.selectArchetype);
+
+        const introProfession = event.target.closest("[data-select-intro-profession]");
+        if (introProfession) {
+            draft.introProfessionId = introProfession.dataset.selectIntroProfession;
+            renderCreation();
+            return;
+        }
 
         const stepButton = event.target.closest("[data-creation-step]");
         if (stepButton && canVisit(Number(stepButton.dataset.creationStep))) {

@@ -172,3 +172,15 @@ Estas exceções existem hoje e devem diminuir, nunca aumentar:
 - o catálogo gerado precisa migrar para schema declarativo validado.
 
 Ao tocar uma dessas áreas, prefira remover uma exceção em vez de adicionar outra.
+
+## 9. Continuidade entre desenvolvedores
+
+Antes de alterar um subsistema existente, leia `docs/DEVELOPER_HANDOFF.md`. Esse
+arquivo registra os proprietários atuais de estado e comportamento, os contratos
+entre gameplay e HUD, a migração de save, o último resultado dos testes e o
+backlog recomendado.
+
+Se uma mudança transferir responsabilidade, adicionar uma nova autoridade de
+domínio, alterar eventos ou modificar o schema persistido, atualize o handoff no
+mesmo commit. Um novo sistema não deve ser criado sem antes confirmar que a regra
+não pertence a um proprietário já existente.

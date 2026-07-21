@@ -293,9 +293,6 @@
             const characterPreview = Aethra.CharacterBuildSystem?.previewAttributes?.(
                 Aethra.CharacterBuildSystem?.recommendedAttributes
             );
-            const recommendedMasteryTotal = Object.values(
-                Aethra.CharacterBuildSystem?.recommendedMasteries || {}
-            ).reduce((sum, value) => sum + Number(value || 0), 0);
             checks.push(
                 createCheck(
                     "Criação do herói com escolhas explicáveis",
@@ -310,10 +307,11 @@
             );
             checks.push(
                 createCheck(
-                    "Pontos iniciais para todos os tipos de skill",
+                    "Ofício inicial orienta sem conceder níveis",
                     Object.keys(Aethra.CharacterBuildSystem?.masteries || {}).length >= 10
-                        && recommendedMasteryTotal === Aethra.CharacterBuildSystem.initialSkillPoints,
-                    `${Object.keys(Aethra.CharacterBuildSystem?.masteries || {}).length} maestrias · ${recommendedMasteryTotal} pontos no preset`
+                        && Aethra.CharacterBuildSystem.initialSkillPoints === 0
+                        && Object.keys(Aethra.CharacterBuildSystem?.introProfessions || {}).length >= 4,
+                    `${Object.keys(Aethra.CharacterBuildSystem?.masteries || {}).length} skills · ${Object.keys(Aethra.CharacterBuildSystem?.introProfessions || {}).length} caminhos · 0 níveis grátis`
                 )
             );
 
@@ -330,7 +328,7 @@
             });
             const validArchetypePresets = archetypeAudits.every((entry) =>
                 entry.attributeTotal === Aethra.CharacterBuildSystem.attributePoints
-                && entry.masteryTotal === Aethra.CharacterBuildSystem.initialSkillPoints
+                && entry.masteryTotal > 0
                 && entry.hasStarterItem
             );
             checks.push(
@@ -368,11 +366,110 @@
                 createCheck(
                     "Disciplinas evoluem ao serem usadas",
                     Number(useProgress?.amount) === 3
-                        && Number(Aethra.GameState.hero?.disciplines?.sword?.uses) === Number(swordBefore.uses || 0) + 1,
+                        && useProgress?.accepted === true
+                        && Number(useProgress?.state?.uses) === Number(swordBefore.uses || 0) + 1,
                     `+${useProgress?.amount || 0} XP de Espadas em um uso`
                 )
             );
             if (Aethra.GameState.hero?.disciplines) Aethra.GameState.hero.disciplines.sword = swordBefore;
+
+            const curveLevels = [1, 10, 100, 500, 1000, 2000];
+            const curveCosts = curveLevels.map((level) => Aethra.XPSystem?.getSkillXPRequired?.(level));
+            const curveBonuses = curveLevels.map((level) => Aethra.XPSystem?.getDiminishingSkillBonus?.(level));
+            checks.push(
+                createCheck(
+                    "Skills têm curva infinita, crescente e finita",
+                    curveCosts.every((cost, index) => Number.isFinite(cost) && cost > 0 && (index === 0 || cost > curveCosts[index - 1]))
+                        && curveBonuses.at(-1) > curveBonuses.at(-2),
+                    curveLevels.map((level, index) => `NV${level}:${Math.round(curveCosts[index])}XP/+${Number(curveBonuses[index]).toFixed(1)}%`).join(" · ")
+                )
+            );
+            const bonusDelta100 = Aethra.XPSystem.getDiminishingSkillBonus(101) - Aethra.XPSystem.getDiminishingSkillBonus(100);
+            const bonusDelta1000 = Aethra.XPSystem.getDiminishingSkillBonus(1001) - Aethra.XPSystem.getDiminishingSkillBonus(1000);
+            checks.push(
+                createCheck(
+                    "Retorno diminui sem criar teto rígido",
+                    bonusDelta1000 > 0 && bonusDelta1000 < bonusDelta100,
+                    `ganho NV100→101 ${bonusDelta100.toFixed(4)} · NV1000→1001 ${bonusDelta1000.toFixed(4)}`
+                )
+            );
+
+            const infiniteSwordBackup = JSON.parse(JSON.stringify(Aethra.GameState.hero.disciplines.sword));
+            const infiniteSword = Aethra.GameState.hero.disciplines.sword;
+            infiniteSword.level = 100;
+            infiniteSword.xpNext = Aethra.XPSystem.getSkillXPRequired(100);
+            infiniteSword.xpCurrent = infiniteSword.xpNext - 1;
+            infiniteSword.trainingMode = "training";
+            const beyondOneHundred = Aethra.XPSystem.grantSkillXP("sword", 2, { source: "integration-infinite", difficulty: 100 });
+            const xpBeforeLock = Aethra.GameState.hero.disciplines.sword.xpTotal;
+            Aethra.XPSystem.setSkillTrainingMode("sword", "locked", "integration");
+            const lockedGain = Aethra.XPSystem.grantSkillXP("sword", 20, { source: "integration-locked", difficulty: 101 });
+            checks.push(
+                createCheck(
+                    "Nível 100 não é máximo e o jogador pode travar XP",
+                    beyondOneHundred?.accepted === true
+                        && Aethra.GameState.hero.disciplines.sword.level === 101
+                        && lockedGain?.reason === "training-locked"
+                        && Aethra.GameState.hero.disciplines.sword.xpTotal === xpBeforeLock,
+                    `nível ${Aethra.GameState.hero.disciplines.sword.level} · bloqueio ${lockedGain?.reason || "falhou"}`
+                )
+            );
+            Aethra.GameState.hero.disciplines.sword = infiniteSwordBackup;
+
+            const fieldBackup = {
+                bag: JSON.parse(JSON.stringify(Aethra.GameState.hero.bag || [])),
+                policies: JSON.parse(JSON.stringify(Aethra.GameState.professionPolicies || {}))
+            };
+            Aethra.ProfessionSystem.setCollectionPolicy("mining", true, "integration");
+            const withoutTool = Aethra.ProfessionSystem.canPerformFieldAction("mining");
+            const testPickaxe = Aethra.ItemSystem.generateItem("apprentice_pickaxe", { quality: 20, potential: 20, source: "integration" });
+            Aethra.BagSystem.addItem(testPickaxe, "integration");
+            const withTool = Aethra.ProfessionSystem.canPerformFieldAction("mining");
+            Aethra.ProfessionSystem.setCollectionPolicy("mining", false, "integration");
+            const disabledPolicy = Aethra.ProfessionSystem.canPerformFieldAction("mining");
+            checks.push(
+                createCheck(
+                    "Coleta respeita escolha explícita e ferramenta",
+                    withoutTool?.reason === "missing-tool" && withTool?.allowed === true && disabledPolicy?.reason === "policy-disabled",
+                    `sem ferramenta: ${withoutTool?.reason} · equipada: ${withTool?.allowed} · desligada: ${disabledPolicy?.reason}`
+                )
+            );
+            Aethra.GameState.hero.bag = fieldBackup.bag;
+            Aethra.GameState.professionPolicies = fieldBackup.policies;
+
+            const craftingBackup = {
+                bag: JSON.parse(JSON.stringify(Aethra.GameState.hero.bag || [])),
+                discipline: JSON.parse(JSON.stringify(Aethra.GameState.hero.disciplines.blacksmithing)),
+                crafting: JSON.parse(JSON.stringify(Aethra.GameState.crafting || null)),
+                hunt: JSON.parse(JSON.stringify(Aethra.GameState.hunt || {}))
+            };
+            Aethra.GameState.hunt.isActive = false;
+            Aethra.GameState.hero.disciplines.blacksmithing.level = 4;
+            Aethra.GameState.hero.disciplines.blacksmithing.xpNext = Aethra.XPSystem.getSkillXPRequired(4);
+            Aethra.GameState.hero.disciplines.blacksmithing.trainingMode = "training";
+            const testIngots = Aethra.ItemSystem.generateItem("refined_ingot", { quantity: 6, quality: 20, potential: 20, source: "integration" });
+            Aethra.BagSystem.addItem(testIngots, "integration");
+            const ingotsBeforeCraft = Aethra.BagSystem.countItem("refined_ingot");
+            Aethra.CraftingSystem.setRandomSource(() => 0.5);
+            const craftedSword = Aethra.CraftingSystem.craft("forge_iron_sword", {
+                stationId: "forge", techniqueId: "balanced", quantity: 1, commandId: "integration-craft-sword"
+            });
+            Aethra.CraftingSystem.resetRandomSource();
+            checks.push(
+                createCheck(
+                    "Forjaria consome materiais e cria item individual",
+                    craftedSword?.accepted === true
+                        && Aethra.BagSystem.countItem("refined_ingot") === ingotsBeforeCraft - 3
+                        && craftedSword.outputs?.[0]?.templateId === "eg_sword_l1"
+                        && craftedSword.outputs?.[0]?.crafting?.recipeId === "forge_iron_sword"
+                        && craftedSword.xp?.accepted === true,
+                    craftedSword?.accepted ? `${craftedSword.outputs[0].name} · qualidade ${craftedSword.outputs[0].quality}` : craftedSword?.reason
+                )
+            );
+            Aethra.GameState.hero.bag = craftingBackup.bag;
+            Aethra.GameState.hero.disciplines.blacksmithing = craftingBackup.discipline;
+            Aethra.GameState.crafting = craftingBackup.crafting;
+            Aethra.GameState.hunt = craftingBackup.hunt;
 
             const forcedDisciplineProc = Aethra.DisciplineSystem?.rollCombatProc?.("axe", () => 0);
             checks.push(
@@ -652,8 +749,11 @@
 
                 Aethra.PlayerHudWorkspace?.refresh?.();
                 const playerHud = document.querySelector(".hero-hub--cockpit .player-hud-workspace");
+                const playerFixedEquipment = document.querySelector(
+                    ".hero-hub--cockpit [data-player-hud-fixed-equipment]"
+                );
                 const playerHudSections = playerHud?.querySelectorAll(".player-hud-section") || [];
-                const equipmentSlots = playerHud?.querySelectorAll(".player-equipment-slot") || [];
+                const equipmentSlots = playerFixedEquipment?.querySelectorAll(".player-equipment-slot") || [];
                 const skillGroups = playerHud?.querySelectorAll(".player-skill-group") || [];
                 const backpackSlots = playerHud?.querySelectorAll(".player-backpack-slot.is-filled") || [];
                 const inspectedBackpackSlots = [...backpackSlots].filter((slot) => slot.dataset.itemTooltipBound === "true");
@@ -670,7 +770,7 @@
                     createCheck(
                         "Painel do herói sem acordeões conflitantes",
                         Boolean(playerHud)
-                            && playerHudSections.length === 4
+                            && playerHudSections.length === 3
                             && !playerHud.querySelector(".hero-hub__accordion-section, .is-collapsed"),
                         playerHud ? `${playerHudSections.length} seções no scroll único` : "cockpit ausente"
                     )
@@ -926,6 +1026,7 @@
                     ? Aethra.CharacterBuildSystem.createCharacter({
                         name: "Herói de Teste",
                         archetypeId: "vanguard",
+                        introProfessionId: "mining",
                         attributes: vanguardPreset.attributes,
                         masteries: vanguardPreset.masteries
                     })
@@ -938,7 +1039,9 @@
                         createdHero?.valid === true
                             && equippedStarter?.weaponFamily === "sword"
                             && starterBar?.slots?.includes("precise_strike")
-                            && Number(Aethra.GameState.hero?.disciplines?.sword?.level) >= 4,
+                            && Number(Aethra.GameState.hero?.disciplines?.sword?.level) === 1
+                            && Number(Aethra.GameState.hero?.disciplines?.mining?.level) === 1
+                            && Aethra.BagSystem?.countItem?.("apprentice_pickaxe") === 1,
                         `${equippedStarter?.name || "sem arma"} · ${starterBar?.slots?.filter(Boolean).join(", ") || "sem técnicas"}`
                     )
                 );
@@ -1087,8 +1190,388 @@
                     )
                 );
 
+                const supplyManagerBefore = {
+                    hero: JSON.parse(JSON.stringify(Aethra.GameState.hero || {})),
+                    idleLoop: JSON.parse(JSON.stringify(Aethra.GameState.idleLoop || {}))
+                };
+                const managedSupplyIds = new Set([
+                    "potion_health",
+                    "potion_mana",
+                    "minor_vigor_tonic",
+                    "field_antidote"
+                ]);
+                Aethra.GameState.hero.characterCreated = true;
+                Aethra.GameState.hero.gold = 100;
+                Aethra.GameState.hero.bag = (Aethra.GameState.hero.bag || []).filter((item) => {
+                    return !managedSupplyIds.has(item.templateId || item.id);
+                });
+                const manualSupplies = Aethra.IdleLoopSystem?.purchaseSupplies?.({
+                    potion_health: 2,
+                    potion_mana: 1
+                }, { source: "integration-manual-supplies" });
+                checks.push(
+                    createCheck(
+                        "Gerenciador compra as quantidades de supplies escolhidas pelo jogador",
+                        manualSupplies?.purchased === 3
+                            && manualSupplies?.cost === 38
+                            && Aethra.IdleLoopSystem?.inventoryQuantity?.("potion_health") === 2
+                            && Aethra.IdleLoopSystem?.inventoryQuantity?.("potion_mana") === 1
+                            && Number(Aethra.GameState.hero.gold) === 62,
+                        `${manualSupplies?.purchased || 0} unidade(s) · ${manualSupplies?.cost || 0} G · saldo ${Aethra.GameState.hero.gold} G`
+                    )
+                );
+
+                Aethra.GameState.hero.gold = 60;
+                Aethra.GameState.hero.bag = (Aethra.GameState.hero.bag || []).filter((item) => {
+                    return !managedSupplyIds.has(item.templateId || item.id);
+                });
+                Aethra.IdleLoopSystem?.updateSetting?.("enabled", true);
+                Aethra.IdleLoopSystem?.configureRestock?.({
+                    autoRestock: true,
+                    goldReserve: 20,
+                    maxRestockSpend: 50,
+                    allowPartialRestock: true,
+                    supplyPlan: {
+                        potion_health: { enabled: true, reorderAt: 4, target: 4, priority: 1 },
+                        potion_mana: { enabled: true, reorderAt: 5, target: 5, priority: 2 },
+                        minor_vigor_tonic: { enabled: false, reorderAt: 2, target: 3, priority: 3 },
+                        field_antidote: { enabled: false, reorderAt: 1, target: 2, priority: 4 }
+                    }
+                });
+                const automaticSupplies = Aethra.IdleLoopSystem?.restockSupplies?.();
+                const configuredSupplyCount = Object.keys(Aethra.IdleLoopSystem?.getSnapshot?.().supplyPlan || {}).length;
+                checks.push(
+                    createCheck(
+                        "Auto-reposição respeita seleção, prioridade, limite e reserva de ouro",
+                        automaticSupplies?.purchased === 4
+                            && automaticSupplies?.cost === 40
+                            && Aethra.IdleLoopSystem?.inventoryQuantity?.("potion_health") === 4
+                            && Aethra.IdleLoopSystem?.inventoryQuantity?.("potion_mana") === 0
+                            && Number(Aethra.GameState.hero.gold) === 20
+                            && configuredSupplyCount === 4,
+                        `${automaticSupplies?.purchased || 0} Vida · ${automaticSupplies?.cost || 0} G gastos · ${Aethra.GameState.hero.gold} G reservados`
+                    )
+                );
+                restoreEnumerableState(Aethra.GameState.hero, supplyManagerBefore.hero);
+                Aethra.GameState.idleLoop = JSON.parse(JSON.stringify(supplyManagerBefore.idleLoop));
+                Aethra.ConsumableSystem?.ensurePolicy?.();
+                Aethra.IdleLoopSystem?.renderControls?.();
+
+                Aethra.RenderEngine?.renderEquipment?.();
+                const fullEquipmentSlots = document.querySelectorAll(
+                    "#equipment-grid [data-equipment-slot]"
+                );
+                checks.push(
+                    createCheck(
+                        "Inventário completo usa os mesmos onze slots da Central do Herói",
+                        Aethra.EquipSystem?.validSlots?.length === 11
+                            && Aethra.PlayerHudWorkspace?.slots?.length === 11
+                            && fullEquipmentSlots.length === 11,
+                        `${fullEquipmentSlots.length} slots renderizados · ${Aethra.EquipSystem?.validSlots?.length || 0} slots de domínio`
+                    )
+                );
+
+                Aethra.RenderEngine?.activateBattleMode?.();
+                Aethra.PlayerHudWorkspace?.refresh?.();
+                const heroPanels = [...document.querySelectorAll("[data-hero-panel-view]")];
+                const visibleHeroPanels = heroPanels.filter((panel) => !panel.hidden);
+                const fixedEquipmentPanel = document.querySelector("[data-player-hud-fixed-equipment]");
+                const fixedEquipmentSlots = fixedEquipmentPanel?.querySelectorAll(
+                    "[data-battle-equipment-slot]"
+                ) || [];
+                checks.push(
+                    createCheck(
+                        "Central mantém recursos e set fixos com três áreas exclusivas",
+                        heroPanels.length === 3
+                            && visibleHeroPanels.length === 1
+                            && fixedEquipmentPanel?.hidden === false
+                            && fixedEquipmentSlots.length === 11,
+                        `${visibleHeroPanels.length}/${heroPanels.length} área(s) visível(is) · ${fixedEquipmentSlots.length}/11 slots fixos`
+                    )
+                );
+
+                const selectedHeroTabBeforeAudit = document.querySelector(
+                    "[data-player-hud-target][aria-selected='true']"
+                )?.dataset.playerHudTarget || "backpack";
+                const heroTabContracts = [
+                    ["backpack", ".player-backpack-slot, .player-backpack-empty", 1],
+                    ["skills", ".player-skill-entry", 4],
+                    ["overview", ".hero-attribute", 6]
+                ];
+                const heroTabsHaveRealContent = heroTabContracts.every(([tab, selector, minimum]) => {
+                    document.querySelector(`[data-player-hud-target='${tab}']`)?.click();
+                    const panel = document.querySelector(`[data-hero-panel-view='${tab}']`);
+                    return panel?.hidden === false
+                        && panel.getAttribute("aria-hidden") === "false"
+                        && panel.querySelectorAll(selector).length >= minimum;
+                });
+                checks.push(
+                    createCheck(
+                        "Todas as abas da Central exibem conteúdo funcional",
+                        heroTabsHaveRealContent,
+                        heroTabsHaveRealContent
+                            ? "Itens, skills e build possuem conteúdo real"
+                            : "uma ou mais abas estão vazias ou não ativaram"
+                    )
+                );
+
+                document.querySelector("[data-player-hud-target='skills']")?.click();
+                const firstSkillGroup = document.querySelector(".player-skill-group");
+                if (firstSkillGroup) firstSkillGroup.open = true;
+                const firstSkillButton = firstSkillGroup?.querySelector("[data-player-skill-id]");
+                firstSkillButton?.click();
+                const firstSkillDetails = firstSkillButton
+                    ? document.getElementById(firstSkillButton.getAttribute("aria-controls"))
+                    : null;
+                const skillTrackSizing = firstSkillGroup
+                    ? getComputedStyle(firstSkillGroup.parentElement).gridAutoRows
+                    : "";
+                const skillGroupIsNotClipped = Boolean(firstSkillGroup)
+                    && skillTrackSizing === "max-content"
+                    && (firstSkillGroup.clientHeight === 0
+                        || firstSkillGroup.clientHeight >= firstSkillGroup.scrollHeight - 1);
+                const skillDetailsOpened = Boolean(firstSkillButton)
+                    && firstSkillButton.getAttribute("aria-expanded") === "true"
+                    && firstSkillDetails?.hidden === false
+                    && Boolean(firstSkillDetails?.textContent?.trim());
+                checks.push(
+                    createCheck(
+                        "Categorias e fichas de Skills expandem sem conteúdo cortado",
+                        skillGroupIsNotClipped && skillDetailsOpened,
+                        `trilha ${skillTrackSizing || "ausente"} · ficha ${skillDetailsOpened ? "aberta" : "fechada"}`
+                    )
+                );
+
+                const intelligenceTabBeforeAudit = document.querySelector(
+                    "[data-intelligence-tab][aria-selected='true']"
+                )?.dataset.intelligenceTab || "analyzer";
+                const intelligenceTabsWork = ["analyzer", "loot", "progression"].every((tab) => {
+                    document.querySelector(`[data-intelligence-tab='${tab}']`)?.click();
+                    const visiblePanels = [...document.querySelectorAll("[data-intelligence-panel]")]
+                        .filter((panel) => !panel.hidden);
+                    return document.querySelector(`[data-intelligence-tab='${tab}']`)
+                        ?.getAttribute("aria-selected") === "true"
+                        && visiblePanels.length === 1
+                        && visiblePanels[0].dataset.intelligencePanel === tab;
+                });
+                document.querySelector(`[data-intelligence-tab='${intelligenceTabBeforeAudit}']`)?.click();
+                checks.push(
+                    createCheck(
+                        "Hunt Analyzer alterna todas as abas internas",
+                        intelligenceTabsWork,
+                        intelligenceTabsWork
+                            ? "Análise, Loot e Progresso alternam painéis exclusivos"
+                            : "aba selecionada e painel visível divergiram"
+                    )
+                );
+                document.querySelector(`[data-player-hud-target='${selectedHeroTabBeforeAudit}']`)?.click();
+
+                const previousBattleMode = Aethra.RenderEngine?.battleMode || "cards";
+                Aethra.RenderEngine?.syncStageMode?.("map2d");
+                const sharedBattleLayout = document.querySelector("[data-battle-mode-layout]");
+                const mapStage = document.getElementById("tilemap-canvas-root");
+                const cardsStage = document.getElementById("battle-card-arena-container");
+                const mapModeSynchronized = Boolean(sharedBattleLayout)
+                    && mapStage?.hidden === false
+                    && cardsStage?.hidden === true;
+                document.getElementById("primary-attack-bar")?.replaceChildren();
+                document.getElementById("skill-action-bar")?.replaceChildren();
+                Aethra.UIManager?.mountActionBarOverlay?.();
+                const actionBarPanel = document.querySelector(
+                    "#battle-actionbar-layer > .battle-panel--actionbar"
+                );
+                const actionBarPanelRect = actionBarPanel?.getBoundingClientRect?.();
+                const actionBarContentBottom = Math.max(
+                    0,
+                    ...[
+                        document.querySelector("#battle-actionbar-layer .primary-attack-bar"),
+                        document.querySelector("#battle-actionbar-layer #skill-action-bar")
+                    ].map((element) => element?.getBoundingClientRect?.().bottom || 0)
+                );
+                const mapActionBarMounted = Boolean(
+                    actionBarPanel
+                )
+                    && document.querySelectorAll(
+                        "#battle-actionbar-layer .primary-attack-card"
+                    ).length === 2
+                    && document.querySelectorAll(
+                        "#battle-actionbar-layer #skill-action-bar .battle-action-slot"
+                    ).length >= 10
+                    && actionBarContentBottom <= Number(actionBarPanelRect?.bottom || 0) + 1;
+                Aethra.RenderEngine?.syncStageMode?.("cards");
+                const cardsModeSynchronized = mapStage?.hidden === true
+                    && cardsStage?.hidden === false;
+                checks.push(
+                    createCheck(
+                        "Mapa 2D e Cartas compartilham um único estado visual persistível",
+                        mapModeSynchronized && cardsModeSynchronized,
+                        `Mapa ${mapModeSynchronized ? "sincronizado" : "inconsistente"} · Cartas ${cardsModeSynchronized ? "sincronizadas" : "inconsistentes"}`
+                    )
+                );
+                checks.push(
+                    createCheck(
+                        "ActionBar permanece completa no Mapa 2D",
+                        mapActionBarMounted,
+                        mapActionBarMounted
+                            ? "2 ataques primários · 10 slots de habilidade · sem corte"
+                            : "ActionBar ausente, incompleta ou cortada"
+                    )
+                );
+                const actionBarSlots = [...document.querySelectorAll(
+                    "#battle-actionbar-layer #skill-action-bar > .battle-action-slot"
+                )];
+                const actionBarSlotStyles = actionBarSlots.map((slot) => getComputedStyle(slot));
+                const actionBarSlotWidths = actionBarSlotStyles.map((style) => Number.parseFloat(style.width || "0"));
+                const actionBarSlotHeights = actionBarSlotStyles.map((style) => Number.parseFloat(style.height || "0"));
+                const hasNeutralScale = (element) => {
+                    const transform = getComputedStyle(element).transform;
+                    if (!transform || transform === "none") return true;
+                    const matrix = new DOMMatrixReadOnly(transform);
+                    const scaleX = Math.hypot(matrix.a, matrix.b);
+                    const scaleY = Math.hypot(matrix.c, matrix.d);
+                    return Math.abs(scaleX - 1) <= 0.01 && Math.abs(scaleY - 1) <= 0.01;
+                };
+                const actionBarSlotsAligned = actionBarSlots.length >= 10
+                    && Math.max(...actionBarSlotHeights) - Math.min(...actionBarSlotHeights) <= 1
+                    && Math.max(...actionBarSlotWidths) - Math.min(...actionBarSlotWidths) <= 1
+                    && actionBarSlots.every((slot) => {
+                        const button = slot.querySelector(".battle-action-slot__skill");
+                        return hasNeutralScale(slot) && Boolean(button) && hasNeutralScale(button);
+                    });
+                checks.push(
+                    createCheck(
+                        "ActionBar mantém todos os slots na mesma escala e linha",
+                        actionBarSlotsAligned,
+                        actionBarSlotsAligned
+                            ? `${actionBarSlots.length} slots alinhados sem escala externa`
+                            : "slots com escala, altura ou alinhamento divergente"
+                    )
+                );
+                Aethra.RenderEngine?.syncStageMode?.(previousBattleMode);
+
+                Aethra.HuntAnalyzerWorkspace?.render?.();
+                const analyzerDetails = document.querySelector("[data-analyzer-extended]");
+                checks.push(
+                    createCheck(
+                        "Hunt Analyzer separa métricas rápidas da análise completa",
+                        Boolean(analyzerDetails)
+                            && document.querySelectorAll(".analyzer-ledger-card").length === 6,
+                        `${document.querySelectorAll(".analyzer-ledger-card").length} métricas rápidas · detalhe ${analyzerDetails ? "disponível" : "ausente"}`
+                    )
+                );
+
+                Aethra.WindowManager?.openWindow?.("inventory-view", {
+                    source: "integration-hud-exclusive"
+                });
+                Aethra.WindowManager?.openWindow?.("skills-view", {
+                    source: "integration-hud-exclusive"
+                });
+                const skillsRect = document.getElementById("skills-view")?.getBoundingClientRect?.();
+                const topbarBottom = document.querySelector("#hud-layer .topbar, .topbar")
+                    ?.getBoundingClientRect?.().bottom || 0;
+                checks.push(
+                    createCheck(
+                        "Janelas do HUD são exclusivas e nunca ficam atrás da topbar",
+                        Aethra.WindowManager?.config?.exclusive === true
+                            && Aethra.WindowManager?.isOpen?.("skills-view") === true
+                            && Aethra.WindowManager?.isOpen?.("inventory-view") === false
+                            && Number(skillsRect?.top || 0) >= Number(topbarBottom) + 6,
+                        `inventário ${Aethra.WindowManager?.isOpen?.("inventory-view") ? "aberto" : "fechado"} · skills y=${Math.round(skillsRect?.top || 0)} · topbar=${Math.round(topbarBottom)}`
+                    )
+                );
+                Aethra.WindowManager?.closeAll?.({ modalOnly: true, silent: true });
+
+                Aethra.WindowManager?.openWindow?.("npc-shop-view", {
+                    source: "integration-responsive-shop"
+                });
+                const npcShopWindow = document.getElementById("npc-shop-view");
+                const npcShopResponsive = Boolean(npcShopWindow)
+                    && npcShopWindow.scrollWidth <= npcShopWindow.clientWidth + 4;
+                const npcShopTabsWork = ["buy", "sell"].every((tab) => {
+                    npcShopWindow?.querySelector(`[data-npc-tab='${tab}']`)?.click();
+                    return npcShopWindow?.querySelector(`[data-npc-tab='${tab}']`)
+                        ?.classList.contains("is-active") === true;
+                });
+                checks.push(
+                    createCheck(
+                        "Loja NPC respeita a largura da janela responsiva",
+                        npcShopResponsive && npcShopTabsWork,
+                        `conteúdo ${npcShopResponsive ? "ajustado" : "com overflow"} · abas ${npcShopTabsWork ? "ativas" : "inertes"}`
+                    )
+                );
+                Aethra.WindowManager?.closeAll?.({ modalOnly: true, silent: true });
+
+                checks.push(
+                    createCheck(
+                        "Camada moderna do HUD inicializa com preferências persistentes",
+                        Aethra.HudModernization?.initialized === true
+                            && typeof Aethra.HudModernization?.getPreferences === "function",
+                        Aethra.HudModernization?.initialized ? "inicializada" : "não inicializada"
+                    )
+                );
+
+                const responsiveProfiles = [
+                    [1280, 720, "compact"],
+                    [1366, 768, "compact"],
+                    [1600, 900, "standard"],
+                    [1920, 1080, "standard"],
+                    [2560, 1440, "wide"],
+                    [3440, 1440, "ultrawide"],
+                    [3840, 2160, "wide"]
+                ];
+                const responsiveProfileMatches = responsiveProfiles.every(([width, height, expected]) => {
+                    return Aethra.HudModernization?.getResponsiveProfile?.(width, height) === expected;
+                });
+                const currentResponsiveProfile = Aethra.HudModernization?.syncResponsiveProfile?.();
+                checks.push(
+                    createCheck(
+                        "HUD classifica automaticamente monitores compactos, padrão, amplos e ultrawide",
+                        responsiveProfileMatches
+                            && document.body.dataset.hudViewport === currentResponsiveProfile?.profile,
+                        responsiveProfileMatches
+                            ? `perfil atual ${currentResponsiveProfile?.profile || "ausente"}`
+                            : "matriz de perfis responsivos inconsistente"
+                    )
+                );
+
+                const cityView = document.getElementById("city-view");
+                const activeWindowsBeforeResize = [...(Aethra.WindowManager?.activeWindows || [])];
+                if (cityView && Aethra.WindowManager) {
+                    Aethra.WindowManager.activeWindows = [
+                        ...new Set([...activeWindowsBeforeResize, "city-view"])
+                    ];
+                    window.dispatchEvent(new Event("resize"));
+                }
+                const cityViewRect = cityView?.getBoundingClientRect?.();
+                const cityViewHasFloatingConstraint = [
+                    "width",
+                    "height",
+                    "max-height",
+                    "left",
+                    "top",
+                    "right",
+                    "bottom",
+                    "inset",
+                    "transform"
+                ].some((property) => Boolean(cityView?.style?.getPropertyValue?.(property)));
+                if (Aethra.WindowManager) {
+                    Aethra.WindowManager.activeWindows = activeWindowsBeforeResize;
+                }
+                checks.push(
+                    createCheck(
+                        "Redimensionar a tela não transforma o mundo em janela flutuante fixa",
+                        Boolean(cityViewRect)
+                            && !cityViewHasFloatingConstraint
+                            && Math.abs(Number(cityViewRect?.width || 0) - window.innerWidth) <= 1,
+                        cityViewHasFloatingConstraint
+                            ? "city-view recebeu dimensões inline indevidas"
+                            : `mundo fluido em ${Math.round(cityViewRect?.width || 0)}×${Math.round(cityViewRect?.height || 0)} px`
+                    )
+                );
+
                 const visualGoldBefore = Number(Aethra.GameState.hero?.gold || 0);
                 const visualXpBefore = Number(Aethra.GameState.hero?.xpTotal || 0);
+                Aethra.TileMapCanvas?.start?.();
                 Aethra.TileMapCanvas?.resize?.();
                 const tileMapViewport = Aethra.TileMapCanvas?.getSnapshot?.().viewport;
                 const tileMapCanvas = document.getElementById("tilemap-canvas");

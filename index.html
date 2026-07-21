@@ -21,14 +21,16 @@
     <link rel="stylesheet" href="css/hunt-analyzer-workspace.css">
     <link rel="stylesheet" href="css/combat-hud-modern.css">
     <link rel="stylesheet" href="css/encounter-combat-hud.css?v=1003">
-    <link rel="stylesheet" href="css/player-hud-workspace.css?v=1">
-    <link rel="stylesheet" href="css/character-creation.css?v=4">
+    <link rel="stylesheet" href="css/player-hud-workspace.css?v=5">
+    <link rel="stylesheet" href="css/profession-workshop.css?v=1">
+    <link rel="stylesheet" href="css/character-creation.css?v=5">
     <link rel="stylesheet" href="css/coliseum-workspace.css?v=1">
     <link rel="stylesheet" href="css/npc-shop.css?v=3">
-    <link rel="stylesheet" href="css/lobby.css">
-    <link rel="stylesheet" href="css/death-modal.css">
+    <link rel="stylesheet" href="css/lobby.css?v=2">
+    <link rel="stylesheet" href="css/death-modal.css?v=2">
     <link rel="stylesheet" href="css/tilemap-canvas.css?v=1007">
-    <link rel="stylesheet" href="css/idle-loop.css?v=1004">
+    <link rel="stylesheet" href="css/idle-loop.css?v=1008">
+    <link rel="stylesheet" href="css/hud-modernization.css?v=15">
 </head>
 
 <body>
@@ -50,35 +52,42 @@
                     <span class="hud-menu-icon" aria-hidden="true">⚔</span><span>Hunt</span>
                 </button>
                 <button type="button" class="primary-view-button" data-primary-view="city" aria-pressed="false" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="NAVEGAÇÃO" data-tooltip-title="Cidade" data-tooltip-body="Abre o hub de preparação com NPCs, mercadores e serviços.">
-                    <span class="hud-menu-icon" aria-hidden="true">🏙</span><span>Cidade</span>
+                    <span class="hud-menu-icon" aria-hidden="true">⌂</span><span>Cidade</span>
                 </button>
                 <button type="button" data-open-window="inventory-view" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="INVENTÁRIO" data-tooltip-title="Mochila" data-tooltip-body="Gerencia itens, compara atributos e equipa peças da build.">
-                    <span class="hud-menu-icon" aria-hidden="true">🎒</span><span>Mochila</span>
+                    <span class="hud-menu-icon" aria-hidden="true">▦</span><span>Mochila</span>
                 </button>
                 <button type="button" data-open-window="npc-shop-view" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="LOJA NPC" data-tooltip-title="Mercador" data-tooltip-body="Compra itens e vende loot ao Velho Varian, o mercador da cidade.">
-                    <span class="hud-menu-icon" aria-hidden="true">🏪</span><span>Loja</span>
-                </button>
-                <button type="button" data-open-window="premium-shop-view" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="LOJA PREMIUM" data-tooltip-title="Cash" data-tooltip-body="Abre a loja vinculada à moeda de Diamantes.">
-                    <span class="hud-menu-icon" aria-hidden="true">◆</span><span>Cash</span>
-                </button>
-                <button type="button" data-open-window="player-market-view" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="ECONOMIA" data-tooltip-title="Mercado" data-tooltip-body="Compra e vende itens entre jogadores com preços e taxas do mercado.">
-                    <span class="hud-menu-icon" aria-hidden="true">⚖</span><span>Mercado</span>
-                </button>
-                <button type="button" data-open-window="coliseum-view" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="PVP GLOBAL" data-tooltip-title="Coliseu" data-tooltip-body="Busca duelos, acompanha o ranking global e inspeciona as relíquias mais fortes do servidor.">
-                    <span class="hud-menu-icon" aria-hidden="true">⚜</span><span>Coliseu</span>
-                </button>
-                <button type="button" data-open-window="social-view" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="COMUNIDADE" data-tooltip-title="Social" data-tooltip-body="Centraliza recursos sociais e interação com outros jogadores.">
-                    <span class="hud-menu-icon" aria-hidden="true">👥</span><span>Social</span>
+                    <span class="hud-menu-icon" aria-hidden="true">◇</span><span>Loja</span>
                 </button>
                 <button type="button" data-open-window="skills-view" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="BUILD" data-tooltip-title="Skills" data-tooltip-body="Organiza habilidades, prioridade automática e limites de ativação.">
                     <span class="hud-menu-icon" aria-hidden="true">✦</span><span>Skills</span>
                 </button>
-                <button type="button" data-open-window="quests-view" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="PROGRESSÃO" data-tooltip-title="Missões" data-tooltip-body="Acompanha objetivos ativos, progresso e recompensas.">
-                    <span class="hud-menu-icon" aria-hidden="true">📜</span><span>Missões</span>
-                </button>
-                <button type="button" data-open-window="options-view" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="SISTEMA" data-tooltip-title="Opções" data-tooltip-body="Altera preferências do jogo, incluindo o modo visual de batalha.">
-                    <span class="hud-menu-icon" aria-hidden="true">⚙</span><span>Opções</span>
-                </button>
+                <div class="hud-more" data-hud-more>
+                    <button type="button" class="hud-more__toggle" data-hud-more-toggle aria-haspopup="menu" aria-expanded="false">
+                        <span class="hud-menu-icon" aria-hidden="true">•••</span><span>Mais</span>
+                    </button>
+                    <div class="hud-more__menu" data-hud-more-menu role="menu" hidden>
+                        <button type="button" data-open-window="premium-shop-view" role="menuitem">
+                            <span class="hud-menu-icon" aria-hidden="true">◆</span><span><strong>Cash</strong><small>Itens de Diamantes</small></span>
+                        </button>
+                        <button type="button" data-open-window="player-market-view" role="menuitem">
+                            <span class="hud-menu-icon" aria-hidden="true">⚖</span><span><strong>Mercado</strong><small>Comprar e anunciar</small></span>
+                        </button>
+                        <button type="button" data-open-window="coliseum-view" role="menuitem">
+                            <span class="hud-menu-icon" aria-hidden="true">⚜</span><span><strong>Coliseu</strong><small>PvP e ranking</small></span>
+                        </button>
+                        <button type="button" data-open-window="social-view" role="menuitem">
+                            <span class="hud-menu-icon" aria-hidden="true">◎</span><span><strong>Social</strong><small>Grupo e comunidade</small></span>
+                        </button>
+                        <button type="button" data-open-window="quests-view" role="menuitem">
+                            <span class="hud-menu-icon" aria-hidden="true">▤</span><span><strong>Missões</strong><small>Objetivos e recompensas</small></span>
+                        </button>
+                        <button type="button" data-open-window="options-view" role="menuitem">
+                            <span class="hud-menu-icon" aria-hidden="true">⚙</span><span><strong>Opções</strong><small>Interface e batalha</small></span>
+                        </button>
+                    </div>
+                </div>
             </nav>
 
             <div class="wallet" aria-label="Recursos do jogador">
@@ -266,7 +275,18 @@
                 </button>
             </header>
 
-            <div id="premium-shop-grid"></div>
+            <div class="commerce-shell commerce-shell--premium">
+                <div class="commerce-overview">
+                    <div><small>SEU SALDO</small><strong><span data-premium-balance>0</span> Diamantes</strong></div>
+                    <p>Itens cosméticos e conveniências. Nenhum item premium concede vantagem de combate.</p>
+                </div>
+                <div class="commerce-filters" aria-label="Filtros da Loja de Diamantes">
+                    <label><span>Buscar</span><input type="search" data-commerce-search="premium-shop-grid" placeholder="Nome do item" autocomplete="off"></label>
+                    <label><span>Categoria</span><select data-commerce-category="premium-shop-grid"><option value="all">Todas</option><option value="cosmetic">Cosméticos</option><option value="convenience">Conveniência</option></select></label>
+                    <span class="commerce-result-count" data-commerce-count="premium-shop-grid">0 itens</span>
+                </div>
+                <div id="premium-shop-grid" class="commerce-grid"></div>
+            </div>
         </section>
 
         <!-- Mercado de Players separado -->
@@ -293,12 +313,30 @@
                 </button>
             </header>
 
-            <div class="market-toolbar">
-                <strong>Ofertas ativas</strong>
-                <span>Taxa de transação: 5%</span>
+            <div class="commerce-shell commerce-shell--market">
+                <div class="market-toolbar">
+                    <div><small>MERCADO LOCAL</small><strong data-market-listing-count>0 ofertas ativas</strong></div>
+                    <span>Taxa de transação: 5% · saldo <b data-market-gold>0 G</b></span>
+                </div>
+                <nav class="commerce-tabs" aria-label="Áreas do Mercado">
+                    <button type="button" class="is-active" data-market-tab="buy" aria-selected="true">Comprar</button>
+                    <button type="button" data-market-tab="sell" aria-selected="false">Anunciar</button>
+                    <button type="button" data-market-tab="history" aria-selected="false">Histórico</button>
+                </nav>
+                <section data-market-panel="buy">
+                    <div class="commerce-filters">
+                        <label><span>Buscar oferta</span><input type="search" data-commerce-search="player-market-grid" placeholder="Item ou vendedor" autocomplete="off"></label>
+                        <span class="commerce-result-count" data-commerce-count="player-market-grid">0 ofertas</span>
+                    </div>
+                    <div id="player-market-grid" class="commerce-grid"></div>
+                </section>
+                <section data-market-panel="sell" hidden>
+                    <div id="market-sell-workspace"></div>
+                </section>
+                <section data-market-panel="history" hidden>
+                    <div id="market-history-workspace"></div>
+                </section>
             </div>
-
-            <div id="player-market-grid"></div>
         </section>
 
         <!-- Social -->
@@ -306,7 +344,7 @@
             id="social-view"
             class="game-window hidden"
             data-aethra-window
-            data-window-size="small"
+            data-window-size="medium"
             aria-hidden="true"
         >
             <header class="window-header">
@@ -325,22 +363,13 @@
                 </button>
             </header>
 
-            <div class="social-list">
-                <article>
-                    <span class="social-status is-online"></span>
-                    <div>
-                        <strong>Mercador</strong>
-                        <small>Vila da Fronteira</small>
-                    </div>
-                </article>
-
-                <article>
-                    <span class="social-status"></span>
-                    <div>
-                        <strong>Companheiros</strong>
-                        <small>Nenhum jogador conectado.</small>
-                    </div>
-                </article>
+            <div class="social-workspace">
+                <div class="social-local-state"><span>●</span><div><strong>Sessão local</strong><small>O progresso está salvo neste dispositivo. Recursos online exigem um servidor conectado.</small></div></div>
+                <div class="social-grid">
+                    <article><span class="social-status is-online"></span><div><small>NPC DISPONÍVEL</small><strong>Mercador da Vila</strong><p>Compre supplies e venda loot na Cidade.</p><button type="button" data-open-window="npc-shop-view">Visitar mercador</button></div></article>
+                    <article><span class="social-feature-icon">◇</span><div><small>GRUPO</small><strong>Companheiros</strong><p>Não há outros jogadores conectados nesta sessão local.</p><button type="button" disabled>Requer modo online</button></div></article>
+                    <article><span class="social-feature-icon">⚜</span><div><small>COMUNIDADE</small><strong>Guilda</strong><p>Guildas, convites e chat serão habilitados com a infraestrutura online.</p><button type="button" disabled>Indisponível offline</button></div></article>
+                </div>
             </div>
         </section>
 
@@ -404,7 +433,7 @@
             id="quests-view"
             class="game-window hidden"
             data-aethra-window
-            data-window-size="medium"
+            data-window-size="large"
             aria-hidden="true"
         >
             <header class="window-header">
@@ -423,14 +452,17 @@
                 </button>
             </header>
 
-            <div id="quests-list"></div>
+            <div class="quest-workspace">
+                <div class="quest-overview"><div><small>JORNADA ATUAL</small><strong data-quest-active-count>0 missões ativas</strong></div><span data-quest-completed-count>0 concluídas</span></div>
+                <div id="quests-list"></div>
+            </div>
         </section>
 
         <section
             id="options-view"
             class="game-window hidden"
             data-aethra-window
-            data-window-size="small"
+            data-window-size="medium"
             aria-hidden="true"
         >
             <header class="window-header">
@@ -479,8 +511,8 @@
                         >
                         <span class="battle-mode-choice__icon" aria-hidden="true">▣</span>
                         <span class="battle-mode-choice__copy">
-                            <strong>Cartas</strong>
-                            <small>Painéis de Herói, Inimigo e log.</small>
+                            <strong>Cartas táticas</strong>
+                            <small>Painéis de Herói, Inimigo e log por rodada.</small>
                         </span>
                         <span class="battle-mode-choice__state">Atual</span>
                     </label>
@@ -497,12 +529,10 @@
                         >
                         <span class="battle-mode-choice__icon" aria-hidden="true">◇</span>
                         <span class="battle-mode-choice__copy">
-                            <strong>3D/Mapa</strong>
-                            <small>Modo de exploração planejado.</small>
+                            <strong>Mapa 2D</strong>
+                            <small>Palco em tempo real com tiles e efeitos de combate.</small>
                         </span>
-                        <span class="battle-mode-choice__state battle-mode-choice__state--future">
-                            Em breve
-                        </span>
+                        <span class="battle-mode-choice__state">Disponível</span>
                     </label>
                 </fieldset>
 
@@ -512,7 +542,16 @@
                     role="status"
                     aria-live="polite"
                 >
-                    Modo ativo: Cartas
+                    Modo ativo: Cartas táticas
+                </div>
+
+                <div class="settings-panel__heading settings-panel__heading--spaced">
+                    <div><small>HUD</small><h3>Densidade e movimento</h3></div>
+                    <span class="settings-panel__badge">Interface</span>
+                </div>
+                <div class="hud-preference-grid">
+                    <label><span><strong>Interface compacta</strong><small>Prioriza área útil em telas menores.</small></span><input type="checkbox" data-hud-compact></label>
+                    <label><span><strong>Reduzir animações</strong><small>Remove pulsos e transições decorativas.</small></span><input type="checkbox" data-hud-reduce-motion></label>
                 </div>
 
                 <div class="settings-panel__heading" style="margin-top: 14px;">
@@ -523,7 +562,7 @@
                     <span class="settings-panel__badge" style="background: rgba(203,138,133,0.15); color: #cb8a85;">Perigo</span>
                 </div>
                 <p class="settings-panel__description">
-                    Apaga o progresso atual e abre a tela de criação de personagem do zero.
+                    Volta à seleção de personagens. O progresso do slot atual permanece salvo.
                 </p>
                 <button
                     type="button"
@@ -531,7 +570,7 @@
                     class="settings-new-character-btn"
                     data-new-character
                 >
-                    ⊕ Criar Novo Personagem
+                    Gerenciar personagens
                 </button>
             </div>
         </section>
@@ -612,12 +651,12 @@
     <script src="js/data/hunts/HuntCatalog.js" defer></script>
     <script src="js/world/EntityManager.js" defer></script>
     <script src="js/infrastructure/SaveManager.js?v=6" defer></script>
-    <script src="js/infrastructure/SettingsManager.js?v=2" defer></script>
+    <script src="js/infrastructure/SettingsManager.js?v=3" defer></script>
     <script src="js/infrastructure/AuthorityGateway.js?v=1" defer></script>
     <script src="js/economy/EconomyRNGManager.js" defer></script>
 
     <!-- UI base -->
-    <script src="js/ui/WindowManager.js?v=2" defer></script>
+    <script src="js/ui/WindowManager.js?v=3" defer></script>
     <script src="js/ui/TooltipManager.js?v=2" defer></script>
 
     <!-- Itens e progressão -->
@@ -639,7 +678,8 @@
     <script src="js/items/ConsumableSystem.js?v=1" defer></script>
     <script src="js/pvp/ColiseumSystem.js?v=6" defer></script>
     <script src="js/world/HuntSystem.js?v=4" defer></script>
-    <script src="js/progression/ProfessionSystem.js" defer></script>
+    <script src="js/progression/ProfessionSystem.js?v=2" defer></script>
+    <script src="js/items/CraftingSystem.js?v=1" defer></script>
     <script src="js/progression/CharacterBuildSystem.js?v=5" defer></script>
     <script src="js/world/ExplorationSystem.js" defer></script>
     <script src="js/combat/BossSystem.js?v=2" defer></script>
@@ -648,27 +688,29 @@
 
     <!-- Mercado e renderização -->
     <script src="js/market/MarketplaceSystem.js?v=2" defer></script>
-    <script src="js/ui/RenderEngine.js?v=4" defer></script>
+    <script src="js/ui/RenderEngine.js?v=7" defer></script>
     <script src="js/ui/UI_Renderer.js" defer></script>
-    <script src="js/ui/UIManager.js" defer></script>
+    <script src="js/ui/UIManager.js?v=6" defer></script>
     <script src="js/ui/HudExperience.js?v=2" defer></script>
     <script src="js/ui/HudWorldMapAndDrops.js?v=2" defer></script>
     <script src="js/ui/EncounterInteractionPass.js?v=2" defer></script>
-    <script src="js/ui/UIStabilityPass.js?v=2" defer></script>
+    <script src="js/ui/UIStabilityPass.js?v=5" defer></script>
     <script src="js/ui/UIFluidityPass.js" defer></script>
     <script src="js/ui/ActionBarWorkspace.js" defer></script>
-    <script src="js/ui/HuntAnalyzerWorkspace.js" defer></script>
+    <script src="js/ui/HuntAnalyzerWorkspace.js?v=2" defer></script>
     <script src="js/ui/CombatHudModernizer.js?v=2" defer></script>
     <script src="js/ui/EncounterCombatHUD.js?v=7" defer></script>
-    <script src="js/ui/PlayerHudWorkspace.js?v=4" defer></script>
-    <script src="js/ui/LobbyUI.js" defer></script>
-    <script src="js/ui/CharacterCreationUI.js?v=5" defer></script>
+    <script src="js/ui/PlayerHudWorkspace.js?v=11" defer></script>
+    <script src="js/ui/ProfessionWorkshopUI.js?v=2" defer></script>
+    <script src="js/ui/LobbyUI.js?v=2" defer></script>
+    <script src="js/ui/CharacterCreationUI.js?v=6" defer></script>
     <script src="js/ui/ColiseumWorkspace.js?v=6" defer></script>
     <script src="js/ui/NpcShopUI.js?v=2" defer></script>
-    <script src="js/ui/DeathModalUI.js" defer></script>
+    <script src="js/ui/DeathModalUI.js?v=2" defer></script>
     <script src="js/world/SpriteLoader.js?v=2" defer></script>
-    <script src="js/world/TileMapCanvas.js?v=4" defer></script>
-    <script src="js/economy/IdleLoopSystem.js?v=2" defer></script>
+    <script src="js/world/TileMapCanvas.js?v=6" defer></script>
+    <script src="js/economy/IdleLoopSystem.js?v=8" defer></script>
+    <script src="js/ui/HudModernization.js?v=4" defer></script>
 
     <!-- Inicialização final -->
     <script src="js/core/GameLoader.js?v=2" defer></script>

@@ -98,6 +98,8 @@
             state.hunt.lastRewards = state.hunt.lastRewards || null;
             state.hunt.elapsedTicks = Math.max(0, Math.floor(number(state.hunt.elapsedTicks, 0)));
             state.hunt.elapsedMs = Math.max(0, number(state.hunt.elapsedMs, 0));
+            state.hunt.professionDelayTicks = Math.max(0, Math.floor(number(state.hunt.professionDelayTicks, 0)));
+            state.hunt.professionDelayReason = state.hunt.professionDelayReason || null;
             state.hunt.currentEnemy = state.hunt.currentEnemy || null;
             state.hunt.lastEnemy = state.hunt.lastEnemy || null;
             state.hunt.startedAt = state.hunt.startedAt || null;
@@ -372,6 +374,8 @@
                 lastRewards: null,
                 elapsedTicks: 0,
                 elapsedMs: 0,
+                professionDelayTicks: 0,
+                professionDelayReason: null,
                 currentEnemy: null,
                 lastEnemy: null,
                 startedAt: new Date().toISOString(),
@@ -525,6 +529,18 @@
             return payload;
         },
 
+        addProfessionDelay(ticks = 1, reason = "profession-action") {
+            this.ensureState();
+            const state = Aethra.GameState.hunt;
+            if (!state.isActive) return false;
+            const added = Math.max(1, Math.floor(number(ticks, 1)));
+            state.professionDelayTicks += added;
+            state.professionDelayReason = String(reason || "profession-action");
+            const payload = { added, total: state.professionDelayTicks, reason: state.professionDelayReason };
+            Aethra.EventBus.emit("hunt:profession-delay", payload);
+            return payload;
+        },
+
         scheduleNextTick(token, delay = this.config.speed) {
             this.clearTickTimer();
             this.timerId = window.setTimeout(() => {
@@ -553,6 +569,14 @@
                 elapsedSeconds: Math.floor(state.elapsedMs / 1000),
                 state: this.getSnapshot()
             });
+
+            if (state.professionDelayTicks > 0) {
+                state.professionDelayTicks -= 1;
+                if (state.professionDelayTicks === 0) state.professionDelayReason = null;
+                Aethra.EventBus.emit("hunt:updated", this.getSnapshot());
+                this.scheduleNextTick(token, this.config.speed);
+                return;
+            }
 
             // Durante a curta resolução visual do combate anterior, não cria
             // um encontro que seria recusado e deixaria a Hunt travada.
@@ -882,6 +906,8 @@
                 elapsedTicks: state.elapsedTicks,
                 elapsedMs: state.elapsedMs,
                 elapsedSeconds: Math.floor(state.elapsedMs / 1000),
+                professionDelayTicks: state.professionDelayTicks,
+                professionDelayReason: state.professionDelayReason,
                 currentEnemy: clone(state.currentEnemy),
                 lastEnemy: clone(state.lastEnemy),
                 startedAt: state.startedAt,

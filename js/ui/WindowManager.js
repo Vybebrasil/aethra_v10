@@ -36,7 +36,7 @@
         },
 
         config: {
-            exclusive: false,
+            exclusive: true,
             modeless: true,
             draggable: true,
             hiddenClass: "hidden",
@@ -692,9 +692,10 @@
             const width = Math.max(rect.width, 320);
             const height = Math.max(rect.height, 220);
             const gap = 16;
-            const top = Math.max(88, Math.min(112, window.innerHeight * 0.12));
+            const safeTop = this.getSafeTopOffset();
+            const top = Math.max(safeTop, Math.min(112, window.innerHeight * 0.12));
             const maxLeft = Math.max(gap, window.innerWidth - width - gap);
-            const maxTop = Math.max(gap, window.innerHeight - height - gap);
+            const maxTop = Math.max(safeTop, window.innerHeight - height - gap);
 
             const presets = {
                 "inventory-view": { left: gap, top },
@@ -720,21 +721,32 @@
 
             return {
                 left: Math.min(maxLeft, Math.max(gap, selected.left)),
-                top: Math.min(maxTop, Math.max(gap, selected.top))
+                top: Math.min(maxTop, Math.max(safeTop, selected.top))
             };
+        },
+
+        getSafeTopOffset() {
+            const topbar = document.querySelector("#hud-layer .topbar, .topbar");
+            const bottom = Number(topbar?.getBoundingClientRect?.().bottom || 0);
+            return Math.max(64, Math.ceil(bottom) + 8);
         },
 
         positionFloatingWindow(windowId, element, options = {}) {
             if (!element || this.isWorldWindow(windowId)) return false;
+
+            const safeTop = this.getSafeTopOffset();
+            const safeBottom = 8;
+            const availableHeight = Math.max(220, window.innerHeight - safeTop - safeBottom);
+            element.style.setProperty("max-height", `${Math.floor(availableHeight)}px`, "important");
 
             const stored = this.getStoredWindowPositions()[windowId];
             const position = options.position || stored ||
                 this.getDefaultWindowPosition(windowId, element);
             const rect = element.getBoundingClientRect();
             const maxLeft = Math.max(8, window.innerWidth - rect.width - 8);
-            const maxTop = Math.max(8, window.innerHeight - rect.height - 8);
+            const maxTop = Math.max(safeTop, window.innerHeight - rect.height - safeBottom);
             const left = Math.min(maxLeft, Math.max(8, Number(position.left) || 8));
-            const top = Math.min(maxTop, Math.max(8, Number(position.top) || 88));
+            const top = Math.min(maxTop, Math.max(safeTop, Number(position.top) || safeTop));
 
             element.style.setProperty("left", `${Math.round(left)}px`, "important");
             element.style.setProperty("top", `${Math.round(top)}px`, "important");
@@ -1472,10 +1484,11 @@
 
                 const { element, offsetX, offsetY } = dragState;
                 const rect = element.getBoundingClientRect();
+                const safeTop = this.getSafeTopOffset();
                 const maxLeft = Math.max(8, window.innerWidth - rect.width - 8);
-                const maxTop = Math.max(8, window.innerHeight - rect.height - 8);
+                const maxTop = Math.max(safeTop, window.innerHeight - rect.height - 8);
                 const left = Math.min(maxLeft, Math.max(8, event.clientX - offsetX));
-                const top = Math.min(maxTop, Math.max(8, event.clientY - offsetY));
+                const top = Math.min(maxTop, Math.max(safeTop, event.clientY - offsetY));
 
                 element.style.setProperty("left", `${Math.round(left)}px`, "important");
                 element.style.setProperty("top", `${Math.round(top)}px`, "important");

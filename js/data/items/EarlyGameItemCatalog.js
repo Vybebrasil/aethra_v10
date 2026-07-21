@@ -85,6 +85,38 @@
         });
     });
 
+    [
+        ["iron_ore", "Minério de Ferro", "⬟", 5, "Rocha bruta usada na fundição."],
+        ["refined_ingot", "Lingote de Ferro", "▰", 14, "Metal refinado para armas e armaduras."],
+        ["beast_hide", "Pele de Fera", "◒", 6, "Pele bruta obtida por Esfolamento."],
+        ["treated_leather", "Couro Tratado", "▧", 16, "Couro curtido pronto para criação."],
+        ["wild_herb", "Erva Silvestre", "❧", 4, "Reagente colhido por Herbalismo."],
+        ["trap_components", "Componentes de Armadilha", "⚙", 12, "Peças recuperadas de um mecanismo desarmado."]
+    ].forEach(([id, name, icon, price, description]) => item(id, {
+        name, icon, price, value: price, description,
+        rarity: "Comum", type: "material", itemType: "MATERIAL", stackable: true, maxStack: 999
+    }));
+
+    [
+        ["apprentice_pickaxe", "Picareta de Aprendiz", "⛏", "Permite extrair veios de minério."],
+        ["skinning_knife", "Faca de Esfolamento", "†", "Permite extrair pele de criaturas derrotadas."],
+        ["herb_knife", "Foice de Herbalista", "❧", "Permite colher ervas sem danificar seus reagentes."],
+        ["smith_hammer", "Martelo de Aprendiz", "⚒", "Ferramenta de orientação para seu primeiro trabalho na forja."]
+    ].forEach(([id, name, icon, description]) => item(id, {
+        name, icon, description, price: 0, value: 0,
+        rarity: "Comum", type: "tool", itemType: "TOOL", stackable: false, maxStack: 1, tradeable: false
+    }));
+
+    [
+        ["ancient_token", "Símbolo Antigo", "✦", 18, "Raro"],
+        ["thieves_mark", "Marca dos Ladrões", "⚿", 34, "Raro"],
+        ["hidden_map_fragment", "Fragmento de Mapa Oculto", "⌖", 85, "Épico"]
+    ].forEach(([id, name, icon, price, rarity]) => item(id, {
+        name, icon, price, value: price, rarity,
+        type: "loot", itemType: "LOOT", stackable: true, maxStack: 999,
+        description: "Achado especial de exploração; pode ser negociado ou usado em conteúdo futuro."
+    }));
+
     item("minor_vigor_tonic", {
         name: "Tônico Menor de Vigor", icon: "⚡", price: 12, value: 12,
         rarity: "Comum", type: "consumable", itemType: "CONSUMABLE",

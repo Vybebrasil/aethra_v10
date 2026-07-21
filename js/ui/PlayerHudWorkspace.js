@@ -18,12 +18,12 @@
         { id: "legs", label: "Pernas", icon: "Ⅱ" },
         { id: "feet", label: "Botas", icon: "⌄" }
     ];
-    const SECTION_ORDER = ["equipment", "backpack", "skills", "overview"];
+    const SECTION_ORDER = ["backpack", "skills", "overview"];
     const SECTION_LABELS = {
-        equipment: ["♟", "Equipamentos", "Paperdoll completo", "inventory-view", "Gerenciar"],
+        equipment: ["♟", "Set equipado", "0/11 slots ativos", "inventory-view", "Gerenciar"],
         backpack: ["▦", "Backpack", "Loot, supplies e materiais", "inventory-view", "Abrir"],
         skills: ["↑", "Skills", "Maestrias por categoria", "skills-view", "Prioridades"],
-        overview: ["✦", "Atributos", "Impacto real da build", "hero-view", "Ficha"]
+        overview: ["✦", "Atributos", "Impacto real da build", null, "6 atributos"]
     };
     const RARITY_ORDER = {
         common: 1,
@@ -138,12 +138,38 @@
 
     function sectionHeading(id) {
         const [icon, title, subtitle, windowId, action] = SECTION_LABELS[id];
+        const subtitleAttribute = id === "equipment" ? " data-player-fixed-equipment-count" : "";
         return `
             <div class="player-hud-section__title">
                 <span aria-hidden="true">${icon}</span>
-                <div><strong>${title}</strong><small>${subtitle}</small></div>
+                <div><strong>${title}</strong><small${subtitleAttribute}>${subtitle}</small></div>
             </div>
-            <button type="button" data-open-window="${windowId}">${action}</button>`;
+            ${windowId
+                ? `<button type="button" data-open-window="${windowId}">${action}</button>`
+                : `<span class="player-hud-section__badge">${action}</span>`}`;
+    }
+
+    function activateSection(nav, views, sectionId) {
+        const selectedId = SECTION_ORDER.includes(sectionId)
+            ? sectionId
+            : SECTION_ORDER[0];
+        uiState().playerHudTab = selectedId;
+        const hub = nav.closest("[data-hero-hub]");
+        if (hub) hub.dataset.playerHudSection = selectedId;
+
+        views.querySelectorAll("[data-hero-panel-view]").forEach((section) => {
+            const active = section.dataset.heroPanelView === selectedId;
+            section.hidden = !active;
+            section.classList.toggle("is-active", active);
+            section.setAttribute("aria-hidden", active ? "false" : "true");
+        });
+
+        nav.querySelectorAll("[data-player-hud-target]").forEach((button) => {
+            const active = button.dataset.playerHudTarget === selectedId;
+            button.classList.toggle("is-active", active);
+            button.setAttribute("aria-selected", active ? "true" : "false");
+            button.setAttribute("aria-current", active ? "page" : "false");
+        });
     }
 
     function bindNavigation(hub, views) {
@@ -154,30 +180,10 @@
         nav.addEventListener("click", (event) => {
             const button = event.target.closest("[data-player-hud-target]");
             if (!button) return;
-            const section = views.querySelector(`[data-hero-panel-view='${button.dataset.playerHudTarget}']`);
-            if (!section) return;
-            views.scrollTo({ top: Math.max(0, section.offsetTop - 6), behavior: "smooth" });
+            activateSection(nav, views, button.dataset.playerHudTarget);
         });
 
-        let scheduled = false;
-        views.addEventListener("scroll", () => {
-            if (scheduled) return;
-            scheduled = true;
-            requestAnimationFrame(() => {
-                scheduled = false;
-                const top = views.scrollTop + 56;
-                let active = SECTION_ORDER[0];
-                SECTION_ORDER.forEach((id) => {
-                    const section = views.querySelector(`[data-hero-panel-view='${id}']`);
-                    if (section && section.offsetTop <= top) active = id;
-                });
-                nav.querySelectorAll("[data-player-hud-target]").forEach((button) => {
-                    const selected = button.dataset.playerHudTarget === active;
-                    button.classList.toggle("is-active", selected);
-                    button.setAttribute("aria-current", selected ? "true" : "false");
-                });
-            });
-        }, { passive: true });
+        activateSection(nav, views, uiState().playerHudTab || SECTION_ORDER[0]);
     }
 
     function ensureBackpackTools(section) {
@@ -232,25 +238,55 @@
         const headerCopy = hub.querySelector(".hero-hub__header > div:first-child");
         if (headerCopy) headerCopy.innerHTML = `<small>PERSONAGEM E INVENTÁRIO</small><h2>Central do Herói</h2>`;
         hub.querySelector(".hero-hub__toggle-all")?.remove();
+        hub.querySelector(".hero-hub__tabs")?.remove();
 
         let nav = hub.querySelector("[data-player-hud-nav]");
+        if (nav?.querySelector("[data-player-hud-target='equipment']")) {
+            nav.remove();
+            nav = null;
+        }
         if (!nav) {
             nav = document.createElement("nav");
             nav.className = "player-hud-nav";
             nav.dataset.playerHudNav = "";
             nav.setAttribute("aria-label", "Atalhos do painel do herói");
             nav.innerHTML = `
-                <button type="button" class="is-active" data-player-hud-target="equipment"><span>♟</span><b>Equip.</b><em data-player-gear-count>0/11</em></button>
-                <button type="button" data-player-hud-target="backpack"><span>▦</span><b>Mochila</b><em data-player-bag-count>0</em></button>
+                <button type="button" class="is-active" data-player-hud-target="backpack"><span>▦</span><b>Itens</b><em data-player-bag-count>0</em></button>
                 <button type="button" data-player-hud-target="skills"><span>↑</span><b>Skills</b><em data-player-skill-count>0</em></button>
-                <button type="button" data-player-hud-target="overview"><span>✦</span><b>Build</b><em>6</em></button>`;
+                <button type="button" data-player-hud-target="overview"><span>✦</span><b>Build</b><em data-player-build-count>0</em></button>`;
             views.insertAdjacentElement("beforebegin", nav);
+        }
+
+        const fixedEquipment = hub.querySelector("[data-player-hud-fixed-equipment]")
+            || views.querySelector("[data-hero-panel-view='equipment']");
+        if (fixedEquipment) {
+            fixedEquipment.dataset.playerHudFixedEquipment = "";
+            fixedEquipment.removeAttribute("data-hero-panel-view");
+            fixedEquipment.removeAttribute("aria-hidden");
+            fixedEquipment.hidden = false;
+            fixedEquipment.classList.remove(
+                "hero-hub__view",
+                "hero-hub__accordion-section",
+                "player-hud-section",
+                "player-hud-section--equipment",
+                "is-collapsed"
+            );
+            fixedEquipment.classList.add("player-hud-fixed-equipment");
+            fixedEquipment.style.removeProperty("display");
+            fixedEquipment.style.removeProperty("height");
+            fixedEquipment.style.removeProperty("max-height");
+            const heading = fixedEquipment.querySelector(".hero-hub__section-heading");
+            if (heading) {
+                heading.className = "hero-hub__section-heading player-hud-section__heading";
+                heading.innerHTML = sectionHeading("equipment");
+            }
+            nav.insertAdjacentElement("beforebegin", fixedEquipment);
         }
 
         SECTION_ORDER.forEach((id) => {
             const section = views.querySelector(`[data-hero-panel-view='${id}']`);
             if (!section) return;
-            section.hidden = false;
+            section.hidden = true;
             section.classList.remove("hero-hub__accordion-section", "is-collapsed");
             section.classList.add("player-hud-section", `player-hud-section--${id}`);
             section.removeAttribute("data-collapsed");
@@ -274,6 +310,7 @@
         const backpack = views.querySelector("[data-hero-panel-view='backpack']");
         if (backpack) ensureBackpackTools(backpack);
         bindNavigation(hub, views);
+        activateSection(nav, views, uiState().playerHudTab || SECTION_ORDER[0]);
         return true;
     }
 
@@ -352,7 +389,7 @@
     function renderBackpackGrid() {
         const container = document.getElementById("battle-inventory-grid");
         if (!container) return false;
-        const { bag, filtered, query } = filteredBackpackItems();
+        const { bag, filtered, category, query } = filteredBackpackItems();
         const explicitCapacity = Number(Aethra.GameState.hero?.bagCapacity || 0);
         const visualSlots = Math.max(18, Math.ceil(Math.max(filtered.length, 1) / 6) * 6);
         const selectedId = Render.getSelectedInventoryItemId?.();
@@ -367,8 +404,9 @@
         container.className = "hero-backpack-grid tibia-backpack-grid player-backpack-grid";
         container.replaceChildren();
 
-        if (query && filtered.length === 0) {
-            container.innerHTML = `<div class="player-backpack-empty"><span>⌕</span><strong>Nenhum item encontrado</strong><small>Tente outro nome ou categoria.</small></div>`;
+        if (filtered.length === 0 && (bag.length === 0 || query || category !== "all")) {
+            const emptyBag = bag.length === 0;
+            container.innerHTML = `<div class="player-backpack-empty"><span>${emptyBag ? "▦" : "⌕"}</span><strong>${emptyBag ? "Mochila vazia" : "Nenhum item encontrado"}</strong><small>${emptyBag ? "Loot, supplies e materiais aparecerão aqui." : "Tente outro nome ou categoria."}</small></div>`;
         } else {
             const fragment = document.createDocumentFragment();
             for (let index = 0; index < visualSlots; index += 1) {
@@ -423,7 +461,7 @@
         const equipment = Aethra.GameState.playerEquipment || Aethra.GameState.hero?.equipment || {};
         const equipped = SLOT_DEFINITIONS.filter((slot) => equipment[slot.id]);
 
-        container.className = "hero-paperdoll player-equipment-matrix";
+        container.className = "hero-paperdoll player-equipment-matrix player-equipment-matrix--persistent";
         container.innerHTML = SLOT_DEFINITIONS.map((slot) => {
             const item = equipment[slot.id] || null;
             const image = item ? Aethra.GameData?.getItemImage?.(item) : "";
@@ -432,7 +470,8 @@
             return `
                 <button type="button" class="hero-paperdoll__slot player-equipment-slot player-equipment-slot--${slot.id} ${item ? "is-filled" : "is-empty"}"
                     data-battle-equipment-slot="${slot.id}" style="--slot-rarity:${esc(rarity?.color || "#415661")};"
-                    aria-label="${esc(item?.name || `${slot.label} vazio`)}">
+                    aria-label="${esc(item?.name || `${slot.label} vazio`)}"
+                    ${item ? "" : `data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="${esc(slot.label)}" data-tooltip-value="Vazio" data-tooltip-body="Clique para abrir a mochila e equipar este slot."`}>
                     <span class="hero-paperdoll__slot-icon"><b aria-hidden="true">${fallback}</b>${image ? `<img src="${esc(image)}" alt="" draggable="false">` : ""}</span>
                     <span class="player-equipment-slot__copy"><small>${slot.label}</small><strong>${esc(item?.name || "Vazio")}</strong></span>
                     ${item ? `<i class="player-equipment-slot__rarity"></i>` : ""}
@@ -463,6 +502,9 @@
         const legacyCount = document.getElementById("hero-equipment-tab-count");
         if (legacyCount) legacyCount.textContent = count;
         document.querySelectorAll("[data-player-gear-count]").forEach((node) => { node.textContent = count; });
+        document.querySelectorAll("[data-player-fixed-equipment-count]").forEach((node) => {
+            node.textContent = `${count} slots ativos`;
+        });
 
         const inspections = equipped.map((slot) => Aethra.ItemSystem?.getItemInspection?.(equipment[slot.id])).filter(Boolean);
         const averageIv = inspections.length ? inspections.reduce((sum, entry) => sum + Number(entry.ivPercent || 0), 0) / inspections.length : 0;
@@ -492,17 +534,55 @@
         return labels[category] || ["•", category || "Outras"];
     }
 
+    function overviewSignature() {
+        const hero = Aethra.GameState.hero || {};
+        const stats = hero.stats || {};
+        return [
+            hero.level,
+            stats.str,
+            stats.mag,
+            stats.precision,
+            stats.defense,
+            stats.critical,
+            stats.criticalMultiplier,
+            stats.evasion,
+            stats.damageMin,
+            stats.damageMax
+        ].map((value) => Number(value || 0)).join("|");
+    }
+
+    function markOverviewRendered() {
+        const container = document.getElementById("hero-attributes-grid");
+        if (!container) return false;
+        const cards = container.querySelectorAll(".hero-attribute");
+        if (cards.length >= 6) container.dataset.playerOverviewSignature = overviewSignature();
+        document.querySelectorAll("[data-player-build-count]").forEach((node) => {
+            node.textContent = String(cards.length);
+        });
+        return cards.length >= 6;
+    }
+
+    function renderOverview() {
+        const container = document.getElementById("hero-attributes-grid");
+        if (!container) return false;
+        const stale = container.dataset.playerOverviewSignature !== overviewSignature();
+        if (container.querySelectorAll(".hero-attribute").length < 6 || stale) {
+            Render.renderHeroStats?.();
+        }
+        return markOverviewRendered();
+    }
+
     function bindSkillSearch(container) {
         const input = container.querySelector("[data-player-skill-search]");
         if (!input) return;
         const apply = () => {
             const query = normalize(input.value);
             uiState().skillSearch = input.value;
-            container.querySelectorAll(".player-skill-row").forEach((row) => {
-                row.hidden = Boolean(query) && !normalize(row.dataset.search).includes(query);
+            container.querySelectorAll(".player-skill-entry").forEach((entry) => {
+                entry.hidden = Boolean(query) && !normalize(entry.dataset.search).includes(query);
             });
             container.querySelectorAll(".player-skill-group").forEach((group) => {
-                group.hidden = ![...group.querySelectorAll(".player-skill-row")].some((row) => !row.hidden);
+                group.hidden = ![...group.querySelectorAll(".player-skill-entry")].some((entry) => !entry.hidden);
             });
         };
         input.addEventListener("input", apply);
@@ -527,6 +607,7 @@
         const totalXP = masteries.reduce((sum, entry) => sum + Number(entry.xpTotal ?? entry.xp ?? 0), 0);
         const strongest = [...masteries].sort((a, b) => Number(b.level || 1) - Number(a.level || 1) || Number(b.xpTotal || 0) - Number(a.xpTotal || 0))[0];
         const categoryState = uiState().skillCategories || {};
+        const selectedSkillId = String(uiState().selectedPlayerSkillId || "");
 
         const groupsHTML = order.filter((category) => grouped.has(category)).map((category) => {
             const entries = grouped.get(category);
@@ -537,19 +618,45 @@
                 <details class="player-skill-group" data-skill-category="${esc(category)}" ${open ? "open" : ""}>
                     <summary><span>${icon}</span><strong>${esc(label)}</strong><small>${entries.length} skills · ${fmt(levelSum)} níveis</small><i>⌄</i></summary>
                     <div class="player-skill-group__rows">
-                        ${entries.map((entry) => {
+                        ${entries.map((entry, entryIndex) => {
                             const current = Number(entry.xpCurrent ?? entry.xp ?? 0);
                             const next = Math.max(1, Number(entry.xpNext || 1));
                             const progress = clamp(entry.progressPercent ?? (current / next) * 100);
+                            const entryId = String(entry.id || entry.name || `${category}-${entryIndex}`);
+                            const detailId = `player-skill-detail-${normalize(`${category}-${entryId}`).replace(/[^a-z0-9]+/g, "-")}`;
+                            const expanded = selectedSkillId === entryId;
+                            const description = entry.description || "Evolui conforme esta disciplina é utilizada.";
+                            const benefit = entry.benefit || entry.nextBenefit || "Ganha eficiência no próximo nível.";
+                            const proc = entry.procName
+                                ? `${Math.round(Number(entry.procChance || 0) * 100)}% de chance-base: ${entry.procName}.`
+                                : "Sem efeito passivo adicional neste nível.";
+                            const profession = Aethra.ProfessionSystem?.professions?.[entryId] || null;
+                            const isGathering = profession?.policy === true;
+                            const policyEnabled = isGathering && Aethra.ProfessionSystem?.getPolicy?.(entryId)?.enabled === true;
+                            const isCrafting = ["blacksmithing", "leatherworking"].includes(entryId);
+                            const trainingLocked = entry.trainingMode === "locked";
                             return `
-                                <article class="player-skill-row" tabindex="0" data-search="${esc(`${entry.name} ${category}`)}"
+                                <article class="player-skill-entry" data-search="${esc(`${entry.name} ${category}`)}">
+                                <button type="button" class="player-skill-row ${expanded ? "is-expanded" : ""}" data-player-skill-id="${esc(entryId)}"
+                                    aria-expanded="${expanded ? "true" : "false"}" aria-controls="${esc(detailId)}"
                                     data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="${esc(label.toUpperCase())}"
                                     data-tooltip-title="${esc(entry.name)}" data-tooltip-value="Nível ${fmt(entry.level)}"
                                     data-tooltip-body="${esc(`${entry.description || entry.benefit || "Evolui conforme é utilizada."}${entry.procName ? ` Chance-base: ${Math.round(Number(entry.procChance || 0) * 100)}% de ${entry.procName}.` : ""}`)}"
                                     data-tooltip-effect="${esc(entry.benefit || entry.nextBenefit || "Ganha eficiência no próximo nível.")}"
                                     data-tooltip-hint="${fmt(current)} / ${fmt(next)} XP para o próximo nível">
                                     <span class="player-skill-row__icon" data-discipline-id="${esc(entry.id)}">${esc(entry.icon || "•")}</span>
-                                    <div><header><strong>${esc(entry.name)}</strong><em>Lv. ${fmt(entry.level)}</em></header><i><b style="width:${progress.toFixed(2)}%"></b></i><small>${fmt(current)} / ${fmt(next)} XP</small></div>
+                                    <div><header><strong>${esc(entry.name)}</strong><em>Lv. ${fmt(entry.level)}</em></header><i><b style="width:${progress.toFixed(2)}%"></b></i><small>${entry.discovered ? `${fmt(current)} / ${fmt(next)} XP` : "Ainda não praticada"}</small></div>
+                                </button>
+                                <div class="player-skill-entry__details" id="${esc(detailId)}" ${expanded ? "" : "hidden"}>
+                                    <p>${esc(description)}</p>
+                                    <strong>${esc(benefit)}</strong>
+                                    <small>${esc(proc)}</small>
+                                    <div class="player-skill-actions">
+                                        <button type="button" class="${trainingLocked ? "is-locked" : "is-training"}" data-skill-training-mode="${esc(entryId)}" data-next-mode="${trainingLocked ? "training" : "locked"}">${trainingLocked ? "🔒 XP travado · liberar" : "◆ Treinando · travar XP"}</button>
+                                        ${isGathering ? `<button type="button" class="${policyEnabled ? "is-active" : ""}" data-profession-policy="${esc(entryId)}" data-policy-enabled="${policyEnabled ? "false" : "true"}">${policyEnabled ? "✓ Coletar nesta hunt" : "○ Ignorar na hunt"}</button>` : ""}
+                                        ${isCrafting ? `<button type="button" data-open-profession-workshop="${esc(entryId)}">⚒ Abrir oficina</button>` : ""}
+                                    </div>
+                                </div>
                                 </article>`;
                         }).join("")}
                     </div>
@@ -562,16 +669,50 @@
                 <span><small>Níveis totais</small><strong>${fmt(totalLevels)}</strong></span>
                 <span><small>XP acumulada</small><strong>${fmt(totalXP)}</strong></span>
                 <span><small>Maior domínio</small><strong>${esc(strongest?.name || "—")}</strong></span>
-                <button type="button" class="player-skill-points ${Number(Aethra.GameState.hero?.skillPoints || 0) > 0 ? "" : "is-empty"}" data-open-skill-allocation>
-                    ${fmt(Aethra.GameState.hero?.skillPoints || 0)} ponto(s) para distribuir
-                </button>
+                <span class="player-skill-points"><b>∞</b> progressão por uso · sem nível máximo</span>
             </div>
             <label class="player-skill-search"><span>⌕</span><input type="search" data-player-skill-search value="${esc(uiState().skillSearch || "")}" placeholder="Filtrar skills ou categoria" aria-label="Filtrar skills"></label>
+            <p class="player-skill-guidance">Abra uma categoria e selecione uma skill para ver seus efeitos permanentes.</p>
             <div class="player-skill-groups">${groupsHTML || `<div class="player-skill-empty">Nenhuma skill disponível.</div>`}</div>`;
         container.querySelectorAll("[data-skill-category]").forEach((details) => {
+            const summary = details.querySelector("summary");
+            summary?.setAttribute("aria-expanded", details.open ? "true" : "false");
             details.addEventListener("toggle", () => {
                 uiState().skillCategories = uiState().skillCategories || {};
                 uiState().skillCategories[details.dataset.skillCategory] = details.open;
+                summary?.setAttribute("aria-expanded", details.open ? "true" : "false");
+            });
+        });
+        container.querySelectorAll("[data-player-skill-id]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const shouldOpen = button.getAttribute("aria-expanded") !== "true";
+                container.querySelectorAll("[data-player-skill-id]").forEach((other) => {
+                    other.classList.remove("is-expanded");
+                    other.setAttribute("aria-expanded", "false");
+                    const details = document.getElementById(other.getAttribute("aria-controls"));
+                    if (details) details.hidden = true;
+                });
+                if (shouldOpen) {
+                    button.classList.add("is-expanded");
+                    button.setAttribute("aria-expanded", "true");
+                    const details = document.getElementById(button.getAttribute("aria-controls"));
+                    if (details) details.hidden = false;
+                    uiState().selectedPlayerSkillId = button.dataset.playerSkillId;
+                } else {
+                    uiState().selectedPlayerSkillId = null;
+                }
+            });
+        });
+        container.querySelectorAll("[data-skill-training-mode]").forEach((button) => {
+            button.addEventListener("click", () => {
+                Aethra.DisciplineSystem?.setTrainingMode?.(button.dataset.skillTrainingMode, button.dataset.nextMode, "hero-skills");
+                renderCategorizedSkills();
+            });
+        });
+        container.querySelectorAll("[data-profession-policy]").forEach((button) => {
+            button.addEventListener("click", () => {
+                Aethra.ProfessionSystem?.setCollectionPolicy?.(button.dataset.professionPolicy, button.dataset.policyEnabled === "true", "hero-skills");
+                renderCategorizedSkills();
             });
         });
         bindSkillSearch(container);
@@ -587,6 +728,7 @@
     function refresh() {
         if (!ensurePanelStructure()) return false;
         renderSummary();
+        renderOverview();
         renderEquipmentMatrix();
         renderBackpackGrid();
         renderCategorizedSkills();
@@ -605,7 +747,10 @@
     }
 
     wrap("activateBattleMode", () => renderSummary());
-    wrap("renderHeroStats", () => renderSummary());
+    wrap("renderHeroStats", () => {
+        renderSummary();
+        markOverviewRendered();
+    });
     wrap("renderBattleEquipment", () => renderEquipmentMatrix());
     wrap("renderBattleInventory", () => renderBackpackGrid());
     wrap("renderHeroSkillProgression", () => renderCategorizedSkills());
@@ -615,6 +760,7 @@
         refresh,
         ensurePanelStructure,
         renderSummary,
+        renderOverview,
         renderEquipment: renderEquipmentMatrix,
         renderBackpack: renderBackpackGrid,
         renderSkills: renderCategorizedSkills,
@@ -629,12 +775,14 @@
             ensurePanelStructure();
             renderEquipmentMatrix();
             renderBackpackGrid();
+            renderOverview();
         });
     });
-    ["skillXPChanged", "profession:xpChanged", "profession:rankUp", "mastery:updated", "levelUp", "skill-point:spent", "discipline:xp-changed", "discipline:level-up", "discipline:invested"].forEach((eventName) => {
+    ["skillXPChanged", "profession:xpChanged", "profession:rankUp", "mastery:updated", "levelUp", "skill-point:spent", "discipline:xp-changed", "discipline:level-up", "discipline:invested", "skill:discovered", "skill:training-mode-changed", "profession:policy-changed", "crafting:completed"].forEach((eventName) => {
         Aethra.EventBus.on(eventName, () => {
             ensurePanelStructure();
             renderCategorizedSkills();
+            renderOverview();
         });
     });
 

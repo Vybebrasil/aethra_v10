@@ -556,50 +556,43 @@
             }
         },
 
+        syncStageMode(mode = this.battleMode) {
+            const selected = mode === "map2d" ? "map2d" : "cards";
+            const mapRoot = document.getElementById("tilemap-canvas-root");
+            const cardsRoot = document.getElementById("battle-card-arena-container");
+            if (mapRoot) mapRoot.hidden = selected !== "map2d";
+            if (cardsRoot) cardsRoot.hidden = selected !== "cards";
+
+            document.querySelectorAll("[data-set-stage-mode]").forEach((button) => {
+                const active = button.dataset.setStageMode === selected;
+                button.classList.toggle("is-active", active);
+                button.setAttribute("aria-pressed", active ? "true" : "false");
+            });
+            return Boolean(mapRoot || cardsRoot);
+        },
+
         activateMap2DPlaceholder() {
-            this.battleMode = "map2d";
-            this.viewMode = "map2d";
-
-            Aethra.GameState.ui = Aethra.GameState.ui || {};
-            Aethra.GameState.ui.battleMode = "map2d";
-            Aethra.GameState.ui.viewMode = "map2d";
-
-            document.body.classList.add("aethra-battle-mode");
-            document.body.classList.add("aethra-map2d-placeholder-mode");
-
             const cityView = document.getElementById("city-view");
             if (!cityView) return false;
 
+            if (!cityView.querySelector("[data-battle-mode-layout]")) {
+                this.activateBattleMode();
+            }
+
+            this.battleMode = "map2d";
+            this.viewMode = "map2d";
+            Aethra.GameState.ui = Aethra.GameState.ui || {};
+            Aethra.GameState.ui.battleMode = "map2d";
+            Aethra.GameState.ui.viewMode = "map2d";
+            document.body.classList.add("aethra-battle-mode", "aethra-map2d-placeholder-mode");
             cityView.dataset.renderMode = "map2d";
-            this.clearActionBarOverlay();
+            this.syncStageMode("map2d");
+            Aethra.TileMapCanvas?.start?.();
 
-            const placeholderAlreadyMounted = Boolean(
-                cityView.querySelector("[data-map2d-placeholder]")
-            );
-
-            if (!placeholderAlreadyMounted) {
-                cityView.innerHTML = `
-                    <div id="tilemap-canvas-root" data-map2d-placeholder class="map2d-active-root"></div>
-                    <div class="battle-compatibility-nodes" hidden>
-                        <div id="stats-display"></div>
-                        <div id="hunt-display"></div>
-                        <div id="combat-display"></div>
-                        <div id="skill-action-bar"></div>
-                        <div id="city-grid"></div>
-                        <div id="hero-sprite"></div>
-                        <div id="boss-weekly-reward"></div>
-                        <div id="boss-list"></div>
-                    </div>
-                `;
-            }
-
-            if (!placeholderAlreadyMounted) {
-                Aethra.EventBus.emit("render:map2d-placeholder-ready", {
-                    battleMode: "map2d",
-                    mode: this.viewMode
-                });
-            }
-
+            Aethra.EventBus.emit("render:map2d-placeholder-ready", {
+                battleMode: "map2d",
+                mode: this.viewMode
+            });
             return true;
         },
 
@@ -620,6 +613,7 @@
             cityView.dataset.renderMode = this.viewMode;
 
             if (cityView.querySelector("[data-battle-mode-layout]")) {
+                this.syncStageMode("cards");
                 return true;
             }
 
@@ -736,8 +730,12 @@
 
                     <main class="battle-main-column">
                         <section class="battle-stage-panel">
+                            <nav class="stage-mode-switcher" aria-label="Visual do palco">
+                                <button type="button" class="stage-mode-btn" data-set-stage-mode="map2d" data-set-battle-mode="map2d">▦ Mapa 2D</button>
+                                <button type="button" class="stage-mode-btn is-active" data-set-stage-mode="cards" data-set-battle-mode="cards">▣ Cartas táticas</button>
+                            </nav>
                             <!-- Mode 1: 2D Canvas Map (Full Height Stage) -->
-                            <div id="tilemap-canvas-root" class="map2d-active-root"></div>
+                            <div id="tilemap-canvas-root" class="map2d-active-root" hidden></div>
 
                             <!-- Mode 2: Card Arena (Hero vs Enemy) -->
                             <div id="battle-card-arena-container" class="battle-card-arena" hidden style="margin-top: 10px;">
@@ -871,6 +869,11 @@
                                     organize o herói antes da próxima caçada.
                                 </p>
                             </div>
+                            <div class="city-hub__status" aria-label="Resumo de preparação">
+                                <span><small>GOLD</small><strong data-city-gold>0 G</strong></span>
+                                <span><small>MOCHILA</small><strong data-city-bag>0 / 40</strong></span>
+                                <span class="is-safe"><small>ÁREA</small><strong>Zona segura</strong></span>
+                            </div>
                             <button
                                 type="button"
                                 class="city-hub__hunt-button"
@@ -890,7 +893,7 @@
                                     >
                                 </div>
                                 <div class="city-service-card__content">
-                                    <small>NPC</small>
+                                    <small><span></span>NPC disponível</small>
                                     <h3>Mercador da Vila</h3>
                                     <p>Compre suprimentos e venda o loot obtido nas hunts.</p>
                                     <button
@@ -903,9 +906,9 @@
                             </article>
 
                             <article class="city-service-card">
-                                <div class="city-service-card__icon" aria-hidden="true">⚖</div>
+                                <div class="city-service-card__icon" aria-hidden="true">◇</div>
                                 <div class="city-service-card__content">
-                                    <small>Comércio</small>
+                                    <small>Comércio local</small>
                                     <h3>Mercado de Jogadores</h3>
                                     <p>Consulte ofertas e negocie itens com outros aventureiros.</p>
                                     <button
@@ -918,9 +921,9 @@
                             </article>
 
                             <article class="city-service-card">
-                                <div class="city-service-card__icon" aria-hidden="true">🎒</div>
+                                <div class="city-service-card__icon" aria-hidden="true">▦</div>
                                 <div class="city-service-card__content">
-                                    <small>Preparação</small>
+                                    <small>Preparação · 11 slots</small>
                                     <h3>Mochila e Equipamentos</h3>
                                     <p>Troque peças e confira o multiplicador de atributos 1.65x.</p>
                                     <button
@@ -935,7 +938,7 @@
                             <article class="city-service-card">
                                 <div class="city-service-card__icon" aria-hidden="true">✦</div>
                                 <div class="city-service-card__content">
-                                    <small>Treinamento</small>
+                                    <small>Treinamento de build</small>
                                     <h3>Mestre de Habilidades</h3>
                                     <p>Organize prioridades, automações e limites de suporte.</p>
                                     <button
@@ -944,6 +947,26 @@
                                     >
                                         Configurar Skills
                                     </button>
+                                </div>
+                            </article>
+
+                            <article class="city-service-card">
+                                <div class="city-service-card__icon" aria-hidden="true">⚒</div>
+                                <div class="city-service-card__content">
+                                    <small>Produção · metal</small>
+                                    <h3>Forja da Cidade</h3>
+                                    <p>Refine minério e produza armas ou armaduras de placa.</p>
+                                    <button type="button" data-open-profession-workshop="blacksmithing">Abrir Forja</button>
+                                </div>
+                            </article>
+
+                            <article class="city-service-card">
+                                <div class="city-service-card__icon" aria-hidden="true">◈</div>
+                                <div class="city-service-card__content">
+                                    <small>Produção · couro</small>
+                                    <h3>Curtume da Cidade</h3>
+                                    <p>Trate peles e confeccione equipamentos leves de couro.</p>
+                                    <button type="button" data-open-profession-workshop="leatherworking">Abrir Curtume</button>
                                 </div>
                             </article>
                         </div>
@@ -957,6 +980,8 @@
                     </div>
                 </div>
             `;
+
+            this.syncStageMode("cards");
 
             document
                 .getElementById("open-full-inventory")
@@ -3261,11 +3286,16 @@
 
             const slots = [
                 { id: "head", label: "Capacete" },
-                { id: "chest", label: "Peitoral" },
-                { id: "legs", label: "Calça" },
-                { id: "feet", label: "Botas" },
+                { id: "neck", label: "Amuleto" },
+                { id: "relic", label: "Relíquia" },
                 { id: "weapon", label: "Arma" },
-                { id: "offhand", label: "Escudo" }
+                { id: "chest", label: "Peitoral" },
+                { id: "offhand", label: "Mão secundária" },
+                { id: "ring1", label: "Anel 1" },
+                { id: "hands", label: "Luvas" },
+                { id: "ring2", label: "Anel 2" },
+                { id: "legs", label: "Calça" },
+                { id: "feet", label: "Botas" }
             ];
 
             container.innerHTML = slots.map(({ id, label }) => {
@@ -3437,6 +3467,8 @@
             const activeHTML = questState.active.length > 0
                 ? questState.active
                     .map((quest) => {
+                        const definition = Aethra.GameData?.quests?.[quest.id] || {};
+                        const reward = quest.reward || definition.reward || {};
                         const objectives = (quest.objectives || [])
                             .map((objective) => {
                                 const progress = Math.min(
@@ -3463,16 +3495,47 @@
                             })
                             .join("");
 
+                        const objectiveTotals = (quest.objectives || []).reduce(
+                            (total, objective) => {
+                                total.progress += Math.min(
+                                    Number(objective.progress || 0),
+                                    Number(objective.required || 1)
+                                );
+                                total.required += Number(objective.required || 1);
+                                return total;
+                            },
+                            { progress: 0, required: 0 }
+                        );
+                        const progressPercent = Math.round(
+                            (objectiveTotals.progress / Math.max(1, objectiveTotals.required)) * 100
+                        );
+                        const rewardItems = (reward.items || []).map((entry) => {
+                            const item = Aethra.GameData?.items?.[entry.templateId || entry.id];
+                            return `${Number(entry.quantity || 1)}× ${item?.name || entry.templateId || entry.id}`;
+                        });
+                        const rewards = [
+                            Number(reward.xp || 0) > 0 ? `${formatNumber(reward.xp)} XP` : null,
+                            Number(reward.gold || 0) > 0 ? `${formatNumber(reward.gold)} G` : null,
+                            ...rewardItems
+                        ].filter(Boolean);
+                        const isTracked = Aethra.GameState.ui?.trackedQuestId === quest.id;
+
                         return `
                             <article class="quest-card quest-card--active">
                                 <header>
-                                    <span>Missão ativa</span>
-                                    <h3>${escapeHTML(quest.title)}</h3>
+                                    <div><span>Missão ativa · Nível ${formatNumber(quest.levelReq || definition.levelReq || 1)}</span>
+                                    <h3>${escapeHTML(quest.title)}</h3></div>
+                                    <strong>${progressPercent}%</strong>
                                 </header>
 
                                 <p>${escapeHTML(quest.description || "")}</p>
 
                                 <ul>${objectives}</ul>
+                                <div class="quest-card__progress"><i style="width:${progressPercent}%"></i></div>
+                                <footer>
+                                    <div><small>RECOMPENSAS</small><span>${rewards.length ? rewards.map(escapeHTML).join(" · ") : "Recompensa não informada"}</span></div>
+                                    <button type="button" data-track-quest="${escapeHTML(quest.id)}" aria-pressed="${isTracked ? "true" : "false"}">${isTracked ? "Acompanhando" : "Acompanhar"}</button>
+                                </footer>
                             </article>
                         `;
                     })
@@ -3504,6 +3567,29 @@
                 : "";
 
             container.innerHTML = activeHTML + completedHTML;
+
+            container.querySelectorAll("[data-track-quest]").forEach((button) => {
+                button.addEventListener("click", () => {
+                    Aethra.GameState.ui = Aethra.GameState.ui || {};
+                    const questId = button.dataset.trackQuest;
+                    Aethra.GameState.ui.trackedQuestId =
+                        Aethra.GameState.ui.trackedQuestId === questId ? null : questId;
+                    this.renderQuests();
+                    Aethra.SaveManager?.save?.("quest-tracking");
+                    Aethra.EventBus.emit("quest:tracking-changed", {
+                        questId: Aethra.GameState.ui.trackedQuestId
+                    });
+                });
+            });
+
+            const activeCount = document.querySelector("[data-quest-active-count]");
+            const completedCount = document.querySelector("[data-quest-completed-count]");
+            if (activeCount) {
+                activeCount.textContent = `${questState.active.length} ${questState.active.length === 1 ? "missão ativa" : "missões ativas"}`;
+            }
+            if (completedCount) {
+                completedCount.textContent = `${questState.completed.length} concluída${questState.completed.length === 1 ? "" : "s"}`;
+            }
 
             Aethra.EventBus.emit("render:quests", {
                 active: questState.active.length,

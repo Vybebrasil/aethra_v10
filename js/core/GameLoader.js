@@ -33,6 +33,7 @@
         "ColiseumSystem",
         "HuntSystem",
         "ProfessionSystem",
+        "CraftingSystem",
         "CharacterBuildSystem",
         "ExplorationSystem",
         "QuestSystem"
@@ -61,6 +62,7 @@
         "ColiseumSystem",
         "HuntSystem",
         "ProfessionSystem",
+        "CraftingSystem",
         "CharacterBuildSystem",
         "ExplorationSystem",
         "QuestSystem"

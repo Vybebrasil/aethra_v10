@@ -4,7 +4,15 @@ Projeto front-end puro. Não usa Node.js nem servidor.
 
 ## Executar
 
-Abra `index.html` diretamente no navegador.
+O projeto continua sendo front-end puro, mas durante o desenvolvimento use um
+servidor local para recarregar e testar todas as mudanças de forma consistente:
+
+```powershell
+python -m http.server 8000 --bind 127.0.0.1
+```
+
+Abra `http://127.0.0.1:8000/index.html`. O acesso direto ao `index.html` continua
+possível, mas não é o fluxo recomendado para desenvolvimento.
 
 ## Estrutura
 
@@ -33,6 +41,10 @@ node scripts/verify-project.mjs
 
 Depois abra `tests/integration.html` e confirme 100% das verificações, sem erros
 de console ou assets ausentes.
+
+Antes de modificar HUD, automação, skills, profissões, coleta, crafting ou save,
+leia `docs/DEVELOPER_HANDOFF.md`. Ele registra o estado atual, o proprietário de
+cada domínio, contratos que não podem ser duplicados, testes e próximos passos.
 
 ## World Loop e progressão
 
