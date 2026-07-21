@@ -63,6 +63,102 @@ body.aethra-battle-mode .tilemap-canvas-container {
     overflow: hidden !important;
 }
 
+body.aethra-battle-mode .tilemap-journey-stats {
+    position: absolute !important;
+    top: 58px !important;
+    right: 12px !important;
+    z-index: 25 !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(58px, auto)) !important;
+    grid-template-rows: 34px !important;
+    gap: 4px !important;
+    width: auto !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    overflow: visible !important;
+    pointer-events: none !important;
+}
+
+body.aethra-battle-mode .tilemap-journey-stats > span {
+    display: grid !important;
+    grid-template-rows: 9px 15px !important;
+    place-items: center !important;
+    min-width: 58px !important;
+    min-height: 34px !important;
+    padding: 4px 7px !important;
+    border: 1px solid rgba(91, 139, 162, .25) !important;
+    border-radius: 7px !important;
+    background: rgba(3, 10, 14, .88) !important;
+    overflow: visible !important;
+}
+
+body.aethra-battle-mode .tilemap-journey-stats small,
+body.aethra-battle-mode .tilemap-journey-stats strong {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+    overflow: visible !important;
+}
+
+body.aethra-battle-mode #idle-loop-controls-root {
+    position: absolute !important;
+    right: 12px !important;
+    bottom: 12px !important;
+    z-index: 25 !important;
+    width: auto !important;
+    max-width: 210px !important;
+}
+
+body.aethra-battle-mode #idle-loop-controls-root .idle-loop-bar {
+    gap: 8px !important;
+    min-height: 32px !important;
+    margin: 0 !important;
+    padding: 4px 6px !important;
+    background: rgba(4, 12, 17, .9) !important;
+    backdrop-filter: blur(8px) !important;
+}
+
+body.aethra-battle-mode #idle-loop-controls-root .idle-loop-telemetry {
+    display: none !important;
+}
+
+body.aethra-battle-mode #idle-loop-controls-root .idle-loop-status {
+    display: none !important;
+}
+
+body.aethra-battle-mode #idle-loop-controls-root .idle-loop-indicator,
+body.aethra-battle-mode #idle-loop-controls-root .idle-toggle-btn {
+    white-space: nowrap !important;
+}
+
+body.aethra-battle-mode #idle-loop-controls-root .idle-toggle-btn {
+    padding: 5px 7px !important;
+}
+
+@media (max-width: 1180px) {
+    body.aethra-battle-mode #idle-loop-controls-root {
+        left: 12px !important;
+        right: 12px !important;
+        max-width: none !important;
+    }
+
+    body.aethra-battle-mode #idle-loop-controls-root .idle-loop-bar {
+        justify-content: flex-end !important;
+    }
+}
+
+body.aethra-battle-mode .tilemap-journey-stats small {
+    color: #718a96 !important;
+    font: 800 6px/1 "Outfit", sans-serif !important;
+    text-transform: uppercase !important;
+}
+
+body.aethra-battle-mode .tilemap-journey-stats strong {
+    color: #e5eef2 !important;
+    font: 800 11px/1 "Outfit", sans-serif !important;
+}
+
 /* HIDE ACTIONBAR HEADER & SQUISHED EXTRA BOXES IN MAIN COLUMN */
 body.aethra-battle-mode .battle-stage-panel > header,
 body.aethra-battle-mode .battle-stage-panel > #hunt-display,

@@ -113,12 +113,9 @@
             return false;
         }
 
-        // Clean up previous combat systems before starting a new hunt
+        // BattleSystem é a única autoridade de combate.
         if (Aethra.BattleSystem && typeof Aethra.BattleSystem.stopCombat === "function") {
             Aethra.BattleSystem.stopCombat("new-hunt-started");
-        }
-        if (Aethra.CombatSystem && typeof Aethra.CombatSystem.stopCombat === "function") {
-            Aethra.CombatSystem.stopCombat("new-hunt-started");
         }
 
         const started = originalStartHunt(huntId, options);
@@ -133,9 +130,6 @@
     Hunt.stopHunt = function (reason = "manual") {
         if (Aethra.BattleSystem && typeof Aethra.BattleSystem.stopCombat === "function") {
             Aethra.BattleSystem.stopCombat("hunt-stopped");
-        }
-        if (Aethra.CombatSystem && typeof Aethra.CombatSystem.stopCombat === "function") {
-            Aethra.CombatSystem.stopCombat("hunt-stopped");
         }
         return originalStopHunt(reason);
     };
@@ -1535,9 +1529,7 @@
         return true;
     }
 
-    const originalRenderBattleCards = Render.renderBattleCards.bind(Render);
-    Render.renderBattleCards = function (...args) {
-        const result = originalRenderBattleCards(...args);
+    function enhanceBattleCardsForWorldMap() {
         const huntActive = Boolean(Aethra.GameState.hunt?.isActive || Hunt.config?.isRunning);
         const launcher = document.querySelector("#battle-enemy-card .hunt-launcher");
         const launcherButton = launcher?.querySelector("[data-start-hunt]");
@@ -1554,8 +1546,9 @@
         }
 
         ensureDropPanel();
-        return result;
-    };
+    }
+
+    Aethra.EventBus.on("render:battle-cards", enhanceBattleCardsForWorldMap);
 
     const originalActivateBattleMode = Render.activateBattleMode.bind(Render);
     Render.activateBattleMode = function (...args) {

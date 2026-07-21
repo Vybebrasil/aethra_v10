@@ -422,12 +422,7 @@
         renderEncounterDock();
     }
 
-    const originalRenderBattleCards = Render.renderBattleCards.bind(Render);
-    Render.renderBattleCards = function (...args) {
-        const result = originalRenderBattleCards(...args);
-        renderEncounterDock();
-        return result;
-    };
+    Aethra.EventBus.on("render:battle-cards", renderEncounterDock);
 
     const originalRenderActionBar = Render.renderActionBar.bind(Render);
     Render.renderActionBar = function (...args) {

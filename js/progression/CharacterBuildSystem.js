@@ -96,6 +96,7 @@
             id: "vanguard", name: "Vanguarda", title: "A muralha que avança", icon: "⚔",
             accent: "#79c9e8", description: "Espada, armadura e controle. Uma entrada segura para aprender o combate.",
             tags: ["Espadas", "Defesa", "Consistente"], starterItemId: "training_sword",
+            starterArmorClass: "plate", starterShield: true,
             attributes: { strength: 3, magic: 0, precision: 2, vitality: 4, defense: 4, agility: 1 },
             masteries: { sword: 3, plate_armor: 2, shield: 1, survival: 1, blacksmithing: 1 }
         },
@@ -103,6 +104,7 @@
             id: "berserker", name: "Berserker", title: "Risco em cada golpe", icon: "🪓",
             accent: "#ff806f", description: "Machados, críticos e dano explosivo. Erra mais, destrói quando conecta.",
             tags: ["Machados", "Crítico", "Alto risco"], starterItemId: "training_axe",
+            starterArmorClass: "plate", starterShield: false,
             attributes: { strength: 5, magic: 0, precision: 3, vitality: 2, defense: 1, agility: 3 },
             masteries: { axe: 3, plate_armor: 1, survival: 2, exploration: 1, skinning: 1 }
         },
@@ -110,6 +112,7 @@
             id: "arcanist", name: "Arcanista", title: "Três escolas, muitas respostas", icon: "✦",
             accent: "#aa8cff", description: "Alterna Fogo, Gelo e Trevas para explosão, controle ou drenagem.",
             tags: ["Elementos", "Mana", "Versátil"], starterItemId: "novice_focus",
+            starterArmorClass: "cloth", starterShield: false,
             attributes: { strength: 1, magic: 5, precision: 3, vitality: 2, defense: 1, agility: 2 },
             masteries: { fire: 2, ice: 2, shadow: 2, cloth_armor: 1, restoration: 1 }
         },
@@ -117,6 +120,7 @@
             id: "ranger", name: "Batedor", title: "Precisão antes do perigo", icon: "➶",
             accent: "#72dda7", description: "Arco, exploração e coleta. Encontra mais oportunidades e escolhe o alvo.",
             tags: ["Arcos", "Exploração", "Precisão"], starterItemId: "training_bow",
+            starterArmorClass: "leather", starterShield: false,
             attributes: { strength: 2, magic: 0, precision: 5, vitality: 2, defense: 1, agility: 4 },
             masteries: { bow: 3, survival: 2, exploration: 1, leather_armor: 1, skinning: 1 }
         },
@@ -124,6 +128,7 @@
             id: "nightblade", name: "Lâmina Sombria", title: "Velocidade e oportunismo", icon: "☾",
             accent: "#d47de7", description: "Adagas e Trevas criam cortes duplos, drenagem e rotas de Ladinagem.",
             tags: ["Adagas", "Trevas", "Ladinagem"], starterItemId: "training_dagger",
+            starterArmorClass: "leather", starterShield: false,
             attributes: { strength: 2, magic: 2, precision: 4, vitality: 1, defense: 1, agility: 4 },
             masteries: { dagger: 3, shadow: 2, thievery: 2, leather_armor: 1 }
         },
@@ -131,6 +136,7 @@
             id: "templar", name: "Templário", title: "Martelo e luz sagrada", icon: "✣",
             accent: "#efd070", description: "Maças, armadura de placa e luz. Uma build híbrida de defesa robusta e magias de cura.",
             tags: ["Maças", "Defesa", "Restauração"], starterItemId: "training_mace",
+            starterArmorClass: "plate", starterShield: true,
             attributes: { strength: 3, magic: 2, precision: 2, vitality: 3, defense: 3, agility: 1 },
             masteries: { mace: 3, plate_armor: 2, shield: 1, restoration: 1, survival: 1 }
         }
@@ -378,18 +384,36 @@
             Aethra.DisciplineSystem?.configureStarterLoadout?.(validation.masteries);
 
             const archetype = ARCHETYPES[validation.archetypeId];
-            const starterItem = archetype?.starterItemId
-                ? Aethra.ItemSystem?.generateItem?.(archetype.starterItemId, {
+            const generateStarter = (templateId, options = {}) => {
+                if (!templateId) return null;
+                return Aethra.ItemSystem?.generateItem?.(templateId, {
                     quality: 55,
                     potential: 45,
                     rarity: "common",
-                    affixes: []
-                })
-                : null;
-            if (starterItem) {
-                Aethra.BagSystem?.addItem?.(starterItem, "character-created");
-                Aethra.EquipSystem?.equip?.(starterItem.instanceId, "weapon");
-            }
+                    affixes: [],
+                    bound: true,
+                    tradeable: false,
+                    source: "character-created",
+                    ...options
+                }) || null;
+            };
+            const starterEquipment = [
+                { slot: "weapon", item: generateStarter(archetype?.starterItemId) },
+                { slot: "chest", item: generateStarter(`eg_chest_${archetype?.starterArmorClass || "leather"}_l1`) },
+                { slot: "offhand", item: archetype?.starterShield ? generateStarter("eg_shield_l1") : null }
+            ].filter((entry) => entry.item);
+            const starterSupplies = [
+                generateStarter("potion_health", { quantity: 5 }),
+                generateStarter("potion_mana", { quantity: 5 })
+            ].filter(Boolean);
+
+            Aethra.BagSystem?.addItems?.(
+                [...starterEquipment.map((entry) => entry.item), ...starterSupplies],
+                "character-created"
+            );
+            starterEquipment.forEach(({ item, slot }) => {
+                Aethra.EquipSystem?.equip?.(item.instanceId, slot);
+            });
             Aethra.EquipSystem?.recalculateStats?.({ emit: false, save: false, source: "character-created" });
 
             Aethra.GameState.ui = Aethra.GameState.ui || {};

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Aethra — Viewport QA</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: #05090c;
+        }
+
+        #qa-frame {
+            display: block;
+            border: 0;
+            width: var(--qa-width);
+            height: var(--qa-height);
+        }
+    </style>
+</head>
+<body>
+    <iframe id="qa-frame" title="Interface Aethra em resolução controlada"></iframe>
+    <script>
+        const query = new URLSearchParams(location.search);
+        const width = Math.min(2560, Math.max(1024, Number(query.get("width")) || 1920));
+        const height = Math.min(1440, Math.max(640, Number(query.get("height")) || 1080));
+        document.documentElement.style.setProperty("--qa-width", `${width}px`);
+        document.documentElement.style.setProperty("--qa-height", `${height}px`);
+        document.documentElement.style.width = `${width}px`;
+        document.body.style.width = `${width}px`;
+        document.getElementById("qa-frame").src = `/index.html?viewport-qa=${width}x${height}`;
+    </script>
+</body>
+</html>

@@ -63,6 +63,99 @@
             );
         },
 
+        countItem(itemOrId) {
+            const stringId = typeof itemOrId === "string" ? itemOrId : null;
+            const instanceId = typeof itemOrId === "object"
+                ? itemOrId?.instanceId
+                : this.getItems().some((item) => item?.instanceId === stringId)
+                    ? stringId
+                    : null;
+            const templateId = typeof itemOrId === "object"
+                ? itemOrId?.templateId || itemOrId?.id
+                : instanceId
+                    ? null
+                    : itemOrId;
+
+            return this.getItems().reduce((total, item) => {
+                const matches = instanceId
+                    ? item?.instanceId === instanceId
+                    : String(item?.templateId || item?.id || "") === String(templateId || "");
+                if (!matches) return total;
+                return total + Math.max(1, Math.floor(Number(item?.quantity) || 1));
+            }, 0);
+        },
+
+        consumeItem(itemOrId, quantity = 1, source = "bag-system") {
+            const requested = Math.max(1, Math.floor(Number(quantity) || 1));
+            const stringId = typeof itemOrId === "string" ? itemOrId : null;
+            const instanceId = typeof itemOrId === "object"
+                ? itemOrId?.instanceId
+                : this.getItems().some((item) => item?.instanceId === stringId)
+                    ? stringId
+                    : null;
+            const templateId = typeof itemOrId === "object"
+                ? itemOrId?.templateId || itemOrId?.id
+                : instanceId
+                    ? null
+                    : itemOrId;
+            const matches = (item) => instanceId
+                ? item?.instanceId === instanceId
+                : String(item?.templateId || item?.id || "") === String(templateId || "");
+            const available = this.countItem(itemOrId);
+
+            if (!templateId && !instanceId) return false;
+            if (available < requested) {
+                Aethra.EventBus.emit("bag:item-consume-failed", {
+                    instanceId,
+                    templateId,
+                    requested,
+                    available,
+                    reason: "INSUFFICIENT_QUANTITY",
+                    source
+                });
+                return false;
+            }
+
+            let remaining = requested;
+            const consumed = [];
+            const nextBag = [];
+
+            this.getItems().forEach((item) => {
+                if (remaining <= 0 || !matches(item)) {
+                    nextBag.push(item);
+                    return;
+                }
+
+                const currentQuantity = Math.max(1, Math.floor(Number(item?.quantity) || 1));
+                const amount = Math.min(currentQuantity, remaining);
+                const nextQuantity = currentQuantity - amount;
+                remaining -= amount;
+                consumed.push({ item: { ...item }, quantity: amount });
+
+                if (nextQuantity > 0) {
+                    nextBag.push({ ...item, quantity: nextQuantity });
+                }
+            });
+
+            if (Aethra.StateManager?.set) {
+                Aethra.StateManager.set("hero.bag", nextBag, { source });
+            } else {
+                Aethra.GameState.hero.bag = nextBag;
+            }
+
+            const payload = {
+                instanceId,
+                templateId: templateId || consumed[0]?.item?.templateId || consumed[0]?.item?.id,
+                quantity: requested,
+                consumed,
+                source,
+                bagSize: nextBag.length
+            };
+            Aethra.EventBus.emit("bag:item-consumed", payload);
+            Aethra.EventBus.emit("inventory:changed", payload);
+            return payload;
+        },
+
         addItem(item, source = "bag-system") {
             if (!item || typeof item !== "object") return false;
 

@@ -61,6 +61,7 @@
         const queue = snapshot.queue;
         const opponent = queue?.opponent || null;
         const escrow = snapshot.escrow?.status === "locked" ? snapshot.escrow : null;
+        const wagersEnabled = snapshot.authority?.capabilities?.wagerEscrow === true;
         const bagItems = (Aethra.GameState.hero?.bag || []).filter((item) => item?.slot && !item.stackable && item.ownership?.bound !== true);
         return `
             <div class="coliseum-arena-grid">
@@ -84,9 +85,11 @@
                     <footer><span>Faixa inicial</span><strong>±140 RP · 82–122% de poder</strong><small>A faixa aumenta somente se a fila demorar.</small></footer>
                 </section>
 
-                <aside class="coliseum-wager ${escrow ? "is-locked" : ""}">
+                <aside class="coliseum-wager ${escrow ? "is-locked" : ""} ${wagersEnabled ? "" : "is-authority-locked"}">
                     <header><div><small>APOSTA 1×1</small><h3>${escrow ? "Itens em custódia" : "Arrisque uma relíquia"}</h3></div><span>${escrow ? "TRAVADA" : "OPCIONAL"}</span></header>
-                    ${escrow ? `
+                    ${!wagersEnabled ? `
+                        <div class="coliseum-search-empty"><span>◇</span><strong>Apostas aguardam o servidor autoritativo</strong><p>Itens, resultado e custódia não podem depender do save local. O Coliseu contra bots continua disponível como simulação.</p></div>
+                        <button type="button" disabled>Custódia indisponível no protótipo local</button>` : escrow ? `
                         <div class="coliseum-escrow">
                             <article><small>SUA APOSTA</small><strong>${esc(escrow.playerItem.name)}</strong><em>${esc(Aethra.ItemRankingSystem?.getItemRanking?.(escrow.playerItem)?.rankLabel || "Não ranqueado")}</em></article>
                             <b>↔</b>
@@ -244,7 +247,12 @@
                 }
                 if (action === "lock-wager") {
                     const result = Aethra.ColiseumSystem.createWager(uiState().selectedWagerItem, null, Aethra.ColiseumSystem.getSnapshot().queue?.opponent);
-                    if (!result.success) notice("A aposta foi recusada: verifique se a peça está livre e negociável.", "error");
+                    if (!result.success) {
+                        const message = result.reason === "SERVER_AUTHORITY_REQUIRED"
+                            ? "Apostas só serão liberadas com custódia autoritativa no servidor."
+                            : "A aposta foi recusada: verifique se a peça está livre e negociável.";
+                        notice(message, "error");
+                    }
                     else notice("Itens verificados e travados em custódia até o resultado do duelo.", "success");
                     return;
                 }

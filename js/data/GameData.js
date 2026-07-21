@@ -51,13 +51,27 @@
                 if (!source) return null;
 
                 /*
+                 * Muitos itens usam `icon` como glifo (⚔, ◇, ▧...). Esses
+                 * valores são conteúdo visual, não nomes de arquivo. Sem
+                 * esta guarda o renderer tentava baixar `/assets/icons/⚔`
+                 * e mascarava o erro com o fallback textual.
+                 */
+                const isInlineOrRemote = /^(https?:|data:|blob:)/i.test(source);
+                const isAssetPath = source.startsWith("assets/") ||
+                    source.startsWith("./assets/");
+                const hasImageExtension = /\.(?:avif|gif|jpe?g|png|svg|webp)$/i.test(source);
+
+                if (!isInlineOrRemote && !isAssetPath && !hasImageExtension) {
+                    return null;
+                }
+
+                /*
                  * Permite usar URL completa, data URL, blob URL ou caminho
                  * já iniciado em assets/.
                  */
                 if (
-                    /^(https?:|data:|blob:)/i.test(source) ||
-                    source.startsWith("assets/") ||
-                    source.startsWith("./assets/")
+                    isInlineOrRemote ||
+                    isAssetPath
                 ) {
                     return source;
                 }

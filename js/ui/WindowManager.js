@@ -470,8 +470,9 @@
             });
 
             this.registerWindowRenderer("npc-shop-view", {
-                containers: ["npc-shop-grid"],
-                render: () => renderNpcShop("npc-shop-grid")
+                containers: [],
+                clearOnClose: false,
+                render: () => Aethra.NpcShopUI?.render?.()
             });
 
             this.registerWindowRenderer("npc-sell-view", {

@@ -32,6 +32,70 @@
     const format = (value) => new Intl.NumberFormat("pt-BR").format(integer(value));
     const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
 
+    function combatSnapshot() {
+        return Aethra.CombatProjection?.getSnapshot?.() || null;
+    }
+
+    function timelineEntryToView(entry = {}) {
+        const outcomeLabels = {
+            hit: "Acertou",
+            miss: "Errou",
+            critical: "Crítico",
+            blocked: "Bloqueado",
+            "critical-blocked": "Crítico · bloqueado",
+            healed: "Curou",
+            used: "Usou",
+            started: "AO VIVO"
+        };
+        const tone = entry.kind === "healing"
+            ? "heal"
+            : entry.kind === "consumable"
+                ? (Number(entry.effects?.hp || 0) > 0 ? "heal" : "utility")
+                : entry.outcome === "hit"
+                    ? "damage"
+                    : entry.outcome || "system";
+        const effectDetail = entry.kind === "consumable"
+            ? [
+                Number(entry.effects?.hp || 0) > 0 ? `+${format(entry.effects.hp)} HP` : "",
+                Number(entry.effects?.mana || 0) > 0 ? `+${format(entry.effects.mana)} MP` : "",
+                Number(entry.effects?.energy || 0) > 0 ? `+${format(entry.effects.energy)} Vigor` : ""
+            ].filter(Boolean).join(" · ")
+            : "";
+        return {
+            id: entry.eventId,
+            battleId: entry.battleId,
+            round: entry.round,
+            actor: entry.actor,
+            actorName: entry.actorName,
+            targetName: entry.targetName,
+            ability: entry.ability,
+            outcome: outcomeLabels[entry.outcome] || entry.outcome || "Executou",
+            amount: integer(entry.amount, 0),
+            tone,
+            detail: entry.message || effectDetail || `${entry.actorName || "Combatente"} executou ${entry.ability || "uma ação"}.`,
+            createdAt: Date.parse(entry.occurredAt) || Date.now()
+        };
+    }
+
+    function syncProjection(snapshot = combatSnapshot()) {
+        if (!snapshot) return null;
+        runtime.history = (snapshot.timeline || []).map(timelineEntryToView);
+        runtime.currentBattleId = snapshot.battleId;
+        if (snapshot.lastOutcome) {
+            const victory = snapshot.lastOutcome.reason === "victory";
+            const defeat = snapshot.lastOutcome.reason === "defeat";
+            const enemyName = snapshot.lastOutcome.enemy?.name || "Criatura";
+            runtime.lastOutcome = {
+                tone: victory ? "victory" : defeat ? "defeat" : "system",
+                title: victory ? `${enemyName} derrotado` : defeat ? "Herói derrotado" : "Combate encerrado",
+                detail: victory
+                    ? `Vitória em ${format(snapshot.lastOutcome.round || 0)} rodada(s).`
+                    : `Motivo: ${String(snapshot.lastOutcome.reason || "encerrado").replaceAll("-", " ")}.`
+            };
+        }
+        return snapshot;
+    }
+
     function combatSpeed() {
         return [1, 2, 4].includes(Number(Aethra.SettingsManager?.getCombatSpeed?.()))
             ? Number(Aethra.SettingsManager.getCombatSpeed())
@@ -49,17 +113,43 @@
         return factor;
     }
 
+    function ensureCombatSpeedControls() {
+        const host = document.querySelector(".battle-panel--actionbar > .battle-panel__header")
+            || document.querySelector(".battle-stage-panel");
+        if (!host) return null;
+        let controls = host.querySelector(":scope > .battle-speed-controls");
+        if (!controls) {
+            controls = document.createElement("div");
+            controls.className = "battle-speed-controls";
+            controls.setAttribute("aria-label", "Velocidade do combate");
+            controls.innerHTML = [1, 2, 4].map((speed) => `
+                <button type="button" data-battle-speed="${speed}" aria-label="Combate em ${speed} vezes" aria-pressed="false">${speed}×</button>
+            `).join("");
+            host.appendChild(controls);
+        }
+        return controls;
+    }
+
     function heroIdentity() {
+        const projected = combatSnapshot()?.hero;
         const hero = Aethra.GameState.hero || {};
         return {
-            id: String(hero.id || "hero"),
-            name: String(hero.name || "Aethra")
+            id: String(projected?.id || hero.id || "hero"),
+            name: String(projected?.name || hero.name || "Aethra")
         };
     }
 
     // Recursos atuais vivem no herói. `stats` é apenas fallback/base e pode
     // permanecer com o valor máximo depois que o herói recebe dano.
     function liveHeroResources() {
+        const projected = combatSnapshot()?.hero?.resources;
+        if (projected) {
+            return {
+                hp: { current: projected.hp.current, maximum: projected.hp.maximum },
+                mana: { current: projected.mana.current, maximum: projected.mana.maximum },
+                vigor: { current: projected.energy.current, maximum: projected.energy.maximum }
+            };
+        }
         const hero = Aethra.GameState.hero || {};
         const stats = hero.stats || {};
         return {
@@ -79,9 +169,8 @@
     }
 
     function enemyIdentity() {
-        const battle = Aethra.GameState.battle || {};
-        const combat = Aethra.GameState.combat || {};
-        const enemy = battle.creature || combat.enemy || battle.lastEnemy || combat.lastEnemy || {};
+        const projected = combatSnapshot();
+        const enemy = projected?.enemy || projected?.lastEnemy || {};
         return {
             id: String(enemy.id || enemy.instanceId || "enemy"),
             name: String(enemy.name || "Criatura")
@@ -99,13 +188,13 @@
     }
 
     function currentRound(payload = {}) {
-        return Math.max(0, integer(payload.round ?? Aethra.GameState.battle?.round ?? Aethra.GameState.combat?.round, 0));
+        return Math.max(0, integer(payload.round ?? combatSnapshot()?.round, 0));
     }
 
     function pushEntry(entry = {}, options = {}) {
         const normalized = {
             id: entry.id || `exchange_${Date.now().toString(36)}_${++runtime.sequence}`,
-            battleId: entry.battleId || Aethra.GameState.battle?.battleId || Aethra.GameState.combat?.combatId || null,
+            battleId: entry.battleId || combatSnapshot()?.battleId || null,
             round: currentRound(entry),
             actor: entry.actor === "enemy" ? "enemy" : entry.actor === "system" ? "system" : "hero",
             actorName: String(entry.actorName || (entry.actor === "enemy" ? enemyIdentity().name : heroIdentity().name)),
@@ -282,7 +371,7 @@
             heroCard.querySelector(".combatant-card__resources")?.insertAdjacentHTML("afterend", recapHTML(latestFor("hero"), "hero"));
         }
 
-        const enemy = Aethra.GameState.battle?.creature || Aethra.GameState.combat?.enemy || null;
+        const enemy = combatSnapshot()?.enemy || null;
         if (combatActive && enemy) {
             const enemyHeaderLabel = enemyCard.querySelector(".combatant-card__header small");
             if (enemyHeaderLabel) enemyHeaderLabel.textContent = "ALVO · INIMIGO";
@@ -398,13 +487,25 @@
     }
 
     function renderEncounterEnhancements() {
+        const projection = syncProjection();
+        ensureCombatSpeedControls();
         const stage = document.querySelector(".battle-stage-panel");
         const arena = stage?.querySelector(".battle-card-arena");
         const versus = arena?.querySelector(".battle-versus");
         if (!stage || !arena || !versus) return false;
 
-        const battle = Aethra.GameState.battle || {};
-        const combat = Aethra.GameState.combat || {};
+        const battle = projection
+            ? {
+                isFighting: projection.active,
+                battleId: projection.battleId,
+                round: projection.round,
+                phase: projection.phase,
+                creature: projection.enemy
+            }
+            : (Aethra.GameState.battle || {});
+        const combat = projection
+            ? { isActive: projection.active, combatId: projection.battleId, round: projection.round, enemy: projection.enemy }
+            : (Aethra.GameState.combat || {});
         const hunt = Aethra.GameState.hunt || {};
         const enemy = (battle.isFighting ? battle.creature : null) || (combat.isActive ? combat.enemy : null) || null;
         const combatActive = Boolean((battle.isFighting || combat.isActive) && enemy);
@@ -449,83 +550,11 @@
         return true;
     }
 
-    const originalRenderBattleCards = Aethra.RenderEngine.renderBattleCards.bind(Aethra.RenderEngine);
-    Aethra.RenderEngine.renderBattleCards = function renderModernEncounterCards(...args) {
-        const result = originalRenderBattleCards(...args);
-        renderEncounterEnhancements();
-        return result;
-    };
-
-    const originalEnsureWorldLayout = Aethra.RenderEngine.ensureProgressionExplorationLayout?.bind(Aethra.RenderEngine);
-    if (originalEnsureWorldLayout) {
-        Aethra.RenderEngine.ensureProgressionExplorationLayout = function ensureModernEncounterLayout(...args) {
-            const result = originalEnsureWorldLayout(...args);
-            renderEncounterEnhancements();
-            return result;
-        };
-    }
-
-    Aethra.EventBus.on("BattleStarted", (payload = {}) => {
-        resetHistory(payload.battleId || null);
-        pushEntry({
-            battleId: payload.battleId,
-            round: 0,
-            actor: "system",
-            actorName: "Arena",
-            targetName: payload.creature?.name || "Criatura",
-            ability: "Encontro iniciado",
-            outcome: "AO VIVO",
-            tone: "system",
-            detail: `${heroIdentity().name} entrou em combate contra ${payload.creature?.name || "uma criatura"}.`
-        });
+    Aethra.EventBus.on("render:battle-cards", renderEncounterEnhancements);
+    Aethra.EventBus.on("render:all-completed", renderEncounterEnhancements);
+    Aethra.EventBus.on("combat:projection-changed", () => {
+        Aethra.RenderEngine.schedule("combat-projection", () => Aethra.RenderEngine.renderBattleCards());
     });
-
-    Aethra.EventBus.on("DamageDealt", (payload = {}) => addAttack({ ...payload, hit: true }));
-    Aethra.EventBus.on("AttackMissed", (payload = {}) => addAttack({ ...payload, hit: false }));
-    Aethra.EventBus.on("HealingReceived", addHealing);
-
-    ["HealthChanged", "ManaChanged", "EnergyChanged", "resourceChanged", "statsChanged"].forEach((eventName) => {
-        Aethra.EventBus.on(eventName, renderEncounterEnhancements);
-    });
-
-    Aethra.EventBus.on("SkillControllerActionExecuted", (payload = {}) => {
-        if (payload.action !== "utility") return;
-        pushEntry({
-            round: payload.round,
-            actor: "hero",
-            actorName: heroIdentity().name,
-            targetName: heroIdentity().name,
-            ability: payload.skill?.name || payload.result?.skillName || "Habilidade",
-            outcome: "Ativou",
-            tone: "utility",
-            detail: payload.result?.message || payload.message || "Efeito de suporte ativado."
-        });
-    });
-
-    Aethra.EventBus.on("BattleEnded", (payload = {}) => {
-        const victory = payload.reason === "victory";
-        const coliseum = payload.source === "coliseum" || payload.result?.source === "coliseum";
-        const creatureName = payload.creature?.name || enemyIdentity().name;
-        runtime.lastOutcome = {
-            tone: victory ? "victory" : payload.reason === "defeat" ? "defeat" : "system",
-            title: coliseum
-                ? (victory ? "Vitória no Coliseu" : "Derrota no Coliseu")
-                : victory
-                    ? `${creatureName} derrotado`
-                    : payload.reason === "defeat"
-                        ? "Herói derrotado"
-                        : "Combate encerrado",
-            detail: coliseum
-                ? (payload.result?.message || "Duelo ranqueado encerrado sem perda de XP ou Gold.")
-                : victory
-                    ? `Vitória em ${format(Aethra.GameState.battle?.round || 0)} rodada(s).`
-                    : `Motivo: ${String(payload.reason || "encerrado").replaceAll("-", " ")}.`
-        };
-        renderEncounterEnhancements();
-    });
-
-    Aethra.EventBus.on("game:reset", () => resetHistory(null));
-    Aethra.EventBus.on("save:loaded", () => resetHistory(null));
 
     document.addEventListener("click", (event) => {
         const speedControl = event.target.closest("[data-battle-speed]");
@@ -544,6 +573,7 @@
 
     Aethra.EncounterCombatHUD = {
         enhance: renderEncounterEnhancements,
+        ensureCombatSpeedControls,
         getHistory: () => runtime.history.map((entry) => ({ ...entry })),
         getHeroResources: liveHeroResources,
         pushEntry,

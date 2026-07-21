@@ -76,7 +76,7 @@ window.Aethra = window.Aethra || {};
         potion_mana: {
             id: "potion_mana",
             name: "Poção de Mana",
-            image: "potion_mana.png",
+            image: "potion_mana.svg",
             rarity: "Comum",
             type: "consumable",
             itemType: "CONSUMABLE",

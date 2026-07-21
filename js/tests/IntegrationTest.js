@@ -13,6 +13,7 @@
         "EventBus",
         "SaveManager",
         "SettingsManager",
+        "AuthorityGateway",
         "EconomyRNGManager",
         "MonsterCatalog",
         "HuntCatalog",
@@ -25,6 +26,8 @@
         "DisciplineSystem",
         "SkillController",
         "BattleSystem",
+        "CombatProjection",
+        "ConsumableSystem",
         "ColiseumSystem",
         "HuntSystem",
         "ItemSystem",
@@ -39,6 +42,9 @@
         "QuestSystem",
         "DungeonSystem",
         "MarketplaceSystem",
+        "NpcShopUI",
+        "TileMapCanvas",
+        "IdleLoopSystem",
         "RenderEngine",
         "UI_Renderer",
         "UIManager",
@@ -188,6 +194,17 @@
                 );
             });
 
+            const initialCombatProjection = Aethra.CombatProjection?.getSnapshot?.();
+            const legacyCombatView = Aethra.CombatSystem?.getSnapshot?.();
+            checks.push(
+                createCheck(
+                    "Combate expõe uma única projeção autoritativa",
+                    initialCombatProjection?.source === "BattleSystem"
+                        && legacyCombatView?.compatibilityFacade === true,
+                    `${initialCombatProjection?.source || "sem autoridade"} · legado ${legacyCombatView?.compatibilityFacade ? "somente leitura" : "independente"}`
+                )
+            );
+
             const earlyGameCoverage = Aethra.EarlyGameItemCatalog?.auditCoverage?.();
             const earlyGameSummary = Aethra.EarlyGameItemCatalog?.summary || {};
             checks.push(
@@ -240,6 +257,16 @@
                         && Number(coliseumSnapshot?.profile?.combatPower) > 0
                         && Number(strongerExpectedScore) < 0.5,
                     `#${coliseumSnapshot?.player?.globalRank || 0} · ${coliseumSnapshot?.profile?.rating || 0} RP · ${coliseumSnapshot?.profile?.combatPower || 0} poder`
+                )
+            );
+            const localWagerGate = Aethra.ColiseumSystem?.createWager?.("integration-nonexistent-item");
+            checks.push(
+                createCheck(
+                    "Cliente local não possui autoridade sobre apostas",
+                    coliseumSnapshot?.authority?.serverAuthoritative === false
+                        && coliseumSnapshot?.authority?.competitive === false
+                        && localWagerGate?.reason === "SERVER_AUTHORITY_REQUIRED",
+                    `${coliseumSnapshot?.authority?.mode || "sem gateway"} · ${localWagerGate?.reason || "sem bloqueio"}`
                 )
             );
 
@@ -803,29 +830,37 @@
                     }
                 };
                 Aethra.GameState.combat = { ...previousCombatState, isActive: false, enemy: null };
-                Aethra.EncounterCombatHUD?.resetHistory?.("integration_combat_hud");
-                Aethra.EncounterCombatHUD?.pushEntry?.({
+                Aethra.CombatProjection?.reset?.("integration-combat-hud");
+                Aethra.EventBus.emit("battle:started", {
+                    battleId: "integration_combat_hud",
+                    creature: Aethra.GameState.battle.creature
+                });
+                Aethra.EventBus.emit("battle:damage-dealt", {
                     battleId: "integration_combat_hud",
                     round: 3,
-                    actor: "hero",
-                    actorName: "Aethra",
+                    side: "hero",
+                    attacker: "hero",
+                    attackerName: "Aethra",
+                    target: "integration_target",
                     targetName: "Alvo de Teste",
-                    ability: "Golpe Pesado",
-                    outcome: "Crítico",
-                    amount: 16,
-                    tone: "critical"
-                }, { render: false });
-                Aethra.EncounterCombatHUD?.pushEntry?.({
+                    skillName: "Golpe Pesado",
+                    hit: true,
+                    isCrit: true,
+                    amount: 16
+                });
+                Aethra.EventBus.emit("battle:attack-missed", {
                     battleId: "integration_combat_hud",
                     round: 3,
-                    actor: "enemy",
+                    side: "creature",
+                    attacker: "integration_target",
                     actorName: "Alvo de Teste",
+                    attackerName: "Alvo de Teste",
+                    target: "hero",
                     targetName: "Aethra",
-                    ability: "Mordida",
-                    outcome: "Errou",
-                    amount: 0,
-                    tone: "miss"
-                }, { render: false });
+                    skillName: "Mordida",
+                    hit: false,
+                    amount: 0
+                });
                 Aethra.RenderEngine?.renderBattleCards?.();
 
                 const combatTimeline = document.querySelector(".encounter-exchange__timeline");
@@ -883,7 +918,7 @@
                 heroForResourceTest.energy = previousHeroResources.energy;
                 heroForResourceTest.maxEnergy = previousHeroResources.maxEnergy;
                 heroForResourceTest.stats = previousHeroResources.stats;
-                Aethra.EncounterCombatHUD?.resetHistory?.(null);
+                Aethra.CombatProjection?.reset?.("integration-combat-hud-restored");
                 Aethra.RenderEngine?.renderBattleCards?.();
 
                 const vanguardPreset = Aethra.CharacterBuildSystem?.archetypes?.vanguard;
@@ -905,6 +940,179 @@
                             && starterBar?.slots?.includes("precise_strike")
                             && Number(Aethra.GameState.hero?.disciplines?.sword?.level) >= 4,
                         `${equippedStarter?.name || "sem arma"} · ${starterBar?.slots?.filter(Boolean).join(", ") || "sem técnicas"}`
+                    )
+                );
+
+                const starterChest = Aethra.GameState.playerEquipment?.chest;
+                const starterOffhand = Aethra.GameState.playerEquipment?.offhand;
+                const starterSupplies = Aethra.GameState.hero?.bag || [];
+                const healthStarter = starterSupplies.find((item) => item.templateId === "potion_health");
+                const manaStarter = starterSupplies.find((item) => item.templateId === "potion_mana");
+                checks.push(
+                    createCheck(
+                        "Kit inicial usa instâncias oficiais e vinculadas",
+                        Boolean(equippedStarter?.instanceId)
+                            && Boolean(starterChest?.instanceId)
+                            && Boolean(starterOffhand?.instanceId)
+                            && healthStarter?.quantity === 5
+                            && manaStarter?.quantity === 5
+                            && healthStarter?.ownership?.bound === true
+                            && manaStarter?.ownership?.bound === true,
+                        `${equippedStarter?.name || "sem arma"} · ${starterChest?.name || "sem armadura"} · ${starterOffhand?.name || "sem escudo"} · ${starterSupplies.length} pilhas`
+                    )
+                );
+
+                const consumableCycleBefore = {
+                    hero: JSON.parse(JSON.stringify(Aethra.GameState.hero || {})),
+                    hunt: JSON.parse(JSON.stringify(Aethra.GameState.hunt || {})),
+                    battle: JSON.parse(JSON.stringify(Aethra.GameState.battle || {})),
+                    combat: JSON.parse(JSON.stringify(Aethra.GameState.combat || {}))
+                };
+                const healthQuantityBefore = Aethra.BagSystem?.countItem?.(healthStarter) || 0;
+                Aethra.GameState.hero.maxHp = 50;
+                Aethra.GameState.hero.hp = 10;
+                Aethra.GameState.hero.stats = Aethra.GameState.hero.stats || {};
+                Aethra.GameState.hero.stats.maxHp = 50;
+                Aethra.GameState.hero.stats.hp = 10;
+                Aethra.GameState.hunt = Aethra.GameState.hunt || {};
+                Object.assign(Aethra.GameState.hunt, {
+                    isActive: true,
+                    huntId: "integration-supply-hunt",
+                    supplyCost: 0,
+                    supplyBreakdown: {}
+                });
+                Object.assign(Aethra.GameState.battle, {
+                    isFighting: true,
+                    battleId: "integration-auto-supply-battle",
+                    round: 1,
+                    phase: "hero-action",
+                    creature: {
+                        id: "integration-supply-target",
+                        name: "Alvo de Supply",
+                        hp: 20,
+                        maxHp: 20,
+                        damage: 1,
+                        stats: {}
+                    }
+                });
+                Aethra.BattleSystem.isFighting = true;
+                Aethra.CombatProjection?.reset?.("integration-auto-supply");
+                const usedSupply = Aethra.ConsumableSystem?.tryAutoUse?.({
+                    source: "integration-real-supply"
+                });
+                const healthQuantityAfter = Aethra.BagSystem?.countItem?.({
+                    instanceId: healthStarter?.instanceId,
+                    templateId: healthStarter?.templateId
+                }) || 0;
+                const projectedAfterSupply = Aethra.CombatProjection?.getSnapshot?.();
+                const recordedSupply = Aethra.GameState.hunt?.supplyBreakdown?.potion_health;
+                checks.push(
+                    createCheck(
+                        "Potion automática fecha estoque, ação, projeção e custo da Hunt",
+                        usedSupply?.used === true
+                            && usedSupply?.automatic === true
+                            && usedSupply?.consumesAction === true
+                            && healthQuantityAfter === healthQuantityBefore - 1
+                            && Number(Aethra.GameState.hero.hp) === 30
+                            && Number(projectedAfterSupply?.hero?.resources?.hp?.current) === 30
+                            && Number(recordedSupply?.quantity) === 1
+                            && Number(recordedSupply?.totalCost) === 10
+                            && projectedAfterSupply?.timeline?.[0]?.kind === "consumable",
+                        `HP ${Aethra.GameState.hero.hp}/50 · potion ${healthQuantityBefore}→${healthQuantityAfter} · ${recordedSupply?.totalCost || 0} G`
+                    )
+                );
+                const remainingHealthStack = Aethra.GameState.hero.bag.find((item) => item.instanceId === healthStarter?.instanceId);
+                const failedConsumptionCount = Aethra.BagSystem?.countItem?.(remainingHealthStack) || 0;
+                const failedConsumption = Aethra.BagSystem?.consumeItem?.(
+                    remainingHealthStack,
+                    failedConsumptionCount + 1,
+                    "integration-atomic-consume"
+                );
+                checks.push(
+                    createCheck(
+                        "Consumo de stack é transacional quando o estoque é insuficiente",
+                        failedConsumption === false
+                            && Aethra.BagSystem?.countItem?.(remainingHealthStack) === failedConsumptionCount,
+                        `${failedConsumptionCount} unidade(s) preservada(s)`
+                    )
+                );
+                restoreEnumerableState(Aethra.GameState.hero, consumableCycleBefore.hero);
+                restoreEnumerableState(Aethra.GameState.hunt, consumableCycleBefore.hunt);
+                restoreEnumerableState(Aethra.GameState.battle, consumableCycleBefore.battle);
+                restoreEnumerableState(Aethra.GameState.combat, consumableCycleBefore.combat);
+                Aethra.BattleSystem.isFighting = Boolean(Aethra.GameState.battle.isFighting);
+                Aethra.CombatProjection?.reset?.("integration-supply-restored");
+                Aethra.SkillController?.bindPlayer?.(Aethra.GameState.hero);
+
+                const protectedSellables = Aethra.NpcShopUI?.getSellableItems?.() || [];
+                const shopGoldBefore = Number(Aethra.GameState.hero?.gold || 0);
+                const potionPurchase = Aethra.MarketplaceSystem?.buyItem?.("potion_health", 3);
+                const purchasedPotion = potionPurchase?.items?.[0];
+                const potionSellback = purchasedPotion
+                    ? Aethra.MarketplaceSystem?.sellBack?.(purchasedPotion.instanceId)
+                    : null;
+                checks.push(
+                    createCheck(
+                        "Loja preserva kit inicial e negocia stacks pelo valor total",
+                        protectedSellables.length === 0
+                            && potionPurchase?.items?.length === 1
+                            && purchasedPotion?.quantity === 3
+                            && potionPurchase?.totalPrice === 30
+                            && potionSellback?.salePrice === 15
+                            && Number(Aethra.GameState.hero?.gold || 0) === shopGoldBefore - 15,
+                        `${protectedSellables.length} item(ns) iniciais vendáveis · compra ${potionPurchase?.totalPrice || 0} G · devolução ${potionSellback?.salePrice || 0} G`
+                    )
+                );
+
+                const idleGoldBefore = Number(Aethra.GameState.hero?.gold || 0);
+                const idleLoot = Aethra.ItemSystem?.generateItem?.("wolf_hide", {
+                    source: "hunt-system",
+                    quantity: 2,
+                    rarity: "common",
+                    affixes: []
+                });
+                if (idleLoot) Aethra.BagSystem?.addItems?.([idleLoot], "integration-idle-loot");
+                const idleLootStillStored = idleLoot?.instanceId
+                    ? Aethra.BagSystem?.hasItem?.(idleLoot.instanceId)
+                    : true;
+                checks.push(
+                    createCheck(
+                        "Loop idle vende somente loot oficial sem gerar ouro aleatório",
+                        Boolean(idleLoot)
+                            && idleLootStillStored === false
+                            && Number(Aethra.GameState.hero?.gold || 0) === idleGoldBefore + Number(idleLoot.price || 0) * 2,
+                        idleLoot
+                            ? `pilha ×${idleLoot.quantity} removida · +${Number(Aethra.GameState.hero?.gold || 0) - idleGoldBefore} G`
+                            : "loot de teste não gerado"
+                    )
+                );
+
+                const visualGoldBefore = Number(Aethra.GameState.hero?.gold || 0);
+                const visualXpBefore = Number(Aethra.GameState.hero?.xpTotal || 0);
+                Aethra.TileMapCanvas?.resize?.();
+                const tileMapViewport = Aethra.TileMapCanvas?.getSnapshot?.().viewport;
+                const tileMapCanvas = document.getElementById("tilemap-canvas");
+                const tileMapParent = tileMapCanvas?.parentElement;
+                const visibleMapArena = Number(tileMapParent?.clientWidth) > 0
+                    && Number(tileMapParent?.clientHeight) > 0;
+                checks.push(
+                    createCheck(
+                        "Mapa 2D cobre toda a arena sem distorcer os tiles",
+                        Boolean(tileMapCanvas && tileMapParent)
+                            && (!visibleMapArena || Math.abs(Number(tileMapCanvas.width) - Number(tileMapParent.clientWidth)) <= 1)
+                            && (!visibleMapArena || Math.abs(Number(tileMapCanvas.height) - Number(tileMapParent.clientHeight)) <= 1)
+                            && Number(tileMapViewport?.coveredWidth) >= Number(tileMapCanvas.width)
+                            && Number(tileMapViewport?.coveredHeight) >= Number(tileMapCanvas.height),
+                        `${tileMapCanvas?.width || 0}×${tileMapCanvas?.height || 0} px · arena ${tileMapParent?.clientWidth || 0}×${tileMapParent?.clientHeight || 0} · cobertura ${tileMapViewport?.coveredWidth || 0}×${tileMapViewport?.coveredHeight || 0}`
+                    )
+                );
+                Aethra.TileMapCanvas?.triggerAttack?.({ side: "hero", hit: true, amount: 5, skillName: "Teste visual" });
+                checks.push(
+                    createCheck(
+                        "Mapa 2D não possui economia ou combate paralelo",
+                        Number(Aethra.GameState.hero?.gold || 0) === visualGoldBefore
+                            && Number(Aethra.GameState.hero?.xpTotal || 0) === visualXpBefore,
+                        `Gold ${visualGoldBefore} · XP ${visualXpBefore}, sem mutação visual`
                     )
                 );
 

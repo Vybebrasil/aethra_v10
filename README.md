@@ -22,6 +22,18 @@ Abra `index.html` diretamente no navegador.
 
 O `index.html` é a versão principal. Os arquivos de teste não são carregados automaticamente.
 
+## Padrão de engenharia
+
+Toda alteração deve seguir as regras de `AGENTS.md` e o contrato descrito em
+`docs/ENGINEERING_STANDARD.md`. Antes de entregar uma mudança, execute:
+
+```bash
+node scripts/verify-project.mjs
+```
+
+Depois abra `tests/integration.html` e confirme 100% das verificações, sem erros
+de console ou assets ausentes.
+
 ## World Loop e progressão
 
 A versão atual inclui paperdoll, backpack em slots, skills de combate/coleta/mundo, eventos de exploração e Hunt Analyzer em tempo real. Consulte `WORLD_LOOP_PROGRESSION.md` para detalhes.

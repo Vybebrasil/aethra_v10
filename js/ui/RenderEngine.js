@@ -1266,8 +1266,37 @@
         renderBattleCards() {
             const hero = Aethra.GameState.hero || {};
             const stats = hero.stats || {};
-            const battle = Aethra.GameState.battle || {};
-            const combat = Aethra.GameState.combat || {};
+            const combatProjection = Aethra.CombatProjection?.getSnapshot?.() || null;
+            const battleState = Aethra.GameState.battle || {};
+            const combatState = Aethra.GameState.combat || {};
+            const battle = combatProjection
+                ? {
+                    ...battleState,
+                    isFighting: combatProjection.active,
+                    battleId: combatProjection.battleId,
+                    round: combatProjection.round,
+                    phase: combatProjection.phase,
+                    creature: combatProjection.enemy,
+                    lastEnemy: combatProjection.lastEnemy,
+                    lastResult: combatProjection.lastResult,
+                    lastMessage: combatProjection.lastMessage,
+                    lastMessageColor: combatProjection.lastMessageColor,
+                    lastHeroAction: combatProjection.hero?.lastAction || null
+                }
+                : battleState;
+            const combat = combatProjection
+                ? {
+                    ...combatState,
+                    isActive: combatProjection.active,
+                    combatId: combatProjection.battleId,
+                    round: combatProjection.round,
+                    enemy: combatProjection.enemy,
+                    lastEnemy: combatProjection.lastEnemy,
+                    lastResult: combatProjection.lastResult,
+                    lastMessage: combatProjection.lastMessage,
+                    lastMessageColor: combatProjection.lastMessageColor
+                }
+                : combatState;
             const hunt = Aethra.GameState.hunt || {};
             const exploration = Aethra.GameState.exploration || {};
             const pendingEvent = exploration.pendingEvent || null;
@@ -1311,12 +1340,12 @@
                     : '<span>VS</span><small>POR RODADAS</small>';
             }
 
-            const heroHp = Number(hero.hp ?? stats.hp ?? 0);
-            const heroMaxHp = Math.max(1, Number(hero.maxHp ?? stats.maxHp ?? heroHp ?? 1));
-            const heroMana = Number(hero.mana ?? stats.mana ?? 0);
-            const heroMaxMana = Math.max(1, Number(hero.maxMana ?? stats.maxMana ?? heroMana ?? 1));
-            const heroVigor = Number(hero.vigor ?? stats.vigor ?? hero.energy ?? stats.energy ?? 0);
-            const heroMaxVigor = Math.max(1, Number(hero.maxVigor ?? stats.maxVigor ?? hero.maxEnergy ?? stats.maxEnergy ?? heroVigor ?? 1));
+            const heroHp = Number(combatProjection?.hero?.resources?.hp?.current ?? hero.hp ?? stats.hp ?? 0);
+            const heroMaxHp = Math.max(1, Number(combatProjection?.hero?.resources?.hp?.maximum ?? hero.maxHp ?? stats.maxHp ?? heroHp ?? 1));
+            const heroMana = Number(combatProjection?.hero?.resources?.mana?.current ?? hero.mana ?? stats.mana ?? 0);
+            const heroMaxMana = Math.max(1, Number(combatProjection?.hero?.resources?.mana?.maximum ?? hero.maxMana ?? stats.maxMana ?? heroMana ?? 1));
+            const heroVigor = Number(combatProjection?.hero?.resources?.energy?.current ?? hero.vigor ?? stats.vigor ?? hero.energy ?? stats.energy ?? 0);
+            const heroMaxVigor = Math.max(1, Number(combatProjection?.hero?.resources?.energy?.maximum ?? hero.maxVigor ?? stats.maxVigor ?? hero.maxEnergy ?? stats.maxEnergy ?? heroVigor ?? 1));
             const heroSprite = resolveSpritePath(hero, 'assets/entities/player_idle.png');
             const currentHuntName = Aethra.HuntSystem?.hunts?.[hunt.huntId]?.name || 'Sem hunt ativa';
             const heroStateTitle = combatActive
@@ -1632,6 +1661,11 @@
                 strip.style.color = color || '';
             }
 
+            Aethra.EventBus.emit("render:battle-cards", {
+                projection: combatProjection,
+                active: combatActive,
+                hasEventCard
+            });
             return true;
         },
 
@@ -3091,6 +3125,14 @@
                 });
 
                 card.addEventListener("dblclick", () => {
+                    if (String(item.itemType || item.type || "").toLowerCase() === "consumable") {
+                        Aethra.EventBus.emit("consumable:use-requested", {
+                            instanceId: item.instanceId,
+                            itemId: item.templateId || item.id,
+                            source: "inventory"
+                        });
+                        return;
+                    }
                     if (
                         item.instanceId &&
                         item.slot &&
@@ -4489,6 +4531,14 @@
                     this.renderInventoryDetails?.(item);
                 });
                 slot.addEventListener("dblclick", () => {
+                    if (String(item.itemType || item.type || "").toLowerCase() === "consumable") {
+                        Aethra.EventBus.emit("consumable:use-requested", {
+                            instanceId: item.instanceId,
+                            itemId: item.templateId || item.id,
+                            source: "hero-backpack"
+                        });
+                        return;
+                    }
                     if (item.slot && Aethra.EquipSystem?.canEquip?.(item, item.slot)) {
                         Aethra.EquipSystem.equip(item.instanceId, item.slot);
                     }

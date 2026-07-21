@@ -663,7 +663,11 @@ window.Aethra = window.Aethra || {};
                 maxStack: template.maxStack || 1,
                 effect: template.effect ?? null,
                 healAmount:
-                    Number(template.healAmount ?? template.effect) || 0
+                    Number(template.healAmount ?? template.effect) || 0,
+                manaAmount:
+                    Number(template.manaAmount) || 0,
+                energyAmount:
+                    Number(template.energyAmount) || 0
             };
 
             const finalStats =

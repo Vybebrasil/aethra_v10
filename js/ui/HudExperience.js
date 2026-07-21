@@ -236,7 +236,7 @@
                     <header><strong>Eventos da região</strong><span>mais recente primeiro</span></header>
                     <div class="journey-stream__list">${entries.length ? entries.map((e) => `<article class="journey-entry is-${esc(e.tone || 'system')}"><span>${esc(e.icon || '•')}</span><div><strong>${esc(e.title || 'Evento')}</strong><small>${esc(e.detail || '')}</small></div><time>${new Date(e.createdAt || Date.now()).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</time></article>`).join('') : `<div class="journey-stream__empty">${esc(emptyMessage)}</div>`}</div>
                 </section>
-                <aside class="journey-stats"><span><small>Eventos</small><strong>${fmt(totals.events)}</strong></span><span><small>Recursos</small><strong>${fmt(totals.resources)}</strong></span><span><small>Skill XP</small><strong>${fmt(totals.skillXP)}</strong></span><span><small>Raros</small><strong>${fmt(totals.rareEvents)}</strong></span></aside>
+                <aside class="journey-stats expedition-live-stats"><span><small>Eventos</small><strong>${fmt(totals.events)}</strong></span><span><small>Recursos</small><strong>${fmt(totals.resources)}</strong></span><span><small>Skill XP</small><strong>${fmt(totals.skillXP)}</strong></span><span><small>Raros</small><strong>${fmt(totals.rareEvents)}</strong></span></aside>
             </div>`;
         root.querySelector('[data-resolve-exploration]')?.addEventListener('click', (event) => Aethra.ExplorationSystem?.resolveEvent?.(event.currentTarget.dataset.resolveExploration, { manual: true }));
         root.querySelector('[data-open-hunt-map]')?.addEventListener('click', () => Aethra.openHuntWorldMap?.());

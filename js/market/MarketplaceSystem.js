@@ -158,7 +158,16 @@
             id: templateId,
             name: template.name || templateId,
             type: template.type || "misc",
+            itemType: String(template.itemType || template.type || "misc").toUpperCase(),
             slot: template.slot || null,
+            icon: template.icon || template.image || null,
+            image: template.image || template.icon || null,
+            description: template.description || "",
+            quantity: template.stackable
+                ? Math.max(1, Math.floor(Number(metadata.quantity) || 1))
+                : 1,
+            stackable: Boolean(template.stackable),
+            maxStack: Number(template.maxStack || 1),
             quality: 50,
             potential: 50,
             rarity: template.rarity || "Comum",
@@ -175,6 +184,10 @@
             },
             market: {
                 ...metadata
+            },
+            origin: {
+                source: metadata.source || "marketplace",
+                createdAt: new Date().toISOString()
             },
             createdAt: Date.now()
         };
@@ -196,7 +209,8 @@
             item = Aethra.ItemSystem.generateItem(templateId, {
                 source: metadata.source || "marketplace",
                 qualityMin: metadata.qualityMin,
-                qualityMax: metadata.qualityMax
+                qualityMax: metadata.qualityMax,
+                quantity: metadata.quantity
             });
         } else if (
             Aethra.ItemSystem &&
@@ -219,8 +233,12 @@
 
     function addItemToBag(item, source) {
         const hero = ensureHeroState();
+        const result = Aethra.BagSystem?.addItems
+            ? Aethra.BagSystem.addItems([item], source)
+            : null;
 
-        hero.bag.push(item);
+        if (result && result.added.length === 0) return false;
+        if (!result) hero.bag.push(item);
 
         const payload = {
             item: clone(item),
@@ -235,6 +253,7 @@
             source,
             bag: clone(hero.bag)
         });
+        return true;
     }
 
     function removeItemFromBag(index, source) {
@@ -244,14 +263,21 @@
             return null;
         }
 
-        const [item] = hero.bag.splice(index, 1);
+        const candidate = hero.bag[index];
+        const item = candidate?.instanceId && Aethra.BagSystem?.removeItem
+            ? Aethra.BagSystem.removeItem(candidate.instanceId, source)
+            : hero.bag.splice(index, 1)[0];
+
+        if (!item) return null;
 
         const payload = {
             item: clone(item),
             source
         };
 
-        Aethra.EventBus.emit("inventory:item-removed", payload);
+        if (!candidate?.instanceId || !Aethra.BagSystem?.removeItem) {
+            Aethra.EventBus.emit("inventory:item-removed", payload);
+        }
         Aethra.EventBus.emit("inventory:changed", {
             reason: "item-removed",
             source,
@@ -383,8 +409,9 @@
             }
 
             const purchasedItems = [];
+            const instancesToCreate = template.stackable ? 1 : amount;
 
-            for (let index = 0; index < amount; index += 1) {
+            for (let index = 0; index < instancesToCreate; index += 1) {
                 const item = createItemInstance(itemId, {
                     source: "npc-shop",
                     purchaseOrigin: "npc-shop",
@@ -392,7 +419,8 @@
                     purchasedAt: Date.now(),
                     sellBackEligible: true,
                     sellBackRate: DEFAULT_SELLBACK_RATE,
-                    premium: false
+                    premium: false,
+                    quantity: template.stackable ? amount : 1
                 });
 
                 if (!item) {
@@ -447,6 +475,9 @@
                 origin === "loot" ||
                 origin === "enemy-drop" ||
                 origin === "hunt-loot" ||
+                origin === "hunt-system" ||
+                origin === "monster-economy" ||
+                origin === "battle-hunt" ||
                 item.type === "loot" ||
                 item.type === "material";
 
@@ -457,7 +488,8 @@
                 });
             }
 
-            const salePrice = getItemBasePrice(item);
+            const quantity = Math.max(1, Math.floor(Number(item.quantity) || 1));
+            const salePrice = getItemBasePrice(item) * quantity;
 
             if (salePrice <= 0) {
                 return this.fail("sellLoot", "invalid-price", {
@@ -476,6 +508,7 @@
             const payload = {
                 item: clone(soldItem),
                 salePrice,
+                quantity,
                 rate: 1
             };
 
@@ -521,7 +554,7 @@
                 });
             }
 
-            const purchasePrice = Math.max(
+            const unitPurchasePrice = Math.max(
                 0,
                 Number(
                     marketData.purchasePrice ||
@@ -540,6 +573,8 @@
                 )
             );
 
+            const quantity = Math.max(1, Math.floor(Number(item.quantity) || 1));
+            const purchasePrice = unitPurchasePrice * quantity;
             const salePrice = Math.floor(purchasePrice * rate);
 
             const soldItem = removeItemFromBag(found.index, "npc-sellback");
@@ -552,8 +587,10 @@
 
             const payload = {
                 item: clone(soldItem),
+                unitPurchasePrice,
                 purchasePrice,
                 salePrice,
+                quantity,
                 rate
             };
 

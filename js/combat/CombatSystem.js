@@ -181,6 +181,7 @@ window.Aethra = window.Aethra || {};
             }
 
             this.randomSource = fn;
+            Aethra.BattleSystem?.setRandomSource?.(fn);
         },
 
         setTurnDelay(milliseconds) {
@@ -487,6 +488,12 @@ window.Aethra = window.Aethra || {};
         },
 
         startCombat(enemy, options = {}) {
+            if (Aethra.BattleSystem?.startCombat) {
+                return Aethra.BattleSystem.startCombat(enemy, {
+                    ...options,
+                    source: options.source || "combat-system-compat"
+                });
+            }
             this.ensureState();
             this.clearTimer();
 
@@ -550,6 +557,9 @@ window.Aethra = window.Aethra || {};
         },
 
         processTurn() {
+            if (Aethra.BattleSystem?.isFighting) {
+                return Aethra.BattleSystem.processCombat();
+            }
             this.ensureState();
 
             const combat = Aethra.GameState.combat;
@@ -618,6 +628,9 @@ window.Aethra = window.Aethra || {};
         },
 
         heroAttack() {
+            if (Aethra.BattleSystem?.isFighting) {
+                return Aethra.BattleSystem.queuePrimaryAttack("left");
+            }
             this.ensureState();
             if (!Aethra.GameState.combat.isActive) return null;
 
@@ -626,6 +639,7 @@ window.Aethra = window.Aethra || {};
         },
 
         enemyAttack() {
+            if (Aethra.BattleSystem) return false;
             this.ensureState();
             if (!Aethra.GameState.combat.isActive) return null;
 
@@ -685,6 +699,9 @@ window.Aethra = window.Aethra || {};
         },
 
         stopCombat(reason = "manual", extra = {}) {
+            if (Aethra.BattleSystem?.isFighting) {
+                return Aethra.BattleSystem.stopCombat(reason, extra);
+            }
             this.ensureState();
             this.clearTimer();
 
@@ -725,6 +742,23 @@ window.Aethra = window.Aethra || {};
         },
 
         getSnapshot() {
+            const projection = Aethra.CombatProjection?.getSnapshot?.();
+            if (projection) {
+                return {
+                    isActive: projection.active,
+                    combatId: projection.battleId,
+                    round: projection.round,
+                    turn: "automatic",
+                    hero: clone(projection.hero),
+                    enemy: clone(projection.enemy),
+                    lastEnemy: clone(projection.lastEnemy),
+                    lastResult: clone(projection.lastResult),
+                    startedAt: projection.startedAt,
+                    endedAt: projection.endedAt,
+                    source: projection.battleSource || null,
+                    compatibilityFacade: true
+                };
+            }
             this.ensureState();
 
             const combat = Aethra.GameState.combat;

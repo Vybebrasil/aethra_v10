@@ -2,8 +2,8 @@
 (function (Aethra) {
     "use strict";
 
-    if (!Aethra?.GameState || !Aethra?.EventBus || !Aethra?.BattleSystem) {
-        throw new Error("ColiseumSystem requer GameState, EventBus e BattleSystem.");
+    if (!Aethra?.GameState || !Aethra?.EventBus || !Aethra?.BattleSystem || !Aethra?.AuthorityGateway) {
+        throw new Error("ColiseumSystem requer GameState, EventBus, BattleSystem e AuthorityGateway.");
     }
 
     const clone = (value) => JSON.parse(JSON.stringify(value));
@@ -114,12 +114,30 @@
         init() {
             if (this.initialized) return this.getSnapshot();
             this.ensureState();
+            this.recoverUnsafeLocalEscrow();
             this.seedLeaderboard();
             this.bindEvents();
             this.rebuildLeaderboard();
             this.initialized = true;
             Aethra.EventBus.emit("coliseum:ready", this.getSnapshot());
             return this.getSnapshot();
+        },
+
+        recoverUnsafeLocalEscrow() {
+            const state = this.ensureState();
+            const escrow = state.escrow;
+            if (!escrow || escrow.status !== "locked" || Aethra.AuthorityGateway.can("wagerEscrow")) {
+                return false;
+            }
+            const playerItem = escrow.playerItem;
+            if (playerItem?.instanceId && !Aethra.BagSystem?.hasItem?.(playerItem.instanceId)) {
+                Aethra.BagSystem?.addItem?.(playerItem, "authority-escrow-recovery");
+            }
+            escrow.status = "cancelled-authority-required";
+            escrow.settledAt = nowISO();
+            if (state.activeMatch?.wagerId === escrow.id) state.activeMatch.wagerId = null;
+            Aethra.EventBus.emit("coliseum:wager-recovered", clone(escrow));
+            return clone(escrow);
         },
 
         bindEvents() {
@@ -459,31 +477,17 @@
             return clone(historyEntry);
         },
 
-        createWager(playerItemInstanceId, opponentItem, opponent = null) {
-            const state = this.ensureState();
-            if (state.escrow?.status === "locked") return { success: false, reason: "escrow-active" };
-            const bag = Aethra.GameState.hero?.bag || [];
-            const playerItem = bag.find((entry) => entry?.instanceId === playerItemInstanceId);
-            if (!playerItem) return { success: false, reason: "item-not-in-bag" };
-            if (playerItem.stackable || playerItem.ownership?.tradeable === false || playerItem.ownership?.bound) {
-                return { success: false, reason: "item-not-wagerable" };
+        createWager(playerItemInstanceId) {
+            const authority = Aethra.AuthorityGateway.guard("wagerEscrow", {
+                operation: "create-wager",
+                playerItemInstanceId
+            });
+            if (!authority.allowed) {
+                return { success: false, reason: authority.reason, authority: authority.authority };
             }
-            const rivalItem = opponentItem || this.createOpponentWagerItem(opponent || state.queue?.opponent);
-            if (!rivalItem) return { success: false, reason: "opponent-item-missing" };
-            const removed = Aethra.BagSystem?.removeItem?.(playerItemInstanceId, "coliseum-escrow");
-            if (!removed) return { success: false, reason: "escrow-lock-failed" };
-            state.escrow = {
-                id: `escrow_${Date.now().toString(36)}`,
-                status: "locked",
-                playerItem: clone(removed),
-                opponentItem: clone(rivalItem),
-                opponentId: opponent?.id || state.queue?.opponent?.id || null,
-                lockedAt: nowISO(),
-                settledAt: null,
-                winner: null
-            };
-            Aethra.EventBus.emit("coliseum:wager-locked", clone(state.escrow));
-            return { success: true, escrow: clone(state.escrow) };
+            // A mutação local permanece proibida mesmo depois de registrar um
+            // adaptador. O adaptador deverá executar este comando no servidor.
+            return { success: false, reason: "SERVER_COMMAND_REQUIRED", authority: authority.authority };
         },
 
         createOpponentWagerItem(opponent = null) {
@@ -506,14 +510,13 @@
             const state = this.ensureState();
             const escrow = state.escrow;
             if (!escrow || escrow.status !== "locked") return false;
-            if (winner === "player") {
-                Aethra.BagSystem?.addItems?.([escrow.playerItem, escrow.opponentItem], "coliseum-wager-win");
-            }
-            escrow.status = "settled";
-            escrow.winner = winner;
-            escrow.settledAt = nowISO();
-            Aethra.EventBus.emit("coliseum:wager-settled", clone(escrow));
-            return clone(escrow);
+            const authority = Aethra.AuthorityGateway.guard("wagerEscrow", {
+                operation: "settle-wager",
+                escrowId: escrow.id,
+                winner
+            });
+            if (!authority.allowed) return false;
+            return false;
         },
 
         cancelWager() {
@@ -537,6 +540,7 @@
             const player = state.leaderboard.find((entry) => entry.isPlayer);
             return {
                 initialized: this.initialized,
+                authority: Aethra.AuthorityGateway.getSnapshot(),
                 season: clone(state.season),
                 profile: clone(state.profile),
                 player: clone(player),

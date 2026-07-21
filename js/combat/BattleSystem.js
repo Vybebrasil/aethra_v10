@@ -131,6 +131,69 @@
             return state.battle;
         },
 
+        applyHealing(amount, options = {}) {
+            this.ensureState();
+            const hero = Aethra.GameState.hero;
+            const stats = hero.stats || (hero.stats = {});
+            const maxHp = Math.max(1, integer(hero.maxHp ?? stats.maxHp, 1));
+            const previousHp = clamp(integer(hero.hp ?? stats.hp, maxHp), 0, maxHp);
+            const requestedAmount = Math.max(0, integer(amount, 0));
+            const hp = Math.min(maxHp, previousHp + requestedAmount);
+            const healedAmount = hp - previousHp;
+
+            if (healedAmount <= 0 && options.allowZero !== true) {
+                return {
+                    applied: false,
+                    reason: "HP_FULL",
+                    previousHp,
+                    hp,
+                    maxHp,
+                    amount: 0,
+                    requestedAmount
+                };
+            }
+
+            hero.hp = hp;
+            hero.maxHp = maxHp;
+            stats.hp = hp;
+            stats.maxHp = maxHp;
+
+            const battle = Aethra.GameState.battle || {};
+            const payload = {
+                ...clone(options.metadata || {}),
+                eventId: options.eventId || `${battle.battleId || "world"}:heal:${battle.round || 0}:${Date.now()}`,
+                applied: true,
+                action: "heal",
+                amount: healedAmount,
+                healedAmount,
+                requestedAmount,
+                previousHp,
+                hp,
+                maxHp,
+                battleId: battle.battleId || null,
+                round: battle.round || 0,
+                skillId: options.skillId || null,
+                skillName: options.skillName || options.itemName || "Cura",
+                itemName: options.itemName || null,
+                source: options.source || "battle-system",
+                message: options.message || `${options.skillName || options.itemName || "Cura"} restaurou ${healedAmount} de vida!`
+            };
+
+            this.syncCombatMirror();
+            Aethra.EventBus.emit("HealingReceived", clone(payload));
+            Aethra.EventBus.emit("HealthChanged", {
+                eventId: payload.eventId,
+                heroHp: hp,
+                heroMaxHp: maxHp,
+                creatureHp: battle.creature?.hp ?? null,
+                creatureMaxHp: battle.creature?.maxHp ?? null,
+                delta: healedAmount,
+                source: payload.source,
+                message: payload.message
+            });
+            return payload;
+        },
+
         bindEvents() {
             if (this._eventsBound) return;
             this._eventsBound = true;
@@ -246,7 +309,16 @@
                     ? creatureOrId
                     : runtimeCreature?.id || runtimeCreature?.enemyId;
 
-            const validation = this.validateCreature(creatureId);
+            const catalogCreature = creatureId
+                ? Aethra.GameData.creatures?.[creatureId]
+                : null;
+            const validation = runtimeCreature
+                ? {
+                    valid: Boolean(creatureId),
+                    reason: creatureId ? null : "CREATURE_ID_INVALID",
+                    creatureId
+                }
+                : this.validateCreature(creatureId);
 
             if (!validation.valid) {
                 Aethra.EventBus.emit("BattleError", validation);
@@ -259,10 +331,9 @@
                 integer(Aethra.GameState.hero?.level, 1)
             );
 
-            const source =
-                typeof Aethra.GameData.getCreature === "function"
+            const source = catalogCreature && typeof Aethra.GameData.getCreature === "function"
                     ? Aethra.GameData.getCreature(creatureId, heroLevel)
-                    : clone(Aethra.GameData.creatures[creatureId]);
+                    : clone(catalogCreature || runtimeCreature);
 
             if (!source) {
                 return null;
@@ -639,7 +710,34 @@
 
             const skillController = hero.skillController || Aethra.SkillController;
             battle.phase = "hero-action";
-            if (skillController && typeof skillController.update === "function") {
+            const autoConsumable = Aethra.ConsumableSystem?.tryAutoUse?.({
+                battle,
+                hero,
+                creature,
+                token
+            });
+
+            if (autoConsumable?.used === true) {
+                controllerAction = {
+                    executed: true,
+                    priority: 0,
+                    action: "consumable",
+                    source: "auto-supply",
+                    skillId: null,
+                    skill: { name: autoConsumable.item?.name || "Consumível" },
+                    result: {
+                        ...autoConsumable,
+                        skillName: autoConsumable.item?.name || "Consumível",
+                        amount: integer(
+                            autoConsumable.effects?.hp ||
+                            autoConsumable.effects?.mana ||
+                            autoConsumable.effects?.energy,
+                            0
+                        )
+                    },
+                    message: autoConsumable.message
+                };
+            } else if (skillController && typeof skillController.update === "function") {
                 controllerAction = skillController.update(deltaTime, {
                     battle,
                     hero,

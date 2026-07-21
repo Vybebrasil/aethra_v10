@@ -265,14 +265,6 @@
                 }
             });
 
-            Aethra.EventBus.on("combat:enemy-defeated", (enemy) => {
-                const data = enemy && enemy.enemy ? enemy.enemy : enemy;
-                const bossId = data && (data.bossId || (data.isBoss ? data.id : null));
-
-                if (bossId && this.bosses[bossId]) {
-                    this.handleBossDefeated(bossId, data);
-                }
-            });
         },
 
         startTimer() {
@@ -468,10 +460,13 @@
             });
 
             if (
-                Aethra.CombatSystem &&
-                typeof Aethra.CombatSystem.startCombat === "function"
+                Aethra.BattleSystem &&
+                typeof Aethra.BattleSystem.startCombat === "function"
             ) {
-                Aethra.CombatSystem.startCombat(combatEnemy);
+                Aethra.BattleSystem.startCombat(combatEnemy, {
+                    source: "boss",
+                    bossId
+                });
             } else {
                 Aethra.EventBus.emit("boss:combat-requested", {
                     bossId,

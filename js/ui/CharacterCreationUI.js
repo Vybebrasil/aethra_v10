@@ -566,6 +566,7 @@
             renderCreation();
             return false;
         }
+
         closeLayer();
         Aethra.UIManager?.setPrimaryView?.("city", { source: "character-created" });
         Aethra.RenderEngine?.renderAll?.();

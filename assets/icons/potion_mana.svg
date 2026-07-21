@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" role="img" aria-label="Poção de Mana">
+  <defs>
+    <linearGradient id="mana" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#74d4ff"/>
+      <stop offset="1" stop-color="#3b62dc"/>
+    </linearGradient>
+  </defs>
+  <path fill="#c7d2d8" d="M18 5h12v5l-2 3v4c7 2 11 8 11 15 0 7-6 11-15 11S9 39 9 32c0-7 4-13 11-15v-4l-2-3z"/>
+  <path fill="#26343d" d="M17 8h14v5H17z"/>
+  <path fill="url(#mana)" d="M13 29c3 2 6 1 9-1 5-3 9-3 13 0v5c0 4-4 6-11 6s-11-2-11-6z"/>
+  <path fill="#b8efff" d="M17 31c2 0 3 1 3 3s-1 3-3 3-3-1-3-3 1-3 3-3z" opacity=".85"/>
+</svg>

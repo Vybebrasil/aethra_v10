@@ -5,14 +5,18 @@
     if (!Aethra?.EventBus) return;
 
     const TILE_SIZE = 32;
-    const MAP_COLS = 24;
-    const MAP_ROWS = 16;
+    const BASE_MAP_COLS = 24;
+    const BASE_MAP_ROWS = 16;
+    let mapCols = BASE_MAP_COLS;
+    let mapRows = BASE_MAP_ROWS;
 
     let canvas = null;
     let ctx = null;
     let animationFrameId = null;
     let isRunning = false;
     let isTransitioningFloor = false;
+    let lastProjectedEventId = null;
+    let canvasResizeObserver = null;
 
     // Progression & Floor State
     let waveState = {
@@ -42,7 +46,7 @@
     let currentTargetIndex = -1;
 
     // Staircase position
-    const STAIRS_POS = { x: 19, y: 7 };
+    let stairsPos = { x: 19, y: 7 };
 
     const floatingTexts = [];
     const chatLogs = [];
@@ -101,14 +105,22 @@
     }
 
     function buildRoomGrid() {
-        return Array.from({ length: MAP_ROWS }, (_, r) =>
-            Array.from({ length: MAP_COLS }, (_, c) => {
-                if (r === 0 || r === MAP_ROWS - 1 || c === 0 || c === MAP_COLS - 1) return 2; // Wood log wall
-                if (r === STAIRS_POS.y && c === STAIRS_POS.x) return 7; // Spiral Stone Staircase
-                if (c >= 19 && Math.abs(r - STAIRS_POS.y) <= 2) return 6; // Stone floor near stairs
-                if ((r === 1 || r === 2) && (c >= 2 && c <= 8)) return 4; // Tree patch
-                if ((r === 1 || r === 2) && (c >= 12 && c <= 17)) return 5; // Flowers
-                if (r >= 5 && r <= 11 && c >= 4 && c <= 18) return 1; // Dirt path
+        const dirtStartX = Math.max(3, Math.floor(mapCols * 0.18));
+        const dirtEndX = Math.max(dirtStartX + 4, stairsPos.x - 1);
+        const dirtStartY = Math.max(4, Math.floor(mapRows * 0.30));
+        const dirtEndY = Math.min(mapRows - 3, Math.max(dirtStartY + 4, Math.ceil(mapRows * 0.72)));
+        const treeEndX = Math.max(5, Math.floor(mapCols * 0.32));
+        const flowerStartX = Math.max(treeEndX + 3, Math.floor(mapCols * 0.48));
+        const flowerEndX = Math.min(mapCols - 3, Math.max(flowerStartX + 3, Math.floor(mapCols * 0.72)));
+
+        return Array.from({ length: mapRows }, (_, r) =>
+            Array.from({ length: mapCols }, (_, c) => {
+                if (r === 0 || r === mapRows - 1 || c === 0 || c === mapCols - 1) return 2; // Wood log wall
+                if (r === stairsPos.y && c === stairsPos.x) return 7; // Spiral Stone Staircase
+                if (c >= stairsPos.x && Math.abs(r - stairsPos.y) <= 2) return 6; // Stone floor near stairs
+                if ((r === 1 || r === 2) && c >= 2 && c <= treeEndX) return 4; // Tree patch
+                if ((r === 1 || r === 2) && c >= flowerStartX && c <= flowerEndX) return 5; // Flowers
+                if (r >= dirtStartY && r <= dirtEndY && c >= dirtStartX && c <= dirtEndX) return 1; // Dirt path
                 return 0; // Grass
             })
         );
@@ -116,18 +128,100 @@
 
     let mapGrid = buildRoomGrid();
 
+    const clampCell = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, Number(value) || minimum));
+
+    function heroSpawnPoint() {
+        return {
+            x: clampCell(Math.round(mapCols * 0.30), 3, mapCols - 6),
+            y: clampCell(Math.round(mapRows * 0.55), 3, mapRows - 4)
+        };
+    }
+
+    function enemySpawnPoint() {
+        return {
+            x: clampCell(Math.round(mapCols * 0.62), 7, stairsPos.x - 3),
+            y: clampCell(stairsPos.y, 3, mapRows - 4)
+        };
+    }
+
+    function resizeCanvasToArena(options = {}) {
+        if (!canvas?.parentElement) return false;
+        const parent = canvas.parentElement;
+        const width = Math.floor(parent.clientWidth);
+        const height = Math.floor(parent.clientHeight);
+        if (width < TILE_SIZE * 8 || height < TILE_SIZE * 8) return false;
+
+        const previousCols = mapCols;
+        const previousRows = mapRows;
+        const nextCols = Math.max(12, Math.ceil(width / TILE_SIZE));
+        const nextRows = Math.max(10, Math.ceil(height / TILE_SIZE));
+        const geometryChanged = canvas.width !== width
+            || canvas.height !== height
+            || nextCols !== mapCols
+            || nextRows !== mapRows;
+        if (!geometryChanged) return false;
+
+        canvas.width = width;
+        canvas.height = height;
+        mapCols = nextCols;
+        mapRows = nextRows;
+        stairsPos = {
+            x: Math.max(8, mapCols - 4),
+            y: clampCell(Math.round(mapRows * 0.50), 3, mapRows - 4)
+        };
+        mapGrid = buildRoomGrid();
+
+        if (options.resetPlayer === true) {
+            const spawn = heroSpawnPoint();
+            Object.assign(player, {
+                x: spawn.x,
+                y: spawn.y,
+                targetX: spawn.x,
+                targetY: spawn.y
+            });
+        } else if (previousCols > 0 && previousRows > 0) {
+            const scaleX = mapCols / previousCols;
+            const scaleY = mapRows / previousRows;
+            player.x = clampCell(player.x * scaleX, 2, mapCols - 3);
+            player.y = clampCell(player.y * scaleY, 2, mapRows - 3);
+            player.targetX = clampCell(player.targetX * scaleX, 2, mapCols - 3);
+            player.targetY = clampCell(player.targetY * scaleY, 2, mapRows - 3);
+            horde.forEach((enemy) => {
+                enemy.x = clampCell(enemy.x * scaleX, 3, mapCols - 4);
+                enemy.y = clampCell(enemy.y * scaleY, 3, mapRows - 4);
+                enemy.baseX = enemy.x;
+                enemy.baseY = enemy.y;
+            });
+        }
+
+        floatingTexts.length = 0;
+        Aethra.EventBus.emit("tilemap:resized", {
+            width,
+            height,
+            columns: mapCols,
+            rows: mapRows,
+            coveredWidth: mapCols * TILE_SIZE,
+            coveredHeight: mapRows * TILE_SIZE
+        });
+        return true;
+    }
+
     function spawnRoomHorde() {
         horde = [];
         const isBossFloor = waveState.currentWave === waveState.maxWaves;
         const count = isBossFloor ? 1 : Math.floor(Math.random() * 2 + 3); // 3 to 5 monsters scattered
 
+        const center = enemySpawnPoint();
         const spawnPositions = [
-            { x: 9, y: 5 },
-            { x: 14, y: 7 },
-            { x: 11, y: 11 },
-            { x: 17, y: 5 },
-            { x: 16, y: 10 }
-        ];
+            center,
+            { x: center.x + 2, y: center.y - 2 },
+            { x: center.x - 2, y: center.y + 2 },
+            { x: center.x + 3, y: center.y + 2 },
+            { x: center.x - 3, y: center.y - 2 }
+        ].map((position) => ({
+            x: clampCell(position.x, 3, stairsPos.x - 2),
+            y: clampCell(position.y, 3, mapRows - 4)
+        }));
 
         for (let i = 0; i < count; i++) {
             const spec = isBossFloor ? MONSTER_SPECIES[4] : MONSTER_SPECIES[Math.floor(Math.random() * 4)];
@@ -160,8 +254,8 @@
                 currentTargetIndex = i;
                 // Walk player towards this target creature (clamped strictly inside visible grid)
                 const target = horde[i];
-                player.targetX = Math.max(3, Math.min(16, target.x - 1));
-                player.targetY = Math.max(3, Math.min(10, target.y));
+                player.targetX = clampCell(target.x - 1, 3, mapCols - 4);
+                player.targetY = clampCell(target.y, 3, mapRows - 4);
                 player.state = "walking";
                 return true;
             }
@@ -188,6 +282,18 @@
             bossBadge.textContent = waveState.currentWave === waveState.maxWaves ? "👹 MINI-BOSS" : `ONDA ${waveState.currentWave}/5`;
             bossBadge.className = `tilemap-header__badge ${waveState.currentWave === waveState.maxWaves ? "is-boss-active" : ""}`;
         }
+    }
+
+    function renderJourneyStats() {
+        const root = document.getElementById("tilemap-journey-stats");
+        if (!root) return false;
+        const totals = Aethra.ExplorationSystem?.getSnapshot?.().totals || {};
+        root.innerHTML = `
+            <span><small>Eventos</small><strong>${fmtNumber(totals.events)}</strong></span>
+            <span><small>Recursos</small><strong>${fmtNumber(totals.resources)}</strong></span>
+            <span><small>Skill XP</small><strong>${fmtNumber(totals.skillXP)}</strong></span>
+            <span><small>Raros</small><strong>${fmtNumber(totals.rareEvents)}</strong></span>`;
+        return true;
     }
 
     function drawTile(c, r, tileType, time) {
@@ -394,8 +500,8 @@
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        for (let r = 0; r < MAP_ROWS; r++) {
-            for (let c = 0; c < MAP_COLS; c++) {
+        for (let r = 0; r < mapRows; r++) {
+            for (let c = 0; c < mapCols; c++) {
                 drawTile(c, r, mapGrid[r][c], time);
             }
         }
@@ -407,97 +513,114 @@
         animationFrameId = requestAnimationFrame(renderLoop);
     }
 
-    // Active Hunt Tick — Hero Walks, Engages Target, Casts Spells & Collects Loot
-    function executeHuntTick() {
-        if (isTransitioningFloor) return;
+    function resolveSpeciesKey(enemy = {}) {
+        const value = `${enemy.id || ""} ${enemy.name || ""}`.toLowerCase();
+        if (/wolf|lobo/.test(value)) return "wolf";
+        if (/rat|rato/.test(value)) return "rat";
+        if (/skeleton|esqueleto/.test(value)) return "skeleton";
+        if (/goblin/.test(value)) return "goblin";
+        if (/boss|demon|demônio|chefe/.test(value)) return "boss";
+        return "goblin";
+    }
 
-        const aliveMonsters = horde.filter(m => !m.isDead && m.hp > 0);
+    function syncEncounter(payload = {}) {
+        const enemy = payload.enemy || payload.creature || payload;
+        if (!enemy?.id && !enemy?.enemyId) return false;
+        const encounterId = enemy.encounterId || enemy.id || enemy.enemyId;
+        if (horde[0]?.id === encounterId && !horde[0]?.isDead) return false;
+        const hp = Math.max(1, Number(enemy.hp ?? enemy.stats?.hp ?? 1));
+        const maxHp = Math.max(hp, Number(enemy.maxHp ?? enemy.stats?.maxHp ?? hp));
+        const spawn = enemySpawnPoint();
+        horde = [{
+            id: encounterId,
+            creatureId: enemy.id || enemy.enemyId,
+            key: resolveSpeciesKey(enemy),
+            name: enemy.name || "Criatura",
+            hp,
+            maxHp,
+            x: spawn.x,
+            y: spawn.y,
+            baseX: spawn.x,
+            baseY: spawn.y,
+            hurtTimer: 0,
+            isBoss: String(enemy.rank || "").toLowerCase() === "boss",
+            isDead: false
+        }];
+        currentTargetIndex = 0;
+        selectNextAliveTarget();
+        addChatLog(`${horde[0].name} bloqueou o caminho.`, "wave");
+        return true;
+    }
 
-        if (aliveMonsters.length === 0) {
-            // Room cleared! Walk hero to the spiral stone stairs
-            if (player.targetX !== STAIRS_POS.x || player.targetY !== STAIRS_POS.y) {
-                player.targetX = STAIRS_POS.x;
-                player.targetY = STAIRS_POS.y;
-                player.state = "walking";
-                addChatLog("Sala limpa! Caminhando para a escada de pedra...", "wave");
-            } else if (Math.abs(player.x - STAIRS_POS.x) < 0.2 && Math.abs(player.y - STAIRS_POS.y) < 0.2) {
-                triggerFloorClimb();
-            }
-            return;
+    // O mapa apenas espelha o resultado calculado pelo BattleSystem.
+    function executeHuntTick(payload = {}) {
+        const target = horde[currentTargetIndex];
+        if (!target || target.isDead) return false;
+        const side = payload.side || payload.actor || payload.attacker;
+        const amount = Math.max(0, Math.floor(Number(payload.amount) || 0));
+        const hit = payload.hit !== false;
+        const isHeroAttack = side === "hero";
+        const skillName = payload.skillName || payload.abilityName || getHeroActiveSkillName();
+
+        if (!hit) {
+            const x = isHeroAttack ? target.x * TILE_SIZE + 16 : player.x * TILE_SIZE + 16;
+            const y = isHeroAttack ? target.y * TILE_SIZE : player.y * TILE_SIZE;
+            addFloatingText("ERROU", x, y, "#a9bac4", 12);
+            addChatLog(payload.message || `${isHeroAttack ? "Herói" : target.name} errou o ataque.`, "info");
+            return true;
         }
 
-        // Get current target monster
-        let target = horde[currentTargetIndex];
-        if (!target || target.isDead || target.hp <= 0) {
-            if (!selectNextAliveTarget()) return;
-            target = horde[currentTargetIndex];
-        }
-
-        // Walk hero towards target if not yet in melee/spell range
-        const dist = Math.hypot(player.x - target.x, player.y - target.y);
-        if (dist > 2.5) {
-            player.targetX = Math.max(2, target.x - 1);
-            player.targetY = target.y;
-            player.state = "walking";
-            return;
-        }
-
-        // Hero is in range -> Execute Attack / Skill Chant
-        player.state = "attacking";
-        const skillName = getHeroActiveSkillName();
-        player.spellText = skillName;
-        player.spellTextTimer = 40;
-
-        addChatLog(`Usou "${skillName}"!`, "spell");
-
-        // Damage target monster
-        target.hurtTimer = 16;
-        const dmg = Math.floor(Math.random() * 30 + 20);
-        const isCrit = Math.random() < 0.3;
-
-        target.hp = Math.max(0, target.hp - dmg);
-
-        const px = target.x * TILE_SIZE + 16;
-        const py = target.y * TILE_SIZE;
-
-        if (isCrit) {
-            addFloatingText(`💥 ${dmg}!`, px, py - 6, "#ffcc00", 17);
-            addChatLog(`Acerto crítico de ${dmg} em ${target.name}!`, "crit");
+        if (isHeroAttack) {
+            player.state = "attacking";
+            player.spellText = skillName;
+            player.spellTextTimer = 40;
+            target.hurtTimer = 16;
+            target.hp = Math.max(0, Number(Aethra.GameState?.battle?.creature?.hp ?? target.hp - amount));
+            const x = target.x * TILE_SIZE + 16;
+            const y = target.y * TILE_SIZE;
+            addFloatingText(payload.isCrit ? `💥 ${amount}!` : `-${amount}`, x, y, payload.isCrit ? "#ffcc00" : "#ff4d4d", payload.isCrit ? 17 : 14);
+            addChatLog(payload.message || `${skillName}: ${amount} de dano em ${target.name}.`, payload.isCrit ? "crit" : "atk");
         } else {
-            addFloatingText(`-${dmg}`, px, py, "#ff4d4d", 14);
-            addChatLog(`Causou ${dmg} de dano em ${target.name}.`, "atk");
+            const x = player.x * TILE_SIZE + 16;
+            const y = player.y * TILE_SIZE;
+            addFloatingText(payload.isBlocked ? `🛡 ${amount}` : `-${amount}`, x, y, payload.isBlocked ? "#79c9e8" : "#ff7180", 14);
+            addChatLog(payload.message || `${target.name} causou ${amount} de dano no herói.`, payload.isBlocked ? "info" : "atk");
         }
+        return true;
+    }
 
-        if (target.hp <= 0) {
-            target.isDead = true;
-            const goldLoot = Math.floor(Math.random() * 15 + 8);
-            const xpReward = Math.floor(target.maxHp * 1.6 + waveState.currentFloor * 10);
+    function visualizeDefeat(payload = {}) {
+        const target = horde[currentTargetIndex] || horde[0];
+        const defeatedId = payload.enemyId || payload.id || payload.enemy?.id;
+        if (!target || (defeatedId && target.creatureId !== defeatedId)) return false;
+        target.hp = 0;
+        target.isDead = true;
+        const x = target.x * TILE_SIZE + 16;
+        const y = target.y * TILE_SIZE;
+        const rewards = payload.rewards || payload;
+        if (Number(rewards.gold)) addFloatingText(`+${fmtNumber(rewards.gold)} G`, x, y - 18, "#ffd700", 13);
+        if (Number(rewards.xp)) addFloatingText(`+${fmtNumber(rewards.xp)} XP`, x, y - 32, "#79c9e8", 13);
+        addChatLog(`☠ ${target.name} derrotado. +${fmtNumber(rewards.xp)} XP · +${fmtNumber(rewards.gold)} G`, "kill");
+        horde = [];
+        currentTargetIndex = -1;
+        player.targetX = stairsPos.x;
+        player.targetY = stairsPos.y;
+        player.state = "walking";
 
-            addFloatingText(`+${goldLoot} 🪙`, px, py - 18, "#ffd700", 13);
-            addFloatingText(`+${xpReward} XP`, px, py - 32, "#79c9e8", 13);
-            addChatLog(`☠ ${target.name} derrotado! (+${goldLoot} G, +${xpReward} XP)`, "kill");
-
-            // Sync backend GameState hero & hunt telemetry
-            if (Aethra.GameState) {
-                Aethra.GameState.hero = Aethra.GameState.hero || {};
-                Aethra.GameState.hero.gold = (Aethra.GameState.hero.gold || 0) + goldLoot;
-                Aethra.GameState.hero.xp = (Aethra.GameState.hero.xp || 0) + xpReward;
-
-                Aethra.GameState.hunt = Aethra.GameState.hunt || {};
-                Aethra.GameState.hunt.isActive = true;
-                Aethra.GameState.hunt.kills = (Aethra.GameState.hunt.kills || 0) + 1;
-                Aethra.GameState.hunt.xp = (Aethra.GameState.hunt.xp || 0) + xpReward;
-                Aethra.GameState.hunt.gold = (Aethra.GameState.hunt.gold || 0) + goldLoot;
-            }
-
-            Aethra.EventBus.emit("goldChanged", { amount: goldLoot, total: Aethra.GameState?.hero?.gold || 0 });
-            Aethra.EventBus.emit("EnemyDefeated", { enemy: target, xp: xpReward, gold: goldLoot });
-            Aethra.EventBus.emit("hunt:enemy-defeated", { enemy: target, xp: xpReward, gold: goldLoot });
-            Aethra.EventBus.emit("hunt:updated", Aethra.GameState?.hunt || {});
-
-            // Select next target in horde
-            selectNextAliveTarget();
+        if (waveState.currentWave >= waveState.maxWaves) {
+            waveState.floorsCleared += 1;
+            waveState.currentFloor += 1;
+            waveState.currentWave = 1;
+            Aethra.EventBus.emit("tilemap:floor-cleared", { ...waveState });
+        } else {
+            waveState.currentWave += 1;
         }
+        renderWaveProgress();
+        return true;
+    }
+
+    function fmtNumber(value) {
+        return new Intl.NumberFormat("pt-BR").format(Math.max(0, Math.floor(Number(value) || 0)));
     }
 
     function triggerFloorClimb() {
@@ -529,19 +652,29 @@
         }
 
         setTimeout(() => {
-            player.x = 4;
-            player.y = 8;
-            player.targetX = 4;
-            player.targetY = 8;
+            const spawn = heroSpawnPoint();
+            player.x = spawn.x;
+            player.y = spawn.y;
+            player.targetX = spawn.x;
+            player.targetY = spawn.y;
             player.state = "idle";
             isTransitioningFloor = false;
-            spawnRoomHorde();
+            horde = [];
+            currentTargetIndex = -1;
+            Aethra.EventBus.emit("tilemap:floor-changed", { ...waveState });
         }, 2200);
     }
 
     function startEngine() {
         const container = document.getElementById("tilemap-canvas-root");
         if (!container) return;
+        if (isRunning && canvas && container.contains(canvas)) {
+            resizeCanvasToArena();
+            renderWaveProgress();
+            renderJourneyStats();
+            Aethra.IdleLoopSystem?.renderControls?.();
+            return true;
+        }
 
         const zoneName = Aethra.GameState?.huntState?.currentZoneName || "Bosque dos Sussurros";
 
@@ -561,8 +694,12 @@
                     </div>
                 </div>
 
+                <div id="idle-loop-controls-root"></div>
+
+                <aside id="tilemap-journey-stats" class="tilemap-journey-stats expedition-live-stats" aria-label="Resumo da exploração"></aside>
+
                 <div class="tilemap-canvas-container">
-                    <canvas id="tilemap-canvas" width="${MAP_COLS * TILE_SIZE}" height="${MAP_ROWS * TILE_SIZE}"></canvas>
+                    <canvas id="tilemap-canvas" width="${BASE_MAP_COLS * TILE_SIZE}" height="${BASE_MAP_ROWS * TILE_SIZE}"></canvas>
                     
                     <div class="tilemap-chat-dock">
                         <header><span>Log de Caçada em Tempo Real</span></header>
@@ -578,51 +715,101 @@
         if (!canvas) return;
         ctx = canvas.getContext("2d");
 
-        const canvasParent = canvas.parentElement;
-        if (canvasParent) {
-            canvas.width = canvasParent.clientWidth || 768;
-            canvas.height = canvasParent.clientHeight || 512;
+        resizeCanvasToArena({ resetPlayer: true });
+        canvasResizeObserver?.disconnect?.();
+        if (typeof ResizeObserver === "function" && canvas.parentElement) {
+            canvasResizeObserver = new ResizeObserver(() => resizeCanvasToArena());
+            canvasResizeObserver.observe(canvas.parentElement);
         }
 
-        spawnRoomHorde();
+        horde = [];
+        currentTargetIndex = -1;
+        const activeEnemy = Aethra.CombatProjection?.getSnapshot?.()?.enemy || null;
+        if (activeEnemy) syncEncounter(activeEnemy);
+        else addChatLog(Aethra.GameState?.hunt?.isActive ? "Explorando a região em busca de ameaças..." : "Escolha uma caçada para iniciar a jornada.", "info");
+        renderJourneyStats();
 
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
         isRunning = true;
         animationFrameId = requestAnimationFrame(renderLoop);
-
-        // Continuous active hunt loop — hero walks, targets creatures, casts spells & climbs floors!
-        clearInterval(autoCombatInterval);
-        autoCombatInterval = setInterval(() => {
-            if (isRunning) executeHuntTick();
-        }, 1200);
+        Aethra.EventBus.emit("tilemap:ready", { wave: { ...waveState } });
     }
 
-    // Event bus listeners — Sync fully with HuntSystem, BattleSystem & ExplorationSystem
-    const HUNT_SYNC_EVENTS = [
-        "hunt:started",
-        "hunt:tick",
-        "hunt:updated",
-        "hunt:encountered",
-        "EnemyEncountered",
-        "EnemyDefeated",
-        "hunt:enemy-defeated",
-        "battle:damage-dealt",
-        "battle:round-processed",
-        "combat:hit",
-        "LootFound"
-    ];
+    function ensureStarted() {
+        if (!isRunning || !canvas || !document.body.contains(canvas)) startEngine();
+    }
 
-    HUNT_SYNC_EVENTS.forEach((evt) => {
-        Aethra.EventBus.on(evt, (payload) => {
-            if (!isRunning || !canvas) startEngine();
-            executeHuntTick(payload);
-        });
+    Aethra.EventBus.on("hunt:started", ({ hunt } = {}) => {
+        ensureStarted();
+        waveState = { currentWave: 1, maxWaves: 5, currentFloor: 1, floorsCleared: 0 };
+        horde = [];
+        currentTargetIndex = -1;
+        renderWaveProgress();
+        addChatLog(`Caçada iniciada em ${hunt?.name || "Aethra"}.`, "wave");
+    });
+    Aethra.EventBus.on("combat:projection-changed", ({ reason, event, snapshot } = {}) => {
+        ensureStarted();
+
+        if (reason === "battle-started" && snapshot?.enemy) {
+            lastProjectedEventId = null;
+            syncEncounter(snapshot.enemy);
+            return;
+        }
+
+        if (reason === "action-resolved" && event?.eventId && event.eventId !== lastProjectedEventId) {
+            lastProjectedEventId = event.eventId;
+            if (event.kind === "attack") executeHuntTick(event);
+            else if (event.kind === "consumable") {
+                addChatLog(event.message || `${event.actorName || "Herói"} usou ${event.ability}.`, "info");
+            }
+            return;
+        }
+
+        if (reason === "battle-ended") {
+            const outcome = snapshot?.lastOutcome;
+            if (outcome?.reason === "victory") {
+                visualizeDefeat({
+                    enemyId: outcome.enemy?.id,
+                    enemy: outcome.enemy,
+                    rewards: outcome.result?.rewards || outcome.result || {}
+                });
+            } else if (outcome?.reason === "defeat") {
+                horde = [];
+                currentTargetIndex = -1;
+                addChatLog("O herói foi derrotado e retornou à cidade.", "crit");
+            }
+        }
+    });
+    Aethra.EventBus.on("hunt:ended", ({ reason } = {}) => {
+        horde = [];
+        currentTargetIndex = -1;
+        addChatLog(reason === "hero-defeated" ? "Caçada encerrada por derrota." : "Caçada encerrada.", "info");
+    });
+    ["hunt:updated", "exploration:updated", "exploration:event-resolved", "profession:xpChanged"].forEach((eventName) => {
+        Aethra.EventBus.on(eventName, renderJourneyStats);
     });
 
     Aethra.TileMapCanvas = {
         start: startEngine,
         triggerAttack: executeHuntTick,
-        triggerFloorClimb
+        triggerFloorClimb,
+        syncEncounter,
+        resize: resizeCanvasToArena,
+        getSnapshot: () => ({
+            wave: { ...waveState },
+            enemies: horde.map((enemy) => ({ ...enemy })),
+            viewport: {
+                width: canvas?.width || 0,
+                height: canvas?.height || 0,
+                columns: mapCols,
+                rows: mapRows,
+                coveredWidth: mapCols * TILE_SIZE,
+                coveredHeight: mapRows * TILE_SIZE
+            }
+        })
     };
+
+    window.addEventListener("resize", () => resizeCanvasToArena());
 
     Aethra.EventBus.on("EngineReady", () => setTimeout(startEngine, 100));
     Aethra.EventBus.on("engine:ready", () => setTimeout(startEngine, 100));

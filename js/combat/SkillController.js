@@ -1161,17 +1161,25 @@
                 )
             );
 
-            const nextHp = Math.min(
-                maxHp,
-                previousHp +
-                requestedAmount
+            const officialHealing = Aethra.BattleSystem?.applyHealing?.(
+                requestedAmount,
+                {
+                    skillId: skill.id,
+                    skillName: skill.name,
+                    source: usage.source || "skill-controller"
+                }
             );
+            const nextHp = officialHealing
+                ? officialHealing.hp
+                : Math.min(maxHp, previousHp + requestedAmount);
+            const healedAmount = officialHealing
+                ? officialHealing.amount
+                : nextHp - previousHp;
 
-            const healedAmount =
-                nextHp - previousHp;
-
-            stats.hp = nextHp;
-            hero.hp = nextHp;
+            if (!officialHealing) {
+                stats.hp = nextHp;
+                hero.hp = nextHp;
+            }
 
             const message =
                 `${skill.name} restaurou `
@@ -1179,6 +1187,7 @@
 
             const result = {
                 action: "heal",
+                eventId: officialHealing?.eventId || null,
                 skillId: skill.id,
                 skillName: skill.name,
                 amount: healedAmount,
@@ -1197,28 +1206,15 @@
                     "skill-controller"
             };
 
-            Aethra.EventBus.emit(
-                "HealingReceived",
-                clone(result)
-            );
+            if (!officialHealing) {
+                Aethra.EventBus.emit(
+                    "HealingReceived",
+                    clone(result)
+                );
+            }
             Aethra.EventBus.emit(
                 "SkillEffectApplied",
                 clone(result)
-            );
-
-            Aethra.EventBus.emit(
-                "HealthChanged",
-                {
-                    heroHp: nextHp,
-                    heroMaxHp: maxHp,
-                    creatureHp:
-                        Aethra.GameState.battle
-                            ?.creature?.hp ?? null,
-                    creatureMaxHp:
-                        Aethra.GameState.battle
-                            ?.creature?.maxHp ?? null,
-                    message
-                }
             );
 
             const player =

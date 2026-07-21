@@ -20,14 +20,14 @@
 
     const SPRITE_MANIFEST = {
         "vanguard":   "assets/entities/player_idle.png",
-        "berserker":  "assets/sprites/heroes/berserker.png",
-        "arcanist":   "assets/sprites/heroes/arcanist.png",
-        "ranger":     "assets/sprites/heroes/ranger.png",
-        "nightblade": "assets/sprites/heroes/nightblade.png",
-        "templar":    "assets/sprites/heroes/templar.png",
-        "goblin":     "assets/sprites/monsters/goblin.png",
-        "wolf":       "assets/sprites/monsters/wolf.png",
-        "skeleton":   "assets/sprites/monsters/skeleton.png"
+        "berserker":  PIXEL_SPRITES.berserker,
+        "arcanist":   PIXEL_SPRITES.arcanist,
+        "ranger":     PIXEL_SPRITES.ranger,
+        "nightblade": PIXEL_SPRITES.nightblade,
+        "templar":    PIXEL_SPRITES.templar,
+        "goblin":     PIXEL_SPRITES.goblin,
+        "wolf":       PIXEL_SPRITES.wolf,
+        "skeleton":   PIXEL_SPRITES.skeleton
     };
 
     function loadSprite(key) {

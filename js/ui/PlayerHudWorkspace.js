@@ -333,6 +333,14 @@
             Render.renderInventoryDetails?.(item);
         });
         button.addEventListener("dblclick", () => {
+            if (String(item.itemType || item.type || "").toLowerCase() === "consumable") {
+                Aethra.EventBus.emit("consumable:use-requested", {
+                    instanceId: item.instanceId,
+                    itemId: item.templateId || item.id,
+                    source: "player-backpack"
+                });
+                return;
+            }
             const slot = Aethra.EquipSystem?.getAllowedSlots?.(item)?.[0] || item.slot;
             if (slot && Aethra.EquipSystem?.canEquip?.(item, slot)) {
                 Aethra.EquipSystem.equip(item.instanceId, slot);

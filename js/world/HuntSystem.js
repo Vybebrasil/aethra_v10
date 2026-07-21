@@ -27,7 +27,6 @@
             encounterResolveDelay: 1200,
             combatEngine: "BattleSystem",
             useBattleSystem: true,
-            useCombatSystem: false,
             autoResolveWithoutCombat: true,
             autoGenerateLoot: true
         },
@@ -629,16 +628,6 @@
                 typeof Aethra.BattleSystem.startCombat === "function"
             ) {
                 Aethra.BattleSystem.startCombat(clone(encounter), {
-                    source: "hunt",
-                    huntId: encounter.huntId,
-                    encounterId: encounter.encounterId
-                });
-            } else if (
-                this.config.useCombatSystem &&
-                Aethra.CombatSystem &&
-                typeof Aethra.CombatSystem.startCombat === "function"
-            ) {
-                Aethra.CombatSystem.startCombat(clone(encounter), {
                     source: "hunt",
                     huntId: encounter.huntId,
                     encounterId: encounter.encounterId
