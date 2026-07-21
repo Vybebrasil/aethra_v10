@@ -320,6 +320,34 @@
         stabilizeAll();
     }
 
+    // Clique em card de maestria → abre o Livro de Habilidade
+    document.addEventListener("click", (event) => {
+        const card = event.target.closest("[data-discipline-id]");
+        if (!card) return;
+        const disciplineId = card.dataset.disciplineId;
+        if (!disciplineId) return;
+        Aethra.WindowManager?.openWindow?.("discipline-guide-view", {
+            source: "skill-card-click",
+            disciplineId
+        });
+        Aethra.RenderEngine?.renderDisciplineGuide?.(disciplineId);
+    });
+
+    // Botão "Novo Personagem" → reseta e reabre criação
+    document.addEventListener("click", (event) => {
+        if (!event.target.closest("[data-new-character]")) return;
+        const confirmed = window.confirm(
+            "Tem certeza? Todo o progresso atual será apagado e você irá criar um novo personagem."
+        );
+        if (!confirmed) return;
+        Aethra.WindowManager?.closeAll?.();
+        Aethra.SaveManager?.reset?.();
+        Aethra.StateManager?.reset?.({ source: "new-character-ui" });
+        window.setTimeout(() => {
+            Aethra.CharacterCreationUI?.show?.();
+        }, 200);
+    });
+
     if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", () => setTimeout(init, 0), { once: true });
     } else {

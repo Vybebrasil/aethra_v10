@@ -523,7 +523,49 @@
                 >
                     Modo ativo: Cartas
                 </div>
+
+                <div class="settings-panel__heading" style="margin-top: 14px;">
+                    <div>
+                        <small>Personagem</small>
+                        <h3>Novo Personagem</h3>
+                    </div>
+                    <span class="settings-panel__badge" style="background: rgba(203,138,133,0.15); color: #cb8a85;">Perigo</span>
+                </div>
+                <p class="settings-panel__description">
+                    Apaga o progresso atual e abre a tela de criação de personagem do zero.
+                </p>
+                <button
+                    type="button"
+                    id="btn-new-character"
+                    class="settings-new-character-btn"
+                    data-new-character
+                >
+                    ⊕ Criar Novo Personagem
+                </button>
             </div>
+        </section>
+
+        <!-- Guia de Disciplina (Livro de Habilidade) -->
+        <section
+            id="discipline-guide-view"
+            class="game-window hidden"
+            data-aethra-window
+            data-window-size="medium"
+            aria-hidden="true"
+        >
+            <header class="window-header">
+                <div>
+                    <small>Mestria de Habilidade</small>
+                    <h2 id="discipline-guide-title">Livro de Habilidade</h2>
+                </div>
+                <button
+                    type="button"
+                    class="window-close"
+                    data-close-window="discipline-guide-view"
+                    aria-label="Fechar guia"
+                >×</button>
+            </header>
+            <div id="discipline-guide-content" class="discipline-guide-content"></div>
         </section>
 
         <section
