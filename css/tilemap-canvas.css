@@ -80,10 +80,10 @@ body.aethra-battle-mode .encounter-context-dock,
 
 /* SLIM ACTIONBAR AT BOTTOM */
 body.aethra-battle-mode .battle-panel--actionbar {
-    flex: 0 0 110px !important;
-    height: 110px !important;
-    min-height: 110px !important;
-    max-height: 110px !important;
+    flex: 0 0 140px !important;
+    height: 140px !important;
+    min-height: 140px !important;
+    max-height: 140px !important;
     margin-top: 4px !important;
     padding: 6px 12px !important;
     overflow: hidden !important;
