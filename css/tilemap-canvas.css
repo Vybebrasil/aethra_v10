@@ -3,20 +3,90 @@
    Visor de Arena 2D no estilo Tibia/Baiak Idle (Full Height)
    ===================================================== */
 
-.battle-stage-panel {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    flex: 1 1 0;
-    min-height: 0;
+/* FORCE MAP 2D TO TAKE 100% HEIGHT OF MAIN COLUMN MATCHING BAIAK IDLE */
+body.aethra-battle-mode .battle-main-column {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    flex: 1 1 0 !important;
+    overflow: hidden !important;
 }
 
-.map2d-active-root {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 0;
-    height: 100%;
-    min-height: 0;
+body.aethra-battle-mode .battle-stage-panel {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    flex: 1 1 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    overflow: hidden !important;
+}
+
+body.aethra-battle-mode .map2d-active-root,
+body.aethra-battle-mode #tilemap-canvas-root {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    flex: 1 1 0 !important;
+    overflow: hidden !important;
+}
+
+body.aethra-battle-mode .tilemap-workspace {
+    position: relative !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    flex: 1 1 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    background: #04090d !important;
+    border: 3px solid #3a2818 !important;
+    box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.85), 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+}
+
+body.aethra-battle-mode .tilemap-canvas-container {
+    position: relative !important;
+    flex: 1 1 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+/* HIDE ACTIONBAR HEADER & SQUISHED EXTRA BOXES IN MAIN COLUMN */
+body.aethra-battle-mode .battle-stage-panel > header,
+body.aethra-battle-mode .battle-stage-panel > #hunt-display,
+body.aethra-battle-mode .battle-stage-panel > .battle-panel--exploration,
+body.aethra-battle-mode .battle-stage-panel > #exploration-feed,
+body.aethra-battle-mode .battle-main-column > .battle-panel--exploration,
+body.aethra-battle-mode .battle-main-column > #hunt-display,
+body.aethra-battle-mode .battle-main-column > section:not(.battle-stage-panel):not(.battle-panel--actionbar) {
+    display: none !important;
+}
+
+/* SLIM ACTIONBAR AT BOTTOM */
+body.aethra-battle-mode .battle-panel--actionbar {
+    flex: 0 0 68px !important;
+    height: 68px !important;
+    min-height: 68px !important;
+    max-height: 68px !important;
+    margin-top: 4px !important;
+    padding: 2px 8px !important;
+    overflow: hidden !important;
+}
+
+body.aethra-battle-mode .battle-panel--actionbar .battle-panel__header {
+    display: none !important;
 }
 
 .tilemap-workspace {
