@@ -185,7 +185,7 @@
                 </div>
                 <div class="creation-avatar ${selected ? "has-archetype" : ""}" ${avatarTooltip}>
                     <i></i><i></i><i></i>
-                    <div class="creation-avatar__sigil">${esc(selected?.icon || "A")}</div>
+                    <div class="creation-avatar__sigil" data-sigil="${esc(selected?.id || "")}">${esc(selected?.icon || "A")}</div>
                     <img src="assets/entities/player_idle.png" alt="Prévia do herói" draggable="false">
                     <span>${esc(selected?.name || "Sem arquétipo")}</span>
                 </div>

@@ -353,6 +353,10 @@ body.is-allocating-skills { overflow: hidden; }
     color: color-mix(in srgb, var(--archetype-accent) 80%, #dfe8eb);
     letter-spacing: 0.02em;
     text-transform: uppercase;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
 }
 
 .creation-archetype__skill-row {
@@ -653,7 +657,10 @@ body.is-allocating-skills { overflow: hidden; }
 .creation-archetype__skill-row div b,
 .creation-discipline__icon,
 .creation-tooltip__item span,
-.creation-tooltip__masteries span {
+.creation-tooltip__masteries span,
+.creation-avatar__sigil,
+.aethra-ui-tooltip__icon,
+.aethra-ui-tooltip__item-icon {
     filter: grayscale(1) brightness(1.7) contrast(1.2);
     display: inline-flex;
     align-items: center;
@@ -667,10 +674,10 @@ body.is-allocating-skills { overflow: hidden; }
 .creation-archetype[data-select-archetype="ranger"] .creation-archetype__icon { font-size: 22px; }
 .creation-archetype[data-select-archetype="nightblade"] .creation-archetype__icon { font-size: 22px; }
 
-/* Scale down emojis in DNA badges & active skills */
-[data-mastery="axe"], [data-mastery="unarmed"], [data-mastery="fire"], [data-mastery="ice"],
-[data-discipline-id="axe"], [data-discipline-id="unarmed"], [data-discipline-id="fire"], [data-discipline-id="ice"],
-[data-skill-id="brutal_cleave"], [data-skill-id="fire_bolt"], [data-skill-id="ice_shard"], [data-skill-id="shadow_bolt"] {
+/* Scale down emojis in DNA badges & active skills & tooltips */
+[data-mastery="axe"], [data-mastery="unarmed"], [data-mastery="fire"], [data-mastery="ice"], [data-mastery="survival"], [data-mastery="thievery"], [data-mastery="exploration"], [data-mastery="mining"], [data-mastery="skinning"],
+[data-discipline-id="axe"], [data-discipline-id="unarmed"], [data-discipline-id="fire"], [data-discipline-id="ice"], [data-discipline-id="survival"], [data-discipline-id="thievery"], [data-discipline-id="exploration"], [data-discipline-id="mining"], [data-discipline-id="skinning"],
+[data-skill-id="brutal_cleave"], [data-skill-id="fire_bolt"], [data-skill-id="ice_shard"], [data-skill-id="shadow_bolt"], [data-item-type="axe"] {
     font-size: 10px;
     transform: scale(0.85);
 }
@@ -681,4 +688,170 @@ body.is-allocating-skills { overflow: hidden; }
 [data-skill-id="precise_strike"], [data-skill-id="aimed_shot"], [data-skill-id="twin_fang"], [data-skill-id="heal"], [data-skill-id="guard"] {
     font-size: 13px;
     transform: scale(1.15);
+}
+
+/* Sigil avatar icon sizes overrides */
+.creation-avatar__sigil[data-sigil="vanguard"] { font-size: 22px; }
+.creation-avatar__sigil[data-sigil="berserker"] { font-size: 14px; }
+.creation-avatar__sigil[data-sigil="arcanist"] { font-size: 20px; }
+.creation-avatar__sigil[data-sigil="ranger"] { font-size: 18px; }
+.creation-avatar__sigil[data-sigil="nightblade"] { font-size: 18px; }
+
+/* Modern RPG Item Tooltip Styling */
+.aethra-ui-tooltip__item-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(14, 25, 30, 0.98), rgba(4, 9, 12, 0.99));
+    border: 1px solid var(--item-rarity-color, rgba(112, 145, 155, 0.35));
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6), inset 0 0 20px color-mix(in srgb, var(--item-rarity-color, #c7c7c7) 8%, transparent);
+    width: 280px;
+    color: #dfe8eb;
+    font-family: "Outfit", system-ui, sans-serif;
+}
+
+.aethra-ui-tooltip__item-detail header {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+}
+
+.aethra-ui-tooltip__item-icon {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--item-rarity-color, #c7c7c7) 12%, rgba(255,255,255,0.02));
+    border: 1px solid color-mix(in srgb, var(--item-rarity-color, #c7c7c7) 35%, transparent);
+    font-size: 20px;
+}
+
+.aethra-ui-tooltip__item-detail header div {
+    display: grid;
+    gap: 2px;
+}
+
+.aethra-ui-tooltip__item-detail header strong {
+    font-family: "Cinzel", serif;
+    font-size: 15px;
+    color: #eff6f7;
+    text-shadow: 0 0 8px color-mix(in srgb, var(--item-rarity-color, #c7c7c7) 40%, transparent);
+}
+
+.aethra-ui-tooltip__item-slot {
+    grid-column: 1 / -1;
+    font-size: 8px;
+    color: #8097a0;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(112, 145, 155, 0.15);
+    padding-bottom: 8px;
+    margin-top: 4px;
+}
+
+/* Combat Stats block inside tooltip */
+.aethra-ui-tooltip__item-stats {
+    display: grid;
+    gap: 8px;
+    padding: 10px;
+    background: rgba(18, 35, 40, 0.5);
+    border-radius: 8px;
+    border: 1px solid rgba(112, 145, 155, 0.08);
+}
+
+.aethra-item-stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.aethra-item-stat-row small {
+    font-size: 7px;
+    color: #8097a0;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+}
+
+.aethra-item-stat-row strong {
+    font-size: 13px;
+    color: #eff6f7;
+    font-family: "Cinzel", serif;
+}
+
+/* Additional bonuses */
+.aethra-ui-tooltip__item-bonuses {
+    display: grid;
+    gap: 4px;
+}
+
+.aethra-ui-tooltip__item-bonuses small {
+    font-size: 7px;
+    color: #8097a0;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+}
+
+.aethra-ui-tooltip__item-bonuses ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 3px;
+}
+
+.aethra-ui-tooltip__item-bonuses li {
+    font-size: 9px;
+    color: #89cce9;
+    font-weight: 600;
+    padding-left: 10px;
+    position: relative;
+}
+
+.aethra-ui-tooltip__item-bonuses li::before {
+    content: "✦";
+    position: absolute;
+    left: 0;
+    color: var(--item-rarity-color, #89cce9);
+    font-size: 8px;
+}
+
+/* Description */
+.aethra-ui-tooltip__item-desc {
+    margin: 0;
+    font-size: 9px;
+    line-height: 1.35;
+    color: #92a8b1;
+    border-top: 1px solid rgba(112, 145, 155, 0.1);
+    padding-top: 8px;
+}
+
+/* Footer */
+.aethra-ui-tooltip__item-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 8px;
+    font-weight: 700;
+    border-top: 1px solid rgba(112, 145, 155, 0.15);
+    padding-top: 8px;
+    margin-top: 4px;
+}
+
+.aethra-ui-tooltip__item-footer .is-ok {
+    color: #6ce2a4;
+}
+
+.aethra-ui-tooltip__item-footer .is-failed {
+    color: #ff7280;
+    text-shadow: 0 0 6px rgba(255,114,128,0.3);
+}
+
+.aethra-ui-tooltip__item-price {
+    color: #e1c16c;
 }

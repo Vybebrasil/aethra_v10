@@ -306,7 +306,7 @@
             return `
                 <article class="aethra-ui-tooltip__skill">
                     <header>
-                        <span class="aethra-ui-tooltip__icon">${escapeHTML(skill.icon || "✦")}</span>
+                        <span class="aethra-ui-tooltip__icon" data-skill-id="${escapeHTML(skillId)}">${escapeHTML(skill.icon || "✦")}</span>
                         <div>
                             <small>HABILIDADE</small>
                             <strong>${escapeHTML(skill.name || skillId)}</strong>
@@ -422,11 +422,163 @@
             `;
         },
 
+        getItem(itemId) {
+            if (!itemId) return null;
+            const equipment = Aethra.GameState.hero?.equipment || {};
+            const eqItem = Object.values(equipment).find(it => it && it.id === itemId);
+            if (eqItem) return eqItem;
+
+            const inventory = Aethra.GameState.hero?.inventory || [];
+            const invItem = inventory.find(it => it && it.id === itemId);
+            if (invItem) return invItem;
+
+            return Aethra.GameData?.items?.[itemId] || null;
+        },
+
+        buildItemHTML(itemId) {
+            const item = this.getItem(itemId);
+            if (!item) return `
+                <article class="aethra-ui-tooltip__text">
+                    <strong>Item Desconhecido</strong>
+                    <p>ID do item não encontrado: ${escapeHTML(itemId)}</p>
+                </article>
+            `;
+
+            const rarityInfo = Aethra.GameData?.itemGeneration?.getRarity?.(item.rarity) || {
+                name: item.rarity || "Comum",
+                color: "#c7c7c7"
+            };
+
+            const slotNames = {
+                weapon: "Mão Principal",
+                shield: "Mão Secundária",
+                offhand: "Mão Secundária",
+                head: "Cabeça",
+                chest: "Peitoral",
+                legs: "Pernas",
+                feet: "Botas",
+                neck: "Amuleto",
+                ring1: "Anel 1",
+                ring2: "Anel 2",
+                relic: "Relíquia",
+                hands: "Mãos / Luvas"
+            };
+
+            const slotLabel = slotNames[item.slot || item.type] || item.slot || "Inventário";
+            const levelReq = number(item.levelReq || item.level, 1);
+            const heroLevel = number(Aethra.GameState.hero?.level, 1);
+            const levelOk = heroLevel >= levelReq;
+
+            let statRows = "";
+            if (Number.isFinite(item.damageMin) && Number.isFinite(item.damageMax)) {
+                statRows += `
+                    <div class="aethra-item-stat-row">
+                        <small>DANO DE ATAQUE</small>
+                        <strong>⚔️ ${formatNumber(item.damageMin)} – ${formatNumber(item.damageMax)}</strong>
+                    </div>
+                `;
+            }
+            if (Number.isFinite(item.defense) && item.defense > 0) {
+                statRows += `
+                    <div class="aethra-item-stat-row">
+                        <small>DEFESA CONSTANTE</small>
+                        <strong>🛡️ +${formatNumber(item.defense)}</strong>
+                    </div>
+                `;
+            }
+
+            const bonusLabels = {
+                str: "Força",
+                mag: "Poder Mágico",
+                precision: "Precisão",
+                critical: "Chance Crítica",
+                evasion: "Evasão",
+                blockChance: "Chance de Bloqueio",
+                hpMax: "Vida Máxima",
+                manaMax: "Mana Máxima"
+            };
+
+            let bonusList = [];
+            Object.entries(bonusLabels).forEach(([key, label]) => {
+                const val = number(item[key]);
+                if (val > 0) {
+                    const isPercent = ["critical", "evasion", "blockChance"].includes(key);
+                    const formatted = isPercent ? `${formatNumber(val)}%` : `+${formatNumber(val)}`;
+                    bonusList.push(`<li>${formatted} ${label}</li>`);
+                }
+            });
+
+            const weaponFamilyNames = {
+                sword: "Espada",
+                axe: "Machado",
+                mace: "Maça",
+                dagger: "Adaga",
+                bow: "Arco"
+            };
+            const typeLabel = item.type === "weapon"
+                ? (weaponFamilyNames[item.weaponFamily] || "Arma")
+                : item.type === "armor"
+                    ? "Armadura"
+                    : item.type === "shield"
+                        ? "Escudo"
+                        : "Utilitário";
+
+            const itemIcon = item.weaponFamily === "sword" ? "⚔️"
+                : item.weaponFamily === "axe" ? "🪓"
+                : item.weaponFamily === "mace" ? "🔨"
+                : item.weaponFamily === "dagger" ? "🗡️"
+                : item.weaponFamily === "bow" ? "🏹"
+                : "🎒";
+
+            return `
+                <article class="aethra-ui-tooltip__item-detail" style="--item-rarity-color: ${rarityInfo.color}">
+                    <header>
+                        <span class="aethra-ui-tooltip__item-icon" data-item-type="${escapeHTML(item.weaponFamily || item.type)}">${escapeHTML(itemIcon)}</span>
+                        <div>
+                            <strong>${escapeHTML(item.name)}</strong>
+                            <small style="color: ${rarityInfo.color}; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;">
+                                ${escapeHTML(rarityInfo.name)}
+                            </small>
+                        </div>
+                        <span class="aethra-ui-tooltip__item-slot">${escapeHTML(typeLabel)} · ${escapeHTML(slotLabel)}</span>
+                    </header>
+
+                    ${statRows ? `<div class="aethra-ui-tooltip__item-stats">${statRows}</div>` : ""}
+
+                    ${bonusList.length > 0 ? `
+                        <div class="aethra-ui-tooltip__item-bonuses">
+                            <small>PROPRIEDADES ADICIONAIS</small>
+                            <ul>${bonusList.join("")}</ul>
+                        </div>
+                    ` : ""}
+
+                    ${item.description ? `
+                        <p class="aethra-ui-tooltip__item-desc"><em>"${escapeHTML(item.description)}"</em></p>
+                    ` : ""}
+
+                    <footer class="aethra-ui-tooltip__item-footer">
+                        <span class="${levelOk ? "is-ok" : "is-failed"}">
+                            Req: Nível ${levelReq}
+                        </span>
+                        ${item.price ? `
+                            <span class="aethra-ui-tooltip__item-price">
+                                🪙 ${formatNumber(item.price)} Ouro
+                            </span>
+                        ` : ""}
+                    </footer>
+                </article>
+            `;
+        },
+
         buildHTML(trigger) {
             const kind = trigger.dataset.tooltipKind || "text";
 
             if (kind === "skill") {
                 return this.buildSkillHTML(trigger.dataset.skillId);
+            }
+
+            if (kind === "item") {
+                return this.buildItemHTML(trigger.dataset.itemIdRef || trigger.dataset.itemId);
             }
 
             if (kind === "stat") {
