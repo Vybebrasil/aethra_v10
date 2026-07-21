@@ -1,4 +1,4 @@
-// TileMapCanvas.js — Engine de Mapa 2D estilo Tibia/Poketibia Idle (Canvas Top-Down/Isometric)
+// TileMapCanvas.js — Engine de Mapa 2D estilo Tibia/Baiak Idle com Sprites PNG e Loop de Combate Vivo
 (function initTileMapCanvas(Aethra) {
     "use strict";
 
@@ -11,31 +11,46 @@
     let canvas = null;
     let ctx = null;
     let animationFrameId = null;
+    let autoCombatInterval = null;
     let isRunning = false;
 
     // Entities on map
     const player = {
+        baseX: 6,
+        baseY: 7,
         x: 6,
         y: 7,
+        targetX: 6,
+        targetY: 7,
         animFrame: 0,
         animTimer: 0,
-        state: "idle", // idle, attack, hurt
-        attackTimer: 0,
-        targetX: 6,
-        targetY: 7
+        state: "idle", // idle, move, attack
+        attackTimer: 0
     };
 
     const monster = {
+        baseX: 15,
+        baseY: 7,
         x: 15,
         y: 7,
         animFrame: 0,
         animTimer: 0,
         state: "idle",
         hurtTimer: 0,
+        deathTimer: 0,
         name: "Goblin",
+        key: "goblin",
         hp: 100,
         maxHp: 100
     };
+
+    const MONSTER_POOL = [
+        { key: "rat",      name: "Rato Gigante", maxHp: 40 },
+        { key: "goblin",   name: "Goblin Ladrão", maxHp: 65 },
+        { key: "wolf",     name: "Lobo Feroz",    maxHp: 90 },
+        { key: "skeleton", name: "Esqueleto",    maxHp: 120 },
+        { key: "boss",     name: "👹 Demônio Ancião (MINI-BOSS)", maxHp: 250 }
+    ];
 
     // Floating Combat Text array
     const floatingTexts = [];
@@ -57,55 +72,47 @@
     const mapGrid = Array.from({ length: MAP_ROWS }, (_, r) =>
         Array.from({ length: MAP_COLS }, (_, c) => {
             if (r === 0 || r === MAP_ROWS - 1 || c === 0 || c === MAP_COLS - 1) return 2; // stone border
-            if (r >= 6 && r <= 8 && c >= 4 && c <= 17) return 1; // dirt path in middle
-            if ((r === 2 || r === 3) && (c === 3 || c === 4 || c === 18 || c === 19)) return 4; // trees
+            if (r >= 6 && r <= 8 && c >= 3 && c <= 18) return 1; // dirt path in middle
+            if ((r === 2 || r === 3) && (c === 3 || c === 4 || c === 17 || c === 18)) return 4; // trees
             if ((r === 11 || r === 12) && (c === 8 || c === 9 || c === 10)) return 3; // water pond
             if (Math.random() < 0.08) return 5; // flower
             return 0; // grass
         })
     );
 
-    // Color definitions for procedurally drawn tiles/sprites
     const TILE_COLORS = {
-        0: "#2a5427", // grass base
-        1: "#635037", // dirt path
-        2: "#3a444d", // stone wall
-        3: "#1a4b6e", // water
-        4: "#1c3c1a", // tree
-        5: "#2a5427"  // grass with flower
+        0: "#2a5427",
+        1: "#635037",
+        2: "#3a444d",
+        3: "#1a4b6e",
+        4: "#1c3c1a",
+        5: "#2a5427"
     };
 
     function drawTile(c, r, tileType, time) {
         const px = c * TILE_SIZE;
         const py = r * TILE_SIZE;
 
-        // Base color
         ctx.fillStyle = TILE_COLORS[tileType] || "#2a5427";
         ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
 
-        // Tile grid outline (subtle Tibia tile border)
         ctx.strokeStyle = "rgba(0, 0, 0, 0.12)";
         ctx.lineWidth = 1;
         ctx.strokeRect(px, py, TILE_SIZE, TILE_SIZE);
 
-        // Details
         if (tileType === 0) {
-            // Grass texture dots
             ctx.fillStyle = "rgba(60, 120, 50, 0.4)";
             ctx.fillRect(px + 6, py + 8, 3, 3);
             ctx.fillRect(px + 20, py + 18, 4, 3);
         } else if (tileType === 1) {
-            // Dirt texture
             ctx.fillStyle = "rgba(40, 30, 20, 0.3)";
             ctx.fillRect(px + 10, py + 12, 4, 4);
             ctx.fillRect(px + 22, py + 6, 3, 3);
         } else if (tileType === 3) {
-            // Water animation
             const wave = Math.sin(time * 0.003 + c + r) * 3;
             ctx.fillStyle = "rgba(100, 200, 255, 0.25)";
             ctx.fillRect(px + 4 + wave, py + 12, 12, 3);
         } else if (tileType === 4) {
-            // Tree trunk + leaves
             ctx.fillStyle = "#3a2618";
             ctx.fillRect(px + 12, py + 18, 8, 14);
             ctx.fillStyle = "#1e4d1b";
@@ -113,7 +120,6 @@
             ctx.arc(px + 16, py + 12, 12, 0, Math.PI * 2);
             ctx.fill();
         } else if (tileType === 5) {
-            // Flower
             ctx.fillStyle = "#e05585";
             ctx.fillRect(px + 14, py + 14, 4, 4);
         }
@@ -134,17 +140,13 @@
         const hero = Aethra.GameState?.hero || {};
         const archetypeId = hero.archetypeId || "vanguard";
 
-        // Try drawing sprite image via SpriteLoader first
         const spriteDrawn = Aethra.SpriteLoader?.draw?.(ctx, archetypeId, px, py + bob, 32, 32);
 
         if (!spriteDrawn) {
-            // Procedural fallback character drawing
             ctx.fillStyle = "#2c4c68";
             ctx.fillRect(px + 9, py + 12 + bob, 14, 14);
-
             ctx.fillStyle = "#8a9ea8";
             ctx.fillRect(px + 10, py + 4 + bob, 12, 10);
-
             ctx.fillStyle = "#50c878";
             ctx.fillRect(px + 13, py + 8 + bob, 6, 2);
 
@@ -171,7 +173,6 @@
         ctx.fillStyle = "#50c878";
         ctx.fillRect(px + 2, py - 10, 28 * hpPct, 4);
 
-        // Name tag overhead
         ctx.fillStyle = "#ffffff";
         ctx.font = "bold 9px Outfit, sans-serif";
         ctx.textAlign = "center";
@@ -179,29 +180,23 @@
     }
 
     function drawMonster(time) {
-        const currentEnemy = Aethra.GameState?.battle?.enemy || Aethra.GameState?.huntState?.currentMonster || null;
-        const mName = currentEnemy?.name || monster.name || "Inimigo";
-        const mCurHp = currentEnemy?.hp || monster.hp;
-        const mMaxHp = currentEnemy?.maxHp || monster.maxHp || 100;
-        const hpPct = Math.max(0, Math.min(1, mCurHp / mMaxHp));
+        if (monster.deathTimer > 0) return; // Monster dead, waiting next wave spawn
 
         const px = monster.x * TILE_SIZE;
         const py = monster.y * TILE_SIZE;
         const shake = monster.hurtTimer > 0 ? (Math.random() * 4 - 2) : 0;
         const bob = Math.sin(time * 0.005 + 1) * 2;
 
-        const mKey = (currentEnemy?.id || "monster").toLowerCase();
-        const spriteDrawn = Aethra.SpriteLoader?.draw?.(ctx, mKey, px + shake, py + bob, 32, 32);
+        const hpPct = Math.max(0, Math.min(1, monster.hp / monster.maxHp));
+
+        const spriteDrawn = Aethra.SpriteLoader?.draw?.(ctx, monster.key, px + shake, py + bob, 32, 32);
 
         if (!spriteDrawn) {
-            // Procedural fallback monster drawing
             ctx.fillStyle = monster.hurtTimer > 0 ? "#ff8888" : "#8c3a3a";
             ctx.fillRect(px + 8 + shake, py + 10 + bob, 16, 16);
-
             ctx.fillStyle = "#ffff00";
             ctx.fillRect(px + 11 + shake, py + 13 + bob, 3, 3);
             ctx.fillRect(px + 18 + shake, py + 13 + bob, 3, 3);
-
             ctx.fillStyle = "#e0e0e0";
             ctx.fillRect(px + 7 + shake, py + 6 + bob, 4, 6);
             ctx.fillRect(px + 21 + shake, py + 6 + bob, 4, 6);
@@ -210,14 +205,14 @@
         // Overhead HP bar
         ctx.fillStyle = "rgba(0,0,0,0.65)";
         ctx.fillRect(px + 2, py - 10, 28, 4);
-        ctx.fillStyle = "#e54d4d";
+        ctx.fillStyle = waveState.currentWave === waveState.maxWaves ? "#ffd700" : "#e54d4d";
         ctx.fillRect(px + 2, py - 10, 28 * hpPct, 4);
 
         // Name tag
-        ctx.fillStyle = "#ff6666";
+        ctx.fillStyle = waveState.currentWave === waveState.maxWaves ? "#ffd700" : "#ff6666";
         ctx.font = "bold 9px Outfit, sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText(mName, px + 16, py - 13);
+        ctx.fillText(monster.name, px + 16, py - 13);
     }
 
     function updateAndDrawFloatingTexts() {
@@ -244,40 +239,58 @@
         }
     }
 
-    function renderLoop(time) {
-        if (!isRunning || !ctx || !canvas) return;
+    function updatePhysics() {
+        // Player smooth movement towards target position
+        const dx = player.targetX - player.x;
+        if (Math.abs(dx) > 0.05) {
+            player.x += dx * 0.25;
+        } else {
+            player.x = player.targetX;
+        }
 
         // Timers update
-        if (player.attackTimer > 0) player.attackTimer--;
-        else player.state = "idle";
+        if (player.attackTimer > 0) {
+            player.attackTimer--;
+            if (player.attackTimer === 0) {
+                player.targetX = player.baseX; // Step back after attack
+                player.state = "idle";
+            }
+        }
 
         if (monster.hurtTimer > 0) monster.hurtTimer--;
 
-        // Clear canvas
+        if (monster.deathTimer > 0) {
+            monster.deathTimer--;
+            if (monster.deathTimer === 0) {
+                spawnNextMonster();
+            }
+        }
+    }
+
+    function renderLoop(time) {
+        if (!isRunning || !ctx || !canvas) return;
+
+        updatePhysics();
+
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Draw tile map grid
         for (let r = 0; r < MAP_ROWS; r++) {
             for (let c = 0; c < MAP_COLS; c++) {
                 drawTile(c, r, mapGrid[r][c], time);
             }
         }
 
-        // Draw entities
         drawPlayer(time);
         drawMonster(time);
-
-        // Draw floating combat numbers
         updateAndDrawFloatingTexts();
 
         animationFrameId = requestAnimationFrame(renderLoop);
     }
 
-    // Wave State Tracking
+    // Wave & Progression State
     let waveState = {
         currentWave: 1,
         maxWaves: 5,
-        isBossWave: false,
         isLoop: true,
         floorsCleared: 0
     };
@@ -317,17 +330,69 @@
         }
     }
 
+    function spawnNextMonster() {
+        if (waveState.currentWave === waveState.maxWaves) {
+            // Mini-Boss Spawn
+            monster.key = "boss";
+            monster.name = "👹 Demônio Ancião (MINI-BOSS)";
+            monster.maxHp = 250;
+            monster.hp = 250;
+        } else {
+            const idx = (waveState.currentWave - 1) % (MONSTER_POOL.length - 1);
+            const template = MONSTER_POOL[idx] || MONSTER_POOL[0];
+            monster.key = template.key;
+            monster.name = template.name;
+            monster.maxHp = template.maxHp;
+            monster.hp = template.maxHp;
+        }
+        monster.x = monster.baseX;
+        monster.y = monster.baseY;
+        monster.deathTimer = 0;
+        monster.hurtTimer = 0;
+    }
+
     function advanceWave() {
         if (waveState.currentWave < waveState.maxWaves) {
             waveState.currentWave++;
             addChatLog(`Avançou para a Onda ${waveState.currentWave}/5 da sala!`, "wave");
         } else {
-            // Cleared Wave 5 / Boss
             waveState.floorsCleared++;
-            addChatLog(`🏆 Mini-Boss derrotado! Sala ${waveState.floorsCleared} limpa. Avançando...`, "boss");
+            addChatLog(`🏆 Mini-Boss derrotado! Sala ${waveState.floorsCleared} limpa!`, "boss");
             waveState.currentWave = 1;
         }
         renderWaveProgress();
+        monster.deathTimer = 20; // Short pause before spawning next wave monster
+    }
+
+    function triggerAttackAnimation(payload = {}) {
+        if (monster.deathTimer > 0) return; // Currently respawning
+
+        // Lunge player forward towards monster
+        player.targetX = player.baseX + 4;
+        player.state = "attack";
+        player.attackTimer = 16;
+        monster.hurtTimer = 16;
+
+        const dmg = payload.damage || payload.amount || Math.floor(Math.random() * 25 + 15);
+        const isCrit = payload.isCrit || payload.critical || Math.random() < 0.25;
+
+        monster.hp = Math.max(0, monster.hp - dmg);
+
+        const px = monster.x * TILE_SIZE + 16;
+        const py = monster.y * TILE_SIZE;
+
+        if (isCrit) {
+            addFloatingText(`💥 ${dmg}!`, px, py - 6, "#ffcc00", 17);
+            addChatLog(`Ataque crítico de ${dmg} de dano!`, "crit");
+        } else {
+            addFloatingText(`-${dmg}`, px, py, "#ff4d4d", 14);
+            addChatLog(`Causou ${dmg} de dano no ${monster.name}.`, "atk");
+        }
+
+        if (monster.hp <= 0) {
+            addChatLog(`☠ ${monster.name} foi derrotado!`, "kill");
+            advanceWave();
+        }
     }
 
     function startEngine() {
@@ -352,7 +417,6 @@
                 <div class="tilemap-canvas-container">
                     <canvas id="tilemap-canvas" width="${MAP_COLS * TILE_SIZE}" height="${MAP_ROWS * TILE_SIZE}"></canvas>
                     
-                    <!-- Chat / Log Overlay in bottom-left corner of map viewport (Baiak style) -->
                     <div class="tilemap-chat-dock">
                         <header><span>Log de Combate</span></header>
                         <div class="tilemap-chat-log" id="tilemap-chat-log">
@@ -368,51 +432,24 @@
         ctx = canvas.getContext("2d");
 
         renderWaveProgress();
+        spawnNextMonster();
 
         isRunning = true;
         animationFrameId = requestAnimationFrame(renderLoop);
+
+        // Auto combat tick simulation (attacks every 1.8 seconds so combat is always alive)
+        clearInterval(autoCombatInterval);
+        autoCombatInterval = setInterval(() => {
+            if (isRunning && monster.hp > 0 && monster.deathTimer === 0) {
+                triggerAttackAnimation();
+            }
+        }, 1800);
     }
 
-    function triggerAttackAnimation(payload = {}) {
-        player.state = "attack";
-        player.attackTimer = 12;
-        monster.hurtTimer = 14;
-
-        const dmg = payload.damage || payload.amount || Math.floor(Math.random() * 20 + 10);
-        const isCrit = payload.isCrit || payload.critical;
-        const isEvade = payload.evaded || payload.type === "evasion";
-        const isBlock = payload.blocked || payload.type === "block";
-
-        const px = monster.x * TILE_SIZE + 16;
-        const py = monster.y * TILE_SIZE;
-
-        if (isEvade) {
-            addFloatingText("ESQUIVA!", px, py, "#79c9e8", 13);
-            addChatLog("Você se esquivou do ataque!", "def");
-        } else if (isBlock) {
-            addFloatingText("BLOQUEIO!", px, py, "#d9b85f", 13);
-            addChatLog("Ataque bloqueado com sucesso!", "def");
-        } else if (isCrit) {
-            addFloatingText(`💥 ${dmg}!`, px, py - 5, "#ffcc00", 17);
-            addChatLog(`Ataque crítico de ${dmg} de dano!`, "crit");
-        } else {
-            addFloatingText(`-${dmg}`, px, py, "#ff4d4d", 14);
-            addChatLog(`Causou ${dmg} de dano no inimigo.`, "atk");
-        }
-    }
-
-    function onEnemyDefeated(payload = {}) {
-        const name = payload.enemyName || payload.name || "Inimigo";
-        addChatLog(`☠ ${name} foi derrotado!`, "kill");
-        advanceWave();
-    }
-
-    // Event bus listeners for combat integration
+    // Event bus listeners
     Aethra.EventBus.on("battle:damage-dealt", triggerAttackAnimation);
     Aethra.EventBus.on("battle:round-processed", triggerAttackAnimation);
     Aethra.EventBus.on("combat:hit", triggerAttackAnimation);
-    Aethra.EventBus.on("EnemyDefeated", onEnemyDefeated);
-    Aethra.EventBus.on("battle:enemy-defeated", onEnemyDefeated);
 
     Aethra.TileMapCanvas = {
         start: startEngine,
@@ -420,10 +457,8 @@
         advanceWave
     };
 
-    // Auto mount when container is available
     Aethra.EventBus.on("EngineReady", () => setTimeout(startEngine, 100));
     Aethra.EventBus.on("engine:ready", () => setTimeout(startEngine, 100));
     Aethra.EventBus.on("render:all", () => setTimeout(startEngine, 50));
     Aethra.EventBus.on("state:restored", () => setTimeout(startEngine, 50));
 })(window.Aethra = window.Aethra || {});
-
