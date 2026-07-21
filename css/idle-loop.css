@@ -1,0 +1,134 @@
+/* =====================================================
+   IDLE LOOP SYSTEM — css/idle-loop.css
+   Estilização do Loop Infinito de Caçada, Auto-Venda e Reabastecimento
+   ===================================================== */
+
+.idle-loop-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    margin-bottom: 8px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(8, 20, 32, 0.95), rgba(4, 10, 16, 0.98));
+    border: 1px solid rgba(218, 182, 94, 0.3);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.idle-loop-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.idle-loop-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: rgba(80, 200, 120, 0.15);
+    border: 1px solid rgba(80, 200, 120, 0.4);
+    color: #50c878;
+    font: 800 9px/1 "Outfit", sans-serif;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.idle-loop-indicator.is-inactive {
+    background: rgba(220, 60, 60, 0.15);
+    border-color: rgba(220, 60, 60, 0.4);
+    color: #ff6666;
+}
+
+.idle-loop-telemetry {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #a0b4be;
+    font: 600 10px/1 "Outfit", sans-serif;
+}
+
+.idle-loop-telemetry strong {
+    color: #ffd700;
+}
+
+.idle-loop-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.idle-toggle-btn {
+    padding: 5px 11px;
+    border: 1px solid rgba(218, 182, 94, 0.35);
+    border-radius: 6px;
+    background: rgba(218, 182, 94, 0.12);
+    color: #ecd06a;
+    font: 700 9.5px/1 "Outfit", sans-serif;
+    letter-spacing: .04em;
+    cursor: pointer;
+    transition: background .18s, border-color .18s, color .18s;
+}
+
+.idle-toggle-btn:hover {
+    background: rgba(218, 182, 94, 0.25);
+    border-color: rgba(218, 182, 94, 0.6);
+    color: #ffffff;
+}
+
+.idle-toggle-btn.is-active {
+    background: rgba(80, 200, 120, 0.2);
+    border-color: rgba(80, 200, 120, 0.6);
+    color: #60e088;
+}
+
+/* Auto-return banner overlay */
+.idle-return-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: rgba(4, 10, 16, 0.92);
+    backdrop-filter: blur(8px);
+    animation: idle-return-fade .4s ease forwards;
+}
+
+@keyframes idle-return-fade {
+    from { opacity: 0; transform: scale(0.98); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+.idle-return-title {
+    color: #ffd700;
+    font: 800 20px/1 "Cinzel", serif;
+    letter-spacing: .08em;
+    text-shadow: 0 2px 12px rgba(255, 215, 0, 0.4);
+}
+
+.idle-return-body {
+    color: #a0c0d0;
+    font: 600 11px/1.4 "Outfit", sans-serif;
+    text-align: center;
+}
+
+.idle-return-steps {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.idle-step-chip {
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: rgba(91, 175, 200, 0.15);
+    border: 1px solid rgba(91, 175, 200, 0.3);
+    color: #79c9e8;
+    font: 700 9px/1 "Outfit", sans-serif;
+}
