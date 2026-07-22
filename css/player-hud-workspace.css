@@ -1140,21 +1140,31 @@
 
 .player-skill-card__btn.btn--training {
     border-color: rgba(94, 188, 231, 0.4);
+    background: rgba(94, 188, 231, 0.08);
     color: #79ccf2;
 }
 
 .player-skill-card__btn.btn--locked {
     border-color: rgba(229, 95, 95, 0.4);
+    background: rgba(229, 95, 95, 0.08);
     color: #f28b8b;
 }
 
 .player-skill-card__btn.btn--active {
     border-color: rgba(100, 210, 140, 0.4);
+    background: rgba(100, 210, 140, 0.08);
     color: #78e0a2;
+}
+
+.player-skill-card__btn.btn--inactive {
+    border-color: rgba(229, 95, 95, 0.4);
+    background: rgba(229, 95, 95, 0.08);
+    color: #f28b8b;
 }
 
 .player-skill-card__btn.btn--workshop {
     border-color: rgba(229, 182, 95, 0.4);
+    background: rgba(229, 182, 95, 0.08);
     color: #ebd188;
 }
 
