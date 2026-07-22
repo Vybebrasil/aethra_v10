@@ -409,6 +409,20 @@
         }, 100);
     });
 
+    // Botão "Resetar Save (Novo Começo)" → limpa todo o progresso e recarrega como novo jogador
+    document.addEventListener("click", (event) => {
+        if (!event.target.closest("[data-reset-save]")) return;
+        const confirmed = window.confirm(
+            "🚨 ATENÇÃO: Deseja apagar todo o progresso do save atual e recomeçar do zero para testar a experiência de novo jogador?"
+        );
+        if (!confirmed) return;
+        if (Aethra.SaveManager?.resetProgress) {
+            Aethra.SaveManager.resetProgress(true);
+        } else {
+            window.location.reload();
+        }
+    });
+
     if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", () => setTimeout(init, 0), { once: true });
     } else {

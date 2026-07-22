@@ -1168,6 +1168,124 @@
     color: #ebd188;
 }
 
+/* ==========================================================================
+   GAME WINDOWS & MODAL COCKPIT OVERHAUL
+   ========================================================================== */
+
+.game-window {
+    max-height: calc(100vh - 70px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(94, 188, 231, 0.3) !important;
+    border-radius: 12px !important;
+    background: linear-gradient(180deg, rgba(10, 20, 26, 0.96), rgba(4, 9, 12, 0.98)) !important;
+    backdrop-filter: blur(16px) !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.window-header {
+    flex: 0 0 auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 10px 16px !important;
+    border-bottom: 1px solid rgba(80, 120, 140, 0.25) !important;
+    background: rgba(4, 10, 14, 0.8) !important;
+}
+
+.settings-panel--v2 {
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    padding: 14px 16px !important;
+    scrollbar-width: thin;
+}
+
+.settings-grid-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    align-items: start;
+}
+
+@media (max-width: 768px) {
+    .settings-grid-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.settings-column {
+    display: grid;
+    gap: 10px;
+}
+
+.settings-card-group {
+    display: grid;
+    gap: 8px;
+}
+
+.settings-card {
+    display: grid;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid rgba(80, 120, 140, 0.22);
+    border-radius: 8px;
+    background: rgba(6, 14, 18, 0.85);
+}
+
+.settings-card--danger {
+    border-color: rgba(229, 95, 95, 0.35);
+    background: rgba(25, 12, 14, 0.85);
+}
+
+.settings-card strong {
+    display: block;
+    color: #e5f1f5;
+    font: 800 11px/1.2 "Outfit", sans-serif;
+    margin-bottom: 2px;
+}
+
+.settings-card small {
+    display: block;
+    color: #7995a3;
+    font: 700 8px/1.2 "Outfit", sans-serif;
+}
+
+.settings-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 6px;
+    font: 800 9px/1 "Outfit", sans-serif;
+    cursor: pointer;
+    transition: all 0.12s ease-in-out;
+}
+
+.settings-action-btn.btn--secondary {
+    border: 1px solid rgba(94, 188, 231, 0.35);
+    background: rgba(94, 188, 231, 0.08);
+    color: #9cdbf5;
+}
+
+.settings-action-btn.btn--secondary:hover {
+    border-color: rgba(94, 188, 231, 0.6);
+    background: rgba(94, 188, 231, 0.18);
+}
+
+.settings-action-btn.btn--danger {
+    border: 1px solid rgba(229, 95, 95, 0.5);
+    background: rgba(229, 95, 95, 0.15);
+    color: #f28b8b;
+}
+
+.settings-action-btn.btn--danger:hover {
+    border-color: rgba(229, 95, 95, 0.8);
+    background: rgba(229, 95, 95, 0.3);
+    box-shadow: 0 0 12px rgba(229, 95, 95, 0.25);
+}
+
 .player-backpack-tools label {
     display: grid;
     grid-template-columns: 20px minmax(0, 1fr);

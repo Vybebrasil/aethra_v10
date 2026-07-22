@@ -468,7 +468,7 @@
             <header class="window-header">
                 <div>
                     <small>Preferências do jogador</small>
-                    <h2>Configurações</h2>
+                    <h2>Configurações do Jogo</h2>
                 </div>
 
                 <button
@@ -481,97 +481,88 @@
                 </button>
             </header>
 
-            <div class="settings-panel">
-                <div class="settings-panel__heading">
-                    <div>
-                        <small>View Engine</small>
-                        <h3>Modo de Batalha</h3>
+            <div class="settings-panel settings-panel--v2">
+                <div class="settings-grid-layout">
+                    <!-- Coluna 1: Visual & Interface -->
+                    <div class="settings-column">
+                        <div class="settings-panel__heading">
+                            <div>
+                                <small>View Engine</small>
+                                <h3>Modo de Batalha</h3>
+                            </div>
+                            <span class="settings-panel__badge">Visual</span>
+                        </div>
+
+                        <fieldset class="battle-mode-options" aria-label="Escolher modo de batalha">
+                            <label class="battle-mode-choice" data-battle-mode-choice>
+                                <input type="radio" name="battle-mode" value="cards" data-battle-mode-option>
+                                <span class="battle-mode-choice__icon" aria-hidden="true">▣</span>
+                                <span class="battle-mode-choice__copy">
+                                    <strong>Cartas táticas</strong>
+                                    <small>Painéis de Herói, Inimigo e log por rodada.</small>
+                                </span>
+                                <span class="battle-mode-choice__state">Atual</span>
+                            </label>
+
+                            <label class="battle-mode-choice" data-battle-mode-choice>
+                                <input type="radio" name="battle-mode" value="map2d" data-battle-mode-option>
+                                <span class="battle-mode-choice__icon" aria-hidden="true">◇</span>
+                                <span class="battle-mode-choice__copy">
+                                    <strong>Mapa 2D</strong>
+                                    <small>Palco em tempo real com tiles e efeitos de combate.</small>
+                                </span>
+                                <span class="battle-mode-choice__state">Disponível</span>
+                            </label>
+                        </fieldset>
+
+                        <div id="battle-mode-setting-status" class="settings-mode-status" role="status" aria-live="polite">
+                            Modo ativo: Cartas táticas
+                        </div>
+
+                        <div class="settings-panel__heading settings-panel__heading--spaced">
+                            <div><small>HUD</small><h3>Densidade e movimento</h3></div>
+                            <span class="settings-panel__badge">Interface</span>
+                        </div>
+
+                        <div class="hud-preference-grid">
+                            <label><span><strong>Interface compacta</strong><small>Prioriza área útil em telas menores.</small></span><input type="checkbox" data-hud-compact></label>
+                            <label><span><strong>Reduzir animações</strong><small>Remove pulsos e transições decorativas.</small></span><input type="checkbox" data-hud-reduce-motion></label>
+                        </div>
                     </div>
-                    <span class="settings-panel__badge">Visual</span>
-                </div>
 
-                <p class="settings-panel__description">
-                    Escolha como o encontro será apresentado. Esta preferência
-                    fica salva neste navegador.
-                </p>
+                    <!-- Coluna 2: Gerenciamento de Personagem & Reset de Save -->
+                    <div class="settings-column">
+                        <div class="settings-panel__heading">
+                            <div>
+                                <small>Personagem & Progresso</small>
+                                <h3>Gerenciamento</h3>
+                            </div>
+                            <span class="settings-panel__badge settings-panel__badge--danger">Perigo</span>
+                        </div>
 
-                <fieldset
-                    class="battle-mode-options"
-                    aria-label="Escolher modo de batalha"
-                >
-                    <label
-                        class="battle-mode-choice"
-                        data-battle-mode-choice
-                    >
-                        <input
-                            type="radio"
-                            name="battle-mode"
-                            value="cards"
-                            data-battle-mode-option
-                        >
-                        <span class="battle-mode-choice__icon" aria-hidden="true">▣</span>
-                        <span class="battle-mode-choice__copy">
-                            <strong>Cartas táticas</strong>
-                            <small>Painéis de Herói, Inimigo e log por rodada.</small>
-                        </span>
-                        <span class="battle-mode-choice__state">Atual</span>
-                    </label>
+                        <div class="settings-card-group">
+                            <article class="settings-card">
+                                <div>
+                                    <strong>Trocar Personagem</strong>
+                                    <small>Volta à seleção de personagens. O progresso atual permanece salvo.</small>
+                                </div>
+                                <button type="button" id="btn-new-character" class="settings-action-btn btn--secondary" data-new-character>
+                                    👤 Gerenciar personagens
+                                </button>
+                            </article>
 
-                    <label
-                        class="battle-mode-choice"
-                        data-battle-mode-choice
-                    >
-                        <input
-                            type="radio"
-                            name="battle-mode"
-                            value="map2d"
-                            data-battle-mode-option
-                        >
-                        <span class="battle-mode-choice__icon" aria-hidden="true">◇</span>
-                        <span class="battle-mode-choice__copy">
-                            <strong>Mapa 2D</strong>
-                            <small>Palco em tempo real com tiles e efeitos de combate.</small>
-                        </span>
-                        <span class="battle-mode-choice__state">Disponível</span>
-                    </label>
-                </fieldset>
-
-                <div
-                    id="battle-mode-setting-status"
-                    class="settings-mode-status"
-                    role="status"
-                    aria-live="polite"
-                >
-                    Modo ativo: Cartas táticas
-                </div>
-
-                <div class="settings-panel__heading settings-panel__heading--spaced">
-                    <div><small>HUD</small><h3>Densidade e movimento</h3></div>
-                    <span class="settings-panel__badge">Interface</span>
-                </div>
-                <div class="hud-preference-grid">
-                    <label><span><strong>Interface compacta</strong><small>Prioriza área útil em telas menores.</small></span><input type="checkbox" data-hud-compact></label>
-                    <label><span><strong>Reduzir animações</strong><small>Remove pulsos e transições decorativas.</small></span><input type="checkbox" data-hud-reduce-motion></label>
-                </div>
-
-                <div class="settings-panel__heading" style="margin-top: 14px;">
-                    <div>
-                        <small>Personagem</small>
-                        <h3>Novo Personagem</h3>
+                            <article class="settings-card settings-card--danger">
+                                <div>
+                                    <strong>Resetar Save (Novo Começo)</strong>
+                                    <small>Apaga completamente o save atual e reinicia o jogo do zero para testar a experiência de novo jogador.</small>
+                                </div>
+                                <button type="button" id="btn-reset-save" class="settings-action-btn btn--danger" data-reset-save>
+                                    🚨 Resetar Save do Zero
+                                </button>
+                            </article>
+                        </div>
                     </div>
-                    <span class="settings-panel__badge" style="background: rgba(203,138,133,0.15); color: #cb8a85;">Perigo</span>
                 </div>
-                <p class="settings-panel__description">
-                    Volta à seleção de personagens. O progresso do slot atual permanece salvo.
-                </p>
-                <button
-                    type="button"
-                    id="btn-new-character"
-                    class="settings-new-character-btn"
-                    data-new-character
-                >
-                    Gerenciar personagens
-                </button>
             </div>
         </section>
 
