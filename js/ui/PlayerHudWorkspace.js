@@ -119,7 +119,7 @@
                     ${resourceRow("hp", "HP", hp, hpMax, "♥")}
                     ${resourceRow("mana", "Mana", mana, manaMax, "✦")}
                 </div>
-                <div id="battle-equipment-summary" class="hero-paperdoll player-equipment-matrix"></div>
+                <div id="battle-equipment-summary" class="player-equipment-matrix player-equipment-matrix--tibia"></div>
             </section>`;
         renderEquipmentMatrix();
         Aethra.TooltipManager?.refresh?.();

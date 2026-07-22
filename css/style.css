@@ -12467,7 +12467,7 @@ body > #aethra-ui-tooltip {
 .hero-resource { min-height:39px!important; padding:5px 6px!important; }
 .hero-resource header { font-size:8px!important; }
 .hero-resource progress { height:6px!important; }
-.hero-paperdoll { min-height:250px!important; margin-top:6px!important; margin-bottom:6px!important; }
+.hero-paperdoll { min-height:0!important; margin-top:6px!important; margin-bottom:6px!important; }
 .tibia-backpack-grid { max-height:240px!important; overflow-y:auto!important; align-content:start!important; margin-bottom:6px!important; }
 .hero-skill-progression { max-height:none!important; overflow:visible!important; padding-bottom:7px!important; }
 
