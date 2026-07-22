@@ -657,12 +657,19 @@
             Mundo: "⌖ Mundo"
         };
 
+        const filteredMasteries = masteries.filter((entry) => {
+            const cat = entry.category || "Outras";
+            if (activeCategory !== "all" && cat !== activeCategory && (activeCategory !== "Criação" || (cat !== "Criação" && cat !== "Craft"))) return false;
+            if (!searchQuery) return true;
+            return normalize(`${entry.name} ${cat} ${entry.description || ""}`).includes(searchQuery);
+        });
+
         // Ordenação Inteligente:
         // 1. Skills Expandidas (Pinned / Foco) ficam SEMPRE NO TOPO!
         // 2. Dentro de cada grupo, ordena por Modo de Treino (Ativo > Travado) e Nível/XP
         filteredMasteries.sort((a, b) => {
-            const aId = String(a.id || a.name);
-            const bId = String(b.id || b.name);
+            const aId = String(a.id || a.name || "");
+            const bId = String(b.id || b.name || "");
             const aMinimized = state.minimizedSkills[aId] === true;
             const bMinimized = state.minimizedSkills[bId] === true;
 
