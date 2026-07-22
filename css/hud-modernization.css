@@ -392,6 +392,20 @@ summary:focus-visible,
     font-size: 8px;
 }
 
+.actionbar-vital-strip-root,
+.combat-survival-strip {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin: 0 auto !important;
+    padding: 3px 12px !important;
+    border-radius: 8px !important;
+    background: rgba(10, 16, 20, 0.85) !important;
+    border: 1px solid rgba(229, 197, 105, 0.25) !important;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+    z-index: 10 !important;
+}
+
 #modal-layer small,
 #modal-layer .aethra-shop-card small,
 #modal-layer .settings-panel small {

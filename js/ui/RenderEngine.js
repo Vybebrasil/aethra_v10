@@ -757,6 +757,7 @@
                                     <small>Combate tático por rodadas</small>
                                     <h2>Ataques & Habilidades</h2>
                                 </div>
+                                <div id="actionbar-vital-strip-root" class="actionbar-vital-strip-root"></div>
                                 <div class="battle-panel__tools">
                                     <button
                                         type="button"

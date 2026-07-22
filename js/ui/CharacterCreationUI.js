@@ -289,7 +289,7 @@
                                 { id: "relic",   label: "Relíquia", emptyIcon: "⚜", item: null },
 
                                 { id: "weapon",  label: "Arma",     emptyIcon: wIcon, item: starterItem },
-                                { id: "chest",   label: "Peitoral", emptyIcon: "◫", item: starterChestItem },
+                                { id: "chest",   label: "Peitoral", emptyIcon: "🛡️", item: starterChestItem },
                                 { id: "offhand", label: "Escudo",   emptyIcon: "🛡", item: starterShieldItem },
 
                                 { id: "ring1",   label: "Anel 1",   emptyIcon: "◎", item: null },
@@ -303,7 +303,7 @@
                             return PREVIEW_SLOTS.map(slot => {
                                 const item = slot.item;
                                 const hasItem = Boolean(item && item.name);
-                                const itemIcon = hasItem ? (slot.id === "weapon" ? wIcon : slot.id === "chest" ? "◫" : "🛡") : slot.emptyIcon;
+                                const itemIcon = hasItem ? (slot.id === "weapon" ? wIcon : slot.id === "chest" ? "🛡️" : "🛡") : slot.emptyIcon;
                                 const shortName = hasItem
                                     ? (item.name.replace(" (Nível 1)", "").replace(" do Novato", "").replace(" de Treino", ""))
                                     : slot.label;

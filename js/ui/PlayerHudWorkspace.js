@@ -10,7 +10,7 @@
         { id: "neck", label: "Amuleto", icon: "◇" },
         { id: "relic", label: "Relíquia", icon: "✦" },
         { id: "weapon", label: "Arma", icon: "⚔" },
-        { id: "chest", label: "Peitoral", icon: "▣" },
+        { id: "chest", label: "Peitoral", icon: "🛡️" },
         { id: "offhand", label: "Mão 2", icon: "◐" },
         { id: "ring1", label: "Anel 1", icon: "○" },
         { id: "hands", label: "Luvas", icon: "✥" },

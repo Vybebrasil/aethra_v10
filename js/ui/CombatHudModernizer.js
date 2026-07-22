@@ -138,19 +138,22 @@
     }
 
     function renderSurvivalStrip() {
+        const rootContainer = document.getElementById("actionbar-vital-strip-root");
         const header = document.querySelector(".battle-panel--actionbar > .battle-panel__header")
             || document.querySelector("#battle-actionbar-layer .battle-panel__header")
             || document.querySelector(".battle-panel--actionbar");
-        if (!header) return false;
+        if (!header && !rootContainer) return false;
 
         document.body.classList.add("aethra-combat-hud-modern");
-        let strip = header.querySelector(".combat-survival-strip");
-        if (!strip) {
+        
+        let strip = rootContainer || (header ? header.querySelector(".combat-survival-strip") : null);
+        if (!strip && header) {
             strip = document.createElement("div");
             strip.className = "combat-survival-strip";
             const tools = header.querySelector(".battle-panel__tools");
             header.insertBefore(strip, tools || null);
         }
+        if (!strip) return false;
 
         const resources = resourceState();
         const settings = Aethra.SkillController.getSettings?.() || {};
