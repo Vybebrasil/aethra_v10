@@ -673,83 +673,84 @@
             const progress = clamp(entry.progressPercent ?? (current / next) * 100);
             const entryId = String(entry.id || entry.name || `skill-${index}`);
             const benefit = entry.benefit || entry.nextBenefit || "Ganha bônus no próximo nível.";
+            const nextBenefit = entry.nextBenefit || "Ganha maior eficiência no próximo nível.";
             const profession = Aethra.ProfessionSystem?.professions?.[entryId] || null;
             const isGathering = profession?.policy === true;
             const policyEnabled = isGathering && Aethra.ProfessionSystem?.getPolicy?.(entryId)?.enabled === true;
             const isCrafting = ["blacksmithing", "leatherworking"].includes(entryId);
             const trainingLocked = entry.trainingMode === "locked";
-            const [icon] = skillGroupLabel(entry.category);
+            const [icon, categoryLabel] = skillGroupLabel(entry.category);
 
             return `
-                <article class="player-skill-card ${trainingLocked ? "is-locked" : ""}" data-skill-id="${esc(entryId)}">
-                    <header class="player-skill-card__header">
-                        <span class="player-skill-card__icon">${esc(entry.icon || icon || "⚔")}</span>
-                        <div class="player-skill-card__info">
+                <article class="player-skill-card-slim ${trainingLocked ? "is-locked" : ""}" data-skill-id="${esc(entryId)}"
+                    data-ui-tooltip data-tooltip-kind="hud"
+                    data-tooltip-eyebrow="${esc(categoryLabel.toUpperCase())}"
+                    data-tooltip-title="${esc(entry.name)} (Nível ${fmt(entry.level)})"
+                    data-tooltip-value="${fmt(current)} / ${fmt(next)} XP (${progress.toFixed(0)}%)"
+                    data-tooltip-body="${esc(entry.description || "Evolui automaticamente ao praticar esta disciplina.")}"
+                    data-tooltip-effect="✦ Efeito Atual: ${esc(benefit)}"
+                    data-tooltip-hint="✦ Próximo Nível: ${esc(nextBenefit)}">
+                    <span class="player-skill-card-slim__icon">${esc(entry.icon || icon || "⚔")}</span>
+                    <div class="player-skill-card-slim__main">
+                        <div class="player-skill-card-slim__title">
                             <strong>${esc(entry.name)}</strong>
-                            <small>${esc(entry.category || "Maestria")}</small>
+                            <small>Lv. <b>${fmt(entry.level)}</b></small>
                         </div>
-                        <span class="player-skill-card__level">Lv. <b>${fmt(entry.level)}</b></span>
-                    </header>
-
-                    <div class="player-skill-card__progress">
-                        <div class="player-skill-card__bar">
+                        <div class="player-skill-card-slim__bar">
                             <b style="width: ${progress.toFixed(1)}%"></b>
                         </div>
-                        <span class="player-skill-card__xp">${fmt(current)} / ${fmt(next)} XP (${progress.toFixed(0)}%)</span>
+                        <div class="player-skill-card-slim__meta">
+                            <span>${esc(entry.category || "Maestria")}</span>
+                            <em>${fmt(current)} / ${fmt(next)} XP (${progress.toFixed(0)}%)</em>
+                        </div>
                     </div>
-
-                    <p class="player-skill-card__benefit">✦ ${esc(benefit)}</p>
-
-                    <footer class="player-skill-card__actions">
+                    <div class="player-skill-card-slim__actions">
                         <button type="button" class="player-skill-card__btn ${trainingLocked ? "btn--locked" : "btn--training"}"
-                            data-skill-training-mode="${esc(entryId)}" data-next-mode="${trainingLocked ? "training" : "locked"}"
-                            data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="${trainingLocked ? "XP Travado" : "Treino Ativo"}"
-                            data-tooltip-body="${trainingLocked ? "Clique para voltar a receber XP nesta habilidade." : "Clique para pausar o ganho de XP nesta habilidade."}">
+                            data-skill-training-mode="${esc(entryId)}" data-next-mode="${trainingLocked ? "training" : "locked"}">
                             ${trainingLocked ? "🔒 Travado" : "◆ Treinando"}
                         </button>
-
                         ${isGathering ? `
                             <button type="button" class="player-skill-card__btn ${policyEnabled ? "btn--active" : "btn--inactive"}"
                                 data-profession-policy="${esc(entryId)}" data-policy-enabled="${policyEnabled ? "false" : "true"}">
                                 ${policyEnabled ? "✓ Coletar" : "○ Ignorar"}
                             </button>` : ""}
-
                         ${isCrafting ? `
                             <button type="button" class="player-skill-card__btn btn--workshop" data-open-profession-workshop="${esc(entryId)}">
                                 ⚒ Oficina
                             </button>` : ""}
-                    </footer>
+                    </div>
                 </article>`;
         }).join("");
 
-        container.className = "hero-skill-progression player-skill-workspace--v2";
+        container.className = "hero-skill-progression player-skill-workspace--v3";
         container.innerHTML = `
-            <div class="player-skill-controls">
-                <nav class="player-skill-chips" aria-label="Categorias de habilidades">
+            <div class="player-skill-controls-row">
+                <select class="player-skill-category-select" data-skill-category-select aria-label="Filtrar por categoria de habilidade">
                     ${categories.map((cat) => {
                         const count = cat === "all" ? masteries.length : masteries.filter((m) => m.category === cat || (cat === "Criação" && m.category === "Craft")).length;
                         if (cat !== "all" && count === 0) return "";
-                        const active = activeCategory === cat;
-                        return `<button type="button" class="player-skill-chip ${active ? "is-active" : ""}" data-skill-category-filter="${esc(cat)}">${categoryLabels[cat] || cat} <small>(${count})</small></button>`;
+                        const selected = activeCategory === cat;
+                        return `<option value="${esc(cat)}" ${selected ? "selected" : ""}>${categoryLabels[cat] || cat} (${count})</option>`;
                     }).join("")}
-                </nav>
+                </select>
                 <label class="player-skill-search">
                     <span aria-hidden="true">⌕</span>
                     <input type="search" data-player-skill-search value="${esc(state.skillSearch || "")}" placeholder="Buscar skill..." aria-label="Buscar habilidades">
                 </label>
             </div>
 
-            <div class="player-skill-grid">
+            <div class="player-skill-grid-slim">
                 ${cardsHTML || `<div class="player-skill-empty">Nenhuma habilidade encontrada.</div>`}
             </div>`;
 
-        // Event listeners para os chips de categoria
-        container.querySelectorAll("[data-skill-category-filter]").forEach((chip) => {
-            chip.addEventListener("click", () => {
-                state.selectedSkillCategory = chip.dataset.skillCategoryFilter;
+        // Event listener para o select dropdown de categorias
+        const select = container.querySelector("[data-skill-category-select]");
+        if (select) {
+            select.addEventListener("change", () => {
+                state.selectedSkillCategory = select.value;
                 renderCategorizedSkills();
             });
-        });
+        }
 
         // Event listeners para alteração de treino de XP
         container.querySelectorAll("[data-skill-training-mode]").forEach((button) => {

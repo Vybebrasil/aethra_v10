@@ -759,17 +759,10 @@
 }
 
 /* ==========================================================================
-   SKILLS TAB REDESIGN — Direct Skill Cards & Category Chips
+   SKILLS TAB REDESIGN V3 — Slim Cards with Hover Tooltips & Category Dropdown
    ========================================================================== */
 
-.player-hud-section--skills {
-    display: flex !important;
-    flex-direction: column !important;
-    min-height: 0 !important;
-    overflow: hidden !important;
-}
-
-.player-skill-workspace--v2 {
+.player-skill-workspace--v3 {
     display: flex !important;
     flex-direction: column !important;
     min-height: 0 !important;
@@ -777,89 +770,154 @@
     gap: 6px !important;
 }
 
-.player-skill-controls {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+.player-skill-controls-row {
+    display: grid;
+    grid-template-columns: 130px minmax(0, 1fr);
     gap: 6px;
-    flex-wrap: wrap;
+    align-items: center;
     margin-bottom: 2px;
 }
 
-.player-skill-chips {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    overflow-x: auto;
-    padding-bottom: 2px;
-    scrollbar-width: thin;
-}
-
-.player-skill-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    height: 24px;
-    padding: 0 8px;
-    border: 1px solid rgba(80, 120, 140, 0.22);
+.player-skill-category-select {
+    height: 26px;
+    padding: 0 6px;
+    border: 1px solid rgba(94, 188, 231, 0.35);
     border-radius: 6px;
-    background: rgba(6, 13, 17, 0.85);
-    color: #7d96a3;
-    font: 800 8px/1 "Outfit", sans-serif;
-    white-space: nowrap;
-    cursor: pointer;
-    transition: all 0.12s ease-in-out;
-}
-
-.player-skill-chip small {
-    color: #58707d;
-    font-size: 7px;
-}
-
-.player-skill-chip:hover {
-    border-color: rgba(94, 188, 231, 0.4);
-    color: #c4e4f0;
-}
-
-.player-skill-chip.is-active {
-    border-color: rgba(229, 182, 95, 0.6);
-    background: rgba(229, 182, 95, 0.12);
+    background: rgba(6, 14, 18, 0.95);
     color: #ebd188;
-    box-shadow: 0 0 8px rgba(229, 182, 95, 0.15);
-}
-
-.player-skill-chip.is-active small {
-    color: #cbb472;
-}
-
-.player-skill-search {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-}
-
-.player-skill-search span {
-    position: absolute;
-    left: 8px;
-    color: #58707d;
-    font-size: 10px;
-    pointer-events: none;
-}
-
-.player-skill-search input {
-    height: 24px;
-    padding: 0 8px 0 22px;
-    border: 1px solid rgba(80, 120, 140, 0.25);
-    border-radius: 6px;
-    background: rgba(4, 9, 12, 0.9);
-    color: #d6e8ef;
-    font: 700 8px/1 "Outfit", sans-serif;
+    font: 800 8px/1 "Outfit", sans-serif;
     outline: none;
+    cursor: pointer;
     transition: border-color 0.12s ease-in-out;
 }
 
-.player-skill-search input:focus {
-    border-color: rgba(94, 188, 231, 0.5);
+.player-skill-category-select:hover,
+.player-skill-category-select:focus {
+    border-color: rgba(229, 182, 95, 0.6);
+}
+
+.player-skill-category-select option {
+    background: #060e12;
+    color: #d6e8ef;
+}
+
+/* Grade de Cards Slim */
+.player-skill-grid-slim {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 4px !important;
+    max-height: 380px !important;
+    overflow-y: auto !important;
+    padding-right: 3px !important;
+    scrollbar-width: thin;
+}
+
+.player-skill-card-slim {
+    display: grid !important;
+    grid-template-columns: 28px minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 5px 8px !important;
+    border: 1px solid rgba(80, 120, 140, 0.22) !important;
+    border-radius: 6px !important;
+    background: linear-gradient(135deg, rgba(12, 23, 29, 0.95), rgba(4, 9, 12, 0.98)) !important;
+    cursor: pointer !important;
+    transition: all 0.12s ease-in-out !important;
+}
+
+.player-skill-card-slim:hover {
+    border-color: rgba(229, 182, 95, 0.5) !important;
+    box-shadow: inset 0 0 10px rgba(229, 182, 95, 0.08), 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+    transform: translateY(-1px) !important;
+}
+
+.player-skill-card-slim.is-locked {
+    border-color: rgba(160, 90, 90, 0.3) !important;
+    background: linear-gradient(135deg, rgba(22, 11, 13, 0.9), rgba(6, 3, 4, 0.95)) !important;
+}
+
+.player-skill-card-slim__icon {
+    display: grid;
+    width: 28px;
+    height: 28px;
+    place-items: center;
+    border: 1px solid rgba(94, 188, 231, 0.3);
+    border-radius: 5px;
+    background: rgba(94, 188, 231, 0.08);
+    color: #9cdbf5;
+    font-size: 13px;
+}
+
+.player-skill-card-slim__main {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.player-skill-card-slim__title {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    min-width: 0;
+    gap: 6px;
+}
+
+.player-skill-card-slim__title strong {
+    color: #e5f1f5;
+    font: 800 10px/1 "Outfit", sans-serif;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.player-skill-card-slim__title small {
+    color: #7995a3;
+    font: 700 8px/1 "Outfit", sans-serif;
+}
+
+.player-skill-card-slim__title small b {
+    color: #e5b65f;
+    font-size: 10px;
+}
+
+.player-skill-card-slim__bar {
+    display: block;
+    height: 3px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+}
+
+.player-skill-card-slim__bar b {
+    display: block;
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #4aa6d6, #e5b65f);
+}
+
+.player-skill-card-slim__meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 7px;
+    color: #637b87;
+    font-weight: 700;
+}
+
+.player-skill-card-slim__meta span {
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.player-skill-card-slim__meta em {
+    font-style: normal;
+    color: #7d96a3;
+}
+
+.player-skill-card-slim__actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 /* Grade de Cards de Habilidade */
