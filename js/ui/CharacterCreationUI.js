@@ -691,7 +691,6 @@
     function maybeShowCreation() {
         if (window.AETHRA_INTEGRATION_TEST === true) return;
         if (!system()?.ensureState) return;
-        if (Aethra.LobbyUI?.active) return; // Lobby handles routing
         if (!Aethra.GameState.hero?.characterCreated) renderCreation();
     }
 

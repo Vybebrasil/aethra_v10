@@ -302,11 +302,16 @@
         const slot0 = readSlot(0);
         const slot1 = readSlot(1);
         const slot2 = readSlot(2);
-        if (!slot0 && !slot1 && !slot2) {
-            console.log("[LobbyUI] Nenhum personagem encontrado. Abrindo criação de personagem do zero.");
+
+        const hasAnyCharacter = (slot0?.hero?.characterCreated === true) ||
+                               (slot1?.hero?.characterCreated === true) ||
+                               (slot2?.hero?.characterCreated === true);
+
+        if (!hasAnyCharacter) {
+            console.log("[LobbyUI] Nenhum personagem criado encontrado. Abrindo tela de criação de personagem.");
             window.setTimeout(() => {
                 createFromSlot(0);
-            }, 150);
+            }, 100);
         }
     }
 
