@@ -244,6 +244,7 @@
                 baseX: tileX,
                 baseY: tileY,
                 thinkTimer: Math.floor(Math.random() * 15),
+                attackCooldown: Math.floor(Math.random() * 50 + 30),
                 hurtTimer: 0,
                 isBoss: isBossFloor,
                 isDead: false
@@ -498,10 +499,26 @@
         if (player.spellTextTimer > 0) player.spellTextTimer--;
         if (player.hurtTimer > 0) player.hurtTimer--;
 
-        // Movimento por Passos Discretos de Grid 32x32 do Tibia
+        // Movimento e Ataques Simultâneos em Tempo Real da Horda
         horde.forEach((m, idx) => {
             if (m.hurtTimer > 0) m.hurtTimer--;
             if (m.isDead || m.hp <= 0) return;
+
+            // Relógio de ataque individual da criatura em tempo real
+            if (m.attackCooldown > 0) {
+                m.attackCooldown--;
+            } else {
+                const distToHero = Math.hypot(m.x - player.x, m.y - player.y);
+                if (distToHero <= 2.0) {
+                    m.attackCooldown = Math.floor(Math.random() * 35 + 45); // Ritmo próprio por criatura (~1s)
+                    player.hurtTimer = 14;
+                    const x = player.x * TILE_SIZE + 16 + (Math.random() * 12 - 6);
+                    const y = player.y * TILE_SIZE + (Math.random() * 12 - 6);
+                    const amount = Math.floor(Math.random() * 3 + 1);
+                    const blocked = Math.random() > 0.5;
+                    addFloatingText(blocked ? `🛡 ${amount}` : `-${amount}`, x, y, blocked ? "#79c9e8" : "#ff7180", 13);
+                }
+            }
 
             // Se o monstro está no meio do passo de 1 tile
             if (m.stepProgress < 1.0) {
@@ -693,7 +710,7 @@
         if (!hasMoreEnemies) {
             setTimeout(() => {
                 triggerFloorClimb();
-            }, 600);
+            }, 250);
         }
         return true;
     }
