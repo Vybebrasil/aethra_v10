@@ -1238,6 +1238,39 @@
     background: rgba(25, 12, 14, 0.85);
 }
 
+/* ==========================================================================
+   HUNT WORLD MAP MODAL OVERLAY (CLEAN BACKDROP)
+   ========================================================================== */
+#hunt-world-map-view:not(.hidden) {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 9999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+    background: rgba(3, 10, 14, 0.88) !important;
+    backdrop-filter: blur(6px) !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+}
+
+#hunt-world-map-view:not(.hidden) .world-map-modal {
+    position: relative !important;
+    width: 90% !important;
+    max-width: 980px !important;
+    max-height: 88vh !important;
+    border: 1px solid rgba(229, 197, 105, 0.4) !important;
+    border-radius: 14px !important;
+    background: linear-gradient(145deg, rgba(13, 31, 37, 0.98), rgba(5, 13, 17, 0.98)) !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(229, 197, 105, 0.15) !important;
+    overflow: hidden !important;
+}
+
 .settings-card strong {
     display: block;
     color: #e5f1f5;

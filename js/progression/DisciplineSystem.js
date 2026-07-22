@@ -346,20 +346,22 @@
                 .filter(([id, value]) => number(value, 0) > 0 && DEFINITIONS[id]?.starterSkill)
                 .sort((a, b) => number(b[1], 0) - number(a[1], 0))
                 .map(([id]) => DEFINITIONS[id].starterSkill);
-            return [...new Set([...selected, "heal", "guard"])].slice(0, 10);
+            return [...new Set([...selected, "guard", "heal"])].slice(0, 5);
         },
 
         configureStarterLoadout(investments = {}) {
             Aethra.SkillSystem?.ensureState?.(true);
             const hero = Aethra.GameState.hero;
-            const bar = hero.actionBars?.[0];
-            if (!bar) return false;
-            bar.slots = Array(Math.max(10, bar.slots.length)).fill(null);
+            hero.actionBars = [
+                { id: 0, name: "Barra Principal", slots: Array(10).fill(null) }
+            ];
+            const bar = hero.actionBars[0];
             this.getStarterSkills(investments).forEach((skillId, index) => {
                 if (Aethra.SkillSystem.skills?.[skillId]) bar.slots[index] = skillId;
             });
             hero.activeActionBar = 0;
-            Aethra.SkillSystem.emitActionBarChanged?.("starter-build");
+            Aethra.SkillController?.ensureState?.(true);
+            Aethra.EventBus.emit("actionbar:changed", { actionBars: hero.actionBars });
             return clone(bar);
         }
     };
