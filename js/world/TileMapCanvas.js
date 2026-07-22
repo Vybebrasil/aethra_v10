@@ -527,34 +527,29 @@
         const enemy = payload.enemy || payload.creature || payload;
         if (!enemy?.id && !enemy?.enemyId) return false;
         const encounterId = enemy.encounterId || enemy.id || enemy.enemyId;
-        if (horde[0]?.id === encounterId && !horde[0]?.isDead) return false;
         const hp = Math.max(1, Number(enemy.hp ?? enemy.stats?.hp ?? 1));
         const maxHp = Math.max(hp, Number(enemy.maxHp ?? enemy.stats?.maxHp ?? hp));
-        const spawn = enemySpawnPoint();
-        horde = [{
-            id: encounterId,
-            creatureId: enemy.id || enemy.enemyId,
-            key: resolveSpeciesKey(enemy),
-            name: enemy.name || "Criatura",
-            hp,
-            maxHp,
-            x: spawn.x,
-            y: spawn.y,
-            baseX: spawn.x,
-            baseY: spawn.y,
-            hurtTimer: 0,
-            isBoss: String(enemy.rank || "").toLowerCase() === "boss",
-            isDead: false
-        }];
-        currentTargetIndex = 0;
+
+        if (!Array.isArray(horde) || horde.length === 0) {
+            spawnRoomHorde();
+        }
+
+        if (horde[0]) {
+            horde[0].id = encounterId;
+            horde[0].name = enemy.name || horde[0].name;
+            horde[0].hp = hp;
+            horde[0].maxHp = maxHp;
+            horde[0].key = resolveSpeciesKey(enemy);
+        }
+
         selectNextAliveTarget();
-        addChatLog(`${horde[0].name} bloqueou o caminho.`, "wave");
+        addChatLog(`${enemy.name || "Horda"} se aproximou.`, "wave");
         return true;
     }
 
     // O mapa apenas espelha o resultado calculado pelo BattleSystem.
     function executeHuntTick(payload = {}) {
-        const target = horde[currentTargetIndex];
+        const target = horde[currentTargetIndex] || horde[0];
         if (!target || target.isDead) return false;
         const side = payload.side || payload.actor || payload.attacker;
         const amount = Math.max(0, Math.floor(Number(payload.amount) || 0));
@@ -578,6 +573,14 @@
             target.hp = Math.max(0, Number(Aethra.GameState?.battle?.creature?.hp ?? target.hp - amount));
             const x = target.x * TILE_SIZE + 16;
             const y = target.y * TILE_SIZE;
+
+            // Efeito visual de magia/projétil se o herói for atacante a distância / arcano
+            const px = player.x * TILE_SIZE + 16;
+            const py = player.y * TILE_SIZE + 16;
+            const isMagic = /fogo|projétil|arcano|raio|cura|foco|varinha/i.test(skillName);
+            const beamColor = isMagic ? "#b87eff" : "#ffd700";
+            addFloatingText(isMagic ? `✨ ${skillName}` : "", px, py - 14, beamColor, 11);
+
             addFloatingText(payload.isCrit ? `💥 ${amount}!` : `-${amount}`, x, y, payload.isCrit ? "#ffcc00" : "#ff4d4d", payload.isCrit ? 17 : 14);
             addChatLog(payload.message || `${skillName}: ${amount} de dano em ${target.name}.`, payload.isCrit ? "crit" : "atk");
         } else {
