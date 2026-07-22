@@ -1804,7 +1804,23 @@
                 const remaining = Math.max(0, readyAt - Date.now());
 
                 const hasWeapon = !!state.weapon;
-                const displayIcon = hasWeapon ? (skill.icon || (isRight ? "🗡" : "⚔")) : "👊";
+                const weaponItem = hasWeapon ? (Aethra.GameData?.items?.[state.weapon.templateId] || Aethra.GameData?.items?.[state.weapon.id] || state.weapon) : null;
+                const weaponAsset = weaponItem ? Aethra.GameData?.assets?.resolve?.("item", weaponItem.icon || weaponItem.image) : null;
+
+                let displayIconHTML;
+                if (weaponAsset) {
+                    displayIconHTML = `<img src="${escapeHTML(weaponAsset)}" alt="" style="width:26px;height:26px;object-fit:contain;vertical-align:middle;">`;
+                } else if (hasWeapon) {
+                    const wType = String(state.weapon.weaponType || weaponItem?.weaponType || weaponItem?.category || "").toLowerCase();
+                    const wIcon = wType.includes("focus") || wType.includes("wand") || wType.includes("staff") ? "✦" :
+                                  wType.includes("bow") ? "➶" :
+                                  wType.includes("axe") ? "🪓" :
+                                  wType.includes("mace") ? "◆" :
+                                  wType.includes("dagger") ? "†" : (isRight ? "🗡" : "⚔");
+                    displayIconHTML = escapeHTML(wIcon);
+                } else {
+                    displayIconHTML = "👊";
+                }
 
                 const card = document.createElement("article");
                 card.className = [
@@ -1831,7 +1847,7 @@
                         ${available ? "" : "disabled"}
                     >
                         <span class="primary-attack-card__mouse">${mouseLabel}</span>
-                        <strong class="primary-attack-card__icon">${escapeHTML(displayIcon)}</strong>
+                        <strong class="primary-attack-card__icon">${displayIconHTML}</strong>
                         <span class="primary-attack-card__copy">
                             <b>${isRight ? "Secundária" : "Principal"}</b>
                             <small>${escapeHTML(weaponName)}</small>

@@ -228,11 +228,19 @@
             ? Boolean(Aethra.GameState.ui?.huntAnalyzerExpanded)
             : true;
         const supplyHTML = supplies.length
-            ? supplies.map((entry) => `
+            ? supplies.map((entry) => {
+                const itemDef = Aethra.GameData?.items?.[entry.id] || {};
+                const asset = Aethra.GameData?.assets?.resolve?.("item", itemDef.icon || itemDef.image);
+                const iconHTML = asset
+                    ? `<img src="${escapeHTML(asset)}" alt="" style="width:18px;height:18px;object-fit:contain;vertical-align:middle;margin-right:6px;">`
+                    : `<i aria-hidden="true" style="margin-right:6px;">${itemDef.icon || (entry.id.includes("potion") ? "🧪" : "▣")}</i>`;
+
+                return `
                 <div class="analyzer-supply-row">
-                    <span><i aria-hidden="true">${entry.id.includes("potion") ? "◉" : "▣"}</i><b>${escapeHTML(entry.name)}</b><small>${entry.quantity > 0 ? `${format(entry.quantity)} usado(s)` : "custo importado"}</small></span>
+                    <span>${iconHTML}<b>${escapeHTML(entry.name)}</b><small>${entry.quantity > 0 ? `${format(entry.quantity)} usado(s)` : "custo importado"}</small></span>
                     <strong>${format(entry.totalCost)} G</strong>
-                </div>`).join("")
+                </div>`;
+            }).join("")
             : `<div class="analyzer-empty-row"><span>✓</span><p><strong>Nenhum supply consumido</strong><small>Poções, runas e outros consumíveis aparecerão aqui.</small></p></div>`;
 
         root.innerHTML = `
