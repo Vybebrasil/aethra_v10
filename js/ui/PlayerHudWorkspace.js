@@ -99,11 +99,37 @@
             </div>`;
     }
 
+    function getTopDiscipline(hero) {
+        const disciplines = hero.disciplines || {};
+        let topName = "Combate";
+        let topLevel = 1;
+        Object.entries(disciplines).forEach(([id, data]) => {
+            const level = Number(data?.level || 1);
+            if (level > topLevel) {
+                topLevel = level;
+                topName = Aethra.DisciplineSystem?.definitions?.[id]?.name || id;
+            }
+        });
+        return `${topName} Nv. ${topLevel}`;
+    }
+
     function renderSummary() {
         const root = document.getElementById("stats-display");
         if (!root) return false;
-        const { hero, hp, hpMax, mana, manaMax, vigor, vigorMax, xp, xpMax } = getHeroResources();
+        const { hero, stats, hp, hpMax, mana, manaMax, vigor, vigorMax, xp, xpMax } = getHeroResources();
         const name = hero.name || "Aethra";
+        const arena = Aethra.ColiseumSystem?.getSnapshot?.() || null;
+        const rankTag = arena?.player?.rankTag || "#43";
+        const bagCount = (hero.bag || []).length;
+        const xpPercent = clamp((xp / Math.max(1, xpMax)) * 100).toFixed(0);
+
+        const dmgMin = Math.max(1, Math.floor(Number(stats.damageMin || stats.attack || 1)));
+        const dmgMax = Math.max(dmgMin, Math.floor(Number(stats.damageMax || stats.attack || dmgMin)));
+        const defense = Math.max(0, Math.floor(Number(stats.defense || stats.armor || 0)));
+        const precision = Math.round(clamp(Number(stats.precision || 0.85), 0, 1) * 100);
+        const critical = Math.round(clamp(Number(stats.critical || 0.05), 0, 1) * 100);
+        const topDiscipline = getTopDiscipline(hero);
+
         root.innerHTML = `
             <section class="player-hud-summary" aria-label="Resumo do personagem">
                 <header class="player-hud-summary__identity">
@@ -115,12 +141,56 @@
                         <span>NV ${fmt(getHeroLevel(hero))} · ${fmt(hero.gold)} Gold</span>
                     </div>
                 </header>
+
                 <div class="player-hud-summary__vitals">
                     ${resourceRow("hp", "HP", hp, hpMax, "♥")}
                     ${resourceRow("mana", "Mana", mana, manaMax, "✦")}
+                    ${resourceRow("vigor", "Vigor", vigor, vigorMax, "⚡")}
                 </div>
-                <div id="battle-equipment-summary" class="player-equipment-matrix player-equipment-matrix--tibia"></div>
+
+                <div class="player-hud-summary__body">
+                    <div class="player-hud-summary__col player-hud-summary__col--left">
+                        <div class="player-stat-badge" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="Poder de Ataque" data-tooltip-body="Dano físico mínimo e máximo por golpe.">
+                            <small>⚔ DANO</small>
+                            <strong>${dmgMin}–${dmgMax}</strong>
+                        </div>
+                        <div class="player-stat-badge" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="Defesa da Armadura" data-tooltip-body="Reduz o dano bruto recebido dos inimigos.">
+                            <small>🛡 DEFESA</small>
+                            <strong>${defense}</strong>
+                        </div>
+                        <div class="player-stat-badge" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="Precisão" data-tooltip-body="Chance de acertar ataques e ignorar esquiva.">
+                            <small>🎯 PRECISÃO</small>
+                            <strong>${precision}%</strong>
+                        </div>
+                        <div class="player-stat-badge" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="Crítico" data-tooltip-body="Chance de desfazer acerto crítico com dano elevado.">
+                            <small>💥 CRÍTICO</small>
+                            <strong>${critical}%</strong>
+                        </div>
+                    </div>
+
+                    <div id="battle-equipment-summary" class="player-equipment-matrix player-equipment-matrix--tibia"></div>
+
+                    <div class="player-hud-summary__col player-hud-summary__col--right">
+                        <div class="player-stat-badge" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="Mochila sem Limites" data-tooltip-body="Itens acumulados no inventário. O scroll da mochila é infinito.">
+                            <small>🎒 MOCHILA</small>
+                            <strong>${bagCount} itens</strong>
+                        </div>
+                        <div class="player-stat-badge" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="Progresso de XP" data-tooltip-body="Experiência necessária para alcançar o próximo nível do herói.">
+                            <small>⬆ XP NÍVEL</small>
+                            <strong>${xpPercent}%</strong>
+                        </div>
+                        <div class="player-stat-badge" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="Ranking do Coliseu" data-tooltip-body="Sua colocação no Coliseu de Aethra.">
+                            <small>⚜ RANK</small>
+                            <strong>${esc(rankTag)}</strong>
+                        </div>
+                        <div class="player-stat-badge" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="Foco de Maestria" data-tooltip-body="Sua disciplina principal mais desenvolvida.">
+                            <small>⚔ FOCO</small>
+                            <strong>${esc(topDiscipline)}</strong>
+                        </div>
+                    </div>
+                </div>
             </section>`;
+
         renderEquipmentMatrix();
         Aethra.TooltipManager?.refresh?.();
         return true;
