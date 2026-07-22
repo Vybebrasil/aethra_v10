@@ -340,7 +340,11 @@
             <div class="creation-tooltip">
                 <p class="creation-tooltip__desc">${esc(entry.description)}</p>
                 <div class="creation-tooltip__section">
-                    <small>EQUIPAMENTO INICIAL</small>
+                    <small>DIFICULDADE & FOCO</small>
+                    <p style="color:#f1d27b;margin:2px 0;"><b>Foco:</b> ${esc(meta.focus)} &middot; <b>Dificuldade:</b> ${esc(meta.difficulty)}</p>
+                </div>
+                <div class="creation-tooltip__section">
+                    <small>EQUIPAMENTO INICIAL DE COMBATE</small>
                     <div class="creation-tooltip__item">
                         <span>${esc(weaponIcon)}</span>
                         <strong>${esc(weaponName)}</strong>
@@ -348,7 +352,7 @@
                     </div>
                 </div>
                 <div class="creation-tooltip__section">
-                    <small>DISTRIBUIÇÃO DE MAESTRIAS</small>
+                    <small>DISTRIBUIÇÃO DE MAESTRIAS INICIAIS</small>
                     <div class="creation-tooltip__masteries">
                         ${Object.entries(entry.masteries)
                             .sort((a, b) => b[1] - a[1])
@@ -359,58 +363,44 @@
                             }).join("")}
                     </div>
                 </div>
-                <div class="creation-tooltip__section">
-                    <small>PROCS E PASSIVAS DE COMBATE</small>
-                    <div class="creation-tooltip__proc">
-                        <strong>✨ ${esc(mainDiscipline?.procName || "Aprimoramento")}</strong>
-                        <p>${esc(mainDiscipline?.role || "Evolução livre por uso de habilidades no combate.")}</p>
-                    </div>
-                </div>
             </div>
         `;
 
+        const masteriesBadges = Object.entries(entry.masteries)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3)
+            .map(([id, val]) => {
+                const mastery = system().masteries[id];
+                return `<span class="archetype-badge"><b>${esc(mastery?.icon || "✦")}</b> ${esc(mastery?.name || id)} +${val}</span>`;
+            }).join("");
+
         return `
             <button type="button" class="creation-archetype ${selected ? "is-selected" : ""}" data-select-archetype="${esc(entry.id)}" style="--archetype-accent:${esc(entry.accent)}"
-                data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-html="true" data-tooltip-eyebrow="ORIGEM DISPONÍVEL" data-tooltip-title="${esc(entry.name)} · ${esc(entry.title)}" data-tooltip-body="${esc(tooltipBodyHtml)}">
+                data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-html="true" data-tooltip-eyebrow="ORIGEM DISPONÍVEL" data-tooltip-title="${esc(entry.name)} · ${esc(meta.focus)}" data-tooltip-body="${esc(tooltipBodyHtml)}">
                 <span class="creation-archetype__icon">${esc(entry.icon)}</span>
-                <small>${esc(entry.title)}</small>
+                <small>${esc(meta.focus.toUpperCase())}</small>
                 <strong>${esc(entry.name)}</strong>
-                <p>${esc(entry.description)}</p>
-
-                <div class="creation-archetype__specs">
-                    <span><b>Foco:</b> ${esc(meta.focus)}</span>
-                    <span><b>Dif.:</b> ${esc(meta.difficulty)}</span>
-                    <span><b>Destaque:</b> ${esc(meta.highlight)}</span>
-                </div>
-
-                <div class="creation-archetype__dna">
-                    ${Object.entries(entry.masteries)
-                        .sort((a, b) => b[1] - a[1])
-                        .slice(0, 3)
-                        .map(([id, val]) => {
-                            const mastery = system().masteries[id];
-                            return `<span><b data-mastery="${esc(id)}">${esc(mastery?.icon || "✦")}</b> ${esc(mastery?.name || id)} +${val}</span>`;
-                        }).join("")}
-                </div>
 
                 <div class="creation-archetype__trait-box">
-                    <small>PASSIVA TÁTICA DA ARMA</small>
+                    <small>⚡ PASSIVA TÁTICA DA ARMA</small>
                     <p>${esc(meta.weaponTrait)}</p>
                 </div>
 
-                <div class="creation-archetype__skill-row" data-ui-tooltip="true" data-tooltip-kind="skill" data-skill-id="${esc(meta.starterSkillId)}">
-                    <small>TÉCNICA INICIAL</small>
+                <div class="creation-archetype__skill-row">
+                    <small>✦ TÉCNICA INICIAL</small>
                     <div>
-                        <b data-skill-id="${esc(meta.starterSkillId)}">${esc(skill.icon || "✦")}</b>
+                        <b>${esc(skill.icon || "✦")}</b>
                         <strong>${esc(skill.name || meta.starterSkillId)}</strong>
                     </div>
                 </div>
 
-                <div class="creation-archetype__tags">${entry.tags.map((tag) => `<em>${esc(tag)}</em>`).join("")}</div>
+                <div class="creation-archetype__badges-row">
+                    ${masteriesBadges}
+                </div>
 
                 <footer class="creation-archetype__footer">
-                    <span class="creation-archetype__footer-label">${selected ? "✓ ARQUÉTIPO ESCOLHIDO" : "ESCOLHER ARQUÉTIPO"}</span>
-                    <b class="creation-archetype__footer-item">${esc(weaponIcon)} ${esc(starterItem.name || "?")} &middot; Dano: ${esc(weaponDmg)}</b>
+                    <span class="creation-archetype__footer-label">${selected ? "✓ ESCOLHIDO" : "ESCOLHER ARQUÉTIPO"}</span>
+                    <b class="creation-archetype__footer-item">${esc(weaponIcon)} ${esc(starterItem.name || "?")}</b>
                 </footer>
             </button>`;
     }
