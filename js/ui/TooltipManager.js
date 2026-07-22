@@ -297,11 +297,11 @@
                 : 0;
             const settings = Aethra.SkillController?.getSettings?.() || {};
             const autoEnabled = settings[skillId]?.auto === true;
-            const ordered = Aethra.SkillController?.getOrderedSkills?.() || [];
-            const priorityIndex = ordered.findIndex((entry) => entry.skillId === skillId);
-            const priorityLabel = priorityIndex >= 0
-                ? `Prioridade ${priorityIndex + 1}`
-                : "Fora da prioridade";
+            const isCreating = document.body.classList.contains("is-creating-character");
+            const priorityTitle = isCreating ? "Técnica da Origem" : "Ordem da ActionBar";
+            const priorityLabel = isCreating
+                ? "Disponível ao Iniciar"
+                : (priorityIndex >= 0 ? `Prioridade ${priorityIndex + 1}` : "Fora da prioridade");
 
             return `
                 <article class="aethra-ui-tooltip__skill">
@@ -348,7 +348,7 @@
                             <b>${autoEnabled ? "Automático ligado" : "Manual"}</b>
                         </div>
                         <div>
-                            <small>Ordem da ActionBar</small>
+                            <small>${escapeHTML(priorityTitle)}</small>
                             <b>${escapeHTML(priorityLabel)}</b>
                         </div>
                     </div>

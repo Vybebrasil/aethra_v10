@@ -276,27 +276,39 @@
 
                 ${selected ? `
                 <div class="creation-starter-gear">
-                    <small>EQUIPAMENTO INICIAL</small>
-                    <div class="creation-starter-paperdoll">
+                    <small>EQUIPAMENTO INICIAL DO ARQUÉTIPO</small>
+                    <div class="creation-paperdoll-grid">
                         ${(()=>{
-                            const PREVIEW_SLOTS = [
-                                { id: "head",    label: "Cabeça",  icon: "□" },
-                                { id: "weapon",  label: "Arma",    icon: "⚔" },
-                                { id: "chest",   label: "Peitoral", icon: "◫" },
-                                { id: "offhand", label: "Offhand", icon: "◇" },
-                                { id: "legs",    label: "Pernas",  icon: "‖" },
-                                { id: "feet",    label: "Pés",     icon: "∥" }
-                            ];
+                            const starterChestItem = Aethra.GameData?.items?.[`eg_chest_${selected.starterArmorClass || "leather"}_l1`] || null;
+                            const starterShieldItem = selected.starterShield ? (Aethra.GameData?.items?.["eg_shield_l1"] || null) : null;
                             const wIcon = WEAPON_ICONS[selected.id] || "⚔";
+
+                            const PREVIEW_SLOTS = [
+                                { id: "neck",    label: "Colar",    emptyIcon: "✦", item: null },
+                                { id: "head",    label: "Elmo",     emptyIcon: "⬡", item: null },
+                                { id: "relic",   label: "Relíquia", emptyIcon: "⚜", item: null },
+
+                                { id: "weapon",  label: "Arma",     emptyIcon: wIcon, item: starterItem },
+                                { id: "chest",   label: "Peitoral", emptyIcon: "◫", item: starterChestItem },
+                                { id: "offhand", label: "Escudo",   emptyIcon: "🛡", item: starterShieldItem },
+
+                                { id: "ring1",   label: "Anel 1",   emptyIcon: "◎", item: null },
+                                { id: "legs",    label: "Calças",   emptyIcon: "◫", item: null },
+                                { id: "hands",   label: "Luvas",    emptyIcon: "✋", item: null },
+
+                                { id: "ring2",   label: "Anel 2",   emptyIcon: "◎", item: null },
+                                { id: "feet",    label: "Botas",    emptyIcon: "👢", item: null }
+                            ];
+
                             return PREVIEW_SLOTS.map(slot => {
-                                const hasWeapon = slot.id === "weapon" && starterItem?.name;
-                                const slotIcon = hasWeapon ? wIcon : slot.icon;
-                                const label = hasWeapon ? esc(starterItem.name) : slot.label;
-                                const dmg = hasWeapon ? ` (${starterItem.damageMin}–${starterItem.damageMax}${starterItem.mag ? ` +${starterItem.mag}M` : ""})` : "";
-                                const tipBody = hasWeapon
-                                    ? `${esc(starterItem.description || '')} Dano: ${starterItem.damageMin}–${starterItem.damageMax}${starterItem.mag ? ` +${starterItem.mag} Magia` : ""}.`
-                                    : "Slot vazio — equipe itens durante a exploração.";
-                                return `<span class="creation-starter-slot ${hasWeapon ? 'is-equipped' : ''}" data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="SLOT: ${esc(slot.label.toUpperCase())}" data-tooltip-title="${hasWeapon ? esc(starterItem.name) : 'Vazio — '+slot.label}" data-tooltip-body="${tipBody}"><b>${slotIcon}</b><small>${label.length > 9 ? label.slice(0,8)+'…' : label}${dmg ? `<em>${esc(dmg)}</em>` : ""}</small></span>`;
+                                const item = slot.item;
+                                const hasItem = Boolean(item && item.name);
+                                const itemIcon = hasItem ? (slot.id === "weapon" ? wIcon : slot.id === "chest" ? "◫" : "🛡") : slot.emptyIcon;
+                                const label = hasItem ? esc(item.name) : slot.label;
+                                const tipBody = hasItem
+                                    ? `${esc(item.description || '')} (Equipamento inicial do arquétipo).`
+                                    : `Slot vazio — equipe itens durante a jornada.`;
+                                return `<span class="creation-paperdoll-slot ${hasItem ? 'has-item' : ''}" data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="SLOT: ${esc(slot.label.toUpperCase())}" data-tooltip-title="${hasItem ? esc(item.name) : 'Vazio — '+slot.label}" data-tooltip-body="${tipBody}"><b>${itemIcon}</b><small>${hasItem ? esc(slot.label) : ''}</small></span>`;
                             }).join("");
                         })()}
                     </div>
