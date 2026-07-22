@@ -591,31 +591,23 @@
 
     function visualizeDefeat(payload = {}) {
         const target = horde[currentTargetIndex] || horde[0];
-        const defeatedId = payload.enemyId || payload.id || payload.enemy?.id;
-        if (!target || (defeatedId && target.creatureId !== defeatedId)) return false;
-        target.hp = 0;
-        target.isDead = true;
-        const x = target.x * TILE_SIZE + 16;
-        const y = target.y * TILE_SIZE;
-        const rewards = payload.rewards || payload;
-        if (Number(rewards.gold)) addFloatingText(`+${fmtNumber(rewards.gold)} G`, x, y - 18, "#ffd700", 13);
-        if (Number(rewards.xp)) addFloatingText(`+${fmtNumber(rewards.xp)} XP`, x, y - 32, "#79c9e8", 13);
-        addChatLog(`☠ ${target.name} derrotado. +${fmtNumber(rewards.xp)} XP · +${fmtNumber(rewards.gold)} G`, "kill");
-        horde = [];
-        currentTargetIndex = -1;
-        player.targetX = stairsPos.x;
-        player.targetY = stairsPos.y;
-        player.state = "walking";
-
-        if (waveState.currentWave >= waveState.maxWaves) {
-            waveState.floorsCleared += 1;
-            waveState.currentFloor += 1;
-            waveState.currentWave = 1;
-            Aethra.EventBus.emit("tilemap:floor-cleared", { ...waveState });
-        } else {
-            waveState.currentWave += 1;
+        if (target) {
+            target.hp = 0;
+            target.isDead = true;
+            const x = target.x * TILE_SIZE + 16;
+            const y = target.y * TILE_SIZE;
+            const rewards = payload.rewards || payload;
+            if (Number(rewards.gold)) addFloatingText(`+${fmtNumber(rewards.gold)} G`, x, y - 18, "#ffd700", 13);
+            if (Number(rewards.xp)) addFloatingText(`+${fmtNumber(rewards.xp)} XP`, x, y - 32, "#79c9e8", 13);
+            addChatLog(`☠ ${target.name} derrotado. +${fmtNumber(rewards.xp)} XP · +${fmtNumber(rewards.gold)} G`, "kill");
         }
-        renderWaveProgress();
+
+        const hasMoreEnemies = selectNextAliveTarget();
+        if (!hasMoreEnemies) {
+            setTimeout(() => {
+                triggerFloorClimb();
+            }, 600);
+        }
         return true;
     }
 
@@ -645,24 +637,24 @@
             banner.className = "floor-transition-banner";
             banner.innerHTML = `
                 <div class="floor-banner-title">${bannerTitle}</div>
-                <div class="floor-banner-sub">Subindo escadas de pedra... Novas criaturas encontradas!</div>
+                <div class="floor-banner-sub">Subindo escadas de pedra... Horda encontrada!</div>
             `;
             container.appendChild(banner);
-            setTimeout(() => banner.remove(), 2200);
+            setTimeout(() => banner.remove(), 1200);
         }
 
+        spawnRoomHorde();
+        const spawn = heroSpawnPoint();
+        player.x = 2;
+        player.y = stairsPos.y;
+        player.targetX = spawn.x;
+        player.targetY = spawn.y;
+        player.state = "walking";
+
         setTimeout(() => {
-            const spawn = heroSpawnPoint();
-            player.x = spawn.x;
-            player.y = spawn.y;
-            player.targetX = spawn.x;
-            player.targetY = spawn.y;
-            player.state = "idle";
             isTransitioningFloor = false;
-            horde = [];
-            currentTargetIndex = -1;
             Aethra.EventBus.emit("tilemap:floor-changed", { ...waveState });
-        }, 2200);
+        }, 1200);
     }
 
     function startEngine() {
