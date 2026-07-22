@@ -539,25 +539,90 @@
             </footer>`;
     }
 
+    function renderRightPanel() {
+        const remaining = points().attributes;
+        const valid = stepReady(1);
+        const introEntries = Object.values(system().introProfessions || {});
+
+        return `
+            <aside class="creation-hero-build-panel">
+                <header class="creation-step-heading">
+                    <div>
+                        <small>DISTRIBUIÇÃO DE ATRIBUTOS</small>
+                        <h3>Pontos Iniciais (${remaining} disp.)</h3>
+                    </div>
+                </header>
+
+                <div class="creation-attribute-list">
+                    ${Object.values(system().attributes).map(attributeCard).join("")}
+                </div>
+
+                <div class="creation-profession-picker">
+                    <small>OFÍCIO / MISSÃO INICIAL</small>
+                    <div class="creation-profession-select-grid">
+                        ${introEntries.map((path) => {
+                            const isSelected = draft.introProfessionId === path.id;
+                            const definition = Aethra.ProfessionSystem?.professions?.[path.id] || {};
+                            return `
+                                <button type="button" class="creation-profession-btn ${isSelected ? "is-selected" : ""}" data-select-intro-profession="${esc(path.id)}">
+                                    <span>${esc(definition.icon || "◇")}</span>
+                                    <strong>${esc(path.title)}</strong>
+                                </button>
+                            `;
+                        }).join("")}
+                    </div>
+                </div>
+
+                <div class="creation-action-box">
+                    <button type="button" class="creation-submit-btn" data-create-character ${valid ? "" : "disabled"}>
+                        Entrar em Aethra <span>⚔️</span>
+                    </button>
+                </div>
+            </aside>
+        `;
+    }
+
     function renderCreation() {
         activeMode = "creation";
         draft = draft || initialDraft();
+        if (!draft.archetypeId) {
+            draft.archetypeId = "vanguard";
+            const selected = system().archetypes?.vanguard;
+            if (selected) {
+                draft.attributes = { ...emptyFor(system().attributes), ...clone(selected.attributes) };
+                draft.masteries = { ...emptyFor(system().masteries), ...clone(selected.masteries) };
+            }
+        }
+        if (!draft.introProfessionId) {
+            draft.introProfessionId = "smithing";
+        }
+
         const selected = archetype();
-        const meta = STEP_META[activeStep - 1];
         const layer = ensureLayer();
+
         layer.innerHTML = `
             <div class="character-creation-backdrop"><i></i><i></i><i></i></div>
-            <main class="character-creation" role="dialog" aria-modal="true" aria-labelledby="character-creation-title" data-creation-active-step="${activeStep}" style="--creation-accent:${esc(selected?.accent || "#d9b85f")}">
+            <main class="character-creation" role="dialog" aria-modal="true" aria-labelledby="character-creation-title" style="--creation-accent:${esc(selected?.accent || "#d9b85f")}">
                 <header class="character-creation__header">
                     <div class="creation-brand"><span>A</span><p><small>CRÔNICAS DE AETHRA</small><strong id="character-creation-title">Forje seu herói</strong></p></div>
-                    <nav class="creation-progress" aria-label="Etapas da criação">${renderProgress()}</nav>
                     <button type="button" class="creation-reset" data-reset-creation title="Recomeçar criação">↻ <span>Recomeçar</span></button>
                 </header>
                 <div class="character-creation__body">
                     ${renderHeroPreview()}
-                    <section class="creation-workspace"><div class="creation-workspace__ambient"><i></i><i></i></div><header class="creation-workspace__mobile-title"><small>ETAPA ${activeStep}</small><strong>${esc(meta.title)}</strong><p>${esc(meta.copy)}</p></header>${renderStepContent()}</section>
+                    <section class="creation-workspace">
+                        <header class="creation-step-heading">
+                            <div>
+                                <small>ESCOLHA DE ARQUÉTIPO</small>
+                                <h2>Qual fantasia você quer viver?</h2>
+                                <p>Cada arquétipo traz passivas táticas únicas e equipamento inicial.</p>
+                            </div>
+                        </header>
+                        <div class="creation-archetype-grid">
+                            ${Object.values(system().archetypes).map(archetypeCard).join("")}
+                        </div>
+                    </section>
+                    ${renderRightPanel()}
                 </div>
-                ${renderFooter()}
             </main>`;
         document.body.classList.add("is-creating-character");
     }
