@@ -333,6 +333,65 @@ summary:focus-visible,
     background: rgba(25, 12, 14, 0.8) !important;
 }
 
+.modern-resource--xp {
+    border-color: rgba(229, 197, 105, 0.35) !important;
+    background: rgba(26, 21, 10, 0.8) !important;
+}
+
+.modern-resource--xp i u {
+    background: linear-gradient(90deg, #e5c569, #f9e29c) !important;
+}
+
+.modern-resource--xp small {
+    color: #e5c569 !important;
+}
+
+.modern-status-effects-list {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.modern-status-empty {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #6a828e;
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.modern-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-size: 9px;
+    font-weight: 700;
+    cursor: help;
+}
+
+.modern-status-badge.is-buff {
+    border: 1px solid rgba(112, 219, 160, 0.4);
+    background: rgba(14, 38, 26, 0.85);
+    color: #70dba0;
+}
+
+.modern-status-badge.is-debuff {
+    border: 1px solid rgba(239, 109, 109, 0.4);
+    background: rgba(38, 14, 16, 0.85);
+    color: #ef6d6d;
+}
+
+.modern-status-badge em {
+    padding: 0 4px;
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.4);
+    font-style: normal;
+    font-size: 8px;
+}
+
 #modal-layer small,
 #modal-layer .aethra-shop-card small,
 #modal-layer .settings-panel small {
