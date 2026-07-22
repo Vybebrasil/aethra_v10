@@ -256,18 +256,18 @@
     }
 
     function selectNextAliveTarget() {
+        if (!Array.isArray(horde) || horde.length === 0) return false;
         for (let i = 0; i < horde.length; i++) {
-            if (!horde[i].isDead && horde[i].hp > 0) {
+            if (horde[i] && !horde[i].isDead && horde[i].hp > 0) {
                 currentTargetIndex = i;
-                // Walk player towards this target creature (clamped strictly inside visible grid)
                 const target = horde[i];
-                player.targetX = clampCell(target.x - 1, 3, mapCols - 4);
-                player.targetY = clampCell(target.y, 3, mapRows - 4);
+                player.targetX = clampCell(target.tileX ?? target.x, 3, mapCols - 4);
+                player.targetY = clampCell(target.tileY ?? target.y, 3, mapRows - 4);
                 player.state = "walking";
                 return true;
             }
         }
-        currentTargetIndex = -1;
+        currentTargetIndex = 0;
         return false;
     }
 
@@ -622,8 +622,18 @@
 
     // O mapa apenas espelha o resultado calculado pelo BattleSystem.
     function executeHuntTick(payload = {}) {
-        const target = horde[currentTargetIndex] || horde[0];
-        if (!target || target.isDead) return false;
+        if (!Array.isArray(horde) || horde.length === 0) {
+            spawnRoomHorde();
+        }
+
+        let target = horde[currentTargetIndex];
+        if (!target || target.isDead || target.hp <= 0) {
+            selectNextAliveTarget();
+            target = horde[currentTargetIndex] || horde[0];
+        }
+
+        if (!target) return true;
+
         const side = payload.side || payload.actor || payload.attacker;
         const amount = Math.max(0, Math.floor(Number(payload.amount) || 0));
         const hit = payload.hit !== false;
