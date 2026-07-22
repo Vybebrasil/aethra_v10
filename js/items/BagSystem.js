@@ -25,6 +25,7 @@
                 Aethra.GameState.hero.bag = [];
             }
 
+            this.consolidateStackables();
             this.bindEvents();
             this.initialized = true;
 
@@ -156,29 +157,94 @@
             return payload;
         },
 
+        isStackable(item) {
+            if (!item || typeof item !== "object") return false;
+            const templateId = item.templateId || item.id || "";
+            const template = Aethra.GameData?.items?.[templateId] || {};
+            
+            const slot = item.slot || template.slot || item.category || template.category || "";
+            const isEquip = ["weapon", "offhand", "shield", "helmet", "chest", "legs", "boots", "amulet", "ring", "relic"].includes(slot);
+            if (isEquip) return false;
+
+            return true;
+        },
+
+        consolidateStackables() {
+            const bag = this.getItems();
+            if (!Array.isArray(bag) || bag.length === 0) return;
+
+            const consolidatedMap = new Map();
+            const newBag = [];
+
+            bag.forEach((item) => {
+                if (!item) return;
+                const templateId = item.templateId || item.id;
+                const isStack = this.isStackable(item);
+
+                if (isStack && templateId) {
+                    if (consolidatedMap.has(templateId)) {
+                        const existing = consolidatedMap.get(templateId);
+                        existing.quantity = Math.max(1, Math.floor(Number(existing.quantity || 1) + Number(item.quantity || 1)));
+                    } else {
+                        const copy = { ...item, quantity: Math.max(1, Math.floor(Number(item.quantity || 1))) };
+                        consolidatedMap.set(templateId, copy);
+                        newBag.push(copy);
+                    }
+                } else {
+                    newBag.push(item);
+                }
+            });
+
+            Aethra.GameState.hero.bag = newBag;
+            Aethra.EventBus.emit("inventory:changed", { source: "consolidated" });
+            return newBag;
+        },
+
         addItem(item, source = "bag-system") {
             if (!item || typeof item !== "object") return false;
 
-            if (item.instanceId && this.hasItem(item.instanceId)) {
+            const bag = this.getItems();
+            const templateId = item.templateId || item.id;
+            const qty = Math.max(1, Math.floor(Number(item.quantity || item.qty) || 1));
+
+            if (this.isStackable(item) && templateId) {
+                const existing = bag.find((entry) => 
+                    entry && (String(entry.templateId || entry.id) === String(templateId))
+                );
+
+                if (existing) {
+                    existing.quantity = Math.max(1, Math.floor(Number(existing.quantity || 1) + qty));
+                    Aethra.EventBus.emit("hero.bag:changed", {
+                        item: existing,
+                        source,
+                        bag
+                    });
+                    Aethra.EventBus.emit("inventory:changed", { source, item: existing });
+                    return true;
+                }
+            }
+
+            const newItem = {
+                ...item,
+                quantity: qty
+            };
+
+            if (newItem.instanceId && this.hasItem(newItem.instanceId)) {
                 Aethra.EventBus.emit("bag:item-ignored", {
                     reason: "DUPLICATE_INSTANCE",
-                    item,
+                    item: newItem,
                     source
                 });
                 return false;
             }
 
-            if (Aethra.Commands?.addItem) {
-                Aethra.Commands.addItem(item, source);
-            } else {
-                this.getItems().push(item);
-                Aethra.EventBus.emit("hero.bag:changed", {
-                    item,
-                    source,
-                    bag: this.getItems()
-                });
-            }
-
+            bag.push(newItem);
+            Aethra.EventBus.emit("hero.bag:changed", {
+                item: newItem,
+                source,
+                bag
+            });
+            Aethra.EventBus.emit("inventory:changed", { source, item: newItem });
             return true;
         },
 
