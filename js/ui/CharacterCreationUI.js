@@ -78,37 +78,43 @@
             focus: "Defensor / Tanque",
             difficulty: "Fácil (★☆☆)",
             highlight: "Vitalidade & Defesa",
-            starterSkillId: "precise_strike"
+            starterSkillId: "precise_strike",
+            weaponTrait: "⚔️ Aparar: 12% chance de aparar e reduzir 35% do dano sofrido"
         },
         berserker: {
             focus: "Dano Físico / Risco",
             difficulty: "Média (★★☆)",
             highlight: "Força Física",
-            starterSkillId: "brutal_cleave"
+            starterSkillId: "brutal_cleave",
+            weaponTrait: "🪓 Sangramento: Maior Dano Máx + 15% chance de corte profundo"
         },
         arcanist: {
             focus: "Elemental / Conjurador",
             difficulty: "Difícil (★★★)",
             highlight: "Magia & Mana",
-            starterSkillId: "fire_bolt"
+            starterSkillId: "fire_bolt",
+            weaponTrait: "✦ Confluência Arcana: +20% em todas as procs mágicas"
         },
         ranger: {
             focus: "Distância / Utilitário",
             difficulty: "Fácil (★☆☆)",
             highlight: "Precisão & Esquiva",
-            starterSkillId: "aimed_shot"
+            starterSkillId: "aimed_shot",
+            weaponTrait: "🏹 Disparo Distante: +12% Esquiva e +15% dano mantendo distância"
         },
         nightblade: {
             focus: "Velocidade / Assassino",
             difficulty: "Difícil (★★★)",
             highlight: "Agilidade & Crítico",
-            starterSkillId: "twin_fang"
+            starterSkillId: "twin_fang",
+            weaponTrait: "🗡️ Perfuração: +15% Crítico e Ignora 30% da Armadura do Alvo"
         },
         templar: {
             focus: "Híbrido / Suporte",
             difficulty: "Média (★★☆)",
             highlight: "Maças & Restauração",
-            starterSkillId: "armor_breaker"
+            starterSkillId: "armor_breaker",
+            weaponTrait: "🔨 Esmagar: Ignora 25% da Defesa Inimiga + 10% chance de Stun"
         }
     };
 
@@ -370,6 +376,11 @@
                             const mastery = system().masteries[id];
                             return `<span><b data-mastery="${esc(id)}">${esc(mastery?.icon || "✦")}</b> ${esc(mastery?.name || id)} +${val}</span>`;
                         }).join("")}
+                </div>
+
+                <div class="creation-archetype__trait-box">
+                    <small>PASSIVA TÁTICA DA ARMA</small>
+                    <p>${esc(meta.weaponTrait)}</p>
                 </div>
 
                 <div class="creation-archetype__skill-row" data-ui-tooltip="true" data-tooltip-kind="skill" data-skill-id="${esc(meta.starterSkillId)}">

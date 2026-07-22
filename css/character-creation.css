@@ -369,6 +369,33 @@ body.is-creating-character #tilemap-canvas-root {
     gap: 3px;
 }
 
+.creation-archetype__trait-box {
+    position: relative;
+    margin-top: 6px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(229, 197, 105, 0.25);
+    background: rgba(14, 25, 30, 0.65);
+    text-align: left;
+}
+
+.creation-archetype__trait-box small {
+    display: block;
+    color: #ebd188;
+    font-size: 7px;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    margin-bottom: 2px;
+}
+
+.creation-archetype__trait-box p {
+    margin: 0;
+    color: #79ccf2;
+    font-size: 8px;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
 .creation-archetype__skill-row {
     position: relative;
     margin-top: 8px;
