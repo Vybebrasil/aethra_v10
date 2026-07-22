@@ -416,7 +416,9 @@
             "🚨 ATENÇÃO: Deseja apagar todo o progresso do save atual e recomeçar do zero para testar a experiência de novo jogador?"
         );
         if (!confirmed) return;
-        if (Aethra.SaveManager?.resetProgress) {
+        if (Aethra.SaveManager?.reset) {
+            Aethra.SaveManager.reset({ reload: true });
+        } else if (Aethra.SaveManager?.resetProgress) {
             Aethra.SaveManager.resetProgress(true);
         } else {
             window.location.reload();

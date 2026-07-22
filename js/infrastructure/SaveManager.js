@@ -217,6 +217,14 @@
             }
         },
 
+        resetProgress(reload = true) {
+            return this.reset({ reload: reload !== false });
+        },
+
+        deleteSave(reload = true) {
+            return this.reset({ reload: reload !== false });
+        },
+
         exists() {
             return localStorage.getItem(SAVE_KEY) !== null;
         },
