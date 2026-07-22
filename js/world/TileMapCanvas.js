@@ -213,15 +213,12 @@
 
         const center = enemySpawnPoint();
         const spawnPositions = [
-            center,
-            { x: center.x + 2, y: center.y - 2 },
-            { x: center.x - 2, y: center.y + 2 },
-            { x: center.x + 3, y: center.y + 2 },
-            { x: center.x - 3, y: center.y - 2 }
-        ].map((position) => ({
-            x: clampCell(position.x, 3, stairsPos.x - 2),
-            y: clampCell(position.y, 3, mapRows - 4)
-        }));
+            { x: clampCell(center.x + 4, 3, mapCols - 4), y: clampCell(center.y - 2, 3, mapRows - 4) },
+            { x: clampCell(center.x - 4, 3, mapCols - 4), y: clampCell(center.y + 2, 3, mapRows - 4) },
+            { x: clampCell(center.x + 3, 3, mapCols - 4), y: clampCell(center.y + 3, 3, mapRows - 4) },
+            { x: clampCell(center.x - 3, 3, mapCols - 4), y: clampCell(center.y - 3, 3, mapRows - 4) },
+            { x: clampCell(center.x + 5, 3, mapCols - 4), y: clampCell(center.y, 3, mapRows - 4) }
+        ];
 
         for (let i = 0; i < count; i++) {
             const spec = isBossFloor ? MONSTER_SPECIES[4] : MONSTER_SPECIES[Math.floor(Math.random() * 4)];
@@ -526,33 +523,45 @@
                 return;
             }
 
-            // Escolher o próximo tile inteiro livre de cerco ao redor do herói
+            // Escolher um dos 8 slots vizinhos discretos em volta do herói
             const heroTileX = Math.round(player.x);
             const heroTileY = Math.round(player.y);
-            const angles = [0, 0.78, 1.57, 2.35, 3.14, 3.92, 4.71, 5.49];
-            const angle = angles[idx % angles.length];
-            const idealX = clampCell(Math.round(heroTileX + Math.cos(angle)), 2, mapCols - 3);
-            const idealY = clampCell(Math.round(heroTileY + Math.sin(angle)), 2, mapRows - 3);
+            const SURROUND_SLOTS = [
+                { dx: -1, dy: -1 }, // NW
+                { dx:  1, dy: -1 }, // NE
+                { dx:  1, dy:  1 }, // SE
+                { dx: -1, dy:  1 }, // SW
+                { dx:  0, dy: -1 }, // N
+                { dx:  1, dy:  0 }, // E
+                { dx:  0, dy:  1 }, // S
+                { dx: -1, dy:  0 }  // W
+            ];
+
+            const slot = SURROUND_SLOTS[idx % SURROUND_SLOTS.length];
+            const targetSlotX = clampCell(heroTileX + slot.dx, 2, mapCols - 3);
+            const targetSlotY = clampCell(heroTileY + slot.dy, 2, mapRows - 3);
 
             let nextX = m.tileX;
             let nextY = m.tileY;
 
-            if (m.tileX < idealX) nextX++;
-            else if (m.tileX > idealX) nextX--;
+            if (m.tileX < targetSlotX) nextX++;
+            else if (m.tileX > targetSlotX) nextX--;
 
-            if (m.tileY < idealY) nextY++;
-            else if (m.tileY > idealY) nextY--;
+            if (m.tileY < targetSlotY) nextY++;
+            else if (m.tileY > targetSlotY) nextY--;
 
-            // Checar se o tile de destino está livre (não sobrepor outro monstro nem parede)
-            const isBlocked = (mapGrid[nextY]?.[nextX] === 2) || horde.some((other, oIdx) =>
+            // Checar se o tile de destino está livre (não sobrepor herói, outro monstro nem parede)
+            const isHeroTile = (nextX === heroTileX && nextY === heroTileY);
+            const isWallTile = (mapGrid[nextY]?.[nextX] === 2);
+            const isMonsterTile = horde.some((other, oIdx) =>
                 oIdx !== idx && !other.isDead && (other.targetTileX === nextX && other.targetTileY === nextY)
             );
 
-            if (!isBlocked && (nextX !== m.tileX || nextY !== m.tileY)) {
+            if (!isHeroTile && !isWallTile && !isMonsterTile && (nextX !== m.tileX || nextY !== m.tileY)) {
                 m.targetTileX = nextX;
                 m.targetTileY = nextY;
                 m.stepProgress = 0.0;
-                m.thinkTimer = Math.floor(Math.random() * 8 + 4);
+                m.thinkTimer = Math.floor(Math.random() * 6 + 2);
             }
         });
     }
