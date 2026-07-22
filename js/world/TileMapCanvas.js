@@ -227,10 +227,8 @@
             const spec = isBossFloor ? MONSTER_SPECIES[4] : MONSTER_SPECIES[Math.floor(Math.random() * 4)];
             const pos = spawnPositions[i] || { x: 10 + i * 2, y: 6 };
 
-            const baseSpeed = spec.key === "rat" || spec.key === "wolf" ? 0.065 :
-                              spec.key === "skeleton" ? 0.038 : 0.05;
-            const speed = baseSpeed + (Math.random() * 0.02 - 0.01);
-            const angleOffset = (Math.PI * 2 * i / count) + (Math.random() * 0.5 - 0.25);
+            const tileX = Math.round(pos.x);
+            const tileY = Math.round(pos.y);
 
             horde.push({
                 id: `m_${i}_${Date.now()}`,
@@ -238,13 +236,17 @@
                 name: spec.name,
                 hp: spec.hp + (waveState.currentFloor * 12),
                 maxHp: spec.maxHp + (waveState.currentFloor * 12),
-                x: pos.x,
-                y: pos.y,
-                baseX: pos.x,
-                baseY: pos.y,
-                moveSpeed: speed,
-                angleOffset: angleOffset,
-                thinkTimer: Math.floor(Math.random() * 20),
+                tileX: tileX,
+                tileY: tileY,
+                targetTileX: tileX,
+                targetTileY: tileY,
+                stepProgress: 1.0,
+                stepSpeed: spec.key === "rat" || spec.key === "wolf" ? 0.08 : 0.05,
+                x: tileX,
+                y: tileY,
+                baseX: tileX,
+                baseY: tileY,
+                thinkTimer: Math.floor(Math.random() * 15),
                 hurtTimer: 0,
                 isBoss: isBossFloor,
                 isDead: false
@@ -517,43 +519,58 @@
         if (player.spellTextTimer > 0) player.spellTextTimer--;
         if (player.hurtTimer > 0) player.hurtTimer--;
 
-        // Movimento dinâmico e IA individual da Horda (Caminhada orgânica + Separação entre monstros!)
+        // Movimento por Passos Discretos de Grid 32x32 do Tibia
         horde.forEach((m, idx) => {
             if (m.hurtTimer > 0) m.hurtTimer--;
             if (m.isDead || m.hp <= 0) return;
 
+            // Se o monstro está no meio do passo de 1 tile
+            if (m.stepProgress < 1.0) {
+                m.stepProgress = Math.min(1.0, m.stepProgress + (m.stepSpeed || 0.06));
+                m.x = m.tileX + (m.targetTileX - m.tileX) * m.stepProgress;
+                m.y = m.tileY + (m.targetTileY - m.tileY) * m.stepProgress;
+                if (m.stepProgress >= 1.0) {
+                    m.tileX = m.targetTileX;
+                    m.tileY = m.targetTileY;
+                    m.x = m.tileX;
+                    m.y = m.tileY;
+                }
+                return;
+            }
+
+            // Monstro pronto para dar o próximo passo discreto de 1 tile
             if (m.thinkTimer > 0) {
                 m.thinkTimer--;
                 return;
             }
 
-            const angle = (m.angleOffset || (idx * 0.8)) + Math.sin(Date.now() * 0.0012 + idx) * 0.45;
-            const targetDist = idx === 0 ? 1.0 : 1.5 + (idx * 0.4);
-            const targetX = clampCell(player.x + Math.cos(angle) * targetDist, 2, mapCols - 3);
-            const targetY = clampCell(player.y + Math.sin(angle) * targetDist, 2, mapRows - 3);
+            // Escolher o próximo tile inteiro livre de cerco ao redor do herói
+            const heroTileX = Math.round(player.x);
+            const heroTileY = Math.round(player.y);
+            const angles = [0, 0.78, 1.57, 2.35, 3.14, 3.92, 4.71, 5.49];
+            const angle = angles[idx % angles.length];
+            const idealX = clampCell(Math.round(heroTileX + Math.cos(angle)), 2, mapCols - 3);
+            const idealY = clampCell(Math.round(heroTileY + Math.sin(angle)), 2, mapRows - 3);
 
-            let sepX = 0;
-            let sepY = 0;
-            horde.forEach((other, oIdx) => {
-                if (oIdx !== idx && !other.isDead) {
-                    const odx = m.x - other.x;
-                    const ody = m.y - other.y;
-                    const distSq = odx * odx + ody * ody;
-                    if (distSq < 1.2 && distSq > 0.001) {
-                        const dist = Math.sqrt(distSq);
-                        sepX += (odx / dist) * 0.035;
-                        sepY += (ody / dist) * 0.035;
-                    }
-                }
-            });
+            let nextX = m.tileX;
+            let nextY = m.tileY;
 
-            const moveSpeed = m.moveSpeed || 0.05;
-            const mdx = (targetX - m.x) * moveSpeed + sepX;
-            const mdy = (targetY - m.y) * moveSpeed + sepY;
+            if (m.tileX < idealX) nextX++;
+            else if (m.tileX > idealX) nextX--;
 
-            if (Math.abs(mdx) > 0.01 || Math.abs(mdy) > 0.01) {
-                m.x += mdx;
-                m.y += mdy;
+            if (m.tileY < idealY) nextY++;
+            else if (m.tileY > idealY) nextY--;
+
+            // Checar se o tile de destino está livre (não sobrepor outro monstro nem parede)
+            const isBlocked = (mapGrid[nextY]?.[nextX] === 2) || horde.some((other, oIdx) =>
+                oIdx !== idx && !other.isDead && (other.targetTileX === nextX && other.targetTileY === nextY)
+            );
+
+            if (!isBlocked && (nextX !== m.tileX || nextY !== m.tileY)) {
+                m.targetTileX = nextX;
+                m.targetTileY = nextY;
+                m.stepProgress = 0.0;
+                m.thinkTimer = Math.floor(Math.random() * 8 + 4);
             }
         });
     }
