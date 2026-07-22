@@ -227,6 +227,11 @@
             const spec = isBossFloor ? MONSTER_SPECIES[4] : MONSTER_SPECIES[Math.floor(Math.random() * 4)];
             const pos = spawnPositions[i] || { x: 10 + i * 2, y: 6 };
 
+            const baseSpeed = spec.key === "rat" || spec.key === "wolf" ? 0.065 :
+                              spec.key === "skeleton" ? 0.038 : 0.05;
+            const speed = baseSpeed + (Math.random() * 0.02 - 0.01);
+            const angleOffset = (Math.PI * 2 * i / count) + (Math.random() * 0.5 - 0.25);
+
             horde.push({
                 id: `m_${i}_${Date.now()}`,
                 key: spec.key,
@@ -237,6 +242,9 @@
                 y: pos.y,
                 baseX: pos.x,
                 baseY: pos.y,
+                moveSpeed: speed,
+                angleOffset: angleOffset,
+                thinkTimer: Math.floor(Math.random() * 20),
                 hurtTimer: 0,
                 isBoss: isBossFloor,
                 isDead: false
@@ -509,23 +517,43 @@
         if (player.spellTextTimer > 0) player.spellTextTimer--;
         if (player.hurtTimer > 0) player.hurtTimer--;
 
-        // Movimento dinâmico de Agro da Horda (Monstros cercam o herói em tempo real!)
-        const angles = [0, 0.78, 1.57, 2.35, 3.14, 3.92, 4.71, 5.49];
+        // Movimento dinâmico e IA individual da Horda (Caminhada orgânica + Separação entre monstros!)
         horde.forEach((m, idx) => {
             if (m.hurtTimer > 0) m.hurtTimer--;
             if (m.isDead || m.hp <= 0) return;
 
-            // Posição de cerco ao redor do herói
-            const angle = angles[idx % angles.length];
-            const dist = idx === 0 ? 1.1 : 1.8 + (idx * 0.4);
-            const targetX = clampCell(player.x + Math.cos(angle) * dist, 2, mapCols - 3);
-            const targetY = clampCell(player.y + Math.sin(angle) * dist, 2, mapRows - 3);
+            if (m.thinkTimer > 0) {
+                m.thinkTimer--;
+                return;
+            }
 
-            const mdx = targetX - m.x;
-            const mdy = targetY - m.y;
-            if (Math.abs(mdx) > 0.05 || Math.abs(mdy) > 0.05) {
-                m.x += mdx * 0.06;
-                m.y += mdy * 0.06;
+            const angle = (m.angleOffset || (idx * 0.8)) + Math.sin(Date.now() * 0.0012 + idx) * 0.45;
+            const targetDist = idx === 0 ? 1.0 : 1.5 + (idx * 0.4);
+            const targetX = clampCell(player.x + Math.cos(angle) * targetDist, 2, mapCols - 3);
+            const targetY = clampCell(player.y + Math.sin(angle) * targetDist, 2, mapRows - 3);
+
+            let sepX = 0;
+            let sepY = 0;
+            horde.forEach((other, oIdx) => {
+                if (oIdx !== idx && !other.isDead) {
+                    const odx = m.x - other.x;
+                    const ody = m.y - other.y;
+                    const distSq = odx * odx + ody * ody;
+                    if (distSq < 1.2 && distSq > 0.001) {
+                        const dist = Math.sqrt(distSq);
+                        sepX += (odx / dist) * 0.035;
+                        sepY += (ody / dist) * 0.035;
+                    }
+                }
+            });
+
+            const moveSpeed = m.moveSpeed || 0.05;
+            const mdx = (targetX - m.x) * moveSpeed + sepX;
+            const mdy = (targetY - m.y) * moveSpeed + sepY;
+
+            if (Math.abs(mdx) > 0.01 || Math.abs(mdy) > 0.01) {
+                m.x += mdx;
+                m.y += mdy;
             }
         });
     }
