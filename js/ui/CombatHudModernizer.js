@@ -138,15 +138,17 @@
     }
 
     function renderSurvivalStrip() {
-        const header = document.querySelector("#battle-actionbar-layer > .battle-panel--actionbar > .battle-panel__header");
+        const header = document.querySelector(".battle-panel--actionbar > .battle-panel__header")
+            || document.querySelector("#battle-actionbar-layer .battle-panel__header")
+            || document.querySelector(".battle-panel--actionbar");
         if (!header) return false;
 
         document.body.classList.add("aethra-combat-hud-modern");
-        let strip = header.querySelector(":scope > .combat-survival-strip");
+        let strip = header.querySelector(".combat-survival-strip");
         if (!strip) {
             strip = document.createElement("div");
             strip.className = "combat-survival-strip";
-            const tools = header.querySelector(":scope > .battle-panel__tools");
+            const tools = header.querySelector(".battle-panel__tools");
             header.insertBefore(strip, tools || null);
         }
 

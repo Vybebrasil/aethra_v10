@@ -1811,12 +1811,17 @@
                 if (weaponAsset) {
                     displayIconHTML = `<img src="${escapeHTML(weaponAsset)}" alt="" style="width:26px;height:26px;object-fit:contain;vertical-align:middle;">`;
                 } else if (hasWeapon) {
-                    const wType = String(state.weapon.weaponType || weaponItem?.weaponType || weaponItem?.category || "").toLowerCase();
-                    const wIcon = wType.includes("focus") || wType.includes("wand") || wType.includes("staff") ? "✦" :
-                                  wType.includes("bow") ? "➶" :
-                                  wType.includes("axe") ? "🪓" :
-                                  wType.includes("mace") ? "◆" :
-                                  wType.includes("dagger") ? "†" : (isRight ? "🗡" : "⚔");
+                    const wName = String(state.weapon?.name || weaponItem?.name || "").toLowerCase();
+                    const wId = String(state.weapon?.templateId || state.weapon?.id || "").toLowerCase();
+                    const wType = String(state.weapon?.weaponType || weaponItem?.weaponType || weaponItem?.category || "").toLowerCase();
+
+                    const isFocus = wId.includes("focus") || wId.includes("foco") || wId.includes("wand") || wId.includes("varinha") || wId.includes("staff") || wId.includes("cajado") || wName.includes("foco") || wName.includes("varinha") || wName.includes("cajado") || wType.includes("focus") || wType.includes("wand") || wType.includes("staff");
+                    const isBow = wId.includes("bow") || wId.includes("arco") || wName.includes("arco") || wType.includes("bow");
+                    const isAxe = wId.includes("axe") || wId.includes("machado") || wName.includes("machado") || wType.includes("axe");
+                    const isMace = wId.includes("mace") || wId.includes("maça") || wId.includes("martelo") || wName.includes("maça") || wName.includes("martelo") || wType.includes("mace");
+                    const isDagger = wId.includes("dagger") || wId.includes("adaga") || wName.includes("adaga") || wType.includes("dagger");
+
+                    const wIcon = isFocus ? "✦" : isBow ? "➶" : isAxe ? "🪓" : isMace ? "◆" : isDagger ? "†" : (isRight ? "🗡" : "⚔");
                     displayIconHTML = escapeHTML(wIcon);
                 } else {
                     displayIconHTML = "👊";

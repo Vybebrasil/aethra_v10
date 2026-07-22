@@ -229,8 +229,9 @@
             : true;
         const supplyHTML = supplies.length
             ? supplies.map((entry) => {
-                const itemDef = Aethra.GameData?.items?.[entry.id] || {};
-                const asset = Aethra.GameData?.assets?.resolve?.("item", itemDef.icon || itemDef.image);
+                const itemDef = Aethra.GameData?.items?.[entry.id] || Aethra.LootSystem?.catalog?.[entry.id] || {};
+                const imageName = itemDef.image || itemDef.icon || (entry.id === "potion_mana" ? "potion_mana.svg" : entry.id === "potion_health" ? "potion_health.svg" : "");
+                const asset = imageName ? Aethra.GameData?.assets?.resolve?.("item", imageName) : null;
                 const iconHTML = asset
                     ? `<img src="${escapeHTML(asset)}" alt="" style="width:18px;height:18px;object-fit:contain;vertical-align:middle;margin-right:6px;">`
                     : `<i aria-hidden="true" style="margin-right:6px;">${itemDef.icon || (entry.id.includes("potion") ? "🧪" : "▣")}</i>`;
