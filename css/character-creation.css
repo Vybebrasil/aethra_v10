@@ -2,6 +2,17 @@
 body.is-creating-character,
 body.is-allocating-skills { overflow: hidden; }
 
+/* Ocultar HUDs por trás na tela de criação de personagem */
+body.is-creating-character #hud-layer,
+body.is-creating-character #actionbar-layer,
+body.is-creating-character #battle-actionbar-layer,
+body.is-creating-character .battle-dashboard-header,
+body.is-creating-character .hud-main,
+body.is-creating-character .world-layer,
+body.is-creating-character #tilemap-canvas-root {
+    display: none !important;
+}
+
 #character-creation-layer {
     position: fixed;
     z-index: 250000;

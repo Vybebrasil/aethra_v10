@@ -22,16 +22,22 @@
         return `${item.name} (Dano: ${damage}${extra})`;
     };
 
-    // Slot icons for the paper-doll (Tibia-style)
+    // Slot icons for the paper-doll (Tibia-style 3x4)
     const SLOT_DEFS = [
-        { id: "head",    label: "Cabeça",  emptyIcon: "⬡" },
-        { id: "chest",   label: "Peitoral", emptyIcon: "◫" },
-        { id: "hands",   label: "Mãos",    emptyIcon: "⬡" },
-        { id: "weapon",  label: "Arma",    emptyIcon: "⚔" },
-        { id: "feet",    label: "Pés",     emptyIcon: "⬡" },
-        { id: "offhand", label: "Offhand", emptyIcon: "⬡" },
-        { id: "ring",    label: "Anel",    emptyIcon: "◎" },
-        { id: "legs",    label: "Pernas",  emptyIcon: "◫" }
+        { id: "neck",    label: "Colar",    emptyIcon: "✦" },
+        { id: "head",    label: "Elmo",     emptyIcon: "⬡" },
+        { id: "relic",   label: "Relíquia", emptyIcon: "⚜" },
+
+        { id: "weapon",  label: "Arma",     emptyIcon: "⚔" },
+        { id: "chest",   label: "Armadura", emptyIcon: "◫" },
+        { id: "offhand", label: "Escudo",   emptyIcon: "🛡" },
+
+        { id: "ring1",   label: "Anel 1",   emptyIcon: "◎" },
+        { id: "legs",    label: "Calças",   emptyIcon: "◫" },
+        { id: "hands",   label: "Luvas",    emptyIcon: "✋" },
+
+        { id: "ring2",   label: "Anel 2",   emptyIcon: "◎" },
+        { id: "feet",    label: "Botas",    emptyIcon: "👢" }
     ];
 
     // Maps archetype id → which slot(s) have starter items
