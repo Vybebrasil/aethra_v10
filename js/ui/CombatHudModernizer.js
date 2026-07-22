@@ -97,44 +97,54 @@
             </span>`;
     }
 
-    function renderLevelXPChip() {
-        const hero = Aethra.GameState?.hero || {};
-        const level = Math.max(1, integer(hero.level, 1));
-        const xpCurrent = Math.max(0, integer(hero.xp, 0));
-        const xpNext = Aethra.XPSystem?.getHeroXPRequired?.(level) || 100;
-        const percent = Math.min(100, Math.max(0, (xpCurrent / xpNext) * 100));
+    const integer = (value, fallback = 0) => Math.max(0, Math.floor(number(value, fallback)));
 
-        return `
-            <span class="modern-resource modern-resource--xp" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="PROGRESSÃO DO HERÓI" data-tooltip-title="Nível ${level}" data-tooltip-value="${format(xpCurrent)} / ${format(xpNext)} XP" data-tooltip-body="Progresso de experiência necessário para o próximo nível do herói.">
-                <small>NV. ${level}</small>
-                <i><u style="width:${percent.toFixed(2)}%"></u></i>
-                <b>${percent.toFixed(0)}% XP</b>
-            </span>`;
+    function renderLevelXPChip() {
+        try {
+            const hero = Aethra.GameState?.hero || {};
+            const level = Math.max(1, integer(hero.level, 1));
+            const xpCurrent = Math.max(0, integer(hero.xp, 0));
+            const xpNext = Aethra.XPSystem?.getHeroXPRequired?.(level) || (level * 100);
+            const percent = Math.min(100, Math.max(0, (xpCurrent / Math.max(1, xpNext)) * 100));
+
+            return `
+                <span class="modern-resource modern-resource--xp" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="PROGRESSÃO DO HERÓI" data-tooltip-title="Nível ${level}" data-tooltip-value="${format(xpCurrent)} / ${format(xpNext)} XP" data-tooltip-body="Progresso de experiência necessário para o próximo nível do herói.">
+                    <small>NV. ${level}</small>
+                    <i><u style="width:${percent.toFixed(2)}%"></u></i>
+                    <b>${percent.toFixed(0)}% XP</b>
+                </span>`;
+        } catch (err) {
+            return `<span class="modern-resource modern-resource--xp"><small>NV. 1</small><b>0% XP</b></span>`;
+        }
     }
 
     function renderStatusEffectsChips() {
-        const combatant = Aethra.BattleSystem?.getHeroCombatant?.() || {};
-        const effects = combatant.statusEffects || combatant.effects || Aethra.GameState?.hero?.statusEffects || [];
+        try {
+            const combatant = Aethra.BattleSystem?.getHeroCombatant?.() || {};
+            const effects = combatant.statusEffects || combatant.effects || Aethra.GameState?.hero?.statusEffects || [];
 
-        if (!Array.isArray(effects) || effects.length === 0) {
-            return `<span class="modern-status-empty" title="Nenhum efeito de status no momento"><small>EFEITOS:</small> <i>―</i></span>`;
+            if (!Array.isArray(effects) || effects.length === 0) {
+                return `<span class="modern-status-empty" title="Nenhum efeito de status no momento"><small>EFEITOS:</small> <i>―</i></span>`;
+            }
+
+            return `
+                <div class="modern-status-effects-list">
+                    ${effects.map((effect) => {
+                        const isBuff = effect.type !== "debuff" && effect.tone !== "negative";
+                        const icon = effect.icon || (isBuff ? "🛡️" : "⚠️");
+                        const name = effect.name || effect.label || "Efeito";
+                        const duration = effect.durationRounds ? `${effect.durationRounds}r` : "";
+                        return `
+                            <span class="modern-status-badge ${isBuff ? "is-buff" : "is-debuff"}" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="${escapeHTML(name)}" data-tooltip-body="${escapeHTML(effect.description || (isBuff ? "Bônus temporário ativo" : "Penalidade temporária em vigor"))}">
+                                <b>${escapeHTML(icon)}</b>
+                                <small>${escapeHTML(name)}</small>
+                                ${duration ? `<em>${escapeHTML(duration)}</em>` : ""}
+                            </span>`;
+                    }).join("")}
+                </div>`;
+        } catch (err) {
+            return `<span class="modern-status-empty"><small>EFEITOS:</small> <i>―</i></span>`;
         }
-
-        return `
-            <div class="modern-status-effects-list">
-                ${effects.map((effect) => {
-                    const isBuff = effect.type !== "debuff" && effect.tone !== "negative";
-                    const icon = effect.icon || (isBuff ? "🛡️" : "⚠️");
-                    const name = effect.name || effect.label || "Efeito";
-                    const duration = effect.durationRounds ? `${effect.durationRounds}r` : "";
-                    return `
-                        <span class="modern-status-badge ${isBuff ? "is-buff" : "is-debuff"}" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="${escapeHTML(name)}" data-tooltip-body="${escapeHTML(effect.description || (isBuff ? "Bônus temporário ativo" : "Penalidade temporária em vigor"))}">
-                            <b>${escapeHTML(icon)}</b>
-                            <small>${escapeHTML(name)}</small>
-                            ${duration ? `<em>${escapeHTML(duration)}</em>` : ""}
-                        </span>`;
-                }).join("")}
-            </div>`;
     }
 
     function renderSurvivalStrip() {
