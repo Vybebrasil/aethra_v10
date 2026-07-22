@@ -657,11 +657,32 @@
             Mundo: "⌖ Mundo"
         };
 
-        const filteredMasteries = masteries.filter((entry) => {
-            const cat = entry.category || "Outras";
-            if (activeCategory !== "all" && cat !== activeCategory && (activeCategory !== "Criação" || (cat !== "Criação" && cat !== "Craft"))) return false;
-            if (!searchQuery) return true;
-            return normalize(`${entry.name} ${cat} ${entry.description || ""}`).includes(searchQuery);
+        // Ordenação Inteligente:
+        // 1. Skills Expandidas (Pinned / Foco) ficam SEMPRE NO TOPO!
+        // 2. Dentro de cada grupo, ordena por Modo de Treino (Ativo > Travado) e Nível/XP
+        filteredMasteries.sort((a, b) => {
+            const aId = String(a.id || a.name);
+            const bId = String(b.id || b.name);
+            const aMinimized = state.minimizedSkills[aId] === true;
+            const bMinimized = state.minimizedSkills[bId] === true;
+
+            if (aMinimized !== bMinimized) {
+                return aMinimized ? 1 : -1;
+            }
+
+            const aTraining = a.trainingMode !== "locked" ? 1 : 0;
+            const bTraining = b.trainingMode !== "locked" ? 1 : 0;
+            if (aTraining !== bTraining) {
+                return bTraining - aTraining;
+            }
+
+            const aLevel = Number(a.level || 1);
+            const bLevel = Number(b.level || 1);
+            if (aLevel !== bLevel) {
+                return bLevel - aLevel;
+            }
+
+            return Number(b.xpTotal || 0) - Number(a.xpTotal || 0);
         });
 
         const cardsHTML = filteredMasteries.map((entry, index) => {
@@ -693,8 +714,8 @@
 
                     <button type="button" class="player-skill-pin-btn ${isMinimized ? "" : "is-pinned"}"
                         data-toggle-skill-pin="${esc(entryId)}"
-                        data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="${isMinimized ? "Fixar / Expandir Skill" : "Minimizar Skill"}"
-                        data-tooltip-body="${isMinimized ? "Clique para expandir a barra de XP em tempo real." : "Clique para recolher o card e economizar espaço."}">
+                        data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="${isMinimized ? "Fixar no Topo & Expandir" : "Minimizar & Mover pro Rodapé"}"
+                        data-tooltip-body="${isMinimized ? "Clique para fixar no topo e acompanhar a barra de XP." : "Clique para minimizar e mover para baixo."}">
                         ${isMinimized ? "📌" : "📍"}
                     </button>
 
