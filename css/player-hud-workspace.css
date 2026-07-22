@@ -762,9 +762,19 @@
    SKILLS TAB REDESIGN — Direct Skill Cards & Category Chips
    ========================================================================== */
 
+.player-hud-section--skills {
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
 .player-skill-workspace--v2 {
-    display: grid;
-    gap: 6px;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    gap: 6px !important;
 }
 
 .player-skill-controls {
@@ -822,15 +832,46 @@
     color: #cbb472;
 }
 
+.player-skill-search {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.player-skill-search span {
+    position: absolute;
+    left: 8px;
+    color: #58707d;
+    font-size: 10px;
+    pointer-events: none;
+}
+
+.player-skill-search input {
+    height: 24px;
+    padding: 0 8px 0 22px;
+    border: 1px solid rgba(80, 120, 140, 0.25);
+    border-radius: 6px;
+    background: rgba(4, 9, 12, 0.9);
+    color: #d6e8ef;
+    font: 700 8px/1 "Outfit", sans-serif;
+    outline: none;
+    transition: border-color 0.12s ease-in-out;
+}
+
+.player-skill-search input:focus {
+    border-color: rgba(94, 188, 231, 0.5);
+}
+
 /* Grade de Cards de Habilidade */
 .player-skill-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
-    gap: 6px;
-    max-height: 275px;
-    overflow-y: auto;
-    padding-right: 3px;
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;
+    gap: 6px !important;
+    max-height: 380px !important;
+    overflow-y: auto !important;
+    padding-right: 3px !important;
     scrollbar-width: thin;
+}
 }
 
 .player-skill-card {

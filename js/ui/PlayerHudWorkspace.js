@@ -341,8 +341,12 @@
             });
             const heading = section.querySelector(".hero-hub__section-heading");
             if (heading) {
-                heading.className = "hero-hub__section-heading player-hud-section__heading";
-                heading.innerHTML = sectionHeading(id);
+                if (id === "skills") {
+                    heading.remove();
+                } else {
+                    heading.className = "hero-hub__section-heading player-hud-section__heading";
+                    heading.innerHTML = sectionHeading(id);
+                }
             }
             views.appendChild(section);
         });
@@ -720,12 +724,6 @@
 
         container.className = "hero-skill-progression player-skill-workspace--v2";
         container.innerHTML = `
-            <div class="player-skill-overview">
-                <span><small>Níveis Totais</small><strong>${fmt(totalLevels)}</strong></span>
-                <span><small>XP Acumulada</small><strong>${fmt(totalXP)}</strong></span>
-                <span><small>Maior Domínio</small><strong>${esc(strongest?.name || "—")}</strong></span>
-            </div>
-
             <div class="player-skill-controls">
                 <nav class="player-skill-chips" aria-label="Categorias de habilidades">
                     ${categories.map((cat) => {
