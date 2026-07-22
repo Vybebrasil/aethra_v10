@@ -304,11 +304,14 @@
                                 const item = slot.item;
                                 const hasItem = Boolean(item && item.name);
                                 const itemIcon = hasItem ? (slot.id === "weapon" ? wIcon : slot.id === "chest" ? "◫" : "🛡") : slot.emptyIcon;
-                                const label = hasItem ? esc(item.name) : slot.label;
+                                const shortName = hasItem
+                                    ? (item.name.replace(" (Nível 1)", "").replace(" do Novato", "").replace(" de Treino", ""))
+                                    : slot.label;
+                                const label = hasItem ? esc(shortName) : slot.label;
                                 const tipBody = hasItem
-                                    ? `${esc(item.description || '')} (Equipamento inicial do arquétipo).`
+                                    ? `${esc(item.name)} — ${esc(item.description || '')} (Equipamento inicial do arquétipo).`
                                     : `Slot vazio — equipe itens durante a jornada.`;
-                                return `<span class="creation-paperdoll-slot ${hasItem ? 'has-item' : ''}" data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="SLOT: ${esc(slot.label.toUpperCase())}" data-tooltip-title="${hasItem ? esc(item.name) : 'Vazio — '+slot.label}" data-tooltip-body="${tipBody}"><b>${itemIcon}</b><small>${hasItem ? esc(slot.label) : ''}</small></span>`;
+                                return `<span class="creation-paperdoll-slot ${hasItem ? 'has-item' : ''}" data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="SLOT: ${esc(slot.label.toUpperCase())}" data-tooltip-title="${hasItem ? esc(item.name) : 'Vazio — '+slot.label}" data-tooltip-body="${tipBody}"><b>${itemIcon}</b><small>${label}</small></span>`;
                             }).join("");
                         })()}
                     </div>
