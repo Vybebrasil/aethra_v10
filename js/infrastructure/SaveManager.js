@@ -191,6 +191,15 @@
 
             try {
                 localStorage.removeItem(SAVE_KEY);
+                localStorage.removeItem('aethra_lobby_slot_0');
+                localStorage.removeItem('aethra_lobby_slot_1');
+                localStorage.removeItem('aethra_lobby_slot_2');
+                localStorage.removeItem('aethra_active_slot');
+
+                if (Aethra.GameState && Aethra.GameState.hero) {
+                    Aethra.GameState.hero.characterCreated = false;
+                }
+
                 replaceState(Aethra.GameState, defaultState);
 
                 Aethra.EventBus.emit('save:reset', {
@@ -198,7 +207,7 @@
                     state: Aethra.GameState
                 });
 
-                console.log('[SaveManager] Save apagado e estado inicial restaurado.');
+                console.log('[SaveManager] Save e slots de lobby apagados. Estado inicial restaurado.');
 
                 if (reload && typeof location !== 'undefined') {
                     location.reload();

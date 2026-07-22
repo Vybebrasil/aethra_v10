@@ -298,6 +298,18 @@
     // Patch CharacterCreationUI to not auto-show while lobby is active
     const _origMaybe = Aethra.CharacterCreationUI?.show;
 
+    function checkAutoCreateIfEmpty() {
+        const slot0 = readSlot(0);
+        const slot1 = readSlot(1);
+        const slot2 = readSlot(2);
+        if (!slot0 && !slot1 && !slot2) {
+            console.log("[LobbyUI] Nenhum personagem encontrado. Abrindo criação de personagem do zero.");
+            window.setTimeout(() => {
+                createFromSlot(0);
+            }, 150);
+        }
+    }
+
     Aethra.EventBus.on("engine:ready", () => {
         Aethra.LobbyUI.active = true;
         migrateOldSave();
@@ -308,6 +320,7 @@
         if (view) {
             view.classList.remove("is-hidden");
         }
+        checkAutoCreateIfEmpty();
     });
 
     Aethra.EventBus.on("EngineReady", () => {
@@ -318,6 +331,7 @@
             renderLobby();
             const view = document.getElementById("lobby-view");
             if (view) view.classList.remove("is-hidden");
+            checkAutoCreateIfEmpty();
         }
     });
 

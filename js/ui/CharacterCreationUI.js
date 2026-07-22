@@ -576,6 +576,27 @@
             return false;
         }
 
+        // Primeira Missão Tutorial estilo RuneScape ("Primeiros Passos em Aethra")
+        try {
+            if (Aethra.QuestSystem) {
+                Aethra.QuestSystem.registerQuest("tutorial_first_steps", {
+                    id: "tutorial_first_steps",
+                    title: "Primeiros Passos em Aethra",
+                    description: "Boas-vindas a Aethra! Abra a aba de Mapa, escolha a Floresta Inicial e teste seu combate contra as criaturas.",
+                    levelReq: 1,
+                    objectives: [
+                        { id: "start_hunt", text: "Iniciar sua primeira caçada (Floresta Inicial)", current: 0, required: 1, completed: false },
+                        { id: "defeat_monsters", text: "Derrotar 3 criaturas locais", current: 0, required: 3, completed: false }
+                    ],
+                    reward: { gold: 100, xp: 50, item: "Anel de Rito Rústico" }
+                });
+                Aethra.QuestSystem.acceptQuest("tutorial_first_steps");
+                if (Aethra.GameState?.ui) Aethra.GameState.ui.trackedQuestId = "tutorial_first_steps";
+            }
+        } catch (e) {
+            console.error("[CharacterCreationUI] Erro ao injetar primeira missão:", e);
+        }
+
         closeLayer();
         Aethra.UIManager?.setPrimaryView?.("city", { source: "character-created" });
         Aethra.RenderEngine?.renderAll?.();
