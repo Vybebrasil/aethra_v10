@@ -608,26 +608,26 @@
 .hero-hub--cockpit .hero-build-summary small { color: #677d87 !important; font-size: 6px !important; }
 .hero-hub--cockpit .hero-build-summary strong { color: #ddc074 !important; font-size: 8px !important; }
 
-/* O set é contexto permanente, no padrão compacto de paperdoll do Tibia. */
 .hero-hub--cockpit .player-hud-fixed-equipment {
-    flex: 0 0 auto;
-    margin: 0 8px 5px;
-    padding: 0 5px 5px;
-    overflow: hidden;
-    border: 1px solid rgba(102, 143, 161, 0.2);
-    border-radius: 10px;
-    background: linear-gradient(180deg, rgba(15, 27, 33, 0.95), rgba(5, 11, 15, 0.97));
+    flex: 0 0 auto !important;
+    height: auto !important;
+    margin: 0 8px 8px !important;
+    padding: 0 8px 8px !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(102, 143, 161, 0.25) !important;
+    border-radius: 10px !important;
+    background: linear-gradient(180deg, rgba(15, 27, 33, 0.95), rgba(5, 11, 15, 0.97)) !important;
 }
 
 .hero-hub--cockpit .player-hud-fixed-equipment .player-hud-section__heading {
-    min-height: 27px !important;
-    margin: 0 -5px 4px !important;
-    padding: 3px 5px 3px 7px !important;
+    min-height: 28px !important;
+    margin: 0 -8px 6px !important;
+    padding: 4px 8px !important;
 }
 
 .player-hud-fixed-equipment .player-hud-section__title {
     grid-template-columns: 20px minmax(0, 1fr) !important;
-    gap: 5px !important;
+    gap: 6px !important;
 }
 
 .player-hud-fixed-equipment .player-hud-section__title > span {
@@ -637,63 +637,12 @@
     font-size: 9px;
 }
 
-.player-hud-fixed-equipment .player-hud-section__title strong { font-size: 8px !important; }
-.player-hud-fixed-equipment .player-hud-section__title small { font-size: 6px !important; }
+.player-hud-fixed-equipment .player-hud-section__title strong { font-size: 9px !important; }
+.player-hud-fixed-equipment .player-hud-section__title small { font-size: 7px !important; }
 .hero-hub--cockpit .player-hud-fixed-equipment .player-hud-section__heading > button {
-    height: 21px !important;
-    padding: 0 7px !important;
-    font-size: 6px !important;
-}
-
-.hero-hub--cockpit .player-hud-fixed-equipment .player-equipment-matrix--persistent {
-    display: grid !important;
-    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
-    grid-template-rows: repeat(2, 28px) !important;
-    gap: 3px !important;
-}
-
-.hero-hub--cockpit .player-hud-fixed-equipment .player-equipment-slot {
-    display: grid !important;
-    grid-column: auto !important;
-    grid-template-columns: 1fr !important;
-    width: auto !important;
-    min-width: 0 !important;
-    height: 28px !important;
-    min-height: 28px !important;
-    padding: 1px !important;
-    border-radius: 6px !important;
-}
-
-.hero-hub--cockpit .player-hud-fixed-equipment .player-equipment-slot:last-child {
-    grid-column: auto !important;
-}
-
-.player-hud-fixed-equipment .player-equipment-slot__copy,
-.player-hud-fixed-equipment .hero-build-summary {
-    display: none !important;
-}
-
-.hero-hub--cockpit .player-hud-fixed-equipment .player-equipment-slot .hero-paperdoll__slot-icon {
-    width: 24px !important;
-    height: 24px !important;
-    margin: auto;
-    border-radius: 5px !important;
-}
-
-.hero-hub--cockpit .player-hud-fixed-equipment .player-equipment-slot .hero-paperdoll__slot-icon img {
-    width: 21px !important;
-    height: 21px !important;
-}
-
-.player-hud-fixed-equipment .player-equipment-slot .hero-paperdoll__slot-icon b {
-    font-size: 9px;
-}
-
-.player-hud-fixed-equipment .player-equipment-slot__rarity {
-    top: 2px;
-    right: 2px;
-    width: 4px;
-    height: 4px;
+    height: 22px !important;
+    padding: 0 8px !important;
+    font-size: 8px !important;
 }
 
 /* Backpack pesquisável, ordenável e com inspeção rica. */
