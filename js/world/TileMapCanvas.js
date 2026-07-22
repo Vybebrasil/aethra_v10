@@ -132,15 +132,15 @@
 
     function heroSpawnPoint() {
         return {
-            x: clampCell(Math.round(mapCols * 0.30), 3, mapCols - 6),
-            y: clampCell(Math.round(mapRows * 0.55), 3, mapRows - 4)
+            x: clampCell(Math.floor(mapCols * 0.35), 3, mapCols - 6),
+            y: clampCell(Math.floor(mapRows * 0.50), 3, mapRows - 4)
         };
     }
 
     function enemySpawnPoint() {
         return {
-            x: clampCell(Math.round(mapCols * 0.62), 7, stairsPos.x - 3),
-            y: clampCell(stairsPos.y, 3, mapRows - 4)
+            x: clampCell(Math.floor(mapCols * 0.50), 4, mapCols - 5),
+            y: clampCell(Math.floor(mapRows * 0.50), 3, mapRows - 4)
         };
     }
 
@@ -482,13 +482,6 @@
     }
 
     let combatStepCounter = 0;
-    const STEP_OFFSETS = [
-        { x: 0, y: -1 },
-        { x: 1, y: 0 },
-        { x: 0, y: 1 },
-        { x: -1, y: 0 }
-    ];
-
     function updatePhysics() {
         // Movimento suave do jogador
         const dx = player.targetX - player.x;
@@ -500,18 +493,7 @@
         } else {
             player.x = player.targetX;
             player.y = player.targetY;
-
-            // Kiting continuo e reposicionamento ativo durante o combate contra a horda!
-            const target = horde[currentTargetIndex] || horde[0];
-            if (target && !target.isDead && target.hp > 0 && !isTransitioningFloor) {
-                combatStepCounter++;
-                if (combatStepCounter % 35 === 0) {
-                    const offset = STEP_OFFSETS[Math.floor(combatStepCounter / 35) % STEP_OFFSETS.length];
-                    player.targetX = clampCell(target.x + offset.x, 3, mapCols - 4);
-                    player.targetY = clampCell(target.y + offset.y, 3, mapRows - 4);
-                    player.state = "walking";
-                }
-            } else if (player.state === "walking") {
+            if (player.state === "walking") {
                 player.state = "idle";
             }
         }
