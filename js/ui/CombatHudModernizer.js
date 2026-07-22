@@ -145,20 +145,27 @@
 
     function availableSkillHTML(skill, selectedSkillId) {
         const role = skillType(skill);
+        const req = Aethra.SkillSystem?.getSkillRequirement?.(skill) || { usable: true };
+        const isLocked = !req.usable;
         return `
-            <button type="button" class="modern-skill-pick is-${role.id} ${skill.id === selectedSkillId ? "is-current" : ""}" data-modern-assign-skill="${escapeHTML(skill.id)}" title="Colocar ${escapeHTML(skill.name)} no slot selecionado">
+            <button type="button" class="modern-skill-pick is-${role.id} ${skill.id === selectedSkillId ? "is-current" : ""} ${isLocked ? "is-locked" : ""}" data-modern-assign-skill="${escapeHTML(skill.id)}" title="${isLocked ? req.reason : `Colocar ${escapeHTML(skill.name)} no slot selecionado`}">
                 <strong>${escapeHTML(skill.icon || "✦")}</strong>
-                <span><b>${escapeHTML(skill.name)}</b><small>${escapeHTML(role.label)} · ${escapeHTML(skillCost(skill))}</small></span>
+                <span>
+                    <b>${escapeHTML(skill.name)}</b>
+                    <small>${isLocked ? `<span style="color:#ef6d6d;font-weight:700;">🔒 ${escapeHTML(req.reason)}</span>` : `${escapeHTML(role.label)} · ${escapeHTML(skillCost(skill))}`}</small>
+                </span>
             </button>`;
     }
 
     function priorityCardHTML(entry, index, count) {
         const { skillId, slotIndex, skill, setting } = entry;
         const role = skillType(skill);
+        const req = Aethra.SkillSystem?.getSkillRequirement?.(skill) || { usable: true };
+        const isLocked = !req.usable;
         const isHeal = role.id === "support";
         const threshold = clamp(number(setting?.hpThreshold ?? skill?.hpThreshold, 50), 5, 95);
         return `
-            <article class="modern-skill-rule is-${role.id}" data-modern-skill-rule="${escapeHTML(skillId)}">
+            <article class="modern-skill-rule is-${role.id} ${isLocked ? "is-weapon-locked" : ""}" data-modern-skill-rule="${escapeHTML(skillId)}">
                 <div class="modern-skill-rule__priority">
                     <span><small>PRIO</small><b>${index + 1}</b></span>
                     <div>
@@ -168,14 +175,17 @@
                 </div>
                 <div class="modern-skill-rule__identity">
                     <span>${escapeHTML(skill.icon || "✦")}</span>
-                    <div><strong>${escapeHTML(skill.name)}</strong><small>${escapeHTML(role.label)} · Tecla ${slotIndex === 9 ? "0" : slotIndex + 1}</small></div>
+                    <div>
+                        <strong>${escapeHTML(skill.name)}</strong>
+                        <small>${isLocked ? `<b style="color:#ef6d6d;">🔒 ${escapeHTML(req.reason)}</b>` : `${escapeHTML(role.label)} · Tecla ${slotIndex === 9 ? "0" : slotIndex + 1}`}</small>
+                    </div>
                 </div>
                 <div class="modern-skill-rule__facts"><span>${escapeHTML(skillCost(skill))}</span><i></i><span>${escapeHTML(cooldownText(skill))}</span></div>
-                <label class="modern-auto-switch">
-                    <input type="checkbox" data-modern-auto="${escapeHTML(skillId)}" ${setting?.auto ? "checked" : ""}>
-                    <span><i></i><b>${setting?.auto ? "Auto ativo" : "Manual"}</b></span>
+                <label class="modern-auto-switch ${isLocked ? "is-disabled" : ""}">
+                    <input type="checkbox" data-modern-auto="${escapeHTML(skillId)}" ${setting?.auto && !isLocked ? "checked" : ""} ${isLocked ? "disabled" : ""}>
+                    <span><i></i><b>${isLocked ? "Indisponível" : setting?.auto ? "Auto ativo" : "Manual"}</b></span>
                 </label>
-                <button type="button" class="modern-use-now" data-modern-use="${escapeHTML(skillId)}">Usar agora</button>
+                <button type="button" class="modern-use-now" data-modern-use="${escapeHTML(skillId)}" ${isLocked ? "disabled" : ""}>${isLocked ? "Bloqueado" : "Usar agora"}</button>
                 ${isHeal ? `
                     <div class="modern-heal-rule">
                         <span><small>CURAR ABAIXO DE</small><output data-modern-threshold-output="${escapeHTML(skillId)}">${Math.round(threshold)}%</output></span>

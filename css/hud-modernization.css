@@ -316,6 +316,23 @@ summary:focus-visible,
     font-size: 22px !important;
 }
 
+#skills-view:not(.hidden) {
+    max-height: calc(100vh - 40px) !important;
+    overflow-y: auto !important;
+}
+
+.modern-skill-pick.is-locked {
+    opacity: 0.6;
+    filter: grayscale(0.5);
+    border-color: rgba(229, 95, 95, 0.3) !important;
+    background: rgba(30, 15, 18, 0.6) !important;
+}
+
+.modern-skill-rule.is-weapon-locked {
+    border-color: rgba(229, 95, 95, 0.35) !important;
+    background: rgba(25, 12, 14, 0.8) !important;
+}
+
 #modal-layer small,
 #modal-layer .aethra-shop-card small,
 #modal-layer .settings-panel small {

@@ -1139,6 +1139,46 @@ window.Aethra = window.Aethra || {};
             });
         },
 
+        getSkillRequirement(skillOrId) {
+            const skill = typeof skillOrId === "string" ? this.skills[skillOrId] : skillOrId;
+            if (!skill || !skill.disciplineId) return { usable: true, reason: null };
+
+            const discipline = skill.disciplineId;
+            if (["unarmed", "survival", "restoration"].includes(discipline)) {
+                return { usable: true, reason: null };
+            }
+
+            const equippedWeapon = Aethra.BattleSystem?.getHeroCombatant?.()?.weapon
+                || Aethra.EquipSystem?.getEquippedItem?.("weapon")
+                || {};
+
+            const templateId = equippedWeapon.templateId || equippedWeapon.id || "";
+            const template = Aethra.GameData?.items?.[templateId] || {};
+            const weaponType = (equippedWeapon.weaponType || template.weaponType || template.category || "").toLowerCase();
+            const weaponName = (equippedWeapon.name || template.name || "").toLowerCase();
+
+            const requirements = {
+                sword: { check: (t, n) => t.includes("sword") || n.includes("espada") || n.includes("lâmina"), label: "Espada" },
+                axe: { check: (t, n) => t.includes("axe") || n.includes("machado") || n.includes("cutelo"), label: "Machado" },
+                mace: { check: (t, n) => t.includes("mace") || n.includes("maça") || n.includes("martelo") || n.includes("clava"), label: "Maça / Clava" },
+                dagger: { check: (t, n) => t.includes("dagger") || n.includes("adaga") || n.includes("faca"), label: "Adaga" },
+                bow: { check: (t, n) => t.includes("bow") || n.includes("arco") || n.includes("besta"), label: "Arco" },
+                fire: { check: (t, n) => t.includes("focus") || t.includes("staff") || n.includes("foco") || n.includes("cajado") || n.includes("varinha"), label: "Foco Mágico / Cajado" },
+                ice: { check: (t, n) => t.includes("focus") || t.includes("staff") || n.includes("foco") || n.includes("cajado") || n.includes("varinha"), label: "Foco Mágico / Cajado" },
+                shadow: { check: (t, n) => t.includes("focus") || t.includes("staff") || n.includes("foco") || n.includes("cajado") || n.includes("varinha"), label: "Foco Mágico / Cajado" }
+            };
+
+            const req = requirements[discipline];
+            if (!req) return { usable: true, reason: null };
+
+            const isValid = req.check(weaponType, weaponName);
+            if (!isValid) {
+                return { usable: false, reason: `Requer ${req.label} equipada` };
+            }
+
+            return { usable: true, reason: null };
+        },
+
         canUseSkill(skillId, target = null) {
             this.ensureState();
             this.cleanupCooldowns();
@@ -1149,6 +1189,16 @@ window.Aethra = window.Aethra || {};
                     ok: false,
                     reason: "unknown-skill",
                     skillId
+                };
+            }
+
+            const req = this.getSkillRequirement(skill);
+            if (!req.usable) {
+                return {
+                    ok: false,
+                    reason: "weapon-requirement",
+                    skillId,
+                    requirementReason: req.reason
                 };
             }
 
