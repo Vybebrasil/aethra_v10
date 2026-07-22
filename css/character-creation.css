@@ -250,38 +250,35 @@ body.is-creating-character #tilemap-canvas-root {
 }
 
 .creation-hero-build-panel .creation-attribute {
-    grid-template-columns: 28px minmax(0, 1fr) auto !important;
-    gap: 7px !important;
-    padding: 5px 8px !important;
+    grid-template-columns: 32px minmax(0, 1fr) auto !important;
+    gap: 8px !important;
+    padding: 8px 10px !important;
     border-radius: 8px !important;
 }
 
 .creation-hero-build-panel .creation-attribute__icon {
-    width: 28px !important;
-    height: 28px !important;
-    font-size: 13px !important;
-    border-radius: 6px !important;
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 14px !important;
+    border-radius: 8px !important;
 }
 
 .creation-hero-build-panel .creation-attribute__copy strong {
-    font-size: 10px !important;
+    font-size: 11px !important;
 }
 
-.creation-hero-build-panel .creation-attribute__copy p {
+.creation-hero-build-panel .creation-attribute__copy p,
+.creation-hero-build-panel .creation-attribute__copy > small {
     display: none !important;
 }
 
-.creation-hero-build-panel .creation-attribute__copy > small {
-    font-size: 6.5px !important;
-}
-
 .creation-hero-build-panel .creation-pips {
-    margin-top: 3px !important;
+    margin-top: 4px !important;
 }
 
 .creation-hero-build-panel .creation-pips i {
-    width: 10px !important;
-    height: 2px !important;
+    width: 12px !important;
+    height: 3px !important;
 }
 
 .creation-attribute-list {

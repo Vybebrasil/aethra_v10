@@ -427,12 +427,20 @@
     function attributeCard(definition) {
         const value = Number(draft.attributes[definition.id] || 0);
         const pips = Array.from({ length: system().maxInitialAttribute }, (_, index) => `<i class="${index < value ? "is-filled" : ""}"></i>`).join("");
+        const tooltipBody = `${esc(definition.description)}<br><br><span style="color:#f1d27b;"><b>Bônus por ponto:</b> ${esc(definition.perPoint)}</span>`;
         return `
             <article class="creation-attribute ${value > 0 ? "is-invested" : ""}" data-creation-attribute-card="${esc(definition.id)}"
-                data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="ATRIBUTO BÁSICO" data-tooltip-title="${esc(definition.name)} (${esc(definition.short)})" data-tooltip-body="${esc(definition.description)} Benefício por ponto: ${esc(definition.perPoint)}">
+                data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-html="true" data-tooltip-eyebrow="ATRIBUTO BÁSICO" data-tooltip-title="${esc(definition.name)} (${esc(definition.short)})" data-tooltip-body="${esc(tooltipBody)}">
                 <span class="creation-attribute__icon">${esc(definition.icon)}</span>
-                <div class="creation-attribute__copy"><header><strong>${esc(definition.name)}</strong><em>${esc(definition.short)}</em></header><p>${esc(definition.description)}</p><small>${esc(definition.perPoint)}</small><div class="creation-pips">${pips}</div></div>
-                <div class="creation-stepper"><button type="button" data-creation-adjust="attribute" data-id="${esc(definition.id)}" data-delta="-1" aria-label="Remover ponto de ${esc(definition.name)}">−</button><b>${value}</b><button type="button" data-creation-adjust="attribute" data-id="${esc(definition.id)}" data-delta="1" aria-label="Adicionar ponto de ${esc(definition.name)}">+</button></div>
+                <div class="creation-attribute__copy">
+                    <header><strong>${esc(definition.name)}</strong><em>${esc(definition.short)}</em></header>
+                    <div class="creation-pips">${pips}</div>
+                </div>
+                <div class="creation-stepper">
+                    <button type="button" data-creation-adjust="attribute" data-id="${esc(definition.id)}" data-delta="-1" aria-label="Remover ponto de ${esc(definition.name)}">−</button>
+                    <b>${value}</b>
+                    <button type="button" data-creation-adjust="attribute" data-id="${esc(definition.id)}" data-delta="1" aria-label="Adicionar ponto de ${esc(definition.name)}">+</button>
+                </div>
             </article>`;
     }
 
