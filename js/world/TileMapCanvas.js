@@ -471,6 +471,14 @@
         }
     }
 
+    let combatStepCounter = 0;
+    const STEP_OFFSETS = [
+        { x: 0, y: -1 },
+        { x: 1, y: 0 },
+        { x: 0, y: 1 },
+        { x: -1, y: 0 }
+    ];
+
     function updatePhysics() {
         // Movimento suave do jogador
         const dx = player.targetX - player.x;
@@ -482,7 +490,18 @@
         } else {
             player.x = player.targetX;
             player.y = player.targetY;
-            if (player.state === "walking") {
+
+            // Kiting continuo e reposicionamento ativo durante o combate contra a horda!
+            const target = horde[currentTargetIndex] || horde[0];
+            if (target && !target.isDead && target.hp > 0 && !isTransitioningFloor) {
+                combatStepCounter++;
+                if (combatStepCounter % 35 === 0) {
+                    const offset = STEP_OFFSETS[Math.floor(combatStepCounter / 35) % STEP_OFFSETS.length];
+                    player.targetX = clampCell(target.x + offset.x, 3, mapCols - 4);
+                    player.targetY = clampCell(target.y + offset.y, 3, mapRows - 4);
+                    player.state = "walking";
+                }
+            } else if (player.state === "walking") {
                 player.state = "idle";
             }
         }

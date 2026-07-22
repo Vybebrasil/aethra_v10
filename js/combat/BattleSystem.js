@@ -29,10 +29,10 @@
         randomSource: Math.random,
 
         config: {
-            tickMs: 1800,
-            roundMs: 1800,
-            introMs: 1200,
-            resolutionMs: 1200,
+            tickMs: 1000,
+            roundMs: 1000,
+            introMs: 600,
+            resolutionMs: 600,
             minimumCombatMs: 4000,
             hardcoreGoldPenalty: 0.10,
             hardcoreXPPenalty: 0.10,
