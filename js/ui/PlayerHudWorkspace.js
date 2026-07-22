@@ -104,30 +104,24 @@
         if (!root) return false;
         const { hero, hp, hpMax, mana, manaMax, vigor, vigorMax, xp, xpMax } = getHeroResources();
         const name = hero.name || "Aethra";
-        const arena = Aethra.ColiseumSystem?.getSnapshot?.() || null;
-        const rankTag = arena?.player?.rankTag || "SEM RANK";
-        const rankColor = arena?.profile?.division?.color || "#82909a";
         root.innerHTML = `
             <section class="player-hud-summary" aria-label="Resumo do personagem">
                 <header class="player-hud-summary__identity">
                     <span class="player-hud-summary__portrait">
                         <img src="assets/entities/player_idle.png" alt="" draggable="false">
-                        <b>${esc(String(name).charAt(0).toUpperCase())}</b>
                     </span>
-                    <div><strong>${esc(name)}</strong><span>Nível ${fmt(getHeroLevel(hero))} · Build ativa</span><em class="player-hud-rank-tag" style="--rank-color:${esc(rankColor)}">⚜ ${esc(rankTag)} · ${fmt(arena?.profile?.rating || 1000)} RP</em></div>
-                    <button type="button" class="player-hud-summary__gold" data-open-window="inventory-view"
-                        data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="Gold disponível"
-                        data-tooltip-value="${fmt(hero.gold)} G" data-tooltip-body="Moeda disponível para lojas, mercado e melhorias.">
-                        <i>●</i>${fmt(hero.gold)} G
-                    </button>
+                    <div>
+                        <strong>${esc(name)}</strong>
+                        <span>NV ${fmt(getHeroLevel(hero))} · ${fmt(hero.gold)} Gold</span>
+                    </div>
                 </header>
                 <div class="player-hud-summary__vitals">
                     ${resourceRow("hp", "HP", hp, hpMax, "♥")}
                     ${resourceRow("mana", "Mana", mana, manaMax, "✦")}
-                    ${resourceRow("vigor", "Vigor", vigor, vigorMax, "⚡")}
-                    ${resourceRow("xp", "XP", xp, xpMax, "↑")}
                 </div>
+                <div id="battle-equipment-summary" class="hero-paperdoll player-equipment-matrix"></div>
             </section>`;
+        renderEquipmentMatrix();
         Aethra.TooltipManager?.refresh?.();
         return true;
     }
@@ -256,27 +250,7 @@
         const fixedEquipment = hub.querySelector("[data-player-hud-fixed-equipment]")
             || views.querySelector("[data-hero-panel-view='equipment']");
         if (fixedEquipment) {
-            fixedEquipment.dataset.playerHudFixedEquipment = "";
-            fixedEquipment.removeAttribute("data-hero-panel-view");
-            fixedEquipment.removeAttribute("aria-hidden");
-            fixedEquipment.hidden = false;
-            fixedEquipment.classList.remove(
-                "hero-hub__view",
-                "hero-hub__accordion-section",
-                "player-hud-section",
-                "player-hud-section--equipment",
-                "is-collapsed"
-            );
-            fixedEquipment.classList.add("player-hud-fixed-equipment");
-            fixedEquipment.style.removeProperty("display");
-            fixedEquipment.style.removeProperty("height");
-            fixedEquipment.style.removeProperty("max-height");
-            const heading = fixedEquipment.querySelector(".hero-hub__section-heading");
-            if (heading) {
-                heading.className = "hero-hub__section-heading player-hud-section__heading";
-                heading.innerHTML = sectionHeading("equipment");
-            }
-            nav.insertAdjacentElement("beforebegin", fixedEquipment);
+            fixedEquipment.remove();
         }
 
         SECTION_ORDER.forEach((id) => {
