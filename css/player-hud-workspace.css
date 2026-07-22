@@ -772,7 +772,7 @@
 
 .player-skill-controls-row {
     display: grid;
-    grid-template-columns: 130px minmax(0, 1fr);
+    grid-template-columns: 120px auto minmax(0, 1fr);
     gap: 6px;
     align-items: center;
     margin-bottom: 2px;
@@ -801,6 +801,51 @@
     color: #d6e8ef;
 }
 
+/* Botão Visão Foco / Pino Global */
+.player-skill-toggle-all-btn {
+    height: 26px;
+    padding: 0 8px;
+    border: 1px solid rgba(229, 182, 95, 0.35);
+    border-radius: 6px;
+    background: rgba(229, 182, 95, 0.08);
+    color: #ebd188;
+    font: 800 8px/1 "Outfit", sans-serif;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.12s ease-in-out;
+}
+
+.player-skill-toggle-all-btn:hover {
+    border-color: rgba(229, 182, 95, 0.6);
+    background: rgba(229, 182, 95, 0.15);
+    box-shadow: 0 0 8px rgba(229, 182, 95, 0.2);
+}
+
+/* Botão de Pino Individual */
+.player-skill-pin-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    font-size: 11px;
+    opacity: 0.5;
+    cursor: pointer;
+    transition: transform 0.12s ease-in-out, opacity 0.12s ease-in-out;
+}
+
+.player-skill-pin-btn:hover {
+    opacity: 1;
+    transform: scale(1.18);
+}
+
+.player-skill-pin-btn.is-pinned {
+    opacity: 0.95;
+}
+
 /* Grade de Cards Slim */
 .player-skill-grid-slim {
     display: grid !important;
@@ -812,9 +857,10 @@
     scrollbar-width: thin;
 }
 
+/* Card Expandido (Foco de Treino com Barra de XP) */
 .player-skill-card-slim {
     display: grid !important;
-    grid-template-columns: 28px minmax(0, 1fr) auto !important;
+    grid-template-columns: 18px 28px minmax(0, 1fr) auto !important;
     align-items: center !important;
     gap: 8px !important;
     padding: 5px 8px !important;
@@ -823,6 +869,11 @@
     background: linear-gradient(135deg, rgba(12, 23, 29, 0.95), rgba(4, 9, 12, 0.98)) !important;
     cursor: pointer !important;
     transition: all 0.12s ease-in-out !important;
+}
+
+.player-skill-card-slim.is-expanded {
+    border-color: rgba(94, 188, 231, 0.35) !important;
+    box-shadow: inset 0 0 10px rgba(94, 188, 231, 0.05) !important;
 }
 
 .player-skill-card-slim:hover {
@@ -834,6 +885,28 @@
 .player-skill-card-slim.is-locked {
     border-color: rgba(160, 90, 90, 0.3) !important;
     background: linear-gradient(135deg, rgba(22, 11, 13, 0.9), rgba(6, 3, 4, 0.95)) !important;
+}
+
+/* Card Minimizado Estilo Tibia (Ultra Compacto) */
+.player-skill-card-slim.is-minimized {
+    grid-template-columns: 18px 20px minmax(0, 1fr) auto !important;
+    gap: 6px !important;
+    padding: 3px 6px !important;
+    border-color: rgba(80, 115, 130, 0.18) !important;
+    background: rgba(5, 11, 14, 0.75) !important;
+    opacity: 0.85;
+}
+
+.player-skill-card-slim.is-minimized:hover {
+    opacity: 1;
+    background: rgba(8, 17, 22, 0.9) !important;
+}
+
+.player-skill-card-slim.is-minimized .player-skill-card-slim__icon {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+    border-radius: 4px;
 }
 
 .player-skill-card-slim__icon {

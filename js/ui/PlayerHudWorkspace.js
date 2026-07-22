@@ -642,6 +642,7 @@
             : (Render.getMasteryCards?.() || []);
 
         const state = uiState();
+        state.minimizedSkills = state.minimizedSkills || {};
         const activeCategory = state.selectedSkillCategory || "all";
         const searchQuery = normalize(state.skillSearch || "");
 
@@ -655,10 +656,6 @@
             Criação: "⚒ Criação",
             Mundo: "⌖ Mundo"
         };
-
-        const totalLevels = masteries.reduce((sum, entry) => sum + Number(entry.level || 1), 0);
-        const totalXP = masteries.reduce((sum, entry) => sum + Number(entry.xpTotal ?? entry.xp ?? 0), 0);
-        const strongest = [...masteries].sort((a, b) => Number(b.level || 1) - Number(a.level || 1) || Number(b.xpTotal || 0) - Number(a.xpTotal || 0))[0];
 
         const filteredMasteries = masteries.filter((entry) => {
             const cat = entry.category || "Outras";
@@ -681,8 +678,11 @@
             const trainingLocked = entry.trainingMode === "locked";
             const [icon, categoryLabel] = skillGroupLabel(entry.category);
 
+            const isExplicitlyMinimized = state.minimizedSkills[entryId] === true;
+            const isMinimized = isExplicitlyMinimized;
+
             return `
-                <article class="player-skill-card-slim ${trainingLocked ? "is-locked" : ""}" data-skill-id="${esc(entryId)}"
+                <article class="player-skill-card-slim ${isMinimized ? "is-minimized" : "is-expanded"} ${trainingLocked ? "is-locked" : ""}" data-skill-id="${esc(entryId)}"
                     data-ui-tooltip data-tooltip-kind="hud"
                     data-tooltip-eyebrow="${esc(categoryLabel.toUpperCase())}"
                     data-tooltip-title="${esc(entry.name)} (Nível ${fmt(entry.level)})"
@@ -690,31 +690,42 @@
                     data-tooltip-body="${esc(entry.description || "Evolui automaticamente ao praticar esta disciplina.")}"
                     data-tooltip-effect="✦ Efeito Atual: ${esc(benefit)}"
                     data-tooltip-hint="✦ Próximo Nível: ${esc(nextBenefit)}">
+
+                    <button type="button" class="player-skill-pin-btn ${isMinimized ? "" : "is-pinned"}"
+                        data-toggle-skill-pin="${esc(entryId)}"
+                        data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="${isMinimized ? "Fixar / Expandir Skill" : "Minimizar Skill"}"
+                        data-tooltip-body="${isMinimized ? "Clique para expandir a barra de XP em tempo real." : "Clique para recolher o card e economizar espaço."}">
+                        ${isMinimized ? "📌" : "📍"}
+                    </button>
+
                     <span class="player-skill-card-slim__icon">${esc(entry.icon || icon || "⚔")}</span>
+
                     <div class="player-skill-card-slim__main">
                         <div class="player-skill-card-slim__title">
                             <strong>${esc(entry.name)}</strong>
                             <small>Lv. <b>${fmt(entry.level)}</b></small>
                         </div>
-                        <div class="player-skill-card-slim__bar">
-                            <b style="width: ${progress.toFixed(1)}%"></b>
-                        </div>
-                        <div class="player-skill-card-slim__meta">
-                            <span>${esc(entry.category || "Maestria")}</span>
-                            <em>${fmt(current)} / ${fmt(next)} XP (${progress.toFixed(0)}%)</em>
-                        </div>
+                        ${!isMinimized ? `
+                            <div class="player-skill-card-slim__bar">
+                                <b style="width: ${progress.toFixed(1)}%"></b>
+                            </div>
+                            <div class="player-skill-card-slim__meta">
+                                <span>${esc(entry.category || "Maestria")}</span>
+                                <em>${fmt(current)} / ${fmt(next)} XP (${progress.toFixed(0)}%)</em>
+                            </div>` : ""}
                     </div>
+
                     <div class="player-skill-card-slim__actions">
                         <button type="button" class="player-skill-card__btn ${trainingLocked ? "btn--locked" : "btn--training"}"
                             data-skill-training-mode="${esc(entryId)}" data-next-mode="${trainingLocked ? "training" : "locked"}">
                             ${trainingLocked ? "🔒 Travado" : "◆ Treinando"}
                         </button>
-                        ${isGathering ? `
+                        ${!isMinimized && isGathering ? `
                             <button type="button" class="player-skill-card__btn ${policyEnabled ? "btn--active" : "btn--inactive"}"
                                 data-profession-policy="${esc(entryId)}" data-policy-enabled="${policyEnabled ? "false" : "true"}">
                                 ${policyEnabled ? "✓ Coletar" : "○ Ignorar"}
                             </button>` : ""}
-                        ${isCrafting ? `
+                        ${!isMinimized && isCrafting ? `
                             <button type="button" class="player-skill-card__btn btn--workshop" data-open-profession-workshop="${esc(entryId)}">
                                 ⚒ Oficina
                             </button>` : ""}
@@ -733,6 +744,12 @@
                         return `<option value="${esc(cat)}" ${selected ? "selected" : ""}>${categoryLabels[cat] || cat} (${count})</option>`;
                     }).join("")}
                 </select>
+
+                <button type="button" class="player-skill-toggle-all-btn" data-toggle-all-skill-pins
+                    data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="Alternar Visão de Skills" data-tooltip-body="Minimiza todas as skills inativas para focar apenas nas habilidades que está evoluindo.">
+                    📌 Visão Foco
+                </button>
+
                 <label class="player-skill-search">
                     <span aria-hidden="true">⌕</span>
                     <input type="search" data-player-skill-search value="${esc(state.skillSearch || "")}" placeholder="Buscar skill..." aria-label="Buscar habilidades">
@@ -743,7 +760,6 @@
                 ${cardsHTML || `<div class="player-skill-empty">Nenhuma habilidade encontrada.</div>`}
             </div>`;
 
-        // Event listener para o select dropdown de categorias
         const select = container.querySelector("[data-skill-category-select]");
         if (select) {
             select.addEventListener("change", () => {
@@ -752,7 +768,26 @@
             });
         }
 
-        // Event listeners para alteração de treino de XP
+        container.querySelectorAll("[data-toggle-skill-pin]").forEach((btn) => {
+            btn.addEventListener("click", (ev) => {
+                ev.stopPropagation();
+                const skillId = btn.dataset.toggleSkillPin;
+                state.minimizedSkills[skillId] = !state.minimizedSkills[skillId];
+                renderCategorizedSkills();
+            });
+        });
+
+        const toggleAllBtn = container.querySelector("[data-toggle-all-skill-pins]");
+        if (toggleAllBtn) {
+            toggleAllBtn.addEventListener("click", () => {
+                const anyExpanded = masteries.some((m) => !state.minimizedSkills[m.id]);
+                masteries.forEach((m) => {
+                    state.minimizedSkills[m.id] = anyExpanded;
+                });
+                renderCategorizedSkills();
+            });
+        }
+
         container.querySelectorAll("[data-skill-training-mode]").forEach((button) => {
             button.addEventListener("click", () => {
                 Aethra.DisciplineSystem?.setTrainingMode?.(button.dataset.skillTrainingMode, button.dataset.nextMode, "hero-skills");
