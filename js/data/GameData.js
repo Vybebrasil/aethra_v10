@@ -551,6 +551,83 @@
         },
 
         quests: {
+            tutorial_first_steps: {
+                id: "tutorial_first_steps",
+                title: "Primeiros Passos em Aethra",
+                description:
+                    "Boas-vindas a Aethra! Para começar sua jornada, explore os arredores da cidade e vença sua primeira batalha.",
+                levelReq: 1,
+                objectives: [
+                    {
+                        id: "defeat_first_creature",
+                        type: "DefeatEnemy",
+                        target: "forest_wolf",
+                        label: "Derrote 3 Criaturas nas Arredores",
+                        required: 3,
+                        progress: 0,
+                        completed: false
+                    }
+                ],
+                reward: {
+                    xp: 50,
+                    gold: 50,
+                    items: [
+                        { templateId: "potion_health", quantity: 3 }
+                    ]
+                },
+                nextQuestId: "tutorial_first_hunt"
+            },
+            tutorial_first_hunt: {
+                id: "tutorial_first_hunt",
+                title: "A Primeira Caçada nas Arredores",
+                description:
+                    "Sua primeira vitória provou seu valor! O guarda da cidade solicita que você limpe a infestação dos arredores.",
+                levelReq: 1,
+                objectives: [
+                    {
+                        id: "defeat_goblin_scouts",
+                        type: "DefeatEnemy",
+                        target: "goblin_scout",
+                        label: "Derrote 5 Goblins Batedores",
+                        required: 5,
+                        progress: 0,
+                        completed: false
+                    }
+                ],
+                reward: {
+                    xp: 100,
+                    gold: 100,
+                    items: [
+                        { templateId: "ring_bronze_l1", quantity: 1 }
+                    ]
+                },
+                nextQuestId: "tutorial_apprentice_craft"
+            },
+            tutorial_apprentice_craft: {
+                id: "tutorial_apprentice_craft",
+                title: "O Ofício de Aprendiz",
+                description:
+                    "Um verdadeiro herói domina a lâmina e a forja. Colete materiais na expedição para desenvolver seu primeiro ofício.",
+                levelReq: 1,
+                objectives: [
+                    {
+                        id: "gather_iron_ore",
+                        type: "ItemAcquired",
+                        target: "iron_ore",
+                        label: "Colete 3 Minérios ou Materiais",
+                        required: 3,
+                        progress: 0,
+                        completed: false
+                    }
+                ],
+                reward: {
+                    xp: 150,
+                    gold: 150,
+                    items: [
+                        { templateId: "potion_mana", quantity: 5 }
+                    ]
+                }
+            },
             area_cleanup: {
                 id: "area_cleanup",
                 title: "Limpeza de Área",

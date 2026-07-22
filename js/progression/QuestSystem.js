@@ -240,6 +240,12 @@
 
             Aethra.EventBus.emit("QuestFinished", clone(quest));
             Aethra.EventBus.emit("quest:finished", clone(quest));
+
+            if (quest.nextQuestId && Aethra.GameData.quests?.[quest.nextQuestId]) {
+                this.acceptQuest(quest.nextQuestId);
+                if (Aethra.GameState?.ui) Aethra.GameState.ui.trackedQuestId = quest.nextQuestId;
+            }
+
             this.save();
             return quest;
         },
