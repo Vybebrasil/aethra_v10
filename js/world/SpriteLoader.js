@@ -21,13 +21,13 @@
     };
 
     const SPRITE_MANIFEST = {
-        "vanguard":   "assets/craftpix/Fighter2_Idle.png",
-        "berserker":  "assets/craftpix/Fighter_sword_with_shadow.png",
-        "arcanist":   "assets/craftpix/Mage1.png",
-        "ranger":     "assets/craftpix/Mage2.png",
-        "nightblade": "assets/craftpix/Mage3.png",
-        "templar":    "assets/craftpix/Mage4.png",
-        "guildmaster":"assets/craftpix/Guildmaster.png",
+        "vanguard":   "assets/entities/warrior_idle.png",
+        "berserker":  "assets/entities/warrior_attack.png",
+        "arcanist":   "assets/entities/mage_arcanist.png",
+        "ranger":     "assets/entities/mage_ranger.png",
+        "nightblade": "assets/entities/mage_nightblade.png",
+        "templar":    "assets/entities/mage_templar.png",
+        "guildmaster":"assets/entities/npc_guildmaster.png",
         "goblin":     PIXEL_SPRITES.goblin,
         "wolf":       PIXEL_SPRITES.wolf,
         "skeleton":   PIXEL_SPRITES.skeleton,
@@ -74,10 +74,14 @@
         if (!img) img = loadSprite(key);
 
         if (img && (isReady(key) || img.complete) && img.naturalWidth > 0) {
-            const sx = options.sx || 0;
-            const sy = options.sy || 0;
-            const sw = options.sw || img.naturalWidth;
-            const sh = options.sh || img.naturalHeight;
+            // Check if source image is a spritesheet grid (e.g. 192x128 containing 6x4 frames of 32x32)
+            const frameW = (img.naturalWidth >= 64 && img.naturalWidth % 32 === 0) ? 32 : img.naturalWidth;
+            const frameH = (img.naturalHeight >= 64 && img.naturalHeight % 32 === 0) ? 32 : img.naturalHeight;
+
+            const sx = options.sx !== undefined ? options.sx : 0;
+            const sy = options.sy !== undefined ? options.sy : 0;
+            const sw = options.sw || frameW;
+            const sh = options.sh || frameH;
 
             ctx.save();
             if (options.flipH) {
