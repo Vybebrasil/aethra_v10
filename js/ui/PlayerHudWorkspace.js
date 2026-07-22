@@ -103,7 +103,6 @@
         const root = document.getElementById("stats-display");
         if (!root) return false;
         const { hero, hp, hpMax, mana, manaMax, vigor, vigorMax, xp, xpMax } = getHeroResources();
-        const location = currentLocation();
         const name = hero.name || "Aethra";
         const arena = Aethra.ColiseumSystem?.getSnapshot?.() || null;
         const rankTag = arena?.player?.rankTag || "SEM RANK";
@@ -115,7 +114,7 @@
                         <img src="assets/entities/player_idle.png" alt="" draggable="false">
                         <b>${esc(String(name).charAt(0).toUpperCase())}</b>
                     </span>
-                    <div><small>PERSONAGEM ATIVO</small><strong>${esc(name)}</strong><span>Nível ${fmt(getHeroLevel(hero))} · Build ativa</span><em class="player-hud-rank-tag" style="--rank-color:${esc(rankColor)}">⚜ ${esc(rankTag)} · ${fmt(arena?.profile?.rating || 1000)} RP</em></div>
+                    <div><strong>${esc(name)}</strong><span>Nível ${fmt(getHeroLevel(hero))} · Build ativa</span><em class="player-hud-rank-tag" style="--rank-color:${esc(rankColor)}">⚜ ${esc(rankTag)} · ${fmt(arena?.profile?.rating || 1000)} RP</em></div>
                     <button type="button" class="player-hud-summary__gold" data-open-window="inventory-view"
                         data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="Gold disponível"
                         data-tooltip-value="${fmt(hero.gold)} G" data-tooltip-body="Moeda disponível para lojas, mercado e melhorias.">
@@ -128,9 +127,6 @@
                     ${resourceRow("vigor", "Vigor", vigor, vigorMax, "⚡")}
                     ${resourceRow("xp", "XP", xp, xpMax, "↑")}
                 </div>
-                <footer class="player-hud-summary__location is-${location.tone}">
-                    <span aria-hidden="true">⌖</span><strong>${esc(location.name)}</strong><em><i></i>${esc(location.state)}</em>
-                </footer>
             </section>`;
         Aethra.TooltipManager?.refresh?.();
         return true;

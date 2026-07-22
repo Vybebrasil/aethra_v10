@@ -65,44 +65,39 @@
 
 .player-hud-summary {
     display: grid;
-    gap: 7px;
-    padding: 8px;
-    border: 1px solid rgba(101, 159, 185, 0.21);
-    border-radius: 13px;
-    background:
-        linear-gradient(135deg, rgba(55, 133, 170, 0.075), transparent 48%),
-        rgba(7, 14, 18, 0.88);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+    gap: 4px;
+    padding: 5px 6px;
+    border: 1px solid rgba(101, 159, 185, 0.2);
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(55, 133, 170, 0.06), transparent 48%), rgba(7, 14, 18, 0.92);
 }
 
 .player-hud-summary__identity {
     display: grid;
-    grid-template-columns: 43px minmax(0, 1fr) auto;
+    grid-template-columns: 34px minmax(0, 1fr) auto;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     min-width: 0;
 }
 
 .player-hud-summary__portrait {
     position: relative;
     display: grid;
-    width: 43px;
-    height: 43px;
+    width: 34px;
+    height: 34px;
     place-items: center;
     overflow: hidden;
-    border: 1px solid rgba(94, 188, 231, 0.42);
-    border-radius: 11px;
+    border: 1px solid rgba(94, 188, 231, 0.38);
+    border-radius: 8px;
     background: radial-gradient(circle at 50% 28%, rgba(79, 177, 220, 0.2), rgba(14, 40, 53, 0.82));
-    box-shadow: inset 0 0 16px rgba(76, 174, 218, 0.1);
 }
 
 .player-hud-summary__portrait img {
     position: relative;
     z-index: 2;
-    width: 38px;
-    height: 38px;
+    width: 30px;
+    height: 30px;
     object-fit: contain;
-    object-position: center bottom;
     image-rendering: pixelated;
 }
 
@@ -460,28 +455,28 @@
 }
 
 /* ==========================================================================
-   PAPERDOLL TIBIA STYLE — Matriz Anatômica 3x4
+   PAPERDOLL TIBIA STYLE — Matriz Anatômica 3x4 Ultra-Compacta
    ========================================================================== */
 
 .hero-hub--cockpit .player-equipment-matrix,
 .hero-hub--cockpit .player-hud-fixed-equipment .player-equipment-matrix--persistent,
 .player-equipment-matrix {
     display: grid !important;
-    grid-template-columns: repeat(3, 44px) !important;
-    grid-template-rows: repeat(4, 44px) !important;
-    gap: 6px !important;
+    grid-template-columns: repeat(3, 38px) !important;
+    grid-template-rows: repeat(4, 38px) !important;
+    gap: 4px !important;
     justify-content: center !important;
     align-content: center !important;
     width: auto !important;
-    margin: 8px auto !important;
-    padding: 10px !important;
-    border: 1px solid rgba(80, 110, 125, 0.35) !important;
-    border-radius: 10px !important;
-    background: radial-gradient(circle at center, #0f1c22 0%, #050b0e 100%) !important;
-    box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.85), 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+    margin: 4px auto !important;
+    padding: 6px !important;
+    border: 1px solid rgba(80, 110, 125, 0.3) !important;
+    border-radius: 8px !important;
+    background: radial-gradient(circle at center, #0e1a20 0%, #04090c 100%) !important;
+    box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.85) !important;
 }
 
-/* Slots de Equipamento */
+/* Slots de Equipamento Compactos */
 .hero-hub--cockpit .player-equipment-slot,
 .hero-hub--cockpit .player-hud-fixed-equipment .player-equipment-slot,
 .player-equipment-slot {
@@ -489,20 +484,20 @@
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    width: 44px !important;
-    min-width: 44px !important;
-    max-width: 44px !important;
-    height: 44px !important;
-    min-height: 44px !important;
-    max-height: 44px !important;
+    width: 38px !important;
+    min-width: 38px !important;
+    max-width: 38px !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    max-height: 38px !important;
     padding: 0 !important;
     overflow: hidden !important;
-    border: 1px solid rgba(75, 105, 120, 0.3) !important;
-    border-radius: 7px !important;
-    background: #081014 !important;
+    border: 1px solid rgba(75, 105, 120, 0.28) !important;
+    border-radius: 6px !important;
+    background: #070e12 !important;
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.7) !important;
     cursor: pointer !important;
-    transition: all 0.15s ease-in-out !important;
+    transition: all 0.12s ease-in-out !important;
 }
 
 /* Mapeamento Anátomico Estilo Tibia */
@@ -526,16 +521,14 @@
 .player-equipment-slot.is-filled {
     border-color: color-mix(in srgb, var(--slot-rarity, #73bddd) 60%, #30434c) !important;
     background: radial-gradient(circle at center, color-mix(in srgb, var(--slot-rarity, #73bddd) 14%, #0a161c) 0%, #050b0f 100%) !important;
-    box-shadow: inset 0 0 8px color-mix(in srgb, var(--slot-rarity, #73bddd) 20%, transparent), 0 2px 6px rgba(0, 0, 0, 0.4) !important;
 }
 
-/* Hover e Foco */
+/* Hover */
 .hero-hub--cockpit .player-equipment-slot:hover,
 .player-equipment-slot:hover {
     z-index: 5 !important;
     border-color: var(--slot-rarity, #e5b65f) !important;
-    box-shadow: inset 0 0 10px color-mix(in srgb, var(--slot-rarity, #e5b65f) 25%, transparent), 0 0 12px color-mix(in srgb, var(--slot-rarity, #e5b65f) 40%, transparent) !important;
-    transform: scale(1.06) !important;
+    transform: scale(1.05) !important;
 }
 
 /* Ícone central do slot */
@@ -544,8 +537,8 @@
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    width: 38px !important;
-    height: 38px !important;
+    width: 32px !important;
+    height: 32px !important;
     margin: 0 !important;
     border: none !important;
     background: transparent !important;
@@ -553,96 +546,62 @@
 
 .player-equipment-slot .hero-paperdoll__slot-icon b {
     color: #4a626d;
-    font-size: 16px;
-    opacity: 0.55;
+    font-size: 14px;
+    opacity: 0.5;
 }
 
 .hero-hub--cockpit .player-equipment-slot .hero-paperdoll__slot-icon img,
 .player-equipment-slot .hero-paperdoll__slot-icon img {
     position: relative !important;
-    width: 32px !important;
-    height: 32px !important;
+    width: 28px !important;
+    height: 28px !important;
     object-fit: contain !important;
     image-rendering: pixelated !important;
-    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
 }
 
-/* Esconde textos extensos de dentro dos quadradinhos do Tibia */
+/* Oculta copys/textos e footers pesados do paperdoll no cockpit */
 .player-equipment-slot__copy,
-.player-hud-fixed-equipment .player-equipment-slot__copy {
+.player-hud-fixed-equipment .player-equipment-slot__copy,
+.hero-hub--cockpit .hero-build-summary,
+.hero-build-summary {
     display: none !important;
 }
 
-/* Ponto Indicador de Raridade */
-.player-equipment-slot__rarity,
-.player-hud-fixed-equipment .player-equipment-slot__rarity {
-    position: absolute !important;
-    top: 3px !important;
-    right: 3px !important;
-    width: 5px !important;
-    height: 5px !important;
-    border-radius: 50% !important;
-    background: var(--slot-rarity, #73bddd) !important;
-    box-shadow: 0 0 4px var(--slot-rarity, #73bddd) !important;
-}
-
-.hero-hub--cockpit .hero-build-summary {
-    display: grid !important;
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    gap: 4px !important;
-    min-height: 38px !important;
-    margin: 6px 0 0 !important;
-}
-
-.hero-hub--cockpit .hero-build-summary > span {
-    display: grid !important;
-    min-width: 0;
-    place-content: center;
-    padding: 4px 2px !important;
-    border: 1px solid rgba(92, 132, 150, 0.14) !important;
-    border-radius: 7px !important;
-    background: rgba(255, 255, 255, 0.016) !important;
-    text-align: center;
-}
-
-.hero-hub--cockpit .hero-build-summary small { color: #677d87 !important; font-size: 6px !important; }
-.hero-hub--cockpit .hero-build-summary strong { color: #ddc074 !important; font-size: 8px !important; }
-
+/* Container do Paperdoll Fixo no cockpit */
 .hero-hub--cockpit .player-hud-fixed-equipment {
     flex: 0 0 auto !important;
     height: auto !important;
-    margin: 0 8px 8px !important;
-    padding: 0 8px 8px !important;
+    margin: 0 6px 4px !important;
+    padding: 2px 4px 4px !important;
     overflow: hidden !important;
-    border: 1px solid rgba(102, 143, 161, 0.25) !important;
-    border-radius: 10px !important;
-    background: linear-gradient(180deg, rgba(15, 27, 33, 0.95), rgba(5, 11, 15, 0.97)) !important;
+    border: 1px solid rgba(102, 143, 161, 0.22) !important;
+    border-radius: 8px !important;
+    background: linear-gradient(180deg, rgba(12, 23, 28, 0.95), rgba(4, 9, 12, 0.97)) !important;
 }
 
 .hero-hub--cockpit .player-hud-fixed-equipment .player-hud-section__heading {
-    min-height: 28px !important;
-    margin: 0 -8px 6px !important;
-    padding: 4px 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    min-height: 22px !important;
+    margin: 0 -4px 2px !important;
+    padding: 2px 6px !important;
+    border-bottom: 1px solid rgba(80, 110, 125, 0.15) !important;
 }
 
 .player-hud-fixed-equipment .player-hud-section__title {
-    grid-template-columns: 20px minmax(0, 1fr) !important;
-    gap: 6px !important;
+    grid-template-columns: auto auto !important;
+    gap: 4px !important;
 }
 
-.player-hud-fixed-equipment .player-hud-section__title > span {
-    width: 20px;
-    height: 20px;
-    border-radius: 5px;
-    font-size: 9px;
-}
-
-.player-hud-fixed-equipment .player-hud-section__title strong { font-size: 9px !important; }
-.player-hud-fixed-equipment .player-hud-section__title small { font-size: 7px !important; }
+.player-hud-fixed-equipment .player-hud-section__title > span { display: none !important; }
+.player-hud-fixed-equipment .player-hud-section__title strong { font-size: 8px !important; color: #a4c2cd !important; letter-spacing: 0.05em; }
+.player-hud-fixed-equipment .player-hud-section__title small { font-size: 7px !important; color: #5a7480 !important; }
 .hero-hub--cockpit .player-hud-fixed-equipment .player-hud-section__heading > button {
-    height: 22px !important;
-    padding: 0 8px !important;
-    font-size: 8px !important;
+    height: 18px !important;
+    padding: 0 6px !important;
+    font-size: 7px !important;
+    border-radius: 4px !important;
 }
 
 /* Backpack pesquisável, ordenável e com inspeção rica. */
