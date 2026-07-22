@@ -13008,18 +13008,24 @@ body > #aethra-ui-tooltip {
 /* Mapa Mundi de Hunts. */
 /* Mapa Mundi de Hunts — Single-Screen Fit (Padrão Character Creation UI) */
 #hunt-world-map-view.hunt-world-map-window {
-    width: min(1080px, calc(100vw - 40px)) !important;
-    height: min(640px, calc(100vh - 60px)) !important;
-    min-width: 720px !important;
-    min-height: 480px !important;
-    max-width: 1080px !important;
-    max-height: 640px !important;
+    width: min(980px, calc(100vw - 40px)) !important;
+    height: min(540px, calc(100vh - 100px)) !important;
+    min-width: 680px !important;
+    min-height: 420px !important;
+    max-width: 980px !important;
+    max-height: 540px !important;
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    margin: 0 !important;
     overflow: hidden !important;
     border: 1px solid rgba(212, 175, 55, 0.45) !important;
     border-radius: 16px !important;
     background: linear-gradient(135deg, rgba(8, 16, 20, 0.98), rgba(14, 25, 32, 0.98)) !important;
     backdrop-filter: blur(16px) !important;
     box-shadow: 0 30px 90px rgba(0, 0, 0, 0.85), 0 0 50px rgba(212, 175, 55, 0.15) !important;
+    z-index: 10000 !important;
 }
 
 .hunt-world-map-window__header {

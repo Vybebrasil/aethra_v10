@@ -150,7 +150,7 @@
             windowElement.id = "hunt-world-map-view";
             windowElement.className = "game-window hidden hunt-world-map-window";
             windowElement.dataset.aethraWindow = "hunt-world-map-view";
-            windowElement.dataset.windowSize = "large";
+            windowElement.dataset.windowSize = "fit";
             windowElement.setAttribute("aria-hidden", "true");
             windowElement.innerHTML = `
                 <header class="window-header hunt-world-map-window__header">

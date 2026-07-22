@@ -40,6 +40,7 @@
 
         const img = new Image();
         loadStatus.set(key, "loading");
+        spriteCache.set(key, img);
 
         img.onload = () => {
             loadStatus.set(key, "ready");
@@ -61,20 +62,6 @@
         };
 
         img.src = SPRITE_MANIFEST[key] || `assets/sprites/${key}.png`;
-        spriteCache.set(key, img);
-
-        // Pre-initialize SVG fallback immediately so there is zero delay
-        if (PIXEL_SPRITES[key] && !isReady(key)) {
-            const svgImg = new Image();
-            svgImg.src = PIXEL_SPRITES[key];
-            svgImg.onload = () => {
-                if (loadStatus.get(key) !== "ready") {
-                    loadStatus.set(key, "ready");
-                    spriteCache.set(key, svgImg);
-                }
-            };
-        }
-
         return img;
     }
 
@@ -107,8 +94,8 @@
         return false;
     }
 
-    // Preload default keys
-    Object.keys(PIXEL_SPRITES).forEach((key) => loadSprite(key));
+    // Preload default keys in manifest
+    Object.keys(SPRITE_MANIFEST).forEach((key) => loadSprite(key));
 
     Aethra.SpriteLoader = {
         load: loadSprite,
