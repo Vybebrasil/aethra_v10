@@ -308,66 +308,94 @@
         const px = c * TILE_SIZE;
         const py = r * TILE_SIZE;
 
+        // Paredes fortificadas de pedra medieval
         if (tileType === 2) {
-            ctx.fillStyle = "#4a321a";
+            ctx.fillStyle = "#2c1e12";
             ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-            ctx.fillStyle = "#2c1c0c";
-            ctx.fillRect(px + 2, py + 2, TILE_SIZE - 4, TILE_SIZE - 4);
-            ctx.fillStyle = "#6e4b28";
-            ctx.fillRect(px + 4, py + 4, TILE_SIZE - 8, 4);
+            ctx.fillStyle = "#4a3520";
+            ctx.fillRect(px + 1, py + 1, TILE_SIZE - 2, TILE_SIZE - 2);
+            ctx.fillStyle = "#6e4e30";
+            ctx.fillRect(px + 3, py + 3, TILE_SIZE - 6, 5);
+            ctx.fillStyle = "#1e140a";
+            ctx.fillRect(px + 2, py + TILE_SIZE - 4, TILE_SIZE - 4, 3);
             return;
         }
 
+        // Chão de pedra / Escada de pedra esculpida (Piso de Dungeon Tibia)
         if (tileType === 6 || tileType === 7) {
-            ctx.fillStyle = "#48525a";
+            ctx.fillStyle = "#343d46";
             ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-            ctx.strokeStyle = "rgba(0,0,0,0.3)";
+            ctx.fillStyle = "#4f5b66";
+            ctx.fillRect(px + 1, py + 1, 14, 14);
+            ctx.fillRect(px + 17, py + 1, 14, 14);
+            ctx.fillRect(px + 1, py + 17, 14, 14);
+            ctx.fillRect(px + 17, py + 17, 14, 14);
+            ctx.strokeStyle = "rgba(0,0,0,0.4)";
             ctx.strokeRect(px, py, TILE_SIZE, TILE_SIZE);
 
             if (tileType === 7) {
-                // Stone Spiral Staircase (Escada de Pedra Tibia)
-                ctx.fillStyle = "#2c343c";
+                // Escada em Espiral de Pedra
+                ctx.fillStyle = "#1a2128";
                 ctx.beginPath();
                 ctx.arc(px + 16, py + 16, 14, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.strokeStyle = "#8a9aa8";
-                ctx.lineWidth = 2;
+                ctx.strokeStyle = "#f39c12";
+                ctx.lineWidth = 2.5;
                 ctx.beginPath();
                 ctx.arc(px + 16, py + 16, 10, 0, Math.PI * 1.5);
                 ctx.stroke();
-                ctx.fillStyle = "#ffd700";
-                ctx.font = "bold 8.5px Outfit, sans-serif";
+                ctx.fillStyle = "#f1c40f";
+                ctx.font = "bold 9px Outfit, sans-serif";
                 ctx.textAlign = "center";
                 ctx.fillText("▲ ANDAR", px + 16, py - 4);
             }
             return;
         }
 
-        ctx.fillStyle = tileType === 1 ? "#5e4b33" : "#2a5427";
+        // Gramado de Alta Resolução / Campo de Batalha Verde
+        ctx.fillStyle = tileType === 1 ? "#5e4b33" : "#245020";
         ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
 
-        ctx.strokeStyle = "rgba(0, 0, 0, 0.08)";
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.06)";
         ctx.lineWidth = 1;
         ctx.strokeRect(px, py, TILE_SIZE, TILE_SIZE);
 
         if (tileType === 0) {
-            ctx.fillStyle = "rgba(60, 120, 50, 0.4)";
-            ctx.fillRect(px + 6, py + 8, 4, 3);
-            ctx.fillRect(px + 18, py + 20, 3, 4);
+            // Texturas sutis de lâminas de relva e pequenas flores
+            ctx.fillStyle = "#2e682a";
+            ctx.fillRect(px + 4, py + 6, 3, 4);
+            ctx.fillRect(px + 18, py + 16, 4, 3);
+            ctx.fillRect(px + 22, py + 8, 3, 5);
+
+            // Detalhes florais dispersos baseados na posição da célula
+            if ((c * 7 + r * 13) % 9 === 0) {
+                ctx.fillStyle = "#f1c40f"; // Flor amarela
+                ctx.fillRect(px + 12, py + 14, 3, 3);
+            } else if ((c * 11 + r * 5) % 11 === 0) {
+                ctx.fillStyle = "#e74c3c"; // Flor vermelha
+                ctx.fillRect(px + 20, py + 10, 3, 3);
+            }
         } else if (tileType === 4) {
-            ctx.fillStyle = "#3a2618";
+            // Árvores Frondosas de Dungeon
+            ctx.fillStyle = "#2c1c0c";
             ctx.fillRect(px + 12, py + 18, 8, 14);
-            ctx.fillStyle = "#1c4a18";
+            ctx.fillStyle = "#1e4d1a";
             ctx.beginPath();
             ctx.arc(px + 16, py + 12, 13, 0, Math.PI * 2);
             ctx.fill();
+            ctx.fillStyle = "#27ae60";
+            ctx.beginPath();
+            ctx.arc(px + 14, py + 10, 8, 0, Math.PI * 2);
+            ctx.fill();
         } else if (tileType === 5) {
-            ctx.fillStyle = "#255a20";
+            // Arbustos de Frutas Tropicais
+            ctx.fillStyle = "#1e4d1a";
             ctx.beginPath();
             ctx.arc(px + 16, py + 16, 11, 0, Math.PI * 2);
             ctx.fill();
-            ctx.fillStyle = "#e05585";
-            ctx.fillRect(px + 14, py + 12, 4, 4);
+            ctx.fillStyle = "#e74c3c";
+            ctx.fillRect(px + 13, py + 11, 4, 4);
+            ctx.fillRect(px + 18, py + 17, 3, 3);
         }
     }
 
@@ -376,6 +404,12 @@
         const py = player.y * TILE_SIZE;
         const hurtShake = player.hurtTimer > 0 ? (Math.random() * 6 - 3) : 0;
         const bob = player.state === "walking" ? Math.sin(time * 0.015) * 3 : Math.sin(time * 0.006) * 2;
+
+        // Sombra de chão do herói
+        ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
+        ctx.beginPath();
+        ctx.ellipse(px + 16 + hurtShake, py + 29, 11, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
 
         ctx.strokeStyle = "rgba(120, 200, 255, 0.6)";
         ctx.lineWidth = 1.5;
@@ -432,6 +466,12 @@
             const shake = m.hurtTimer > 0 ? (Math.random() * 6 - 3) : 0;
             const bob = Math.sin(time * 0.005 + m.x + idx) * 2.5;
             const hpPct = Math.max(0, Math.min(1, m.hp / m.maxHp));
+
+            // Sombra de chão da criatura
+            ctx.fillStyle = "rgba(0, 0, 0, 0.35)";
+            ctx.beginPath();
+            ctx.ellipse(px + 16 + shake, py + 29, 9, 3.5, 0, 0, Math.PI * 2);
+            ctx.fill();
 
             const spriteDrawn = Aethra.SpriteLoader?.draw?.(ctx, m.key, px + shake, py + bob, 32, 32);
 
