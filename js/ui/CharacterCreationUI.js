@@ -583,6 +583,43 @@
         `;
     }
 
+    function renderArchetypeSpotlight() {
+        const selected = archetype();
+        if (!selected) return "";
+        const starterItem = Aethra.GameData?.items?.[selected.starterItemId] || {};
+
+        return `
+            <div class="creation-archetype-spotlight" style="--spotlight-color:${esc(selected.accent || "#d9b85f")}">
+                <div class="creation-spotlight-info">
+                    <small>DESTINO DE COMBATE SELECIONADO</small>
+                    <header>
+                        <span class="spotlight-icon">${esc(selected.icon)}</span>
+                        <div>
+                            <h4>${esc(selected.name)} &middot; <small style="color:${esc(selected.accent)}; font-weight:700;">${esc(selected.title)}</small></h4>
+                            <p>${esc(selected.description)}</p>
+                        </div>
+                    </header>
+                </div>
+
+                <div class="creation-spotlight-perks">
+                    <div class="spotlight-perk-item">
+                        <small>ARMA INICIAL DE COMBATE</small>
+                        <strong>${esc(starterItem.name || "Arma")} (${starterItem.damageMin}–${starterItem.damageMax} Dano Base)</strong>
+                    </div>
+                    <div class="spotlight-perk-item">
+                        <small>ACTIONBAR E TÉCNICAS DA CLASSE</small>
+                        <div class="spotlight-skills-bar">${renderStarterBar()}</div>
+                    </div>
+                </div>
+
+                <div class="creation-spotlight-note">
+                    <span>↗</span>
+                    <p><strong>Em Aethra não existem classes fixas:</strong> O que você usa é o que evolui. Seu herói pode aprender qualquer magia ou arma durante a jornada.</p>
+                </div>
+            </div>
+        `;
+    }
+
     function renderCreation() {
         activeMode = "creation";
         draft = draft || initialDraft();
@@ -621,6 +658,7 @@
                         <div class="creation-archetype-grid">
                             ${Object.values(system().archetypes).map(archetypeCard).join("")}
                         </div>
+                        ${renderArchetypeSpotlight()}
                     </section>
                     ${renderRightPanel()}
                 </div>
