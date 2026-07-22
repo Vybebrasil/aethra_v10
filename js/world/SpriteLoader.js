@@ -21,12 +21,13 @@
     };
 
     const SPRITE_MANIFEST = {
-        "vanguard":   "assets/entities/player_idle.png",
-        "berserker":  PIXEL_SPRITES.berserker,
-        "arcanist":   PIXEL_SPRITES.arcanist,
-        "ranger":     PIXEL_SPRITES.ranger,
-        "nightblade": PIXEL_SPRITES.nightblade,
-        "templar":    PIXEL_SPRITES.templar,
+        "vanguard":   "assets/craftpix/Fighter2_Idle.png",
+        "berserker":  "assets/craftpix/Fighter_sword_with_shadow.png",
+        "arcanist":   "assets/craftpix/Mage1.png",
+        "ranger":     "assets/craftpix/Mage2.png",
+        "nightblade": "assets/craftpix/Mage3.png",
+        "templar":    "assets/craftpix/Mage4.png",
+        "guildmaster":"assets/craftpix/Guildmaster.png",
         "goblin":     PIXEL_SPRITES.goblin,
         "wolf":       PIXEL_SPRITES.wolf,
         "skeleton":   PIXEL_SPRITES.skeleton,
