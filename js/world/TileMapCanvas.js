@@ -366,26 +366,27 @@
     function drawPlayer(time) {
         const px = player.x * TILE_SIZE;
         const py = player.y * TILE_SIZE;
+        const hurtShake = player.hurtTimer > 0 ? (Math.random() * 6 - 3) : 0;
         const bob = player.state === "walking" ? Math.sin(time * 0.015) * 3 : Math.sin(time * 0.006) * 2;
 
-        ctx.strokeStyle = "rgba(120, 200, 255, 0.5)";
+        ctx.strokeStyle = "rgba(120, 200, 255, 0.6)";
         ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.ellipse(px + 16, py + 28, 12, 6, 0, 0, Math.PI * 2);
+        ctx.ellipse(px + 16 + hurtShake, py + 28 + bob, 12, 6, 0, 0, Math.PI * 2);
         ctx.stroke();
 
         const hero = Aethra.GameState?.hero || {};
         const archetypeId = hero.archetypeId || "vanguard";
 
-        const spriteDrawn = Aethra.SpriteLoader?.draw?.(ctx, archetypeId, px, py + bob, 32, 32);
+        const spriteDrawn = Aethra.SpriteLoader?.draw?.(ctx, archetypeId, px + hurtShake, py + bob, 32, 32);
 
         if (!spriteDrawn) {
-            ctx.fillStyle = "#2c4c68";
-            ctx.fillRect(px + 9, py + 12 + bob, 14, 14);
+            ctx.fillStyle = player.hurtTimer > 0 ? "#ff7777" : "#2c4c68";
+            ctx.fillRect(px + 9 + hurtShake, py + 12 + bob, 14, 14);
             ctx.fillStyle = "#8a9ea8";
-            ctx.fillRect(px + 10, py + 4 + bob, 12, 10);
+            ctx.fillRect(px + 10 + hurtShake, py + 4 + bob, 12, 10);
             ctx.fillStyle = "#50c878";
-            ctx.fillRect(px + 13, py + 8 + bob, 6, 2);
+            ctx.fillRect(px + 13 + hurtShake, py + 8 + bob, 6, 2);
         }
 
         if (player.spellTextTimer > 0) {
@@ -415,19 +416,19 @@
     }
 
     function drawHorde(time) {
-        horde.forEach((m) => {
+        horde.forEach((m, idx) => {
             if (m.isDead || m.hp <= 0) return;
 
             const px = m.x * TILE_SIZE;
             const py = m.y * TILE_SIZE;
-            const shake = m.hurtTimer > 0 ? (Math.random() * 4 - 2) : 0;
-            const bob = Math.sin(time * 0.005 + m.x) * 2;
+            const shake = m.hurtTimer > 0 ? (Math.random() * 6 - 3) : 0;
+            const bob = Math.sin(time * 0.005 + m.x + idx) * 2.5;
             const hpPct = Math.max(0, Math.min(1, m.hp / m.maxHp));
 
             const spriteDrawn = Aethra.SpriteLoader?.draw?.(ctx, m.key, px + shake, py + bob, 32, 32);
 
             if (!spriteDrawn) {
-                ctx.fillStyle = m.hurtTimer > 0 ? "#ff8888" : "#8c3a3a";
+                ctx.fillStyle = m.hurtTimer > 0 ? "#ff4444" : "#8c3a3a";
                 ctx.fillRect(px + 8 + shake, py + 10 + bob, 16, 16);
                 ctx.fillStyle = "#ffff00";
                 ctx.fillRect(px + 11 + shake, py + 13 + bob, 3, 3);
@@ -471,7 +472,7 @@
     }
 
     function updatePhysics() {
-        // Smooth player grid movement
+        // Movimento suave do jogador
         const dx = player.targetX - player.x;
         const dy = player.targetY - player.y;
 
@@ -487,9 +488,26 @@
         }
 
         if (player.spellTextTimer > 0) player.spellTextTimer--;
+        if (player.hurtTimer > 0) player.hurtTimer--;
 
-        horde.forEach((m) => {
+        // Movimento dinâmico de Agro da Horda (Monstros cercam o herói em tempo real!)
+        const angles = [0, 0.78, 1.57, 2.35, 3.14, 3.92, 4.71, 5.49];
+        horde.forEach((m, idx) => {
             if (m.hurtTimer > 0) m.hurtTimer--;
+            if (m.isDead || m.hp <= 0) return;
+
+            // Posição de cerco ao redor do herói
+            const angle = angles[idx % angles.length];
+            const dist = idx === 0 ? 1.1 : 1.8 + (idx * 0.4);
+            const targetX = clampCell(player.x + Math.cos(angle) * dist, 2, mapCols - 3);
+            const targetY = clampCell(player.y + Math.sin(angle) * dist, 2, mapRows - 3);
+
+            const mdx = targetX - m.x;
+            const mdy = targetY - m.y;
+            if (Math.abs(mdx) > 0.05 || Math.abs(mdy) > 0.05) {
+                m.x += mdx * 0.06;
+                m.y += mdy * 0.06;
+            }
         });
     }
 
@@ -584,6 +602,7 @@
             addFloatingText(payload.isCrit ? `💥 ${amount}!` : `-${amount}`, x, y, payload.isCrit ? "#ffcc00" : "#ff4d4d", payload.isCrit ? 17 : 14);
             addChatLog(payload.message || `${skillName}: ${amount} de dano em ${target.name}.`, payload.isCrit ? "crit" : "atk");
         } else {
+            player.hurtTimer = 16;
             const x = player.x * TILE_SIZE + 16;
             const y = player.y * TILE_SIZE;
             addFloatingText(payload.isBlocked ? `🛡 ${amount}` : `-${amount}`, x, y, payload.isBlocked ? "#79c9e8" : "#ff7180", 14);
