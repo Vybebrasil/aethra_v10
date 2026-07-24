@@ -134,7 +134,7 @@
             <section class="player-hud-summary" aria-label="Resumo do personagem">
                 <header class="player-hud-summary__identity">
                     <span class="player-hud-summary__portrait">
-                        <img src="assets/entities/player_idle.png" alt="" draggable="false">
+                        <img src="assets/organized/characters/heroes/Fighter2_Idle_without_shadow.png" alt="" draggable="false">
                     </span>
                     <div>
                         <strong>${esc(name)}</strong>
@@ -516,7 +516,7 @@
                     data-battle-equipment-slot="${slot.id}" style="--slot-rarity:${esc(rarity?.color || "#415661")};"
                     aria-label="${esc(item?.name || `${slot.label} vazio`)}"
                     ${item ? "" : `data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="${esc(slot.label)}" data-tooltip-value="Vazio" data-tooltip-body="Clique para abrir a mochila e equipar este slot."`}>
-                    <span class="hero-paperdoll__slot-icon"><b aria-hidden="true">${fallback}</b>${image ? `<img src="${esc(image)}" alt="" draggable="false">` : ""}</span>
+                    <span class="hero-paperdoll__slot-icon">${image ? `<img src="${esc(image)}" alt="" draggable="false" onerror="this.style.display='none'; this.nextElementSibling.removeAttribute('style');"><b style="display:none;" aria-hidden="true">${fallback}</b>` : `<b aria-hidden="true">${fallback}</b>`}</span>
                     <span class="player-equipment-slot__copy"><small>${slot.label}</small><strong>${esc(item?.name || "Vazio")}</strong></span>
                     ${item ? `<i class="player-equipment-slot__rarity"></i>` : ""}
                 </button>`;

@@ -26,14 +26,9 @@
             description: "Coleta ervas, sementes e reagentes naturais.", benefit: "Aumenta rendimento e descobertas raras.",
             actionTypes: ["gather-herb", "herb-node", "botany"], requiredTool: "herb_knife", policy: true
         },
-        exploration: {
-            id: "exploration", name: "Exploração", icon: "⌖", category: "world", status: "available",
-            description: "Evolui ao descobrir eventos, trilhas e segredos.", benefit: "Melhora a leitura e o aproveitamento do mundo.",
-            actionTypes: ["discover", "explore-trail", "investigate", "map-secret"]
-        },
-        survival: {
-            id: "survival", name: "Sobrevivência", icon: "△", category: "world", status: "available",
-            description: "Adaptação, vigor e resistência em caçadas longas.", benefit: "Melhora recuperação e eficiência de recursos.",
+        resilience: {
+            id: "resilience", name: "Resiliência", icon: "△", category: "world", status: "available",
+            description: "Capacidade de recuperar HP e Mana ao descansar nas escadarias.", benefit: "Aumenta a cura passiva entre andares.",
             actionTypes: ["survive", "camp", "recover", "endure-trap"]
         },
         blacksmithing: {
@@ -53,8 +48,18 @@
         },
         thievery: {
             id: "thievery", name: "Ladinagem", icon: "⚿", category: "utility", status: "available",
-            description: "Arromba fechaduras, desarma armadilhas e encontra passagens.", benefit: "Melhora testes e acesso a loot especial.",
+            description: "Abordagem ladina para arrombar baús e desarmar armadilhas.", benefit: "Garante loot intacto de baús trancados.",
             actionTypes: ["lockpick", "disarm-trap", "secret-door", "pickpocket"]
+        },
+        arcanism: {
+            id: "arcanism", name: "Arcanismo", icon: "✦", category: "utility", status: "available",
+            description: "Abordagem mágica para desfazer selos e desviar de perigos.", benefit: "Consome mana, mas ignora mecânicas de tranca física.",
+            actionTypes: ["dispel-seal", "deflect-trap"]
+        },
+        athletics: {
+            id: "athletics", name: "Atletismo", icon: "💪", category: "utility", status: "available",
+            description: "Abordagem bruta para esmagar baús e suportar armadilhas.", benefit: "Rápido, mas pode quebrar itens frágeis.",
+            actionTypes: ["smash-chest", "endure-trap"]
         }
     });
 

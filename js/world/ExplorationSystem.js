@@ -243,10 +243,25 @@
         init() {
             this.ensureState();
             if (this.initialized) return this.getSnapshot();
+            this.registerResourceTemplates();
             this.bindEvents();
             this.initialized = true;
             Aethra.EventBus.emit("exploration:ready", this.getSnapshot());
             return this.getSnapshot();
+        },
+
+        registerResourceTemplates() {
+            Object.values(RESOURCE_ITEMS).forEach((definition) => {
+                const id = definition.templateId;
+                if (!id || Aethra.GameData?.items?.[id]) return;
+                const template = { id, ...definition, stackable: true, maxStack: 999 };
+                if (Aethra.LootSystem?.registerTemplate) {
+                    Aethra.LootSystem.registerTemplate(id, template);
+                } else {
+                    Aethra.GameData?.registerItem?.(id, template);
+                }
+            });
+            Aethra.ItemSystem?.syncFromGameData?.();
         },
 
         ensureState() {
@@ -355,19 +370,24 @@
             return true;
         },
 
-        tryTrigger(context = {}) {
+        tryTriggerStairsEvent(context = {}) {
             const state = this.ensureState();
             const huntState = Aethra.GameState.hunt || {};
-            const tick = integer(context.tick ?? huntState.elapsedTicks);
-
+            
             if (state.pendingEvent) return true;
-            if (huntState.currentEnemy) return false;
-            if (tick - state.lastEventTick < this.minimumTickGap) return false;
-
-            const explorationLevel = Aethra.ProfessionSystem?.getState?.("exploration")?.level || 1;
+            
+            // At the stairs, you might not always find something.
+            // But let's give a high chance (e.g. 70%) to find an event.
             const focusMultiplier = Math.max(0, Number(context.modifiers?.eventChance ?? Aethra.HuntSystem?.getModifier?.("eventChance", 1) ?? 1));
-            const chance = clamp((this.eventChance + (explorationLevel - 1) * 0.005) * focusMultiplier, 0, 0.92);
-            if (this.randomSource() > chance) return false;
+            const chance = clamp(0.70 * focusMultiplier, 0, 1.0);
+            
+            // Also, trigger passive Resilience heal
+            this.triggerResilienceHeal();
+
+            if (this.randomSource() > chance) {
+                // No event found, just wait at stairs
+                return false;
+            }
 
             const definition = this.pickEvent(context);
             if (!definition) return false;
@@ -376,7 +396,7 @@
                 ...clone(definition),
                 eventId: `evt_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
                 createdAt: new Date().toISOString(),
-                tick,
+                room: context.room || 1,
                 huntId: huntState.huntId,
                 status: "pending",
                 requiredLevel: Math.max(
@@ -386,7 +406,6 @@
             };
 
             state.pendingEvent = event;
-            state.lastEventTick = tick;
             this.pushFeed({
                 type: "event-found",
                 icon: definition.icon,
@@ -399,14 +418,53 @@
             Aethra.EventBus.emit("exploration:event-found", clone(event));
             Aethra.EventBus.emit("exploration:updated", this.getSnapshot());
 
-            this.pendingTimer = window.setTimeout(() => {
-                this.resolveEvent(event.eventId, {
-                    manual: false,
-                    skip: Boolean(event.requiresManual)
-                });
-            }, event.requiresManual ? 9000 : 2200);
+            // Remove the timeout for manual events. At stairs, manual events MUST be manually resolved.
+            // For gathering events, we can auto-resolve them after a short delay if auto-resolve is enabled.
+            if (!event.requiresManual) {
+                this.pendingTimer = window.setTimeout(() => {
+                    this.resolveEvent(event.eventId, {
+                        manual: false,
+                        skip: false
+                    });
+                }, 1500);
+            }
 
             return true;
+        },
+
+        triggerResilienceHeal() {
+            const resilienceState = Aethra.ProfessionSystem?.getState?.("resilience");
+            if (!resilienceState) return;
+
+            const level = resilienceState.level || 1;
+            // Base heal: 5% + 0.5% per level
+            const healPercent = 0.05 + (level * 0.005);
+            
+            const hero = Aethra.GameState.hero;
+            if (!hero) return;
+            
+            const maxHp = hero.stats?.maxHp || 100;
+            const maxMana = hero.stats?.maxMana || 50;
+            
+            const healHp = Math.floor(maxHp * healPercent);
+            const healMana = Math.floor(maxMana * healPercent);
+            
+            // Assuming BattleSystem or HeroSystem handles actual healing, we emit an event
+            Aethra.EventBus.emit("hero:resilience-heal", {
+                hp: healHp,
+                mana: healMana,
+                source: "stairs-rest"
+            });
+            
+            this.pushFeed({
+                type: "event-heal",
+                icon: "△",
+                title: "Fôlego Recobrado",
+                detail: `Você descansa na escadaria e recupera ${healHp} HP.`,
+                tone: "event"
+            });
+            
+            Aethra.ProfessionSystem?.addXp?.("resilience", 15);
         },
 
         pickEvent(context = {}) {
@@ -479,19 +537,22 @@
             }
 
             const requiresCheck = Boolean(event.requiresManual || event.requiredLevel > 1);
+            const appliedProfessionId = options.professionId || event.professionId || "exploration";
+            
             const skillCheck = requiresCheck
                 ? Aethra.ProfessionSystem?.check?.(
-                    event.professionId,
+                    appliedProfessionId,
                     event.requiredLevel || 1,
                     { randomSource: this.randomSource }
                 )
-                : { success: true, level: Aethra.ProfessionSystem?.getState?.(event.professionId)?.level || 1, requiredLevel: 1, chance: 1, roll: 0 };
+                : { success: true, level: Aethra.ProfessionSystem?.getState?.(appliedProfessionId)?.level || 1, requiredLevel: 1, chance: 1, roll: 0 };
 
             if (!skillCheck?.success) {
                 event.status = "failed";
                 event.resolvedAt = new Date().toISOString();
                 event.manual = Boolean(options.manual);
                 event.skillCheck = clone(skillCheck || {});
+                event.appliedProfessionId = appliedProfessionId;
                 state.pendingEvent = null;
                 state.totals.failedChecks += 1;
 
@@ -505,7 +566,7 @@
                     event.failureDamage = damage;
                 }
 
-                const failedProfessionName = Aethra.ProfessionSystem?.professions?.[event.professionId]?.name || "Skill";
+                const failedProfessionName = Aethra.ProfessionSystem?.professions?.[appliedProfessionId]?.name || "Skill";
                 this.pushFeed({
                     type: "skill-check-failed",
                     icon: "×",
@@ -523,7 +584,7 @@
             const xpMax = Math.max(xpMin, integer(event.xp?.[1], xpMin));
             const baseXp = Math.max(1, Math.round((xpMin + Math.floor(this.randomSource() * (xpMax - xpMin + 1))) * manualMultiplier));
             const xpPayload = Aethra.ProfessionSystem?.grantActionXP?.(
-                event.professionId,
+                appliedProfessionId,
                 baseXp,
                 event.actionType || event.id,
                 { source: `exploration:${event.id}`, difficulty: event.requiredLevel || 1 }

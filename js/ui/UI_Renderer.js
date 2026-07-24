@@ -316,7 +316,7 @@
             const fileName = data.sprite || data.image || null;
 
             return fileName
-                ? `assets/entities/${fileName}`
+                ? (fileName.includes("/") ? fileName : `assets/entities/${fileName}`)
                 : null;
         }
 
@@ -342,7 +342,7 @@
             null;
 
         return fileName
-            ? `assets/icons/${fileName}`
+            ? (fileName.includes("/") ? fileName : `assets/icons/${fileName}`)
             : null;
     }
 

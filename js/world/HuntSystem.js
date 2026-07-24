@@ -104,6 +104,12 @@
             state.hunt.lastEnemy = state.hunt.lastEnemy || null;
             state.hunt.startedAt = state.hunt.startedAt || null;
             state.hunt.endedAt = state.hunt.endedAt || null;
+            
+            // Dungeon progression state
+            state.hunt.currentRoom = Math.max(1, Math.floor(number(state.hunt.currentRoom, 1)));
+            state.hunt.monstersDefeatedInRoom = Math.max(0, Math.floor(number(state.hunt.monstersDefeatedInRoom, 0)));
+            state.hunt.monstersTotalInRoom = Math.max(0, Math.floor(number(state.hunt.monstersTotalInRoom, 0)));
+            state.hunt.isAtStairs = Boolean(state.hunt.isAtStairs);
         },
 
         bindEvents() {
@@ -379,7 +385,11 @@
                 currentEnemy: null,
                 lastEnemy: null,
                 startedAt: new Date().toISOString(),
-                endedAt: null
+                endedAt: null,
+                currentRoom: 1,
+                monstersDefeatedInRoom: 0,
+                monstersTotalInRoom: hunt.baseMobsPerRoom?.[0] || 3,
+                isAtStairs: false
             });
 
             Aethra.EventBus.emit("hunt:started", {
@@ -581,22 +591,26 @@
             // Durante a curta resolução visual do combate anterior, não cria
             // um encontro que seria recusado e deixaria a Hunt travada.
             if (!state.currentEnemy && !Aethra.BattleSystem?.isFighting) {
-                const explorationTriggered = Boolean(
-                    Aethra.ExplorationSystem?.tryTrigger?.({
-                        huntId: state.huntId,
-                        tick: state.elapsedTicks,
-                        elapsedMs: state.elapsedMs,
-                        focus: hunt.focus ? clone(hunt.focus) : null,
-                        modifiers: clone(hunt.modifiers || {})
-                    })
-                );
-
-                const encounterChance = clamp(
-                    number(hunt.encounterChance, 0.3) * Math.max(0, number(hunt.modifiers?.encounterChance, 1)),
-                    0,
-                    1
-                );
-                if (!explorationTriggered && this.randomSource() <= encounterChance) {
+                if (state.monstersDefeatedInRoom >= state.monstersTotalInRoom) {
+                    if (!state.isAtStairs) {
+                        state.isAtStairs = true;
+                        this.config.isPaused = true;
+                        
+                        Aethra.EventBus.emit("hunt:stairs-reached", {
+                            huntId: state.huntId,
+                            room: state.currentRoom
+                        });
+                        
+                        // ExplorationSystem intercepts this to spawn chest/trap/shrine events
+                        Aethra.ExplorationSystem?.tryTriggerStairsEvent?.({
+                            huntId: state.huntId,
+                            room: state.currentRoom,
+                            focus: hunt.focus ? clone(hunt.focus) : null,
+                            modifiers: clone(hunt.modifiers || {})
+                        });
+                    }
+                } else {
+                    // Spawn the next monster immediately if not at stairs
                     this.handleEncounter();
                 }
             }
@@ -611,7 +625,20 @@
             if (Aethra.GameState.hunt.currentEnemy) return clone(Aethra.GameState.hunt.currentEnemy);
 
             const hunt = this.hunts[Aethra.GameState.hunt.huntId];
-            const selectedId = enemyId || this.pickEnemy(hunt);
+            
+            // Boss spawn logic
+            const state = Aethra.GameState.hunt;
+            let selectedId = enemyId;
+            if (!selectedId) {
+                if (state.currentRoom === hunt.maxRooms && state.monstersDefeatedInRoom === state.monstersTotalInRoom - 1) {
+                    selectedId = hunt.bossEncounter;
+                }
+                
+                if (!selectedId) {
+                    selectedId = this.pickEnemy(hunt);
+                }
+            }
+            
             const creature = this.getCreature(selectedId);
 
             if (!creature) {
@@ -666,6 +693,35 @@
             }
 
             return clone(encounter);
+        },
+
+        nextRoom() {
+            this.ensureState();
+            const state = Aethra.GameState.hunt;
+            const hunt = this.hunts[state.huntId];
+
+            if (!state.isAtStairs) return false;
+
+            if (state.currentRoom >= (hunt.maxRooms || 10)) {
+                // Run complete!
+                Aethra.EventBus.emit("hunt:run-completed", { huntId: state.huntId });
+                this.stopHunt("run-completed");
+                return true;
+            }
+
+            state.currentRoom += 1;
+            state.monstersDefeatedInRoom = 0;
+            state.monstersTotalInRoom = hunt.baseMobsPerRoom?.[state.currentRoom - 1] || 3;
+            state.isAtStairs = false;
+            this.config.isPaused = false;
+            
+            Aethra.EventBus.emit("hunt:room-entered", {
+                huntId: state.huntId,
+                room: state.currentRoom
+            });
+            
+            this.scheduleNextTick(this.sessionToken, 0);
+            return true;
         },
 
         resolveEncounter(encounterId = null) {
@@ -756,6 +812,7 @@
             const lootValue = Math.max(0, Math.floor(number(economyResult.lootValue, 0)));
 
             state.kills += 1;
+            state.monstersDefeatedInRoom = Math.max(0, Math.floor(number(state.monstersDefeatedInRoom, 0))) + 1;
             if (!Aethra.XPSystem) state.xp += xp;
             state.gold += gold;
             state.lootCount += lootCount;

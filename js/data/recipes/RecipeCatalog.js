@@ -88,7 +88,7 @@
             requiredLevel: 3,
             xp: 20,
             inputs: [{ itemId: "refined_ingot", quantity: 3 }],
-            outputs: [{ itemId: "eg_head_plate_l1", quantity: 1 }],
+            outputs: [{ itemId: "eg_head_l1", quantity: 1 }],
             description: "Forja um elmo de placa que protege contra golpes críticos."
         },
         {
@@ -103,7 +103,7 @@
             requiredLevel: 3,
             xp: 22,
             inputs: [{ itemId: "refined_ingot", quantity: 4 }],
-            outputs: [{ itemId: "eg_legs_plate_l1", quantity: 1 }],
+            outputs: [{ itemId: "eg_legs_l1", quantity: 1 }],
             description: "Forja perneiras de placa com boa cobertura lateral."
         },
         {
@@ -118,7 +118,7 @@
             requiredLevel: 4,
             xp: 25,
             inputs: [{ itemId: "refined_ingot", quantity: 5 }],
-            outputs: [{ itemId: "eg_chest_plate_l1", quantity: 1 }],
+            outputs: [{ itemId: "eg_chest_l1", quantity: 1 }],
             description: "Cria uma proteção pesada com qualidade variável."
         },
 
@@ -180,7 +180,7 @@
             requiredLevel: 7,
             xp: 48,
             inputs: [{ itemId: "steel_ingot", quantity: 5 }],
-            outputs: [{ itemId: "eg_chest_plate_l2", quantity: 1 }],
+            outputs: [{ itemId: "eg_chest_l2", quantity: 1 }],
             description: "Proteção de aço com defesa e HP base significativamente maiores."
         },
         {
@@ -195,7 +195,7 @@
             requiredLevel: 7,
             xp: 38,
             inputs: [{ itemId: "steel_ingot", quantity: 3 }],
-            outputs: [{ itemId: "eg_head_plate_l2", quantity: 1 }],
+            outputs: [{ itemId: "eg_head_l2", quantity: 1 }],
             description: "Elmo de aço com resistência a críticos e bônus de HP."
         },
 
@@ -227,7 +227,7 @@
             requiredLevel: 2,
             xp: 15,
             inputs: [{ itemId: "treated_leather", quantity: 2 }],
-            outputs: [{ itemId: "eg_feet_leather_l1", quantity: 1 }],
+            outputs: [{ itemId: "eg_feet_l1", quantity: 1 }],
             description: "Cria botas leves com qualidade individual e bônus de evasão."
         },
         {
@@ -242,7 +242,7 @@
             requiredLevel: 2,
             xp: 15,
             inputs: [{ itemId: "treated_leather", quantity: 2 }],
-            outputs: [{ itemId: "eg_head_leather_l1", quantity: 1 }],
+            outputs: [{ itemId: "eg_head_l1", quantity: 1 }],
             description: "Capuz de couro que equilibra proteção e mobilidade."
         },
         {
@@ -257,7 +257,7 @@
             requiredLevel: 3,
             xp: 20,
             inputs: [{ itemId: "treated_leather", quantity: 3 }],
-            outputs: [{ itemId: "eg_legs_leather_l1", quantity: 1 }],
+            outputs: [{ itemId: "eg_legs_l1", quantity: 1 }],
             description: "Calças de couro com boa cobertura e evasão adicional."
         },
         {
@@ -272,7 +272,7 @@
             requiredLevel: 4,
             xp: 25,
             inputs: [{ itemId: "treated_leather", quantity: 4 }],
-            outputs: [{ itemId: "eg_chest_leather_l1", quantity: 1 }],
+            outputs: [{ itemId: "eg_chest_l1", quantity: 1 }],
             description: "Costura uma proteção leve com qualidade variável."
         },
 
@@ -304,7 +304,7 @@
             requiredLevel: 6,
             xp: 38,
             inputs: [{ itemId: "reinforced_leather", quantity: 4 }],
-            outputs: [{ itemId: "eg_chest_leather_l2", quantity: 1 }],
+            outputs: [{ itemId: "eg_chest_l2", quantity: 1 }],
             description: "Proteção de couro reforçado com evasão e HP superiores."
         },
         {
@@ -319,7 +319,7 @@
             requiredLevel: 6,
             xp: 30,
             inputs: [{ itemId: "reinforced_leather", quantity: 2 }],
-            outputs: [{ itemId: "eg_feet_leather_l2", quantity: 1 }],
+            outputs: [{ itemId: "eg_feet_l2", quantity: 1 }],
             description: "Botas reforçadas com alta evasão para caçadores experientes."
         },
         {
@@ -334,7 +334,7 @@
             requiredLevel: 7,
             xp: 35,
             inputs: [{ itemId: "reinforced_leather", quantity: 3 }],
-            outputs: [{ itemId: "eg_head_leather_l2", quantity: 1 }],
+            outputs: [{ itemId: "eg_head_l2", quantity: 1 }],
             description: "Capacete de couro reforçado com resistência adicional."
         }
     ]);

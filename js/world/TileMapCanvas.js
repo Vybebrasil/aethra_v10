@@ -304,98 +304,57 @@
         return true;
     }
 
+    const ASSETS = {
+        grass: new Image(),
+        dirt: new Image(),
+        wall: new Image(),
+        tree: new Image(),
+        flower: new Image(),
+        stone: new Image()
+    };
+    // Usando FieldsTile_01 que provavelmente é grama sólida (centro)
+    ASSETS.grass.src = "assets/organized/world/tiles/FieldsTile_01.png";
+    ASSETS.dirt.src = "assets/organized/world/tiles/FieldsTile_14.png";
+    ASSETS.wall.src = "assets/organized/world/tiles/FieldsTile_24.png";
+    ASSETS.tree.src = "assets/organized/world/props/Tree1.png";
+    ASSETS.flower.src = "assets/organized/world/tiles/FieldsTile_33.png";
+    ASSETS.stone.src = "assets/organized/world/tiles/FieldsTile_20.png";
+
     function drawTile(c, r, tileType, time) {
         const px = c * TILE_SIZE;
         const py = r * TILE_SIZE;
 
-        // Paredes fortificadas de pedra medieval
-        if (tileType === 2) {
-            ctx.fillStyle = "#2c1e12";
+        // Draw base ground
+        if (tileType === 0 || tileType === 4 || tileType === 5) {
+            ctx.fillStyle = "#4a6c25"; // Grama sólida
             ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-            ctx.fillStyle = "#4a3520";
-            ctx.fillRect(px + 1, py + 1, TILE_SIZE - 2, TILE_SIZE - 2);
-            ctx.fillStyle = "#6e4e30";
-            ctx.fillRect(px + 3, py + 3, TILE_SIZE - 6, 5);
-            ctx.fillStyle = "#1e140a";
-            ctx.fillRect(px + 2, py + TILE_SIZE - 4, TILE_SIZE - 4, 3);
-            return;
-        }
-
-        // Chão de pedra / Escada de pedra esculpida (Piso de Dungeon Tibia)
-        if (tileType === 6 || tileType === 7) {
-            ctx.fillStyle = "#343d46";
-            ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-            ctx.fillStyle = "#4f5b66";
-            ctx.fillRect(px + 1, py + 1, 14, 14);
-            ctx.fillRect(px + 17, py + 1, 14, 14);
-            ctx.fillRect(px + 1, py + 17, 14, 14);
-            ctx.fillRect(px + 17, py + 17, 14, 14);
-            ctx.strokeStyle = "rgba(0,0,0,0.4)";
-            ctx.strokeRect(px, py, TILE_SIZE, TILE_SIZE);
-
+            // Desenha borda suave para criar padronagem orgânica muito leve (opcional)
+        } else if (tileType === 1) {
+            if (ASSETS.dirt.complete && ASSETS.dirt.naturalWidth > 0) ctx.drawImage(ASSETS.dirt, px, py, TILE_SIZE, TILE_SIZE);
+            else { ctx.fillStyle = "#8b5a2b"; ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE); }
+        } else if (tileType === 2) {
+            if (ASSETS.wall.complete && ASSETS.wall.naturalWidth > 0) ctx.drawImage(ASSETS.wall, px, py, TILE_SIZE, TILE_SIZE);
+            else { ctx.fillStyle = "#555"; ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE); }
+        } else if (tileType === 6 || tileType === 7) {
+            if (ASSETS.stone.complete && ASSETS.stone.naturalWidth > 0) ctx.drawImage(ASSETS.stone, px, py, TILE_SIZE, TILE_SIZE);
+            else { ctx.fillStyle = "#777"; ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE); }
             if (tileType === 7) {
-                // Escada em Espiral de Pedra
                 ctx.fillStyle = "#1a2128";
                 ctx.beginPath();
                 ctx.arc(px + 16, py + 16, 14, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.strokeStyle = "#f39c12";
-                ctx.lineWidth = 2.5;
-                ctx.beginPath();
-                ctx.arc(px + 16, py + 16, 10, 0, Math.PI * 1.5);
-                ctx.stroke();
                 ctx.fillStyle = "#f1c40f";
                 ctx.font = "bold 9px Outfit, sans-serif";
                 ctx.textAlign = "center";
                 ctx.fillText("▲ ANDAR", px + 16, py - 4);
             }
-            return;
         }
 
-        // Gramado de Alta Resolução / Campo de Batalha Verde
-        ctx.fillStyle = tileType === 1 ? "#5e4b33" : "#245020";
-        ctx.fillRect(px, py, TILE_SIZE, TILE_SIZE);
-
-        ctx.strokeStyle = "rgba(0, 0, 0, 0.06)";
-        ctx.lineWidth = 1;
-        ctx.strokeRect(px, py, TILE_SIZE, TILE_SIZE);
-
-        if (tileType === 0) {
-            // Texturas sutis de lâminas de relva e pequenas flores
-            ctx.fillStyle = "#2e682a";
-            ctx.fillRect(px + 4, py + 6, 3, 4);
-            ctx.fillRect(px + 18, py + 16, 4, 3);
-            ctx.fillRect(px + 22, py + 8, 3, 5);
-
-            // Detalhes florais dispersos baseados na posição da célula
-            if ((c * 7 + r * 13) % 9 === 0) {
-                ctx.fillStyle = "#f1c40f"; // Flor amarela
-                ctx.fillRect(px + 12, py + 14, 3, 3);
-            } else if ((c * 11 + r * 5) % 11 === 0) {
-                ctx.fillStyle = "#e74c3c"; // Flor vermelha
-                ctx.fillRect(px + 20, py + 10, 3, 3);
-            }
-        } else if (tileType === 4) {
-            // Árvores Frondosas de Dungeon
-            ctx.fillStyle = "#2c1c0c";
-            ctx.fillRect(px + 12, py + 18, 8, 14);
-            ctx.fillStyle = "#1e4d1a";
-            ctx.beginPath();
-            ctx.arc(px + 16, py + 12, 13, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = "#27ae60";
-            ctx.beginPath();
-            ctx.arc(px + 14, py + 10, 8, 0, Math.PI * 2);
-            ctx.fill();
-        } else if (tileType === 5) {
-            // Arbustos de Frutas Tropicais
-            ctx.fillStyle = "#1e4d1a";
-            ctx.beginPath();
-            ctx.arc(px + 16, py + 16, 11, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = "#e74c3c";
-            ctx.fillRect(px + 13, py + 11, 4, 4);
-            ctx.fillRect(px + 18, py + 17, 3, 3);
+        // Overlays
+        if (tileType === 4 && ASSETS.tree.complete) {
+            ctx.drawImage(ASSETS.tree, px - 16, py - 32, 64, 64);
+        } else if (tileType === 5 && ASSETS.flower.complete) {
+            ctx.drawImage(ASSETS.flower, px, py, TILE_SIZE, TILE_SIZE);
         }
     }
 

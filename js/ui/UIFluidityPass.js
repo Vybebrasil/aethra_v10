@@ -325,6 +325,7 @@
         "hunt:updated",
         "hunt:ended",
         "hunt:enemy-defeated",
+        "hunt:stairs-reached",
         "exploration:updated",
         "exploration:event-found",
         "exploration:event-resolved",

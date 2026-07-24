@@ -250,7 +250,7 @@
                 <div class="creation-avatar ${selected ? "has-archetype" : ""}" ${avatarTooltip}>
                     <i></i><i></i><i></i>
                     <div class="creation-avatar__sigil" data-sigil="${esc(selected?.id || "")}">${esc(selected?.icon || "A")}</div>
-                    <img src="assets/entities/player_idle.png" alt="Prévia do herói" draggable="false">
+                    <img src="assets/organized/characters/heroes/Fighter2_Idle_without_shadow.png" alt="Prévia do herói" draggable="false">
                     <span>${esc(selected?.name || "Sem arquétipo")}</span>
                 </div>
                 <div class="creation-hero-preview__role">
@@ -279,7 +279,7 @@
                     <small>EQUIPAMENTO INICIAL DO ARQUÉTIPO</small>
                     <div class="creation-paperdoll-grid">
                         ${(()=>{
-                            const starterChestItem = Aethra.GameData?.items?.[`eg_chest_${selected.starterArmorClass || "leather"}_l1`] || null;
+                            const starterChestItem = Aethra.GameData?.items?.["eg_chest_l1"] || null;
                             const starterShieldItem = selected.starterShield ? (Aethra.GameData?.items?.["eg_shield_l1"] || null) : null;
                             const wIcon = WEAPON_ICONS[selected.id] || "⚔";
 

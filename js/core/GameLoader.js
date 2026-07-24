@@ -27,6 +27,8 @@
         "SkillSystem",
         "DisciplineSystem",
         "SkillController",
+        "BattleMath",
+        "BattleLogger",
         "BattleSystem",
         "CombatProjection",
         "ConsumableSystem",

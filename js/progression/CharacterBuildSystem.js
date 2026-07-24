@@ -405,7 +405,7 @@
             };
             const starterEquipment = [
                 { slot: "weapon", item: generateStarter(archetype?.starterItemId) },
-                { slot: "chest", item: generateStarter(`eg_chest_${archetype?.starterArmorClass || "leather"}_l1`) },
+                { slot: "chest", item: generateStarter("eg_chest_l1") },
                 { slot: "offhand", item: archetype?.starterShield ? generateStarter("eg_shield_l1") : null }
             ].filter((entry) => entry.item);
             const starterSupplies = [

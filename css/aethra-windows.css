@@ -1,0 +1,214 @@
+/**
+ * ============================================================================
+ * AETHRA UNIFIED WINDOW ARCHITECTURE v6.0
+ * Universal design system for all game HUD modals and floating windows.
+ * Excludes #city-view (the primary world map scene).
+ * ============================================================================
+ */
+
+:root {
+    --aethra-win-bg: linear-gradient(180deg, #111c22 0%, #0a1115 100%);
+    --aethra-win-border: rgba(212, 175, 55, 0.45);
+    --aethra-win-header-bg: linear-gradient(180deg, rgba(22, 36, 44, 0.98) 0%, rgba(12, 20, 26, 0.98) 100%);
+    --aethra-win-gold: #f0d18b;
+    --aethra-win-muted: #7e9aa6;
+    --aethra-win-radius: 12px;
+}
+
+/* ============================================================================
+   1. BASE FLOATING / MODAL WINDOW SPECIFICATION (Excludes #city-view)
+   ============================================================================ */
+
+.aethra-floating-window:not(#city-view),
+#modal-layer [data-aethra-window]:not(#city-view),
+#modal-layer .game-window:not(#city-view),
+#arsenal-view,
+#inventory-view,
+#npc-shop-view,
+#skills-view,
+#quests-view,
+#dungeon-view,
+#professions-view,
+#premium-shop-view,
+#player-market-view,
+#coliseum-view,
+#options-view {
+    display: none;
+    flex-direction: column !important;
+    position: fixed !important;
+    box-sizing: border-box !important;
+    
+    /* Responsive Sizing */
+    width: min(960px, 85vw) !important;
+    height: min(640px, calc(100vh - 160px)) !important;
+    min-width: 360px !important;
+    min-height: 260px !important;
+    max-width: 95vw !important;
+    max-height: calc(100vh - 140px) !important;
+    
+    /* Visual Frame */
+    background: var(--aethra-win-bg) !important;
+    border: 1px solid var(--aethra-win-border) !important;
+    border-radius: var(--aethra-win-radius) !important;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 215, 0, 0.15) !important;
+    
+    padding: 0 !important;
+    margin: 0 !important;
+    
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1000 !important;
+}
+
+/* Hide when has .hidden or [hidden] (Except #city-view) */
+.game-window.hidden:not(#city-view),
+[data-aethra-window].hidden:not(#city-view),
+.game-window[hidden]:not(#city-view),
+[data-aethra-window][hidden]:not(#city-view) {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Clear pseudo borders for modals */
+.aethra-floating-window:not(#city-view)::after,
+#modal-layer .game-window:not(#city-view)::after,
+.aethra-floating-window:not(#city-view)::before,
+#modal-layer .game-window:not(#city-view)::before {
+    display: none !important;
+    content: none !important;
+}
+
+/* ============================================================================
+   2. ACTIVE / OPEN WINDOW STATE
+   ============================================================================ */
+
+.aethra-floating-window.is-open:not(#city-view),
+#modal-layer [data-aethra-window].is-open:not(#city-view),
+#modal-layer .game-window.is-open:not(#city-view),
+#arsenal-view.is-open,
+#inventory-view.is-open,
+#npc-shop-view.is-open,
+#skills-view.is-open,
+#quests-view.is-open,
+#dungeon-view.is-open {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    overflow: hidden !important;
+    resize: both !important;
+}
+
+/* Default Centering for Open Windows */
+.game-window.is-open:not(#city-view):not([data-floating-positioned="true"]),
+[data-aethra-window].is-open:not(#city-view):not([data-floating-positioned="true"]) {
+    top: calc(50vh - (min(640px, calc(100vh - 160px)) / 2) - 20px) !important;
+    left: calc(50vw - (min(960px, 85vw) / 2)) !important;
+    transform: none !important;
+}
+
+/* ============================================================================
+   3. HEADER SYSTEM
+   ============================================================================ */
+
+.game-window:not(#city-view) > .window-header,
+[data-aethra-window]:not(#city-view) > .window-header {
+    flex: 0 0 auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    
+    min-height: 50px !important;
+    padding: 10px 18px !important;
+    margin: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    position: relative !important;
+    
+    background: var(--aethra-win-header-bg) !important;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.25) !important;
+    border-top-left-radius: calc(var(--aethra-win-radius) - 1px) !important;
+    border-top-right-radius: calc(var(--aethra-win-radius) - 1px) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+}
+
+.game-window:not(#city-view) .window-header h2,
+[data-aethra-window]:not(#city-view) .window-header h2 {
+    margin: 0 !important;
+    color: var(--aethra-win-gold) !important;
+    font-family: "Cinzel", Georgia, serif !important;
+    font-size: 1.15rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.03em !important;
+    line-height: 1.2 !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8) !important;
+}
+
+.game-window:not(#city-view) .window-header small,
+[data-aethra-window]:not(#city-view) .window-header small {
+    display: block !important;
+    margin-bottom: 2px !important;
+    color: var(--aethra-win-muted) !important;
+    font-size: 0.68rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+}
+
+.game-window:not(#city-view) .window-header .window-close,
+[data-aethra-window]:not(#city-view) .window-header .window-close,
+.game-window:not(#city-view) .window-header .aethra-window-close,
+[data-aethra-window]:not(#city-view) .window-header .aethra-window-close {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    width: 32px !important;
+    height: 32px !important;
+    display: grid !important;
+    place-items: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    
+    border: 1px solid rgba(212, 175, 55, 0.3) !important;
+    border-radius: 6px !important;
+    background: rgba(0, 0, 0, 0.4) !important;
+    color: #e1bd63 !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
+    line-height: 1 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+}
+
+.game-window:not(#city-view) .window-header .window-close:hover,
+[data-aethra-window]:not(#city-view) .window-header .window-close:hover {
+    background: rgba(180, 40, 40, 0.6) !important;
+    border-color: rgba(255, 100, 100, 0.6) !important;
+    color: #fff !important;
+}
+
+/* ============================================================================
+   4. BODY & CONTENT AREA
+   ============================================================================ */
+
+.game-window:not(#city-view) > :not(.window-header),
+[data-aethra-window]:not(#city-view) > :not(.window-header) {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+}
+
+/* Resizer handle */
+.game-window:not(#city-view)::-webkit-resizer,
+[data-aethra-window]:not(#city-view)::-webkit-resizer {
+    background-color: transparent;
+    border-top: 3px solid rgba(255, 215, 0, 0.8);
+    border-left: 3px solid rgba(255, 215, 0, 0.8);
+    border-radius: 4px;
+}

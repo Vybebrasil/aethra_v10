@@ -27,35 +27,43 @@
         aliases: { ...ALIASES },
         source: "PocketDM SRD / CC-BY-4.0",
 
-        init() {
+        async init() {
             if (this.initialized) return this.getStats();
             Aethra.LootProfileRegistry?.registerTemplates?.();
 
-            Aethra.MonsterCatalogData.forEach((record) => {
-                const monster = clone(record);
-                monster.lootTable = Aethra.LootProfileRegistry?.buildLootTable?.(monster) || monster.lootTable || [];
-                this.entries.set(monster.id, monster);
-                if (monster.slug) this.aliases[monster.slug] = monster.id;
-                this.aliases[normalize(monster.sourceName || monster.name)] = monster.id;
-                Aethra.GameData.creatures[monster.id] = clone(monster);
-            });
+            try {
+                const response = await fetch("data/monsters.json");
+                const data = await response.json();
 
-            Object.entries(ALIASES).forEach(([alias, targetId]) => {
-                const target = this.entries.get(targetId);
-                if (!target) return;
-                Aethra.GameData.creatures[alias] = {
-                    ...clone(target),
-                    id: alias,
-                    catalogId: targetId,
-                    aliasOf: targetId
-                };
-            });
+                data.forEach((record) => {
+                    const monster = clone(record);
+                    monster.lootTable = Aethra.LootProfileRegistry?.buildLootTable?.(monster) || monster.lootTable || [];
+                    this.entries.set(monster.id, monster);
+                    if (monster.slug) this.aliases[monster.slug] = monster.id;
+                    this.aliases[normalize(monster.sourceName || monster.name)] = monster.id;
+                    Aethra.GameData.creatures[monster.id] = clone(monster);
+                });
 
-            this.patchCreatureScaling();
-            this.initialized = true;
+                Object.entries(ALIASES).forEach(([alias, targetId]) => {
+                    const target = this.entries.get(targetId);
+                    if (!target) return;
+                    Aethra.GameData.creatures[alias] = {
+                        ...clone(target),
+                        id: alias,
+                        catalogId: targetId,
+                        aliasOf: targetId
+                    };
+                });
 
-            Aethra.EventBus?.emit?.("monster-catalog:ready", this.getStats());
-            return this.getStats();
+                this.patchCreatureScaling();
+                this.initialized = true;
+
+                Aethra.EventBus?.emit?.("monster-catalog:ready", this.getStats());
+                return this.getStats();
+            } catch (error) {
+                console.error("Falha ao carregar monsters.json:", error);
+                throw error;
+            }
         },
 
         patchCreatureScaling() {

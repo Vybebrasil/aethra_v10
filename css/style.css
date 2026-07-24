@@ -9,8 +9,9 @@
 :root {
     color-scheme: dark;
 
-    --world-map-image:
-        url("../assets/pixel-crawler/MockUps/Tavern.png");
+    /* Sem arte de fundo dedicada: o TileMapCanvas desenha o mundo e o
+       gradiente abaixo cobre o vão. Aponte para um PNG real ao adicionar. */
+    --world-map-image: none;
 
     --bg-deep: #050606;
     --bg-panel: rgba(8, 13, 17, 0.94);
@@ -1824,9 +1825,9 @@ body > :not(
 
 #modal-layer #inventory-grid.inventory-scroll-list {
     display: grid !important;
-    grid-template-columns: repeat(5, minmax(52px, 1fr)) !important;
+    grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)) !important;
     align-content: start;
-    gap: 6px !important;
+    gap: 4px !important;
     height: 330px;
     min-height: 330px;
     max-height: 330px;
@@ -1848,13 +1849,11 @@ body > :not(
 }
 
 #modal-layer #inventory-grid .tibia-item-slot {
-    display: grid !important;
-    grid-template-rows: 48px auto auto;
-    align-content: start;
-    justify-items: stretch;
-    gap: 3px;
+    display: block !important;
+    position: relative;
+    aspect-ratio: 1 / 1;
     min-width: 0;
-    min-height: 86px !important;
+    min-height: 0 !important;
     padding: 4px !important;
     border: 2px groove #4a4337 !important;
     border-radius: 3px !important;
@@ -1912,6 +1911,11 @@ body > :not(
     color: #fff;
     font-size: 10px;
     text-shadow: 0 1px 2px #000;
+}
+
+#modal-layer #inventory-grid .tibia-item-slot__name,
+#modal-layer #inventory-grid .tibia-item-slot__meta {
+    display: none !important;
 }
 
 .tibia-item-slot__name {
@@ -2065,6 +2069,14 @@ body > :not(
 .paperdoll-slot__empty {
     color: rgba(201, 154, 61, 0.34);
     font-size: 22px;
+}
+
+/* Item equipado sem arte dedicada: exibe o glifo do template. */
+.paperdoll-slot__glyph {
+    color: var(--gold-light);
+    font-size: 20px;
+    line-height: 1;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
 .paperdoll-slot--head { grid-area: head; }
@@ -4144,14 +4156,7 @@ button[data-action-bar-skill].is-auto {
     width: min(1040px, calc(100vw - 32px));
 }
 
-#modal-layer.is-modeless [data-aethra-window].aethra-floating-window.is-open,
-#modal-layer.is-modeless .game-window.aethra-floating-window.is-open {
-    display: block !important;
-    transform: none !important;
-    pointer-events: auto !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-}
+/* Block removed: Handled by aethra-windows.css flex architecture */
 
 #modal-layer.is-modeless [data-aethra-window].aethra-floating-window.is-open:not(.is-front-window) {
     filter: brightness(0.88);
@@ -12239,6 +12244,9 @@ body > #aethra-ui-tooltip {
 .analyzer-live-card.is-world strong { color: #7cc6e8; }
 .analyzer-live-card.is-skill strong { color: #e0bd67; }
 
+.tibia-item-name, .tibia-item-meta { display: none !important; }
+.tibia-backpack-slot { width: 32px !important; height: 32px !important; }
+
 .hunt-analyzer-breakdown {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -13505,6 +13513,12 @@ body > #aethra-ui-tooltip {
     min-width: 480px !important;
     min-height: 380px !important;
     overflow: hidden !important;
+    background: linear-gradient(145deg, rgba(12, 25, 30, .85), rgba(4, 10, 13, .85)) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    box-shadow: 0 32px 110px rgba(0, 0, 0, .72), inset 0 1px rgba(255, 255, 255, .035) !important;
+    border: 1px solid rgba(217, 184, 95, 0.4) !important;
+    border-radius: 14px !important;
 }
 
 .combat-log-window__body {
@@ -16661,3 +16675,9 @@ body > #aethra-ui-tooltip {
     font-style: normal;
     font-weight: 850;
 }
+
+
+/* =====================================================================
+   SMART RESIZABLE HUD OVERRIDES
+   ===================================================================== */
+/* Old Smart HUD block removed */

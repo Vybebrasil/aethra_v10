@@ -190,6 +190,6 @@ filtered={'metadata':{**raw.get('metadata',{}),'filtered_for_runtime':'is_srd ==
 
 payload=json.dumps(normalized,ensure_ascii=False,separators=(',',':'))
 js='''// MonsterCatalogData.js - Catálogo SRD pré-normalizado para execução local\n(function (Aethra) {\n    "use strict";\n    Aethra.MonsterCatalogData = %s;\n})(window.Aethra = window.Aethra || {});\n'''%payload
-(JS_DATA/'MonsterCatalogData.js').write_text(js,encoding='utf-8')
+(JS_DATA/'monsters'/'MonsterCatalogData.js').write_text(js,encoding='utf-8')
 
 print(f'Catálogo gerado: {len(normalized)} criaturas SRD')

@@ -462,27 +462,58 @@
 
     function renderIdleBrief(versus, hunt) {
         const activeHunt = Boolean(hunt.isActive);
+        const atStairs = Boolean(hunt.isAtStairs);
         const lastOutcome = runtime.lastOutcome;
         versus.hidden = false;
         versus.className = "battle-versus encounter-exchange encounter-idle-brief";
-        versus.setAttribute("aria-label", activeHunt ? "Estado da exploração" : "Próxima jornada");
+        versus.setAttribute("aria-label", activeHunt ? (atStairs ? "Escadaria encontrada" : "Estado da exploração") : "Próxima jornada");
+        
+        let stateCopy = "";
+        let button = "";
+        
+        if (!activeHunt) {
+            stateCopy = `
+                <small>ARENA LIVRE</small>
+                <strong>Pronto para uma nova jornada</strong>
+                <p>Escolha uma Hunt ou Expedição para começar a próxima sequência de encontros.</p>
+            `;
+            button = `<button type="button" data-open-hunt-map>Abrir Mapa Mundi</button>`;
+        } else if (atStairs) {
+            const currentRoom = hunt.currentRoom || 1;
+            const maxRooms = Aethra.HuntSystem?.hunts?.[hunt.huntId]?.maxRooms || 10;
+            const isBossNext = currentRoom === maxRooms - 1;
+            const isFinished = currentRoom >= maxRooms;
+            
+            stateCopy = `
+                <small>SALA LIMPA</small>
+                <strong>Escadaria da Masmorra (${currentRoom}/${maxRooms})</strong>
+                <p>Você limpou esta área e encontrou a escada. ${isBossNext ? "O chefe aguarda no próximo andar!" : "Descanse e prepare-se."}</p>
+            `;
+            button = `<button type="button" class="aethra-button is-primary" onclick="Aethra.HuntSystem.nextRoom()">${isFinished ? "Concluir Masmorra" : "Descer Escadas"}</button>`;
+        } else {
+            const defeated = hunt.monstersDefeatedInRoom || 0;
+            const total = hunt.monstersTotalInRoom || 1;
+            stateCopy = `
+                <small>SALA ${hunt.currentRoom || 1}</small>
+                <strong>Inimigos Derrotados: ${defeated}/${total}</strong>
+                <p>Avançando pela masmorra. O próximo encontro acontecerá em breve.</p>
+            `;
+            button = `<span class="encounter-idle-brief__pulse"><i></i> CAMINHANDO</span>`;
+        }
+        
         versus.innerHTML = `
-            <span class="encounter-idle-brief__icon" aria-hidden="true">${activeHunt ? "⌖" : "◇"}</span>
+            <span class="encounter-idle-brief__icon" aria-hidden="true">${activeHunt ? (atStairs ? "◳" : "⌖") : "◇"}</span>
             <div class="encounter-idle-brief__copy">
-                <small>${activeHunt ? "EXPEDIÇÃO EM CURSO" : "ARENA LIVRE"}</small>
-                <strong>${activeHunt ? "Procurando a próxima ameaça" : "Pronto para uma nova jornada"}</strong>
-                <p>${activeHunt
-                    ? "A exploração continua. O próximo encontro aparecerá aqui sem esticar o cartão do herói."
-                    : "Escolha uma Hunt ou Expedição para começar a próxima sequência de encontros."}</p>
+                ${stateCopy}
             </div>
-            ${lastOutcome ? `
+            ${lastOutcome && !atStairs ? `
                 <div class="encounter-idle-brief__last is-${escapeHTML(lastOutcome.tone || "victory")}">
                     <span>ÚLTIMO COMBATE</span>
                     <strong>${escapeHTML(lastOutcome.title)}</strong>
                     <small>${escapeHTML(lastOutcome.detail)}</small>
                 </div>
             ` : ""}
-            ${!activeHunt ? `<button type="button" data-open-hunt-map>Abrir Mapa Mundi</button>` : `<span class="encounter-idle-brief__pulse"><i></i> BUSCANDO</span>`}
+            ${button}
         `;
     }
 

@@ -11,7 +11,9 @@ body.aethra-combat-hud-modern #battle-actionbar-layer.battle-actionbar-overlay {
     min-height: var(--stable-actionbar-height) !important;
     max-height: var(--stable-actionbar-height) !important;
     border-top-color: rgba(110, 153, 169, 0.24) !important;
-    background: linear-gradient(180deg, rgba(10, 19, 24, 0.985), rgba(4, 10, 13, 0.995)) !important;
+    background: linear-gradient(180deg, rgba(10, 19, 24, 0.85), rgba(4, 10, 13, 0.85)) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
     box-shadow: 0 -14px 38px rgba(0, 0, 0, 0.48) !important;
 }
 

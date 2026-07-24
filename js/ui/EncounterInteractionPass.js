@@ -205,15 +205,31 @@
         if (!dock) return false;
         const entries = highlightState().slice(0, 3);
         const hunt = Aethra.GameState.hunt || {};
-        const fallback = {
-            type: hunt.isActive ? "exploration" : "system",
-            icon: hunt.isActive ? "⌖" : "◇",
-            title: hunt.isActive ? "Exploração contínua" : "Nenhuma expedição ativa",
-            detail: hunt.isActive
-                ? "Combates, eventos e drops aparecerão aqui quando acontecerem."
-                : "Abra o Mapa Mundi para escolher uma Hunt.",
-            action: hunt.isActive ? null : "map"
-        };
+        
+        let fallback;
+        if (hunt.isActive && hunt.isAtStairs) {
+            const currentRoom = hunt.currentRoom || 1;
+            const maxRooms = Aethra.HuntSystem?.hunts?.[hunt.huntId]?.maxRooms || 10;
+            const isFinished = currentRoom >= maxRooms;
+            fallback = {
+                type: "event",
+                icon: "◳",
+                title: "Área Limpa",
+                detail: `Sala ${currentRoom}/${maxRooms} concluída.`,
+                action: "stairs"
+            };
+        } else {
+            fallback = {
+                type: hunt.isActive ? "exploration" : "system",
+                icon: hunt.isActive ? "⌖" : "◇",
+                title: hunt.isActive ? "Exploração contínua" : "Nenhuma expedição ativa",
+                detail: hunt.isActive
+                    ? "Combates, eventos e drops aparecerão aqui quando acontecerem."
+                    : "Abra o Mapa Mundi para escolher uma Hunt.",
+                action: hunt.isActive ? null : "map"
+            };
+        }
+        
         const rows = entries.length ? entries : [fallback];
 
         dock.innerHTML = `
@@ -254,14 +270,47 @@
     }
 
     function resolveContextAction(action) {
+        if (action === "stairs") return Aethra.HuntSystem?.nextRoom?.();
         if (action === "drops") return openDropPanel();
         if (action === "combat-log") return openCombatLog();
         if (action === "map") return Aethra.openHuntWorldMap?.();
         if (action === "event") {
-            const pending = Aethra.GameState.exploration?.pendingEvent;
+            const pending = Aethra.GameState.exploration?.pendingEvent || null;
             if (pending?.eventId) return Aethra.ExplorationSystem?.resolveEvent?.(pending.eventId, { manual: true });
         }
         return false;
+    }
+
+    function syncInteractionUI() {
+        const combatActive = Aethra.BattleSystem?.isFighting;
+        const stage = document.querySelector(".battle-stage-panel");
+        const arena = stage?.querySelector(".battle-card-arena");
+        const dock = arena?.querySelector(".encounter-context-dock");
+        
+        if (combatActive) {
+            if (dock) dock.hidden = true;
+            arena?.classList.remove("has-event-card", "has-context-card");
+            return;
+        }
+
+        const pending = Aethra.GameState.exploration?.pendingEvent || null;
+        const hunt = Aethra.GameState.hunt || {};
+        
+        if (pending && dock) {
+            dock.hidden = false;
+            arena.classList.add("has-event-card", "has-context-card");
+            renderEventDock(dock, pending);
+        } else if (dock) {
+            if (hunt.isActive && hunt.isAtStairs) {
+                dock.hidden = false;
+                arena.classList.add("has-context-card");
+                arena.classList.remove("has-event-card");
+                renderEncounterDock();
+            } else {
+                dock.hidden = true;
+                arena?.classList.remove("has-event-card", "has-context-card");
+            }
+        }
     }
 
     function skillIdForSlot(slot) {

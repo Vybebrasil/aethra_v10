@@ -304,6 +304,7 @@
                     this.schedule("heroStats", () => this.renderHeroStats());
                     this.schedule("inventory", () => this.renderInventory());
                     this.schedule("actionBar", () => this.renderActionBar());
+                    this.schedule("primaryAttacks", () => this.renderPrimaryAttackBar());
                 });
             });
 
@@ -1372,7 +1373,7 @@
             const heroMaxMana = Math.max(1, Number(combatProjection?.hero?.resources?.mana?.maximum ?? hero.maxMana ?? stats.maxMana ?? heroMana ?? 1));
             const heroVigor = Number(combatProjection?.hero?.resources?.energy?.current ?? hero.vigor ?? stats.vigor ?? hero.energy ?? stats.energy ?? 0);
             const heroMaxVigor = Math.max(1, Number(combatProjection?.hero?.resources?.energy?.maximum ?? hero.maxVigor ?? stats.maxVigor ?? hero.maxEnergy ?? stats.maxEnergy ?? heroVigor ?? 1));
-            const heroSprite = resolveSpritePath(hero, 'assets/entities/player_idle.png');
+            const heroSprite = resolveSpritePath(hero, 'assets/organized/characters/heroes/Fighter2_Idle_without_shadow.png');
             const currentHuntName = Aethra.HuntSystem?.hunts?.[hunt.huntId]?.name || 'Sem hunt ativa';
             const heroStateTitle = combatActive
                 ? 'Em combate'
@@ -1806,7 +1807,7 @@
 
                 const hasWeapon = !!state.weapon;
                 const weaponItem = hasWeapon ? (Aethra.GameData?.items?.[state.weapon.templateId] || Aethra.GameData?.items?.[state.weapon.id] || state.weapon) : null;
-                const weaponAsset = weaponItem ? Aethra.GameData?.assets?.resolve?.("item", weaponItem.icon || weaponItem.image) : null;
+                const weaponAsset = weaponItem ? Aethra.GameData?.assets?.resolve?.("item", weaponItem.image || weaponItem.icon) : null;
 
                 let displayIconHTML;
                 if (weaponAsset) {
@@ -3089,6 +3090,12 @@
 
                 card.dataset.instanceId = item.instanceId || "";
                 card.dataset.itemIndex = String(index);
+                card.dataset.uiTooltip = "true";
+                card.dataset.tooltipKind = "item";
+                card.dataset.itemIdRef = item.instanceId || "";
+                if (!item.instanceId) {
+                    card.dataset.itemId = templateId;
+                }
                 card.setAttribute(
                     "aria-pressed",
                     item.instanceId === selectedId
@@ -3114,7 +3121,8 @@
                             : `
                                 <span class="inventory-item-fallback">
                                     ${escapeHTML(
-                                        String(item.name || templateId || "?").charAt(0)
+                                        item.icon
+                                        || String(item.name || templateId || "?").charAt(0)
                                     )}
                                 </span>
                             `
@@ -3349,9 +3357,13 @@
                                         draggable="false"
                                     >
                                 `
-                                : `
-                                    <span class="paperdoll-slot__empty">+</span>
-                                `
+                                : item
+                                    ? `
+                                        <span class="paperdoll-slot__glyph" aria-hidden="true">${escapeHTML(item.icon || "◆")}</span>
+                                    `
+                                    : `
+                                        <span class="paperdoll-slot__empty">+</span>
+                                    `
                             }
                         </span>
 
@@ -4505,7 +4517,7 @@
                     style="--slot-rarity:${esc(rarity?.color || "#33444e")};"
                     aria-label="${esc(item?.name || `${slot.label} vazio`)}">
                     <span class="hero-paperdoll__slot-icon">
-                        ${image ? `<img src="${esc(image)}" alt="${esc(item.name)}" draggable="false">` : `<b>${slot.icon}</b>`}
+                        ${image ? `<img src="${esc(image)}" alt="${esc(item.name)}" draggable="false" onerror="this.style.display='none'; this.nextElementSibling.removeAttribute('style');"><b style="display:none;" aria-hidden="true">${slot.icon}</b>` : `<b>${slot.icon}</b>`}
                     </span>
                     <small>${slot.label}</small>
                     ${item ? `<em>${Number(inspect?.multiplier || 1).toFixed(2)}x · IV ${iv.toFixed(0)}%</em>` : `<em>Vazio</em>`}
@@ -4521,7 +4533,7 @@
                     <i class="hero-paperdoll__torso"></i>
                     <i class="hero-paperdoll__legs"></i>
                 </span>
-                <img src="assets/entities/player_idle.png" alt="" draggable="false">
+                <img src="assets/organized/characters/heroes/Fighter2_Idle_without_shadow.png" alt="" draggable="false">
             </div>
             ${slotHTML}
         `;

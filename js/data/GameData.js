@@ -903,8 +903,8 @@
 
             const fileName =
                 item.image ||
-                item.icon ||
                 template.image ||
+                item.icon ||
                 template.icon ||
                 null;
 

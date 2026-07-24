@@ -5,8 +5,7 @@
     display: flex;
     flex-direction: column;
     gap: 9px;
-    height: auto !important;
-    min-height: 100%;
+    height: 100%;
     padding: 10px !important;
     overflow-y: auto !important;
     color: #dce7ec;
@@ -23,7 +22,10 @@
     padding: 8px 11px;
     border: 1px solid var(--analyzer-border);
     border-radius: 10px;
-    background: linear-gradient(110deg, rgba(15, 27, 34, 0.98), rgba(8, 15, 20, 0.92));
+    background: linear-gradient(110deg, rgba(15, 27, 34, 0.75), rgba(8, 15, 20, 0.75));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .analyzer-session-bar > div {
@@ -90,7 +92,9 @@
     overflow: hidden;
     border: 1px solid var(--analyzer-border);
     border-radius: 10px;
-    background: linear-gradient(145deg, rgba(13, 26, 32, 0.96), rgba(8, 17, 22, 0.96));
+    background: linear-gradient(145deg, rgba(13, 26, 32, 0.75), rgba(8, 17, 22, 0.75));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     outline: none;
     transition: border-color 150ms ease, background-color 150ms ease, transform 150ms ease;
 }
@@ -190,7 +194,9 @@
     border: 1px solid var(--analyzer-border);
     border-radius: 10px;
     overflow: hidden;
-    background: var(--analyzer-panel);
+    background: linear-gradient(145deg, rgba(8, 18, 23, 0.75), rgba(4, 10, 13, 0.75));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }
 
 .analyzer-ledger-lines > span {
@@ -293,7 +299,9 @@
     padding: 7px 9px;
     border: 1px solid var(--analyzer-border);
     border-radius: 9px;
-    background: var(--analyzer-panel);
+    background: linear-gradient(145deg, rgba(8, 18, 23, 0.75), rgba(4, 10, 13, 0.75));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     outline: none;
 }
 
@@ -317,7 +325,9 @@
     grid-template-rows: auto auto;
     min-height: 54px;
     border-color: rgba(174, 129, 229, 0.2);
-    background: linear-gradient(135deg, rgba(33, 20, 45, 0.55), rgba(8, 18, 23, 0.88));
+    background: linear-gradient(135deg, rgba(33, 20, 45, 0.55), rgba(8, 18, 23, 0.65));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }
 
 .analyzer-record-grid b { color: #bc94ef; }
@@ -339,7 +349,9 @@
     padding: 7px;
     border: 1px solid var(--analyzer-border);
     border-radius: 9px;
-    background: var(--analyzer-panel);
+    background: linear-gradient(145deg, rgba(8, 18, 23, 0.75), rgba(4, 10, 13, 0.75));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     outline: none;
 }
 

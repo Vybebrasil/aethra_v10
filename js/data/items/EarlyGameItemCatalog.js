@@ -15,34 +15,6 @@
         .replace(/[^a-z0-9]+/g, "_")
         .replace(/^_+|_+$/g, "");
 
-    const LEVEL_NAMES = [
-        "Recruta", "Vigia", "Ferro", "Fronteira", "Mercenário",
-        "Caçador", "Veterano", "Arena", "Rúnico", "Aetheriano"
-    ];
-
-    const WEAPON_FAMILIES = {
-        sword: { name: "Espada", icon: "⚔", damage: 1, precision: 1, critical: 0 },
-        axe: { name: "Machado", icon: "◩", damage: 1.15, precision: 0, critical: 0.006 },
-        mace: { name: "Maça", icon: "✣", damage: 1.08, precision: 0, defense: 1 },
-        dagger: { name: "Adaga", icon: "†", damage: 0.82, precision: 2, critical: 0.012 },
-        bow: { name: "Arco", icon: "➶", damage: 0.92, precision: 3, critical: 0.004 },
-        focus: { name: "Foco", icon: "✦", damage: 0.78, precision: 1, mag: 2 }
-    };
-
-    const ARMOR_PIECES = {
-        head: { name: "Elmo", icon: "⌃", defense: 0.68, hp: 1.2 },
-        chest: { name: "Peitoral", icon: "▣", defense: 1.35, hp: 3.2 },
-        hands: { name: "Luvas", icon: "✥", defense: 0.52, hp: 0.8, precision: 1 },
-        legs: { name: "Perneiras", icon: "Ⅱ", defense: 0.92, hp: 2.1 },
-        feet: { name: "Botas", icon: "⌄", defense: 0.48, hp: 0.8, evasion: 0.003 }
-    };
-
-    const ARMOR_CLASSES = {
-        cloth: { name: "de Tecido", defMultiplier: 0.5, bonusName: "mag", bonusVal: 0.6, bonusHp: 0.8 },
-        leather: { name: "de Couro", defMultiplier: 0.8, bonusName: "evasion", bonusVal: 0.0006, bonusHp: 1.0 },
-        plate: { name: "de Placa", defMultiplier: 1.3, bonusName: "str", bonusVal: 0.5, bonusHp: 1.4 }
-    };
-
     const FAMILY_MATERIALS = {
         beast: ["beast_hide", "raw_meat", "monster_fang"],
         monstrosity: ["monster_fang", "beast_hide", "aether_fragment"],
@@ -71,240 +43,756 @@
         arena_badge: ["Insígnia de Arena", "◆", 35, "Raro"]
     };
 
-    const templates = {};
-    const item = (id, data) => {
-        templates[id] = { id, ...data };
-        return templates[id];
-    };
+    let templates = {};
 
-    Object.entries(EXTRA_MATERIALS).forEach(([id, [name, icon, price, rarity]]) => {
-        item(id, {
-            name, icon, price, value: price, rarity,
-            type: "material", itemType: "MATERIAL", stackable: true, maxStack: 999,
-            description: "Componente de criação encontrado nas regiões iniciais de Aethra."
-        });
-    });
-
-    [
-        ["iron_ore", "Minério de Ferro", "⬟", 5, "Rocha bruta usada na fundição."],
-        ["refined_ingot", "Lingote de Ferro", "▰", 14, "Metal refinado para armas e armaduras."],
-        ["beast_hide", "Pele de Fera", "◒", 6, "Pele bruta obtida por Esfolamento."],
-        ["treated_leather", "Couro Tratado", "▧", 16, "Couro curtido pronto para criação."],
-        ["wild_herb", "Erva Silvestre", "❧", 4, "Reagente colhido por Herbalismo."],
-        ["trap_components", "Componentes de Armadilha", "⚙", 12, "Peças recuperadas de um mecanismo desarmado."]
-    ].forEach(([id, name, icon, price, description]) => item(id, {
-        name, icon, price, value: price, description,
-        rarity: "Comum", type: "material", itemType: "MATERIAL", stackable: true, maxStack: 999
-    }));
-
-    [
-        ["apprentice_pickaxe", "Picareta de Aprendiz", "⛏", "Permite extrair veios de minério."],
-        ["skinning_knife", "Faca de Esfolamento", "†", "Permite extrair pele de criaturas derrotadas."],
-        ["herb_knife", "Foice de Herbalista", "❧", "Permite colher ervas sem danificar seus reagentes."],
-        ["smith_hammer", "Martelo de Aprendiz", "⚒", "Ferramenta de orientação para seu primeiro trabalho na forja."]
-    ].forEach(([id, name, icon, description]) => item(id, {
-        name, icon, description, price: 0, value: 0,
-        rarity: "Comum", type: "tool", itemType: "TOOL", stackable: false, maxStack: 1, tradeable: false
-    }));
-
-    [
-        ["ancient_token", "Símbolo Antigo", "✦", 18, "Raro"],
-        ["thieves_mark", "Marca dos Ladrões", "⚿", 34, "Raro"],
-        ["hidden_map_fragment", "Fragmento de Mapa Oculto", "⌖", 85, "Épico"]
-    ].forEach(([id, name, icon, price, rarity]) => item(id, {
-        name, icon, price, value: price, rarity,
-        type: "loot", itemType: "LOOT", stackable: true, maxStack: 999,
-        description: "Achado especial de exploração; pode ser negociado ou usado em conteúdo futuro."
-    }));
-
-    item("minor_vigor_tonic", {
-        name: "Tônico Menor de Vigor", icon: "⚡", price: 12, value: 12,
-        rarity: "Comum", type: "consumable", itemType: "CONSUMABLE",
-        effect: 18, energyAmount: 18, stackable: true, maxStack: 99,
-        description: "Recupera 18 de Vigor."
-    });
-    item("field_antidote", {
-        name: "Antídoto de Campanha", icon: "+", price: 18, value: 18,
-        rarity: "Incomum", type: "consumable", itemType: "CONSUMABLE",
-        effect: "cleanse_poison", stackable: true, maxStack: 99,
-        description: "Remove veneno e reduz sua duração nas próximas duas rodadas."
-    });
-
-    // ── Suprimentos iniciais (usados por CharacterBuildSystem.createCharacter) ──
-    item("potion_health", {
-        name: "Poção de Vida", icon: "🧪", price: 10, value: 10,
-        rarity: "Comum", type: "consumable", itemType: "CONSUMABLE",
-        healAmount: 20, stackable: true, maxStack: 99,
-        description: "Recupera 20 de HP. Item inicial de todo aventureiro."
-    });
-    item("potion_mana", {
-        name: "Poção de Mana", icon: "💧", price: 18, value: 18,
-        rarity: "Comum", type: "consumable", itemType: "CONSUMABLE",
-        manaAmount: 25, stackable: true, maxStack: 99,
-        description: "Restaura 25 de Mana. Essencial para arcanistas."
-    });
-
-    // ── Armas de treino iniciais por arquétipo ────────────────────────────────
-    item("training_sword", {
-        name: "Espada de Treino", icon: "⚔", price: 0, value: 0,
-        rarity: "Comum", type: "weapon", itemType: "WEAPON",
-        slot: "weapon", weaponFamily: "sword",
-        baseStats: { damageMin: 4, damageMax: 8, precision: 1 },
-        stats:     { damageMin: 4, damageMax: 8, precision: 1 },
-        levelReq: 1, stackable: false, maxStack: 1,
-        description: "Espada de madeira reforçada. Item de iniciante vinculado ao herói."
-    });
-    item("training_axe", {
-        name: "Machado de Treino", icon: "◩", price: 0, value: 0,
-        rarity: "Comum", type: "weapon", itemType: "WEAPON",
-        slot: "weapon", weaponFamily: "axe",
-        baseStats: { damageMin: 5, damageMax: 10, critical: 0.04 },
-        stats:     { damageMin: 5, damageMax: 10, critical: 0.04 },
-        levelReq: 1, stackable: false, maxStack: 1,
-        description: "Machado pesado de treino. Item de iniciante vinculado ao herói."
-    });
-    item("training_mace", {
-        name: "Maça de Treino", icon: "✣", price: 0, value: 0,
-        rarity: "Comum", type: "weapon", itemType: "WEAPON",
-        slot: "weapon", weaponFamily: "mace",
-        baseStats: { damageMin: 4, damageMax: 9, defense: 1 },
-        stats:     { damageMin: 4, damageMax: 9, defense: 1 },
-        levelReq: 1, stackable: false, maxStack: 1,
-        description: "Maça de madeira pesada. Item de iniciante vinculado ao herói."
-    });
-    item("training_dagger", {
-        name: "Adaga de Treino", icon: "†", price: 0, value: 0,
-        rarity: "Comum", type: "weapon", itemType: "WEAPON",
-        slot: "weapon", weaponFamily: "dagger",
-        baseStats: { damageMin: 3, damageMax: 7, precision: 2, critical: 0.06 },
-        stats:     { damageMin: 3, damageMax: 7, precision: 2, critical: 0.06 },
-        levelReq: 1, stackable: false, maxStack: 1,
-        description: "Adaga fina de prática. Item de iniciante vinculado ao herói."
-    });
-    item("training_bow", {
-        name: "Arco de Treino", icon: "➶", price: 0, value: 0,
-        rarity: "Comum", type: "weapon", itemType: "WEAPON",
-        slot: "weapon", weaponFamily: "bow",
-        baseStats: { damageMin: 4, damageMax: 8, precision: 3 },
-        stats:     { damageMin: 4, damageMax: 8, precision: 3 },
-        levelReq: 1, stackable: false, maxStack: 1,
-        description: "Arco de cipó resistente. Item de iniciante vinculado ao herói."
-    });
-    item("novice_focus", {
-        name: "Foco de Novato", icon: "✦", price: 0, value: 0,
-        rarity: "Comum", type: "weapon", itemType: "WEAPON",
-        slot: "weapon", weaponFamily: "focus",
-        baseStats: { damageMin: 3, damageMax: 6, mag: 3, precision: 1 },
-        stats:     { damageMin: 3, damageMax: 6, mag: 3, precision: 1 },
-        levelReq: 1, stackable: false, maxStack: 1,
-        description: "Orbe canalizado para iniciantes em magia. Item de iniciante vinculado ao herói."
-    });
-
-    for (let level = 1; level <= 10; level += 1) {
-        const grade = LEVEL_NAMES[level - 1];
-        const tier = Math.ceil(level / 2);
-
-        Object.entries(WEAPON_FAMILIES).forEach(([family, definition]) => {
-            const base = 2.4 + level * 1.45;
-            const average = base * definition.damage;
-            const stats = {
-                damageMin: Math.max(1, Math.floor(average * 0.78)),
-                damageMax: Math.max(2, Math.ceil(average * 1.22)),
-                precision: Math.max(0, Math.floor(level * 0.35 + definition.precision))
-            };
-            if (definition.critical) stats.critical = Number((definition.critical + level * 0.0008).toFixed(3));
-            if (definition.defense) stats.defense = Math.max(1, Math.floor(level * 0.25 + definition.defense));
-            if (definition.mag) stats.mag = Math.max(1, Math.floor(level * 0.55 + definition.mag));
-
-            item(`eg_${family}_l${level}`, {
-                name: `${definition.name} ${grade}`,
-                icon: definition.icon,
-                type: "weapon",
-                itemType: "WEAPON",
-                slot: "weapon",
-                weaponFamily: family,
-                equipmentClass: family === "focus" ? "arcane" : "martial",
-                levelReq: level,
-                tier,
-                rarity: level >= 9 ? "Raro" : level >= 5 ? "Incomum" : "Comum",
-                price: 14 + level * level * 7,
-                value: 14 + level * level * 7,
-                stackable: false,
-                maxStack: 1,
-                baseStats: stats,
-                stats: clone(stats),
-                description: `${definition.name} de nível ${level}, criada para ter rolls e afixos individualizados.`
-            });
-        });
-
-        Object.entries(ARMOR_PIECES).forEach(([slot, definition]) => {
-            Object.entries(ARMOR_CLASSES).forEach(([armorClass, classDef]) => {
-                const defBase = Math.max(1, Math.round((1 + level * 0.72) * definition.defense * classDef.defMultiplier));
-                const hpBase = Math.max(1, Math.round(level * definition.hp * classDef.bonusHp));
-                
-                const stats = {
-                    defense: defBase,
-                    hpMax: hpBase
-                };
-                
-                if (classDef.bonusName === "evasion") {
-                    stats.evasion = Number((classDef.bonusVal * level + (definition.evasion || 0)).toFixed(4));
-                } else if (classDef.bonusName) {
-                    stats[classDef.bonusName] = Math.max(1, Math.round(classDef.bonusVal * level));
-                }
-                
-                if (definition.precision) {
-                    stats.precision = Math.max(1, Math.floor(level * 0.2 + definition.precision));
-                }
-
-                item(`eg_${slot}_${armorClass}_l${level}`, {
-                    name: `${definition.name} ${classDef.name} ${grade}`,
-                    icon: definition.icon,
-                    type: "armor",
-                    itemType: slot.toUpperCase(),
-                    slot,
-                    equipmentClass: "armor",
-                    armorType: armorClass,
-                    levelReq: level,
-                    tier,
-                    rarity: level >= 9 ? "Raro" : level >= 5 ? "Incomum" : "Comum",
-                    price: Math.round((11 + level * level * 5) * classDef.defMultiplier),
-                    value: Math.round((11 + level * level * 5) * classDef.defMultiplier),
-                    stackable: false,
-                    maxStack: 1,
-                    baseStats: stats,
-                    stats: clone(stats),
-                    description: `Proteção de ${armorClass === "cloth" ? "Tecido" : armorClass === "leather" ? "Couro" : "Placa"} de nível ${level} com atributos variáveis.`
-                });
-            });
-        });
-
-        const shieldStats = {
-            defense: 1 + Math.ceil(level * 0.85),
-            blockChance: Number((0.025 + level * 0.003).toFixed(3)),
-            blockReduction: Number((0.18 + level * 0.008).toFixed(3))
-        };
-        item(`eg_shield_l${level}`, {
-            name: `Escudo ${grade}`, icon: "⬡", type: "shield", itemType: "SHIELD",
-            slot: "offhand", levelReq: level, tier, equipmentClass: "defensive",
-            rarity: level >= 9 ? "Raro" : level >= 5 ? "Incomum" : "Comum",
-            price: 13 + level * level * 6, value: 13 + level * level * 6,
-            stackable: false, maxStack: 1, baseStats: shieldStats, stats: clone(shieldStats),
-            description: `Escudo de nível ${level}; melhora defesa e bloqueio sem criar imunidade.`
-        });
-
-        const ringStats = level % 2 === 0
-            ? { critical: Number((0.004 + level * 0.001).toFixed(3)), precision: Math.ceil(level * 0.3) }
-            : { hpMax: 2 + level * 2, manaMax: 1 + level };
-        item(`eg_ring_l${level}`, {
-            name: `Anel ${grade}`, icon: "○", type: "accessory", itemType: "RING",
-            slot: "ring1", allowedSlots: ["ring1", "ring2"], levelReq: level, tier,
-            equipmentClass: "accessory", rarity: level >= 8 ? "Raro" : "Incomum",
-            price: 22 + level * level * 8, value: 22 + level * level * 8,
-            stackable: false, maxStack: 1, baseStats: ringStats, stats: clone(ringStats),
-            description: `Joia de nível ${level}; seus rolls podem colocá-la no ranking mundial.`
-        });
+    function item(id, definition) {
+        templates[id] = { id, ...definition };
     }
+
+    // ── Armaduras e Armas baseadas nos Assets Curados (Nível 1 a 10) ──
+
+    // Set Recruta (Nível 1)
+    item("eg_chest_l1", {
+        name: "Peitoral Recruta", icon: "▣", image: "assets/organized/items/armor/armor_001.png", price: 30, value: 30,
+        rarity: "Comum", type: "armor", itemType: "CHEST", slot: "chest", equipmentClass: "armor", armorType: "plate", levelReq: 1, tier: 1,
+        baseStats: { defense: 3, hpMax: 4, str: 0.5 }, stats: { defense: 3, hpMax: 4, str: 0.5 }, stackable: false, maxStack: 1
+    });
+    item("eg_head_l1", {
+        name: "Elmo Recruta", icon: "⌃", image: "assets/organized/items/helmets/helmets_001.png", price: 23, value: 23,
+        rarity: "Comum", type: "armor", itemType: "HEAD", slot: "head", equipmentClass: "armor", armorType: "plate", levelReq: 1, tier: 1,
+        baseStats: { defense: 2, hpMax: 2 }, stats: { defense: 2, hpMax: 2 }, stackable: false, maxStack: 1
+    });
+    item("eg_legs_l1", {
+        name: "Perneiras Recruta", icon: "Ⅱ", image: "assets/organized/items/legs/legs_001.png", price: 27, value: 27,
+        rarity: "Comum", type: "armor", itemType: "LEGS", slot: "legs", equipmentClass: "armor", armorType: "plate", levelReq: 1, tier: 1,
+        baseStats: { defense: 2, hpMax: 3 }, stats: { defense: 2, hpMax: 3 }, stackable: false, maxStack: 1
+    });
+    item("eg_feet_l1", {
+        name: "Botas Recruta", icon: "⌄", image: "assets/organized/items/boots/boots_001.png", price: 19, value: 19,
+        rarity: "Comum", type: "armor", itemType: "FEET", slot: "feet", equipmentClass: "armor", armorType: "plate", levelReq: 1, tier: 1,
+        baseStats: { defense: 1, hpMax: 2, evasion: 0.003 }, stats: { defense: 1, hpMax: 2, evasion: 0.003 }, stackable: false, maxStack: 1
+    });
+    item("eg_hands_l1", {
+        name: "Luvas Recruta", icon: "✥", price: 19, value: 19,
+        rarity: "Comum", type: "armor", itemType: "HANDS", slot: "hands", equipmentClass: "armor", armorType: "plate", levelReq: 1, tier: 1,
+        baseStats: { defense: 1, hpMax: 2, precision: 1 }, stats: { defense: 1, hpMax: 2, precision: 1 }, stackable: false, maxStack: 1
+    });
+    item("eg_sword_l1", {
+        name: "Espada Recruta", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_011.png", price: 21, value: 21,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "sword", equipmentClass: "martial", levelReq: 1, tier: 1,
+        baseStats: { damageMin: 3, damageMax: 5, precision: 1 }, stats: { damageMin: 3, damageMax: 5, precision: 1 }, stackable: false, maxStack: 1
+    });
+    item("eg_axe_l1", {
+        name: "Machado Recruta", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_021.png", price: 21, value: 21,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "axe", equipmentClass: "martial", levelReq: 1, tier: 1,
+        baseStats: { damageMin: 3, damageMax: 6, precision: 0, critical: 0.007 }, stats: { damageMin: 3, damageMax: 6, precision: 0, critical: 0.007 }, stackable: false, maxStack: 1
+    });
+    item("eg_mace_l1", {
+        name: "Maça Recruta", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_031.png", price: 21, value: 21,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "mace", equipmentClass: "martial", levelReq: 1, tier: 1,
+        baseStats: { damageMin: 3, damageMax: 6, precision: 0, defense: 1 }, stats: { damageMin: 3, damageMax: 6, precision: 0, defense: 1 }, stackable: false, maxStack: 1
+    });
+    item("eg_dagger_l1", {
+        name: "Adaga Recruta", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_041.png", price: 21, value: 21,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "dagger", equipmentClass: "martial", levelReq: 1, tier: 1,
+        baseStats: { damageMin: 2, damageMax: 4, precision: 2, critical: 0.013 }, stats: { damageMin: 2, damageMax: 4, precision: 2, critical: 0.013 }, stackable: false, maxStack: 1
+    });
+    item("eg_bow_l1", {
+        name: "Arco Recruta", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_051.png", price: 21, value: 21,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "bow", equipmentClass: "martial", levelReq: 1, tier: 1,
+        baseStats: { damageMin: 2, damageMax: 5, precision: 3, critical: 0.005 }, stats: { damageMin: 2, damageMax: 5, precision: 3, critical: 0.005 }, stackable: false, maxStack: 1
+    });
+    item("eg_focus_l1", {
+        name: "Foco Recruta", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_061.png", price: 21, value: 21,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 1, tier: 1,
+        baseStats: { damageMin: 2, damageMax: 4, precision: 1, mag: 2 }, stats: { damageMin: 2, damageMax: 4, precision: 1, mag: 2 }, stackable: false, maxStack: 1
+    });
+    item("eg_shield_l1", {
+        name: "Escudo Recruta", icon: "⬡", type: "shield", itemType: "SHIELD",
+        slot: "offhand", levelReq: 1, tier: 1, equipmentClass: "defensive", rarity: "Comum",
+        price: 19, value: 19,
+        stackable: false, maxStack: 1, baseStats: {"defense":2,"blockChance":0.028,"blockReduction":0.188}, stats: {"defense":2,"blockChance":0.028,"blockReduction":0.188},
+        description: "Escudo de nível 1; melhora defesa e bloqueio sem criar imunidade."
+    });
+    item("eg_ring_l1", {
+        name: "Anel Recruta", icon: "○", image: "assets/organized/items/loot/all/loot_051.png", type: "accessory", itemType: "RING",
+        slot: "ring1", allowedSlots: ["ring1", "ring2"], levelReq: 1, tier: 1,
+        equipmentClass: "accessory", rarity: "Incomum",
+        price: 30, value: 30,
+        stackable: false, maxStack: 1, baseStats: {"hpMax":4,"manaMax":2}, stats: {"hpMax":4,"manaMax":2},
+        description: "Joia de nível 1; seus rolls podem colocá-la no ranking mundial."
+    });
+
+    // Set Aventureiro (Nível 2)
+    item("eg_chest_l2", {
+        name: "Peitoral Aventureiro", icon: "▣", image: "assets/organized/items/armor/armor_002.png", price: 40, value: 40,
+        rarity: "Comum", type: "armor", itemType: "CHEST", slot: "chest", equipmentClass: "armor", armorType: "plate", levelReq: 2, tier: 1,
+        baseStats: { defense: 4, hpMax: 9, str: 0.5 }, stats: { defense: 4, hpMax: 9, str: 0.5 }, stackable: false, maxStack: 1
+    });
+    item("eg_head_l2", {
+        name: "Elmo Aventureiro", icon: "⌃", image: "assets/organized/items/helmets/helmets_002.png", price: 31, value: 31,
+        rarity: "Comum", type: "armor", itemType: "HEAD", slot: "head", equipmentClass: "armor", armorType: "plate", levelReq: 2, tier: 1,
+        baseStats: { defense: 2, hpMax: 5 }, stats: { defense: 2, hpMax: 5 }, stackable: false, maxStack: 1
+    });
+    item("eg_legs_l2", {
+        name: "Perneiras Aventureiro", icon: "Ⅱ", image: "assets/organized/items/legs/legs_002.png", price: 36, value: 36,
+        rarity: "Comum", type: "armor", itemType: "LEGS", slot: "legs", equipmentClass: "armor", armorType: "plate", levelReq: 2, tier: 1,
+        baseStats: { defense: 3, hpMax: 6 }, stats: { defense: 3, hpMax: 6 }, stackable: false, maxStack: 1
+    });
+    item("eg_feet_l2", {
+        name: "Botas Aventureiro", icon: "⌄", image: "assets/organized/items/boots/boots_002.png", price: 26, value: 26,
+        rarity: "Comum", type: "armor", itemType: "FEET", slot: "feet", equipmentClass: "armor", armorType: "plate", levelReq: 2, tier: 1,
+        baseStats: { defense: 2, hpMax: 4, evasion: 0.003 }, stats: { defense: 2, hpMax: 4, evasion: 0.003 }, stackable: false, maxStack: 1
+    });
+    item("eg_hands_l2", {
+        name: "Luvas Aventureiro", icon: "✥", price: 26, value: 26,
+        rarity: "Comum", type: "armor", itemType: "HANDS", slot: "hands", equipmentClass: "armor", armorType: "plate", levelReq: 2, tier: 1,
+        baseStats: { defense: 2, hpMax: 4, precision: 1 }, stats: { defense: 2, hpMax: 4, precision: 1 }, stackable: false, maxStack: 1
+    });
+    item("eg_sword_l2", {
+        name: "Espada Aventureiro", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_012.png", price: 42, value: 42,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "sword", equipmentClass: "martial", levelReq: 2, tier: 1,
+        baseStats: { damageMin: 4, damageMax: 7, precision: 1 }, stats: { damageMin: 4, damageMax: 7, precision: 1 }, stackable: false, maxStack: 1
+    });
+    item("eg_axe_l2", {
+        name: "Machado Aventureiro", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_022.png", price: 42, value: 42,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "axe", equipmentClass: "martial", levelReq: 2, tier: 1,
+        baseStats: { damageMin: 4, damageMax: 8, precision: 0, critical: 0.008 }, stats: { damageMin: 4, damageMax: 8, precision: 0, critical: 0.008 }, stackable: false, maxStack: 1
+    });
+    item("eg_mace_l2", {
+        name: "Maça Aventureiro", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_032.png", price: 42, value: 42,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "mace", equipmentClass: "martial", levelReq: 2, tier: 1,
+        baseStats: { damageMin: 4, damageMax: 7, precision: 0, defense: 1 }, stats: { damageMin: 4, damageMax: 7, precision: 0, defense: 1 }, stackable: false, maxStack: 1
+    });
+    item("eg_dagger_l2", {
+        name: "Adaga Aventureiro", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_042.png", price: 42, value: 42,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "dagger", equipmentClass: "martial", levelReq: 2, tier: 1,
+        baseStats: { damageMin: 3, damageMax: 6, precision: 2, critical: 0.014 }, stats: { damageMin: 3, damageMax: 6, precision: 2, critical: 0.014 }, stackable: false, maxStack: 1
+    });
+    item("eg_bow_l2", {
+        name: "Arco Aventureiro", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_052.png", price: 42, value: 42,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "bow", equipmentClass: "martial", levelReq: 2, tier: 1,
+        baseStats: { damageMin: 3, damageMax: 6, precision: 3, critical: 0.006 }, stats: { damageMin: 3, damageMax: 6, precision: 3, critical: 0.006 }, stackable: false, maxStack: 1
+    });
+    item("eg_focus_l2", {
+        name: "Foco Aventureiro", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_062.png", price: 42, value: 42,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 2, tier: 1,
+        baseStats: { damageMin: 3, damageMax: 6, precision: 1, mag: 3 }, stats: { damageMin: 3, damageMax: 6, precision: 1, mag: 3 }, stackable: false, maxStack: 1
+    });
+    item("eg_shield_l2", {
+        name: "Escudo Aventureiro", icon: "⬡", type: "shield", itemType: "SHIELD",
+        slot: "offhand", levelReq: 2, tier: 1, equipmentClass: "defensive", rarity: "Comum",
+        price: 37, value: 37,
+        stackable: false, maxStack: 1, baseStats: {"defense":3,"blockChance":0.031,"blockReduction":0.196}, stats: {"defense":3,"blockChance":0.031,"blockReduction":0.196},
+        description: "Escudo de nível 2; melhora defesa e bloqueio sem criar imunidade."
+    });
+    item("eg_ring_l2", {
+        name: "Anel Aventureiro", icon: "○", image: "assets/organized/items/loot/all/loot_051.png", type: "accessory", itemType: "RING",
+        slot: "ring1", allowedSlots: ["ring1", "ring2"], levelReq: 2, tier: 1,
+        equipmentClass: "accessory", rarity: "Incomum",
+        price: 54, value: 54,
+        stackable: false, maxStack: 1, baseStats: {"critical":0.006,"precision":1}, stats: {"critical":0.006,"precision":1},
+        description: "Joia de nível 2; seus rolls podem colocá-la no ranking mundial."
+    });
+
+    // Set Vybe (Nível 3)
+    item("eg_chest_l3", {
+        name: "Peitoral Vybe", icon: "▣", image: "assets/organized/items/armor/armor_003.png", price: 50, value: 50,
+        rarity: "Comum", type: "armor", itemType: "CHEST", slot: "chest", equipmentClass: "armor", armorType: "plate", levelReq: 3, tier: 2,
+        baseStats: { defense: 6, hpMax: 13, str: 0.5 }, stats: { defense: 6, hpMax: 13, str: 0.5 }, stackable: false, maxStack: 1
+    });
+    item("eg_head_l3", {
+        name: "Elmo Vybe", icon: "⌃", image: "assets/organized/items/helmets/helmets_003.png", price: 39, value: 39,
+        rarity: "Comum", type: "armor", itemType: "HEAD", slot: "head", equipmentClass: "armor", armorType: "plate", levelReq: 3, tier: 2,
+        baseStats: { defense: 3, hpMax: 7 }, stats: { defense: 3, hpMax: 7 }, stackable: false, maxStack: 1
+    });
+    item("eg_legs_l3", {
+        name: "Perneiras Vybe", icon: "Ⅱ", image: "assets/organized/items/legs/legs_003.png", price: 45, value: 45,
+        rarity: "Comum", type: "armor", itemType: "LEGS", slot: "legs", equipmentClass: "armor", armorType: "plate", levelReq: 3, tier: 2,
+        baseStats: { defense: 4, hpMax: 9 }, stats: { defense: 4, hpMax: 9 }, stackable: false, maxStack: 1
+    });
+    item("eg_feet_l3", {
+        name: "Botas Vybe", icon: "⌄", image: "assets/organized/items/boots/boots_003.png", price: 33, value: 33,
+        rarity: "Comum", type: "armor", itemType: "FEET", slot: "feet", equipmentClass: "armor", armorType: "plate", levelReq: 3, tier: 2,
+        baseStats: { defense: 2, hpMax: 5, evasion: 0.003 }, stats: { defense: 2, hpMax: 5, evasion: 0.003 }, stackable: false, maxStack: 1
+    });
+    item("eg_hands_l3", {
+        name: "Luvas Vybe", icon: "✥", price: 33, value: 33,
+        rarity: "Comum", type: "armor", itemType: "HANDS", slot: "hands", equipmentClass: "armor", armorType: "plate", levelReq: 3, tier: 2,
+        baseStats: { defense: 2, hpMax: 5, precision: 1 }, stats: { defense: 2, hpMax: 5, precision: 1 }, stackable: false, maxStack: 1
+    });
+    item("eg_sword_l3", {
+        name: "Espada Vybe", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_013.png", price: 77, value: 77,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "sword", equipmentClass: "martial", levelReq: 3, tier: 2,
+        baseStats: { damageMin: 5, damageMax: 9, precision: 2 }, stats: { damageMin: 5, damageMax: 9, precision: 2 }, stackable: false, maxStack: 1
+    });
+    item("eg_axe_l3", {
+        name: "Machado Vybe", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_023.png", price: 77, value: 77,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "axe", equipmentClass: "martial", levelReq: 3, tier: 2,
+        baseStats: { damageMin: 6, damageMax: 10, precision: 1, critical: 0.008 }, stats: { damageMin: 6, damageMax: 10, precision: 1, critical: 0.008 }, stackable: false, maxStack: 1
+    });
+    item("eg_mace_l3", {
+        name: "Maça Vybe", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_033.png", price: 77, value: 77,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "mace", equipmentClass: "martial", levelReq: 3, tier: 2,
+        baseStats: { damageMin: 5, damageMax: 9, precision: 1, defense: 1 }, stats: { damageMin: 5, damageMax: 9, precision: 1, defense: 1 }, stackable: false, maxStack: 1
+    });
+    item("eg_dagger_l3", {
+        name: "Adaga Vybe", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_043.png", price: 77, value: 77,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "dagger", equipmentClass: "martial", levelReq: 3, tier: 2,
+        baseStats: { damageMin: 4, damageMax: 7, precision: 3, critical: 0.014 }, stats: { damageMin: 4, damageMax: 7, precision: 3, critical: 0.014 }, stackable: false, maxStack: 1
+    });
+    item("eg_bow_l3", {
+        name: "Arco Vybe", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_053.png", price: 77, value: 77,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "bow", equipmentClass: "martial", levelReq: 3, tier: 2,
+        baseStats: { damageMin: 4, damageMax: 8, precision: 4, critical: 0.006 }, stats: { damageMin: 4, damageMax: 8, precision: 4, critical: 0.006 }, stackable: false, maxStack: 1
+    });
+    item("eg_focus_l3", {
+        name: "Foco Vybe", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_063.png", price: 77, value: 77,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 3, tier: 2,
+        baseStats: { damageMin: 4, damageMax: 7, precision: 2, mag: 3 }, stats: { damageMin: 4, damageMax: 7, precision: 2, mag: 3 }, stackable: false, maxStack: 1
+    });
+    item("eg_shield_l3", {
+        name: "Escudo Vybe", icon: "⬡", type: "shield", itemType: "SHIELD",
+        slot: "offhand", levelReq: 3, tier: 2, equipmentClass: "defensive", rarity: "Comum",
+        price: 67, value: 67,
+        stackable: false, maxStack: 1, baseStats: {"defense":4,"blockChance":0.034,"blockReduction":0.204}, stats: {"defense":4,"blockChance":0.034,"blockReduction":0.204},
+        description: "Escudo de nível 3; melhora defesa e bloqueio sem criar imunidade."
+    });
+    item("eg_ring_l3", {
+        name: "Anel Vybe", icon: "○", image: "assets/organized/items/loot/all/loot_051.png", type: "accessory", itemType: "RING",
+        slot: "ring1", allowedSlots: ["ring1", "ring2"], levelReq: 3, tier: 2,
+        equipmentClass: "accessory", rarity: "Incomum",
+        price: 94, value: 94,
+        stackable: false, maxStack: 1, baseStats: {"hpMax":8,"manaMax":4}, stats: {"hpMax":8,"manaMax":4},
+        description: "Joia de nível 3; seus rolls podem colocá-la no ranking mundial."
+    });
+
+    // Set Guarda (Nível 4)
+    item("eg_chest_l4", {
+        name: "Peitoral Guarda", icon: "▣", image: "assets/organized/items/armor/armor_004.png", price: 60, value: 60,
+        rarity: "Comum", type: "armor", itemType: "CHEST", slot: "chest", equipmentClass: "armor", armorType: "plate", levelReq: 4, tier: 2,
+        baseStats: { defense: 7, hpMax: 18, str: 0.5 }, stats: { defense: 7, hpMax: 18, str: 0.5 }, stackable: false, maxStack: 1
+    });
+    item("eg_head_l4", {
+        name: "Elmo Guarda", icon: "⌃", image: "assets/organized/items/helmets/helmets_004.png", price: 47, value: 47,
+        rarity: "Comum", type: "armor", itemType: "HEAD", slot: "head", equipmentClass: "armor", armorType: "plate", levelReq: 4, tier: 2,
+        baseStats: { defense: 4, hpMax: 9 }, stats: { defense: 4, hpMax: 9 }, stackable: false, maxStack: 1
+    });
+    item("eg_legs_l4", {
+        name: "Perneiras Guarda", icon: "Ⅱ", image: "assets/organized/items/legs/legs_004.png", price: 54, value: 54,
+        rarity: "Comum", type: "armor", itemType: "LEGS", slot: "legs", equipmentClass: "armor", armorType: "plate", levelReq: 4, tier: 2,
+        baseStats: { defense: 5, hpMax: 13 }, stats: { defense: 5, hpMax: 13 }, stackable: false, maxStack: 1
+    });
+    item("eg_feet_l4", {
+        name: "Botas Guarda", icon: "⌄", image: "assets/organized/items/boots/boots_004.png", price: 40, value: 40,
+        rarity: "Comum", type: "armor", itemType: "FEET", slot: "feet", equipmentClass: "armor", armorType: "plate", levelReq: 4, tier: 2,
+        baseStats: { defense: 3, hpMax: 7, evasion: 0.003 }, stats: { defense: 3, hpMax: 7, evasion: 0.003 }, stackable: false, maxStack: 1
+    });
+    item("eg_hands_l4", {
+        name: "Luvas Guarda", icon: "✥", price: 40, value: 40,
+        rarity: "Comum", type: "armor", itemType: "HANDS", slot: "hands", equipmentClass: "armor", armorType: "plate", levelReq: 4, tier: 2,
+        baseStats: { defense: 3, hpMax: 7, precision: 1 }, stats: { defense: 3, hpMax: 7, precision: 1 }, stackable: false, maxStack: 1
+    });
+    item("eg_sword_l4", {
+        name: "Espada Guarda", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_014.png", price: 126, value: 126,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "sword", equipmentClass: "martial", levelReq: 4, tier: 2,
+        baseStats: { damageMin: 6, damageMax: 11, precision: 2 }, stats: { damageMin: 6, damageMax: 11, precision: 2 }, stackable: false, maxStack: 1
+    });
+    item("eg_axe_l4", {
+        name: "Machado Guarda", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_024.png", price: 126, value: 126,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "axe", equipmentClass: "martial", levelReq: 4, tier: 2,
+        baseStats: { damageMin: 7, damageMax: 12, precision: 1, critical: 0.009 }, stats: { damageMin: 7, damageMax: 12, precision: 1, critical: 0.009 }, stackable: false, maxStack: 1
+    });
+    item("eg_mace_l4", {
+        name: "Maça Guarda", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_034.png", price: 126, value: 126,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "mace", equipmentClass: "martial", levelReq: 4, tier: 2,
+        baseStats: { damageMin: 6, damageMax: 11, precision: 1, defense: 2 }, stats: { damageMin: 6, damageMax: 11, precision: 1, defense: 2 }, stackable: false, maxStack: 1
+    });
+    item("eg_dagger_l4", {
+        name: "Adaga Guarda", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_044.png", price: 126, value: 126,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "dagger", equipmentClass: "martial", levelReq: 4, tier: 2,
+        baseStats: { damageMin: 5, damageMax: 9, precision: 3, critical: 0.015 }, stats: { damageMin: 5, damageMax: 9, precision: 3, critical: 0.015 }, stackable: false, maxStack: 1
+    });
+    item("eg_bow_l4", {
+        name: "Arco Guarda", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_054.png", price: 126, value: 126,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "bow", equipmentClass: "martial", levelReq: 4, tier: 2,
+        baseStats: { damageMin: 5, damageMax: 10, precision: 4, critical: 0.007 }, stats: { damageMin: 5, damageMax: 10, precision: 4, critical: 0.007 }, stackable: false, maxStack: 1
+    });
+    item("eg_focus_l4", {
+        name: "Foco Guarda", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_064.png", price: 126, value: 126,
+        rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 4, tier: 2,
+        baseStats: { damageMin: 4, damageMax: 8, precision: 2, mag: 4 }, stats: { damageMin: 4, damageMax: 8, precision: 2, mag: 4 }, stackable: false, maxStack: 1
+    });
+    item("eg_shield_l4", {
+        name: "Escudo Guarda", icon: "⬡", type: "shield", itemType: "SHIELD",
+        slot: "offhand", levelReq: 4, tier: 2, equipmentClass: "defensive", rarity: "Comum",
+        price: 109, value: 109,
+        stackable: false, maxStack: 1, baseStats: {"defense":5,"blockChance":0.037,"blockReduction":0.212}, stats: {"defense":5,"blockChance":0.037,"blockReduction":0.212},
+        description: "Escudo de nível 4; melhora defesa e bloqueio sem criar imunidade."
+    });
+    item("eg_ring_l4", {
+        name: "Anel Guarda", icon: "○", image: "assets/organized/items/loot/all/loot_051.png", type: "accessory", itemType: "RING",
+        slot: "ring1", allowedSlots: ["ring1", "ring2"], levelReq: 4, tier: 2,
+        equipmentClass: "accessory", rarity: "Incomum",
+        price: 150, value: 150,
+        stackable: false, maxStack: 1, baseStats: {"critical":0.008,"precision":2}, stats: {"critical":0.008,"precision":2},
+        description: "Joia de nível 4; seus rolls podem colocá-la no ranking mundial."
+    });
+
+    // Set Mercenário (Nível 5)
+    item("eg_chest_l5", {
+        name: "Peitoral Mercenário", icon: "▣", image: "assets/organized/items/armor/armor_005.png", price: 70, value: 70,
+        rarity: "Incomum", type: "armor", itemType: "CHEST", slot: "chest", equipmentClass: "armor", armorType: "plate", levelReq: 5, tier: 3,
+        baseStats: { defense: 8, hpMax: 22, str: 0.5 }, stats: { defense: 8, hpMax: 22, str: 0.5 }, stackable: false, maxStack: 1
+    });
+    item("eg_head_l5", {
+        name: "Elmo Mercenário", icon: "⌃", image: "assets/organized/items/helmets/helmets_005.png", price: 55, value: 55,
+        rarity: "Incomum", type: "armor", itemType: "HEAD", slot: "head", equipmentClass: "armor", armorType: "plate", levelReq: 5, tier: 3,
+        baseStats: { defense: 4, hpMax: 11 }, stats: { defense: 4, hpMax: 11 }, stackable: false, maxStack: 1
+    });
+    item("eg_legs_l5", {
+        name: "Perneiras Mercenário", icon: "Ⅱ", image: "assets/organized/items/legs/legs_005.png", price: 63, value: 63,
+        rarity: "Incomum", type: "armor", itemType: "LEGS", slot: "legs", equipmentClass: "armor", armorType: "plate", levelReq: 5, tier: 3,
+        baseStats: { defense: 6, hpMax: 15 }, stats: { defense: 6, hpMax: 15 }, stackable: false, maxStack: 1
+    });
+    item("eg_feet_l5", {
+        name: "Botas Mercenário", icon: "⌄", image: "assets/organized/items/boots/boots_005.png", price: 47, value: 47,
+        rarity: "Incomum", type: "armor", itemType: "FEET", slot: "feet", equipmentClass: "armor", armorType: "plate", levelReq: 5, tier: 3,
+        baseStats: { defense: 3, hpMax: 9, evasion: 0.003 }, stats: { defense: 3, hpMax: 9, evasion: 0.003 }, stackable: false, maxStack: 1
+    });
+    item("eg_hands_l5", {
+        name: "Luvas Mercenário", icon: "✥", price: 47, value: 47,
+        rarity: "Incomum", type: "armor", itemType: "HANDS", slot: "hands", equipmentClass: "armor", armorType: "plate", levelReq: 5, tier: 3,
+        baseStats: { defense: 3, hpMax: 9, precision: 1 }, stats: { defense: 3, hpMax: 9, precision: 1 }, stackable: false, maxStack: 1
+    });
+    item("eg_sword_l5", {
+        name: "Espada Mercenário", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_015.png", price: 189, value: 189,
+        rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "sword", equipmentClass: "martial", levelReq: 5, tier: 3,
+        baseStats: { damageMin: 7, damageMax: 12, precision: 2 }, stats: { damageMin: 7, damageMax: 12, precision: 2 }, stackable: false, maxStack: 1
+    });
+    item("eg_axe_l5", {
+        name: "Machado Mercenário", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_025.png", price: 189, value: 189,
+        rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "axe", equipmentClass: "martial", levelReq: 5, tier: 3,
+        baseStats: { damageMin: 8, damageMax: 14, precision: 1, critical: 0.01 }, stats: { damageMin: 8, damageMax: 14, precision: 1, critical: 0.01 }, stackable: false, maxStack: 1
+    });
+    item("eg_mace_l5", {
+        name: "Maça Mercenário", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_035.png", price: 189, value: 189,
+        rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "mace", equipmentClass: "martial", levelReq: 5, tier: 3,
+        baseStats: { damageMin: 8, damageMax: 13, precision: 1, defense: 2 }, stats: { damageMin: 8, damageMax: 13, precision: 1, defense: 2 }, stackable: false, maxStack: 1
+    });
+    item("eg_dagger_l5", {
+        name: "Adaga Mercenário", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_045.png", price: 189, value: 189,
+        rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "dagger", equipmentClass: "martial", levelReq: 5, tier: 3,
+        baseStats: { damageMin: 6, damageMax: 10, precision: 3, critical: 0.016 }, stats: { damageMin: 6, damageMax: 10, precision: 3, critical: 0.016 }, stackable: false, maxStack: 1
+    });
+    item("eg_bow_l5", {
+        name: "Arco Mercenário", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_055.png", price: 189, value: 189,
+        rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "bow", equipmentClass: "martial", levelReq: 5, tier: 3,
+        baseStats: { damageMin: 6, damageMax: 11, precision: 4, critical: 0.008 }, stats: { damageMin: 6, damageMax: 11, precision: 4, critical: 0.008 }, stackable: false, maxStack: 1
+    });
+    item("eg_focus_l5", {
+        name: "Foco Mercenário", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_065.png", price: 189, value: 189,
+        rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 5, tier: 3,
+        baseStats: { damageMin: 5, damageMax: 10, precision: 2, mag: 4 }, stats: { damageMin: 5, damageMax: 10, precision: 2, mag: 4 }, stackable: false, maxStack: 1
+    });
+    item("eg_shield_l5", {
+        name: "Escudo Mercenário", icon: "⬡", type: "shield", itemType: "SHIELD",
+        slot: "offhand", levelReq: 5, tier: 3, equipmentClass: "defensive", rarity: "Incomum",
+        price: 163, value: 163,
+        stackable: false, maxStack: 1, baseStats: {"defense":6,"blockChance":0.04,"blockReduction":0.22}, stats: {"defense":6,"blockChance":0.04,"blockReduction":0.22},
+        description: "Escudo de nível 5; melhora defesa e bloqueio sem criar imunidade."
+    });
+    item("eg_ring_l5", {
+        name: "Anel Mercenário", icon: "○", image: "assets/organized/items/loot/all/loot_051.png", type: "accessory", itemType: "RING",
+        slot: "ring1", allowedSlots: ["ring1", "ring2"], levelReq: 5, tier: 3,
+        equipmentClass: "accessory", rarity: "Incomum",
+        price: 222, value: 222,
+        stackable: false, maxStack: 1, baseStats: {"hpMax":12,"manaMax":6}, stats: {"hpMax":12,"manaMax":6},
+        description: "Joia de nível 5; seus rolls podem colocá-la no ranking mundial."
+    });
+
+    // Set Explorador (Nível 6)
+    item("eg_chest_l6", {
+        name: "Peitoral Explorador", icon: "▣", image: "assets/organized/items/armor/armor_006.png", price: 80, value: 80,
+        rarity: "Incomum", type: "armor", itemType: "CHEST", slot: "chest", equipmentClass: "armor", armorType: "plate", levelReq: 6, tier: 3,
+        baseStats: { defense: 9, hpMax: 27, str: 0.5 }, stats: { defense: 9, hpMax: 27, str: 0.5 }, stackable: false, maxStack: 1
+    });
+    item("eg_head_l6", {
+        name: "Elmo Explorador", icon: "⌃", image: "assets/organized/items/helmets/helmets_006.png", price: 63, value: 63,
+        rarity: "Incomum", type: "armor", itemType: "HEAD", slot: "head", equipmentClass: "armor", armorType: "plate", levelReq: 6, tier: 3,
+        baseStats: { defense: 5, hpMax: 14 }, stats: { defense: 5, hpMax: 14 }, stackable: false, maxStack: 1
+    });
+    item("eg_legs_l6", {
+        name: "Perneiras Explorador", icon: "Ⅱ", image: "assets/organized/items/legs/legs_006.png", price: 72, value: 72,
+        rarity: "Incomum", type: "armor", itemType: "LEGS", slot: "legs", equipmentClass: "armor", armorType: "plate", levelReq: 6, tier: 3,
+        baseStats: { defense: 6, hpMax: 19 }, stats: { defense: 6, hpMax: 19 }, stackable: false, maxStack: 1
+    });
+    item("eg_feet_l6", {
+        name: "Botas Explorador", icon: "⌄", image: "assets/organized/items/boots/boots_006.png", price: 54, value: 54,
+        rarity: "Incomum", type: "armor", itemType: "FEET", slot: "feet", equipmentClass: "armor", armorType: "plate", levelReq: 6, tier: 3,
+        baseStats: { defense: 4, hpMax: 11, evasion: 0.003 }, stats: { defense: 4, hpMax: 11, evasion: 0.003 }, stackable: false, maxStack: 1
+    });
+    item("eg_hands_l6", {
+        name: "Luvas Explorador", icon: "✥", price: 54, value: 54,
+        rarity: "Incomum", type: "armor", itemType: "HANDS", slot: "hands", equipmentClass: "armor", armorType: "plate", levelReq: 6, tier: 3,
+        baseStats: { defense: 4, hpMax: 11, precision: 1 }, stats: { defense: 4, hpMax: 11, precision: 1 }, stackable: false, maxStack: 1
+    });
+    item("eg_sword_l6", {
+        name: "Espada Explorador", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_016.png", price: 266, value: 266,
+        rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "sword", equipmentClass: "martial", levelReq: 6, tier: 3,
+        baseStats: { damageMin: 8, damageMax: 14, precision: 3 }, stats: { damageMin: 8, damageMax: 14, precision: 3 }, stackable: false, maxStack: 1
+    });
+    item("eg_axe_l6", {
+        name: "Machado Explorador", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_026.png", price: 266, value: 266,
+        rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "axe", equipmentClass: "martial", levelReq: 6, tier: 3,
+        baseStats: { damageMin: 9, damageMax: 16, precision: 2, critical: 0.011 }, stats: { damageMin: 9, damageMax: 16, precision: 2, critical: 0.011 }, stackable: false, maxStack: 1
+    });
+    item("eg_mace_l6", {
+        name: "Maça Explorador", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_036.png", price: 266, value: 266,
+        rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "mace", equipmentClass: "martial", levelReq: 6, tier: 3,
+        baseStats: { damageMin: 9, damageMax: 15, precision: 2, defense: 2 }, stats: { damageMin: 9, damageMax: 15, precision: 2, defense: 2 }, stackable: false, maxStack: 1
+    });
+    item("eg_dagger_l6", {
+        name: "Adaga Explorador", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_046.png", price: 266, value: 266,
+        rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "dagger", equipmentClass: "martial", levelReq: 6, tier: 3,
+        baseStats: { damageMin: 7, damageMax: 12, precision: 4, critical: 0.017 }, stats: { damageMin: 7, damageMax: 12, precision: 4, critical: 0.017 }, stackable: false, maxStack: 1
+    });
+    item("eg_bow_l6", {
+        name: "Arco Explorador", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_056.png", price: 266, value: 266,
+        rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "bow", equipmentClass: "martial", levelReq: 6, tier: 3,
+        baseStats: { damageMin: 7, damageMax: 13, precision: 5, critical: 0.009 }, stats: { damageMin: 7, damageMax: 13, precision: 5, critical: 0.009 }, stackable: false, maxStack: 1
+    });
+    item("eg_focus_l6", {
+        name: "Foco Explorador", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_066.png", price: 266, value: 266,
+        rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 6, tier: 3,
+        baseStats: { damageMin: 6, damageMax: 11, precision: 3, mag: 5 }, stats: { damageMin: 6, damageMax: 11, precision: 3, mag: 5 }, stackable: false, maxStack: 1
+    });
+    item("eg_shield_l6", {
+        name: "Escudo Explorador", icon: "⬡", type: "shield", itemType: "SHIELD",
+        slot: "offhand", levelReq: 6, tier: 3, equipmentClass: "defensive", rarity: "Incomum",
+        price: 229, value: 229,
+        stackable: false, maxStack: 1, baseStats: {"defense":7,"blockChance":0.043,"blockReduction":0.228}, stats: {"defense":7,"blockChance":0.043,"blockReduction":0.228},
+        description: "Escudo de nível 6; melhora defesa e bloqueio sem criar imunidade."
+    });
+    item("eg_ring_l6", {
+        name: "Anel Explorador", icon: "○", image: "assets/organized/items/loot/all/loot_051.png", type: "accessory", itemType: "RING",
+        slot: "ring1", allowedSlots: ["ring1", "ring2"], levelReq: 6, tier: 3,
+        equipmentClass: "accessory", rarity: "Incomum",
+        price: 310, value: 310,
+        stackable: false, maxStack: 1, baseStats: {"critical":0.01,"precision":2}, stats: {"critical":0.01,"precision":2},
+        description: "Joia de nível 6; seus rolls podem colocá-la no ranking mundial."
+    });
+
+    // Set Veterano (Nível 7)
+    item("eg_chest_l7", {
+        name: "Peitoral Veterano", icon: "▣", image: "assets/organized/items/armor/armor_007.png", price: 90, value: 90,
+        rarity: "Incomum", type: "armor", itemType: "CHEST", slot: "chest", equipmentClass: "armor", armorType: "plate", levelReq: 7, tier: 4,
+        baseStats: { defense: 11, hpMax: 31, str: 0.5 }, stats: { defense: 11, hpMax: 31, str: 0.5 }, stackable: false, maxStack: 1
+    });
+    item("eg_head_l7", {
+        name: "Elmo Veterano", icon: "⌃", image: "assets/organized/items/helmets/helmets_007.png", price: 71, value: 71,
+        rarity: "Incomum", type: "armor", itemType: "HEAD", slot: "head", equipmentClass: "armor", armorType: "plate", levelReq: 7, tier: 4,
+        baseStats: { defense: 6, hpMax: 16 }, stats: { defense: 6, hpMax: 16 }, stackable: false, maxStack: 1
+    });
+    item("eg_legs_l7", {
+        name: "Perneiras Veterano", icon: "Ⅱ", image: "assets/organized/items/legs/legs_007.png", price: 81, value: 81,
+        rarity: "Incomum", type: "armor", itemType: "LEGS", slot: "legs", equipmentClass: "armor", armorType: "plate", levelReq: 7, tier: 4,
+        baseStats: { defense: 8, hpMax: 22 }, stats: { defense: 8, hpMax: 22 }, stackable: false, maxStack: 1
+    });
+    item("eg_feet_l7", {
+        name: "Botas Veterano", icon: "⌄", image: "assets/organized/items/boots/boots_007.png", price: 61, value: 61,
+        rarity: "Incomum", type: "armor", itemType: "FEET", slot: "feet", equipmentClass: "armor", armorType: "plate", levelReq: 7, tier: 4,
+        baseStats: { defense: 4, hpMax: 12, evasion: 0.003 }, stats: { defense: 4, hpMax: 12, evasion: 0.003 }, stackable: false, maxStack: 1
+    });
+    item("eg_hands_l7", {
+        name: "Luvas Veterano", icon: "✥", price: 61, value: 61,
+        rarity: "Incomum", type: "armor", itemType: "HANDS", slot: "hands", equipmentClass: "armor", armorType: "plate", levelReq: 7, tier: 4,
+        baseStats: { defense: 4, hpMax: 12, precision: 1 }, stats: { defense: 4, hpMax: 12, precision: 1 }, stackable: false, maxStack: 1
+    });
+    item("eg_sword_l7", {
+        name: "Espada Veterano", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_017.png", price: 357, value: 357,
+        rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "sword", equipmentClass: "martial", levelReq: 7, tier: 4,
+        baseStats: { damageMin: 9, damageMax: 16, precision: 3 }, stats: { damageMin: 9, damageMax: 16, precision: 3 }, stackable: false, maxStack: 1
+    });
+    item("eg_axe_l7", {
+        name: "Machado Veterano", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_027.png", price: 357, value: 357,
+        rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "axe", equipmentClass: "martial", levelReq: 7, tier: 4,
+        baseStats: { damageMin: 11, damageMax: 18, precision: 2, critical: 0.012 }, stats: { damageMin: 11, damageMax: 18, precision: 2, critical: 0.012 }, stackable: false, maxStack: 1
+    });
+    item("eg_mace_l7", {
+        name: "Maça Veterano", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_037.png", price: 357, value: 357,
+        rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "mace", equipmentClass: "martial", levelReq: 7, tier: 4,
+        baseStats: { damageMin: 10, damageMax: 17, precision: 2, defense: 2 }, stats: { damageMin: 10, damageMax: 17, precision: 2, defense: 2 }, stackable: false, maxStack: 1
+    });
+    item("eg_dagger_l7", {
+        name: "Adaga Veterano", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_047.png", price: 357, value: 357,
+        rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "dagger", equipmentClass: "martial", levelReq: 7, tier: 4,
+        baseStats: { damageMin: 8, damageMax: 13, precision: 4, critical: 0.018 }, stats: { damageMin: 8, damageMax: 13, precision: 4, critical: 0.018 }, stackable: false, maxStack: 1
+    });
+    item("eg_bow_l7", {
+        name: "Arco Veterano", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_057.png", price: 357, value: 357,
+        rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "bow", equipmentClass: "martial", levelReq: 7, tier: 4,
+        baseStats: { damageMin: 9, damageMax: 15, precision: 5, critical: 0.01 }, stats: { damageMin: 9, damageMax: 15, precision: 5, critical: 0.01 }, stackable: false, maxStack: 1
+    });
+    item("eg_focus_l7", {
+        name: "Foco Veterano", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_067.png", price: 357, value: 357,
+        rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 7, tier: 4,
+        baseStats: { damageMin: 7, damageMax: 12, precision: 3, mag: 5 }, stats: { damageMin: 7, damageMax: 12, precision: 3, mag: 5 }, stackable: false, maxStack: 1
+    });
+    item("eg_shield_l7", {
+        name: "Escudo Veterano", icon: "⬡", type: "shield", itemType: "SHIELD",
+        slot: "offhand", levelReq: 7, tier: 4, equipmentClass: "defensive", rarity: "Incomum",
+        price: 307, value: 307,
+        stackable: false, maxStack: 1, baseStats: {"defense":7,"blockChance":0.046,"blockReduction":0.236}, stats: {"defense":7,"blockChance":0.046,"blockReduction":0.236},
+        description: "Escudo de nível 7; melhora defesa e bloqueio sem criar imunidade."
+    });
+    item("eg_ring_l7", {
+        name: "Anel Veterano", icon: "○", image: "assets/organized/items/loot/all/loot_051.png", type: "accessory", itemType: "RING",
+        slot: "ring1", allowedSlots: ["ring1", "ring2"], levelReq: 7, tier: 4,
+        equipmentClass: "accessory", rarity: "Incomum",
+        price: 414, value: 414,
+        stackable: false, maxStack: 1, baseStats: {"hpMax":16,"manaMax":8}, stats: {"hpMax":16,"manaMax":8},
+        description: "Joia de nível 7; seus rolls podem colocá-la no ranking mundial."
+    });
+
+    // Set Coliseu (Nível 8)
+    item("eg_chest_l8", {
+        name: "Peitoral Coliseu", icon: "▣", image: "assets/organized/items/armor/armor_008.png", price: 100, value: 100,
+        rarity: "Incomum", type: "armor", itemType: "CHEST", slot: "chest", equipmentClass: "armor", armorType: "plate", levelReq: 8, tier: 4,
+        baseStats: { defense: 12, hpMax: 36, str: 0.5 }, stats: { defense: 12, hpMax: 36, str: 0.5 }, stackable: false, maxStack: 1
+    });
+    item("eg_head_l8", {
+        name: "Elmo Coliseu", icon: "⌃", image: "assets/organized/items/helmets/helmets_008.png", price: 79, value: 79,
+        rarity: "Incomum", type: "armor", itemType: "HEAD", slot: "head", equipmentClass: "armor", armorType: "plate", levelReq: 8, tier: 4,
+        baseStats: { defense: 6, hpMax: 18 }, stats: { defense: 6, hpMax: 18 }, stackable: false, maxStack: 1
+    });
+    item("eg_legs_l8", {
+        name: "Perneiras Coliseu", icon: "Ⅱ", image: "assets/organized/items/legs/legs_008.png", price: 90, value: 90,
+        rarity: "Incomum", type: "armor", itemType: "LEGS", slot: "legs", equipmentClass: "armor", armorType: "plate", levelReq: 8, tier: 4,
+        baseStats: { defense: 8, hpMax: 25 }, stats: { defense: 8, hpMax: 25 }, stackable: false, maxStack: 1
+    });
+    item("eg_feet_l8", {
+        name: "Botas Coliseu", icon: "⌄", image: "assets/organized/items/boots/boots_008.png", price: 68, value: 68,
+        rarity: "Incomum", type: "armor", itemType: "FEET", slot: "feet", equipmentClass: "armor", armorType: "plate", levelReq: 8, tier: 4,
+        baseStats: { defense: 5, hpMax: 14, evasion: 0.003 }, stats: { defense: 5, hpMax: 14, evasion: 0.003 }, stackable: false, maxStack: 1
+    });
+    item("eg_hands_l8", {
+        name: "Luvas Coliseu", icon: "✥", price: 68, value: 68,
+        rarity: "Incomum", type: "armor", itemType: "HANDS", slot: "hands", equipmentClass: "armor", armorType: "plate", levelReq: 8, tier: 4,
+        baseStats: { defense: 5, hpMax: 14, precision: 1 }, stats: { defense: 5, hpMax: 14, precision: 1 }, stackable: false, maxStack: 1
+    });
+    item("eg_sword_l8", {
+        name: "Espada Coliseu", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_018.png", price: 462, value: 462,
+        rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "sword", equipmentClass: "martial", levelReq: 8, tier: 4,
+        baseStats: { damageMin: 10, damageMax: 18, precision: 3 }, stats: { damageMin: 10, damageMax: 18, precision: 3 }, stackable: false, maxStack: 1
+    });
+    item("eg_axe_l8", {
+        name: "Machado Coliseu", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_028.png", price: 462, value: 462,
+        rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "axe", equipmentClass: "martial", levelReq: 8, tier: 4,
+        baseStats: { damageMin: 12, damageMax: 20, precision: 2, critical: 0.012 }, stats: { damageMin: 12, damageMax: 20, precision: 2, critical: 0.012 }, stackable: false, maxStack: 1
+    });
+    item("eg_mace_l8", {
+        name: "Maça Coliseu", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_038.png", price: 462, value: 462,
+        rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "mace", equipmentClass: "martial", levelReq: 8, tier: 4,
+        baseStats: { damageMin: 11, damageMax: 19, precision: 2, defense: 3 }, stats: { damageMin: 11, damageMax: 19, precision: 2, defense: 3 }, stackable: false, maxStack: 1
+    });
+    item("eg_dagger_l8", {
+        name: "Adaga Coliseu", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_048.png", price: 462, value: 462,
+        rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "dagger", equipmentClass: "martial", levelReq: 8, tier: 4,
+        baseStats: { damageMin: 8, damageMax: 15, precision: 4, critical: 0.018 }, stats: { damageMin: 8, damageMax: 15, precision: 4, critical: 0.018 }, stackable: false, maxStack: 1
+    });
+    item("eg_bow_l8", {
+        name: "Arco Coliseu", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_058.png", price: 462, value: 462,
+        rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "bow", equipmentClass: "martial", levelReq: 8, tier: 4,
+        baseStats: { damageMin: 10, damageMax: 16, precision: 5, critical: 0.01 }, stats: { damageMin: 10, damageMax: 16, precision: 5, critical: 0.01 }, stackable: false, maxStack: 1
+    });
+    item("eg_focus_l8", {
+        name: "Foco Coliseu", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_068.png", price: 462, value: 462,
+        rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 8, tier: 4,
+        baseStats: { damageMin: 8, damageMax: 14, precision: 3, mag: 6 }, stats: { damageMin: 8, damageMax: 14, precision: 3, mag: 6 }, stackable: false, maxStack: 1
+    });
+    item("eg_shield_l8", {
+        name: "Escudo Coliseu", icon: "⬡", type: "shield", itemType: "SHIELD",
+        slot: "offhand", levelReq: 8, tier: 4, equipmentClass: "defensive", rarity: "Incomum",
+        price: 397, value: 397,
+        stackable: false, maxStack: 1, baseStats: {"defense":8,"blockChance":0.049,"blockReduction":0.244}, stats: {"defense":8,"blockChance":0.049,"blockReduction":0.244},
+        description: "Escudo de nível 8; melhora defesa e bloqueio sem criar imunidade."
+    });
+    item("eg_ring_l8", {
+        name: "Anel Coliseu", icon: "○", image: "assets/organized/items/loot/all/loot_051.png", type: "accessory", itemType: "RING",
+        slot: "ring1", allowedSlots: ["ring1", "ring2"], levelReq: 8, tier: 4,
+        equipmentClass: "accessory", rarity: "Raro",
+        price: 534, value: 534,
+        stackable: false, maxStack: 1, baseStats: {"critical":0.012,"precision":3}, stats: {"critical":0.012,"precision":3},
+        description: "Joia de nível 8; seus rolls podem colocá-la no ranking mundial."
+    });
+
+    // Set Rúnico (Nível 9)
+    item("eg_chest_l9", {
+        name: "Peitoral Rúnico", icon: "▣", image: "assets/organized/items/armor/armor_009.png", price: 110, value: 110,
+        rarity: "Raro", type: "armor", itemType: "CHEST", slot: "chest", equipmentClass: "armor", armorType: "plate", levelReq: 9, tier: 5,
+        baseStats: { defense: 13, hpMax: 40, str: 0.5 }, stats: { defense: 13, hpMax: 40, str: 0.5 }, stackable: false, maxStack: 1
+    });
+    item("eg_head_l9", {
+        name: "Elmo Rúnico", icon: "⌃", image: "assets/organized/items/helmets/helmets_009.png", price: 87, value: 87,
+        rarity: "Raro", type: "armor", itemType: "HEAD", slot: "head", equipmentClass: "armor", armorType: "plate", levelReq: 9, tier: 5,
+        baseStats: { defense: 7, hpMax: 20 }, stats: { defense: 7, hpMax: 20 }, stackable: false, maxStack: 1
+    });
+    item("eg_legs_l9", {
+        name: "Perneiras Rúnico", icon: "Ⅱ", image: "assets/organized/items/legs/legs_009.png", price: 99, value: 99,
+        rarity: "Raro", type: "armor", itemType: "LEGS", slot: "legs", equipmentClass: "armor", armorType: "plate", levelReq: 9, tier: 5,
+        baseStats: { defense: 9, hpMax: 28 }, stats: { defense: 9, hpMax: 28 }, stackable: false, maxStack: 1
+    });
+    item("eg_feet_l9", {
+        name: "Botas Rúnico", icon: "⌄", image: "assets/organized/items/boots/boots_009.png", price: 75, value: 75,
+        rarity: "Raro", type: "armor", itemType: "FEET", slot: "feet", equipmentClass: "armor", armorType: "plate", levelReq: 9, tier: 5,
+        baseStats: { defense: 5, hpMax: 16, evasion: 0.003 }, stats: { defense: 5, hpMax: 16, evasion: 0.003 }, stackable: false, maxStack: 1
+    });
+    item("eg_hands_l9", {
+        name: "Luvas Rúnico", icon: "✥", price: 75, value: 75,
+        rarity: "Raro", type: "armor", itemType: "HANDS", slot: "hands", equipmentClass: "armor", armorType: "plate", levelReq: 9, tier: 5,
+        baseStats: { defense: 5, hpMax: 16, precision: 1 }, stats: { defense: 5, hpMax: 16, precision: 1 }, stackable: false, maxStack: 1
+    });
+    item("eg_sword_l9", {
+        name: "Espada Rúnico", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_019.png", price: 581, value: 581,
+        rarity: "Raro", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "sword", equipmentClass: "martial", levelReq: 9, tier: 5,
+        baseStats: { damageMin: 12, damageMax: 19, precision: 4 }, stats: { damageMin: 12, damageMax: 19, precision: 4 }, stackable: false, maxStack: 1
+    });
+    item("eg_axe_l9", {
+        name: "Machado Rúnico", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_029.png", price: 581, value: 581,
+        rarity: "Raro", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "axe", equipmentClass: "martial", levelReq: 9, tier: 5,
+        baseStats: { damageMin: 13, damageMax: 22, precision: 3, critical: 0.013 }, stats: { damageMin: 13, damageMax: 22, precision: 3, critical: 0.013 }, stackable: false, maxStack: 1
+    });
+    item("eg_mace_l9", {
+        name: "Maça Rúnico", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_039.png", price: 581, value: 581,
+        rarity: "Raro", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "mace", equipmentClass: "martial", levelReq: 9, tier: 5,
+        baseStats: { damageMin: 13, damageMax: 21, precision: 3, defense: 3 }, stats: { damageMin: 13, damageMax: 21, precision: 3, defense: 3 }, stackable: false, maxStack: 1
+    });
+    item("eg_dagger_l9", {
+        name: "Adaga Rúnico", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_049.png", price: 581, value: 581,
+        rarity: "Raro", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "dagger", equipmentClass: "martial", levelReq: 9, tier: 5,
+        baseStats: { damageMin: 9, damageMax: 16, precision: 5, critical: 0.019 }, stats: { damageMin: 9, damageMax: 16, precision: 5, critical: 0.019 }, stackable: false, maxStack: 1
+    });
+    item("eg_bow_l9", {
+        name: "Arco Rúnico", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_059.png", price: 581, value: 581,
+        rarity: "Raro", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "bow", equipmentClass: "martial", levelReq: 9, tier: 5,
+        baseStats: { damageMin: 11, damageMax: 18, precision: 6, critical: 0.011 }, stats: { damageMin: 11, damageMax: 18, precision: 6, critical: 0.011 }, stackable: false, maxStack: 1
+    });
+    item("eg_focus_l9", {
+        name: "Foco Rúnico", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_069.png", price: 581, value: 581,
+        rarity: "Raro", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 9, tier: 5,
+        baseStats: { damageMin: 9, damageMax: 15, precision: 4, mag: 6 }, stats: { damageMin: 9, damageMax: 15, precision: 4, mag: 6 }, stackable: false, maxStack: 1
+    });
+    item("eg_shield_l9", {
+        name: "Escudo Rúnico", icon: "⬡", type: "shield", itemType: "SHIELD",
+        slot: "offhand", levelReq: 9, tier: 5, equipmentClass: "defensive", rarity: "Raro",
+        price: 499, value: 499,
+        stackable: false, maxStack: 1, baseStats: {"defense":9,"blockChance":0.052,"blockReduction":0.252}, stats: {"defense":9,"blockChance":0.052,"blockReduction":0.252},
+        description: "Escudo de nível 9; melhora defesa e bloqueio sem criar imunidade."
+    });
+    item("eg_ring_l9", {
+        name: "Anel Rúnico", icon: "○", image: "assets/organized/items/loot/all/loot_051.png", type: "accessory", itemType: "RING",
+        slot: "ring1", allowedSlots: ["ring1", "ring2"], levelReq: 9, tier: 5,
+        equipmentClass: "accessory", rarity: "Raro",
+        price: 670, value: 670,
+        stackable: false, maxStack: 1, baseStats: {"hpMax":20,"manaMax":10}, stats: {"hpMax":20,"manaMax":10},
+        description: "Joia de nível 9; seus rolls podem colocá-la no ranking mundial."
+    });
+
+    // Set Aetheriano (Nível 10)
+    item("eg_chest_l10", {
+        name: "Peitoral Aetheriano", icon: "▣", image: "assets/organized/items/armor/armor_010.png", price: 120, value: 120,
+        rarity: "Raro", type: "armor", itemType: "CHEST", slot: "chest", equipmentClass: "armor", armorType: "plate", levelReq: 10, tier: 5,
+        baseStats: { defense: 14, hpMax: 45, str: 0.5 }, stats: { defense: 14, hpMax: 45, str: 0.5 }, stackable: false, maxStack: 1
+    });
+    item("eg_head_l10", {
+        name: "Elmo Aetheriano", icon: "⌃", image: "assets/organized/items/helmets/helmets_010.png", price: 95, value: 95,
+        rarity: "Raro", type: "armor", itemType: "HEAD", slot: "head", equipmentClass: "armor", armorType: "plate", levelReq: 10, tier: 5,
+        baseStats: { defense: 7, hpMax: 23 }, stats: { defense: 7, hpMax: 23 }, stackable: false, maxStack: 1
+    });
+    item("eg_legs_l10", {
+        name: "Perneiras Aetheriano", icon: "Ⅱ", image: "assets/organized/items/legs/legs_010.png", price: 108, value: 108,
+        rarity: "Raro", type: "armor", itemType: "LEGS", slot: "legs", equipmentClass: "armor", armorType: "plate", levelReq: 10, tier: 5,
+        baseStats: { defense: 10, hpMax: 31 }, stats: { defense: 10, hpMax: 31 }, stackable: false, maxStack: 1
+    });
+    item("eg_feet_l10", {
+        name: "Botas Aetheriano", icon: "⌄", image: "assets/organized/items/boots/boots_010.png", price: 82, value: 82,
+        rarity: "Raro", type: "armor", itemType: "FEET", slot: "feet", equipmentClass: "armor", armorType: "plate", levelReq: 10, tier: 5,
+        baseStats: { defense: 6, hpMax: 18, evasion: 0.003 }, stats: { defense: 6, hpMax: 18, evasion: 0.003 }, stackable: false, maxStack: 1
+    });
+    item("eg_hands_l10", {
+        name: "Luvas Aetheriano", icon: "✥", price: 82, value: 82,
+        rarity: "Raro", type: "armor", itemType: "HANDS", slot: "hands", equipmentClass: "armor", armorType: "plate", levelReq: 10, tier: 5,
+        baseStats: { defense: 6, hpMax: 18, precision: 1 }, stats: { defense: 6, hpMax: 18, precision: 1 }, stackable: false, maxStack: 1
+    });
+    item("eg_sword_l10", {
+        name: "Espada Aetheriano", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_020.png", price: 714, value: 714,
+        rarity: "Raro", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "sword", equipmentClass: "martial", levelReq: 10, tier: 5,
+        baseStats: { damageMin: 13, damageMax: 21, precision: 4 }, stats: { damageMin: 13, damageMax: 21, precision: 4 }, stackable: false, maxStack: 1
+    });
+    item("eg_axe_l10", {
+        name: "Machado Aetheriano", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_030.png", price: 714, value: 714,
+        rarity: "Raro", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "axe", equipmentClass: "martial", levelReq: 10, tier: 5,
+        baseStats: { damageMin: 15, damageMax: 24, precision: 3, critical: 0.014 }, stats: { damageMin: 15, damageMax: 24, precision: 3, critical: 0.014 }, stackable: false, maxStack: 1
+    });
+    item("eg_mace_l10", {
+        name: "Maça Aetheriano", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_040.png", price: 714, value: 714,
+        rarity: "Raro", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "mace", equipmentClass: "martial", levelReq: 10, tier: 5,
+        baseStats: { damageMin: 14, damageMax: 23, precision: 3, defense: 3 }, stats: { damageMin: 14, damageMax: 23, precision: 3, defense: 3 }, stackable: false, maxStack: 1
+    });
+    item("eg_dagger_l10", {
+        name: "Adaga Aetheriano", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_050.png", price: 714, value: 714,
+        rarity: "Raro", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "dagger", equipmentClass: "martial", levelReq: 10, tier: 5,
+        baseStats: { damageMin: 10, damageMax: 17, precision: 5, critical: 0.02 }, stats: { damageMin: 10, damageMax: 17, precision: 5, critical: 0.02 }, stackable: false, maxStack: 1
+    });
+    item("eg_bow_l10", {
+        name: "Arco Aetheriano", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_060.png", price: 714, value: 714,
+        rarity: "Raro", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "bow", equipmentClass: "martial", levelReq: 10, tier: 5,
+        baseStats: { damageMin: 12, damageMax: 19, precision: 6, critical: 0.012 }, stats: { damageMin: 12, damageMax: 19, precision: 6, critical: 0.012 }, stackable: false, maxStack: 1
+    });
+    item("eg_focus_l10", {
+        name: "Foco Aetheriano", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_070.png", price: 714, value: 714,
+        rarity: "Raro", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 10, tier: 5,
+        baseStats: { damageMin: 10, damageMax: 17, precision: 4, mag: 7 }, stats: { damageMin: 10, damageMax: 17, precision: 4, mag: 7 }, stackable: false, maxStack: 1
+    });
+    item("eg_shield_l10", {
+        name: "Escudo Aetheriano", icon: "⬡", type: "shield", itemType: "SHIELD",
+        slot: "offhand", levelReq: 10, tier: 5, equipmentClass: "defensive", rarity: "Raro",
+        price: 613, value: 613,
+        stackable: false, maxStack: 1, baseStats: {"defense":10,"blockChance":0.055,"blockReduction":0.26}, stats: {"defense":10,"blockChance":0.055,"blockReduction":0.26},
+        description: "Escudo de nível 10; melhora defesa e bloqueio sem criar imunidade."
+    });
+    item("eg_ring_l10", {
+        name: "Anel Aetheriano", icon: "○", image: "assets/organized/items/loot/all/loot_051.png", type: "accessory", itemType: "RING",
+        slot: "ring1", allowedSlots: ["ring1", "ring2"], levelReq: 10, tier: 5,
+        equipmentClass: "accessory", rarity: "Raro",
+        price: 822, value: 822,
+        stackable: false, maxStack: 1, baseStats: {"critical":0.014,"precision":3}, stats: {"critical":0.014,"precision":3},
+        description: "Joia de nível 10; seus rolls podem colocá-la no ranking mundial."
+    });
+
+    // ── Ferramentas de profissão (exigidas por ProfessionSystem) ──
+    item("apprentice_pickaxe", {
+        name: "Picareta de Aprendiz", icon: "⛏", image: "assets/organized/items/weapons/all/weapons_003.png", price: 25, value: 25,
+        rarity: "Comum", type: "tool", itemType: "TOOL", toolType: "mining", levelReq: 1, tier: 1,
+        stackable: false, maxStack: 1, description: "Ferramenta básica para extrair minérios em campo."
+    });
+    item("skinning_knife", {
+        name: "Faca de Esfolar", icon: "◒", image: "assets/organized/items/loot/all/loot_066.png", price: 25, value: 25,
+        rarity: "Comum", type: "tool", itemType: "TOOL", toolType: "skinning", levelReq: 1, tier: 1,
+        stackable: false, maxStack: 1, description: "Lâmina curva para extrair couro de criaturas abatidas."
+    });
+    item("herb_knife", {
+        name: "Foice de Herbalista", icon: "❧", image: "assets/organized/items/loot/all/loot_084.png", price: 25, value: 25,
+        rarity: "Comum", type: "tool", itemType: "TOOL", toolType: "herbalism", levelReq: 1, tier: 1,
+        stackable: false, maxStack: 1, description: "Corta ervas sem danificar as propriedades alquímicas."
+    });
+    item("smith_hammer", {
+        name: "Martelo de Forja", icon: "⚒", image: "assets/organized/items/weapons/all/weapons_002.png", price: 25, value: 25,
+        rarity: "Comum", type: "tool", itemType: "TOOL", toolType: "smithing", levelReq: 1, tier: 1,
+        stackable: false, maxStack: 1, description: "Martelo pesado usado para refinar lingotes na forja."
+    });
+
 
     function hash(value) {
         let result = 2166136261;
@@ -317,17 +805,17 @@
 
     function equipmentPool(level) {
         const safeLevel = clamp(Math.floor(Number(level) || 1), 1, 10);
-        const pool = [
-            ...Object.keys(WEAPON_FAMILIES).map((family) => `eg_${family}_l${safeLevel}`),
+        return [
+            `eg_sword_l${safeLevel}`, `eg_axe_l${safeLevel}`, `eg_mace_l${safeLevel}`,
+            `eg_dagger_l${safeLevel}`, `eg_bow_l${safeLevel}`, `eg_focus_l${safeLevel}`,
             `eg_shield_l${safeLevel}`,
-            `eg_ring_l${safeLevel}`
+            `eg_ring_l${safeLevel}`,
+            `eg_head_l${safeLevel}`,
+            `eg_chest_l${safeLevel}`,
+            `eg_hands_l${safeLevel}`,
+            `eg_legs_l${safeLevel}`,
+            `eg_feet_l${safeLevel}`
         ];
-        Object.keys(ARMOR_PIECES).forEach((slot) => {
-            pool.push(`eg_${slot}_cloth_l${safeLevel}`);
-            pool.push(`eg_${slot}_leather_l${safeLevel}`);
-            pool.push(`eg_${slot}_plate_l${safeLevel}`);
-        });
-        return pool;
     }
 
     function signatureMaterials(monster) {

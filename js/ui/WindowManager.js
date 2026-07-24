@@ -688,41 +688,15 @@
         },
 
         getDefaultWindowPosition(windowId, element) {
-            const rect = element.getBoundingClientRect();
-            const width = Math.max(rect.width, 320);
-            const height = Math.max(rect.height, 220);
-            const gap = 16;
+            const winWidth = Math.min(960, Math.floor(window.innerWidth * 0.85));
+            const winHeight = Math.min(640, Math.max(280, window.innerHeight - 160));
             const safeTop = this.getSafeTopOffset();
-            const top = Math.max(safeTop, Math.min(112, window.innerHeight * 0.12));
-            const maxLeft = Math.max(gap, window.innerWidth - width - gap);
-            const maxTop = Math.max(safeTop, window.innerHeight - height - gap);
+            const safeBottom = 80;
 
-            const presets = {
-                "inventory-view": { left: gap, top },
-                "skills-view": { left: maxLeft, top },
-                "npc-shop-view": {
-                    left: Math.max(gap, (window.innerWidth - width) / 2),
-                    top
-                },
-                "premium-shop-view": {
-                    left: Math.max(gap, (window.innerWidth - width) / 2),
-                    top
-                },
-                "player-market-view": {
-                    left: Math.max(gap, (window.innerWidth - width) / 2),
-                    top
-                }
-            };
+            const left = Math.max(16, Math.floor((window.innerWidth - winWidth) / 2));
+            const top = Math.max(safeTop, Math.floor((window.innerHeight - winHeight - safeBottom) / 2));
 
-            const selected = presets[windowId] || {
-                left: Math.max(gap, (window.innerWidth - width) / 2),
-                top: Math.max(gap, Math.min(top, maxTop))
-            };
-
-            return {
-                left: Math.min(maxLeft, Math.max(gap, selected.left)),
-                top: Math.min(maxTop, Math.max(safeTop, selected.top))
-            };
+            return { left, top };
         },
 
         getSafeTopOffset() {
@@ -735,26 +709,32 @@
             if (!element || this.isWorldWindow(windowId)) return false;
 
             const safeTop = this.getSafeTopOffset();
-            const safeBottom = 8;
-            const availableHeight = Math.max(220, window.innerHeight - safeTop - safeBottom);
+            const safeBottom = 80;
+            const availableHeight = Math.max(280, window.innerHeight - safeTop - safeBottom);
             element.style.setProperty("max-height", `${Math.floor(availableHeight)}px`, "important");
 
-            const stored = this.getStoredWindowPositions()[windowId];
-            const position = options.position || stored ||
-                this.getDefaultWindowPosition(windowId, element);
-            const rect = element.getBoundingClientRect();
-            const maxLeft = Math.max(8, window.innerWidth - rect.width - 8);
-            const maxTop = Math.max(safeTop, window.innerHeight - rect.height - safeBottom);
-            const left = Math.min(maxLeft, Math.max(8, Number(position.left) || 8));
-            const top = Math.min(maxTop, Math.max(safeTop, Number(position.top) || safeTop));
+            const stored = options.resetPosition ? null : this.getStoredWindowPositions()[windowId];
+            
+            // Validate stored position is on-screen
+            let position = options.position || stored;
+            if (position) {
+                if (position.left < 0 || position.left > window.innerWidth - 100 ||
+                    position.top < 0 || position.top > window.innerHeight - 100) {
+                    position = null;
+                }
+            }
 
-            element.style.setProperty("left", `${Math.round(left)}px`, "important");
-            element.style.setProperty("top", `${Math.round(top)}px`, "important");
+            if (!position) {
+                position = this.getDefaultWindowPosition(windowId, element);
+            }
+
+            element.style.setProperty("left", `${Math.round(position.left)}px`, "important");
+            element.style.setProperty("top", `${Math.round(position.top)}px`, "important");
             element.style.setProperty("right", "auto", "important");
             element.style.setProperty("transform", "none", "important");
             element.dataset.floatingPositioned = "true";
 
-            return { left, top };
+            return { left: position.left, top: position.top };
         },
 
         getWindow(windowId) {

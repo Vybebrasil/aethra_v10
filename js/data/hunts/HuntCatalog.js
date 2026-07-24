@@ -17,7 +17,8 @@
             icon: "♣",
             position: { x: 17, y: 67 },
             rewards: ["Couro", "Carne", "Ervas"],
-            encounterChance: 0.35,
+            maxRooms: 10,
+            baseMobsPerRoom: [2, 3, 3, 4, 4, 5, 5, 6, 6, 1],
             focus: { id: "skinning", name: "Couraria / Feras", skill: "skinning", icon: "♣" },
             modifiers: {
                 combatXp: 1.0,
@@ -49,7 +50,8 @@
             icon: "⚑",
             position: { x: 35, y: 48 },
             rewards: ["Gold", "Tecido", "Fragmentos de arma"],
-            encounterChance: 0.39,
+            maxRooms: 10,
+            baseMobsPerRoom: [2, 3, 3, 4, 4, 5, 5, 6, 6, 1],
             focus: { id: "gold", name: "Gold / Saques", skill: null, icon: "●" },
             modifiers: {
                 combatXp: 1.15,
@@ -80,7 +82,8 @@
             icon: "▦",
             position: { x: 61, y: 73 },
             rewards: ["Ossos", "Ectoplasma", "Relíquias"],
-            encounterChance: 0.43,
+            maxRooms: 10,
+            baseMobsPerRoom: [2, 3, 3, 4, 4, 5, 5, 6, 6, 1],
             focus: { id: "thievery", name: "Ladinagem / Baús", skill: "thievery", icon: "⌖" },
             modifiers: {
                 combatXp: 0.85,
@@ -111,7 +114,8 @@
             icon: "✣",
             position: { x: 28, y: 25 },
             rewards: ["Veneno", "Couro", "Baús ocultos"],
-            encounterChance: 0.45,
+            maxRooms: 10,
+            baseMobsPerRoom: [2, 3, 3, 4, 4, 5, 5, 6, 6, 1],
             focus: { id: "survival", name: "Sobrevivência", skill: "survival", icon: "▲" },
             modifiers: {
                 combatXp: 1.0,
@@ -142,7 +146,8 @@
             icon: "☾",
             position: { x: 48, y: 88 },
             rewards: ["Ervas", "Resina", "Essência"],
-            encounterChance: 0.48,
+            maxRooms: 10,
+            baseMobsPerRoom: [2, 3, 3, 4, 4, 5, 5, 6, 6, 1],
             focus: { id: "herbalism", name: "Herbalismo / Ervas", skill: "herbalism", icon: "✿" },
             modifiers: {
                 combatXp: 0.9,
@@ -173,7 +178,8 @@
             icon: "⛏",
             position: { x: 78, y: 27 },
             rewards: ["Minério", "Núcleos", "Mineração"],
-            encounterChance: 0.49,
+            maxRooms: 10,
+            baseMobsPerRoom: [2, 3, 3, 4, 4, 5, 5, 6, 6, 1],
             focus: { id: "mining", name: "Mineração / Minérios", skill: "mining", icon: "⛏" },
             modifiers: {
                 combatXp: 0.9,
@@ -204,7 +210,8 @@
             icon: "❄",
             position: { x: 57, y: 15 },
             rewards: ["Peles raras", "Ossos", "Essência gélida"],
-            encounterChance: 0.51,
+            maxRooms: 10,
+            baseMobsPerRoom: [2, 3, 3, 4, 4, 5, 5, 6, 6, 1],
             focus: { id: "survival", name: "Sobrevivência gélida", skill: "survival", icon: "❄" },
             modifiers: {
                 combatXp: 1.1,
@@ -235,7 +242,8 @@
             icon: "♨",
             position: { x: 8, y: 39 },
             rewards: ["Escamas", "Essências", "Loot dracônico"],
-            encounterChance: 0.53,
+            maxRooms: 10,
+            baseMobsPerRoom: [2, 3, 3, 4, 4, 5, 5, 6, 6, 1],
             focus: { id: "skinning", name: "Couraria Dracônica", skill: "skinning", icon: "♨" },
             modifiers: {
                 combatXp: 1.3,
@@ -266,7 +274,8 @@
             icon: "♠",
             position: { x: 88, y: 78 },
             rewards: ["Cinza infernal", "Icor", "Afixos raros"],
-            encounterChance: 0.55,
+            maxRooms: 10,
+            baseMobsPerRoom: [2, 3, 3, 4, 4, 5, 5, 6, 6, 1],
             focus: { id: "alchemy", name: "Alquimia / Icor", skill: null, icon: "☠" },
             modifiers: {
                 combatXp: 1.4,
@@ -296,7 +305,8 @@
             icon: "≋",
             position: { x: 23, y: 87 },
             rewards: ["Resíduo psíquico", "Relíquias", "Tesouros"],
-            encounterChance: 0.56,
+            maxRooms: 10,
+            baseMobsPerRoom: [2, 3, 3, 4, 4, 5, 5, 6, 6, 1],
             focus: { id: "thievery", name: "Ladinagem Abissal", skill: "thievery", icon: "≋" },
             modifiers: {
                 combatXp: 1.1,
@@ -326,7 +336,8 @@
             icon: "♜",
             position: { x: 81, y: 53 },
             rewards: ["Relíquias", "Loot épico", "Essências"],
-            encounterChance: 0.58,
+            maxRooms: 10,
+            baseMobsPerRoom: [2, 3, 3, 4, 4, 5, 5, 6, 6, 1],
             focus: { id: "combat", name: "Combate Lendário", skill: null, icon: "♜" },
             modifiers: {
                 combatXp: 1.8,
@@ -356,7 +367,8 @@
             icon: "✦",
             position: { x: 50, y: 45 },
             rewards: ["Cinza estelar", "Minério estelar", "XP supremo"],
-            encounterChance: 0.6,
+            maxRooms: 10,
+            baseMobsPerRoom: [2, 3, 3, 4, 4, 5, 5, 6, 6, 1],
             focus: { id: "exploration", name: "Exploração Suprema", skill: "exploration", icon: "✦" },
             modifiers: {
                 combatXp: 2.0,
@@ -389,7 +401,8 @@
             danger: 2,
             icon: "◉",
             rewards: ["Gold elevado", "Baús", "Fragmentos de arma"],
-            encounterChance: 0.52,
+            maxRooms: 10,
+            baseMobsPerRoom: [2, 3, 3, 4, 4, 5, 5, 6, 6, 1],
             modifiers: {
                 combatXp: 0.6,
                 gold: 2.5,
@@ -417,7 +430,8 @@
             danger: 3,
             icon: "⛏",
             rewards: ["Minério", "Componentes metálicos"],
-            encounterChance: 0.2,
+            maxRooms: 10,
+            baseMobsPerRoom: [2, 3, 3, 4, 4, 5, 5, 6, 6, 1],
             modifiers: {
                 combatXp: 0.15,
                 gold: 0.4,
@@ -444,7 +458,8 @@
             danger: 2,
             icon: "♣",
             rewards: ["Couro", "Carne"],
-            encounterChance: 0.42,
+            maxRooms: 10,
+            baseMobsPerRoom: [2, 3, 3, 4, 4, 5, 5, 6, 6, 1],
             modifiers: {
                 combatXp: 0.7,
                 gold: 0.5,
@@ -471,7 +486,8 @@
             danger: 4,
             icon: "⚿",
             rewards: ["Baús trancados"],
-            encounterChance: 0.28,
+            maxRooms: 10,
+            baseMobsPerRoom: [2, 3, 3, 4, 4, 5, 5, 6, 6, 1],
             modifiers: {
                 combatXp: 0.3,
                 gold: 1.3,
@@ -498,7 +514,8 @@
             danger: 3,
             icon: "⚔",
             rewards: ["XP de Combate"],
-            encounterChance: 0.92,
+            maxRooms: 10,
+            baseMobsPerRoom: [2, 3, 3, 4, 4, 5, 5, 6, 6, 1],
             modifiers: {
                 combatXp: 2.5,
                 combatSkillXp: 1.75,
