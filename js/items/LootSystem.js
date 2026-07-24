@@ -62,7 +62,7 @@ window.Aethra = window.Aethra || {};
         potion_health: {
             id: "potion_health",
             name: "Poção de Vida",
-            image: "potion_health.png",
+            image: "assets/organized/items/potions/all/potions_001.png",
             rarity: "Comum",
             type: "consumable",
             itemType: "CONSUMABLE",
@@ -76,7 +76,7 @@ window.Aethra = window.Aethra || {};
         potion_mana: {
             id: "potion_mana",
             name: "Poção de Mana",
-            image: "potion_mana.svg",
+            image: "assets/organized/items/potions/all/potions_002.svg",
             rarity: "Comum",
             type: "consumable",
             itemType: "CONSUMABLE",
@@ -217,7 +217,7 @@ window.Aethra = window.Aethra || {};
         orcish_cleaver: {
             id: "orcish_cleaver",
             name: "Cutelo do Batedor",
-            image: "sword_iron.png",
+            image: "assets/organized/items/weapons/all/weapons_011.png",
             rarity: "Incomum",
             type: "weapon",
             slot: "weapon",

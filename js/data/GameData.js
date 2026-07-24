@@ -328,7 +328,7 @@
             sword_iron: {
                 id: "sword_iron",
                 name: "Espada de Ferro",
-                image: "sword_iron.png",
+                image: "assets/organized/items/weapons/all/weapons_011.png",
                 type: "weapon",
                 slot: "weapon",
                 tier: 1,
@@ -347,37 +347,39 @@
             },
 
             training_sword: {
-                id: "training_sword", name: "Espada de Recruta", image: "sword_iron.png",
+                id: "training_sword", name: "Espada de Recruta", image: "assets/organized/items/weapons/all/weapons_011.png",
                 type: "weapon", slot: "weapon", weaponFamily: "sword", tier: 1, levelReq: 1,
                 damage: 4, damageMin: 3, damageMax: 5, price: 5, rarity: "Comum", stackable: false,
                 description: "Uma lâmina simples para aprender os fundamentos de Espadas."
             },
             training_axe: {
-                id: "training_axe", name: "Machado de Recruta", image: "starter_axe.svg",
+                id: "training_axe", name: "Machado de Recruta", image: "assets/organized/items/weapons/all/weapons_050.png",
                 type: "weapon", slot: "weapon", weaponFamily: "axe", tier: 1, levelReq: 1,
                 damage: 4, damageMin: 3, damageMax: 5, price: 5, rarity: "Comum", stackable: false,
                 description: "Pesado o bastante para ensinar que todo impacto cobra um risco."
             },
             training_mace: {
-                id: "training_mace", name: "Maça de Recruta", image: "starter_mace.svg",
+                id: "training_mace", name: "Maça de Recruta", image: "assets/organized/items/weapons/all/weapons_002.png",
                 type: "weapon", slot: "weapon", weaponFamily: "mace", tier: 1, levelReq: 1,
                 damage: 4, damageMin: 3, damageMax: 5, price: 5, rarity: "Comum", stackable: false,
                 description: "Uma arma contundente feita para aprender a quebrar defesas."
             },
             training_dagger: {
-                id: "training_dagger", name: "Adaga de Recruta", image: "starter_dagger.svg",
+                id: "training_dagger", name: "Adaga de Recruta", image: "assets/organized/items/weapons/all/weapons_069.png",
                 type: "weapon", slot: "weapon", weaponFamily: "dagger", tier: 1, levelReq: 1,
                 damage: 4, damageMin: 3, damageMax: 5, price: 5, rarity: "Comum", stackable: false,
                 description: "Lâmina leve para explorar velocidade, abertura e oportunismo."
             },
             training_bow: {
-                id: "training_bow", name: "Arco de Recruta", image: "starter_bow.svg",
+                // Sem arte de arco no pacote atual: o glifo da família é usado
+                // como ícone. Não apontar para um arquivo inexistente (404).
+                id: "training_bow", name: "Arco de Recruta",
                 type: "weapon", slot: "weapon", weaponFamily: "bow", tier: 1, levelReq: 1,
                 damage: 4, damageMin: 3, damageMax: 5, price: 5, rarity: "Comum", stackable: false,
                 description: "Um arco curto para dominar distância e precisão."
             },
             novice_focus: {
-                id: "novice_focus", name: "Foco do Iniciado", image: "starter_focus.svg",
+                id: "novice_focus", name: "Foco do Iniciado", image: "assets/organized/items/weapons/all/weapons_046.png",
                 type: "weapon", slot: "weapon", weaponFamily: "focus", tier: 1, levelReq: 1,
                 damage: 3, damageMin: 2, damageMax: 4, mag: 1, price: 5, rarity: "Comum", stackable: false,
                 description: "Canaliza as primeiras fórmulas de Fogo, Gelo e Trevas."
@@ -386,7 +388,7 @@
             potion_health: {
                 id: "potion_health",
                 name: "Poção de Vida",
-                image: "potion_health.png",
+                image: "assets/organized/items/potions/all/potions_001.png",
                 type: "consumable",
                 slot: null,
                 tier: 1,
@@ -404,7 +406,7 @@
             wolf_hide: {
                 id: "wolf_hide",
                 name: "Pele de Lobo",
-                image: "wolf_hide.png",
+                image: "assets/organized/items/loot/all/loot_041.png",
                 type: "material",
                 slot: null,
                 tier: 1,

@@ -773,7 +773,7 @@
 
     // ── Ferramentas de profissão (exigidas por ProfessionSystem) ──
     item("apprentice_pickaxe", {
-        name: "Picareta de Aprendiz", icon: "⛏", image: "assets/organized/items/weapons/all/weapons_003.png", price: 25, value: 25,
+        name: "Picareta de Aprendiz", icon: "⛏", image: "assets/organized/items/materials/all/materials_001.png", price: 25, value: 25,
         rarity: "Comum", type: "tool", itemType: "TOOL", toolType: "mining", levelReq: 1, tier: 1,
         stackable: false, maxStack: 1, description: "Ferramenta básica para extrair minérios em campo."
     });
