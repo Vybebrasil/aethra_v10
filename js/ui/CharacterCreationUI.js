@@ -221,19 +221,6 @@
         };
     }
 
-    function renderProgress() {
-        return STEP_META.map((step) => {
-            const current = activeStep === step.id;
-            const complete = step.id < activeStep && stepReady(step.id);
-            const allowed = canVisit(step.id);
-            return `
-                <button type="button" class="creation-progress__step ${current ? "is-current" : ""} ${complete ? "is-complete" : ""}"
-                    data-creation-step="${step.id}" ${allowed ? "" : "disabled"} aria-current="${current ? "step" : "false"}">
-                    <span>${complete ? "✓" : step.id}</span><small>ETAPA ${step.id}</small><strong>${step.label}</strong>
-                </button>`;
-        }).join("");
-    }
-
     function renderHeroPreview() {
         const selected = archetype();
         const preview = previewData();
