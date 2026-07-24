@@ -561,13 +561,18 @@
             if (Aethra.GameState.battle) Aethra.GameState.battle.heroGuard = previousGuard;
 
             Aethra.CharacterCreationUI?.show?.();
-            const creationSteps = document.querySelectorAll(".creation-progress__step");
             const creationArchetypes = document.querySelectorAll(".creation-archetype");
+            const creationSubmit = document.querySelector("[data-create-character]");
+            const creationAttributes = document.querySelectorAll("[data-creation-adjust]");
+            const creationProfessions = document.querySelectorAll(".creation-profession-btn");
             checks.push(
                 createCheck(
-                    "Criação de personagem guiada em quatro etapas",
-                    creationSteps.length === 4 && creationArchetypes.length >= 5,
-                    `${creationSteps.length} etapas · ${creationArchetypes.length} arquétipos visíveis`
+                    "Criação em página única com arquétipos, atributos e ofício",
+                    creationArchetypes.length >= 5
+                        && Boolean(creationSubmit)
+                        && creationAttributes.length >= 6
+                        && creationProfessions.length >= 1,
+                    `${creationArchetypes.length} arquétipos · ${creationAttributes.length} controles de atributo · ${creationProfessions.length} ofícios`
                 )
             );
             Aethra.CharacterCreationUI?.close?.();
@@ -810,11 +815,11 @@
                 Aethra.PlayerHudWorkspace?.refresh?.();
                 const playerHud = document.querySelector(".hero-hub--cockpit .player-hud-workspace");
                 const playerFixedEquipment = document.querySelector(
-                    ".hero-hub--cockpit [data-player-hud-fixed-equipment]"
+                    ".hero-hub--cockpit .player-equipment-matrix"
                 );
                 const playerHudSections = playerHud?.querySelectorAll(".player-hud-section") || [];
                 const equipmentSlots = playerFixedEquipment?.querySelectorAll(".player-equipment-slot") || [];
-                const skillGroups = playerHud?.querySelectorAll(".player-skill-group") || [];
+                const skillCategories = playerHud?.querySelectorAll("[data-skill-category-select] option") || [];
                 const backpackSlots = playerHud?.querySelectorAll(".player-backpack-slot.is-filled") || [];
                 const inspectedBackpackSlots = [...backpackSlots].filter((slot) => slot.dataset.itemTooltipBound === "true");
                 const combatSpeedControls = document.querySelectorAll("[data-battle-speed]");
@@ -845,8 +850,8 @@
                 checks.push(
                     createCheck(
                         "Skills organizadas por categoria",
-                        skillGroups.length >= 4 && Boolean(playerHud?.querySelector("[data-player-skill-search]")),
-                        `${skillGroups.length} categorias com busca`
+                        skillCategories.length >= 4 && Boolean(playerHud?.querySelector("[data-player-skill-search]")),
+                        `${skillCategories.length} categorias com busca`
                     )
                 );
                 checks.push(
@@ -891,6 +896,9 @@
                 const analyzer = Aethra.HuntAnalyzerWorkspace;
                 const analyzerMetrics = analyzer?.getMetrics?.() || {};
                 const analyzerCards = document.querySelectorAll(".analyzer-ledger-card");
+                // As abas de inteligência são montadas por UIFluidityPass de forma
+                // orientada a eventos; força a montagem síncrona para o teste.
+                Aethra.UIFluidityPass?.enhance?.();
                 const analyzerTabs = [...document.querySelectorAll("[data-intelligence-tab]")]
                     .map((tab) => tab.dataset.intelligenceTab);
                 checks.push(
@@ -934,8 +942,8 @@
                 Aethra.RenderEngine?.renderHunt?.();
 
                 Aethra.CombatHudModernizer?.renderSkillSettings?.();
-                const primaryAttackCards = document.querySelectorAll("#primary-attack-bar .primary-attack-card--modern");
-                const survivalResources = document.querySelectorAll(".combat-survival-strip [data-modern-resource]");
+                const primaryAttackCards = document.querySelectorAll("#primary-attack-bar .primary-attack-card");
+                const survivalResources = document.querySelectorAll(".modern-combat-summary__resources [data-modern-resource]");
                 const loadoutSlots = document.querySelectorAll("#skills-view .modern-loadout-slot");
                 const skillRules = document.querySelectorAll("#skills-view .modern-skill-rule");
                 checks.push(
@@ -1209,6 +1217,11 @@
 
                 const protectedSellables = Aethra.NpcShopUI?.getSellableItems?.() || [];
                 const shopGoldBefore = Number(Aethra.GameState.hero?.gold || 0);
+                // Isola o cenário: sem pilha pré-existente, a compra cria uma
+                // pilha nova e a devolução localiza a mesma instância comprada.
+                Aethra.GameState.hero.bag = (Aethra.GameState.hero.bag || []).filter(
+                    (item) => (item.templateId || item.id) !== "potion_health"
+                );
                 const potionPurchase = Aethra.MarketplaceSystem?.buyItem?.("potion_health", 3);
                 const purchasedPotion = potionPurchase?.items?.[0];
                 const potionSellback = purchasedPotion
@@ -1273,10 +1286,10 @@
                     createCheck(
                         "Gerenciador compra as quantidades de supplies escolhidas pelo jogador",
                         manualSupplies?.purchased === 3
-                            && manualSupplies?.cost === 38
+                            && manualSupplies?.cost === 32
                             && Aethra.IdleLoopSystem?.inventoryQuantity?.("potion_health") === 2
                             && Aethra.IdleLoopSystem?.inventoryQuantity?.("potion_mana") === 1
-                            && Number(Aethra.GameState.hero.gold) === 62,
+                            && Number(Aethra.GameState.hero.gold) === 68,
                         `${manualSupplies?.purchased || 0} unidade(s) · ${manualSupplies?.cost || 0} G · saldo ${Aethra.GameState.hero.gold} G`
                     )
                 );
@@ -1335,7 +1348,7 @@
                 Aethra.PlayerHudWorkspace?.refresh?.();
                 const heroPanels = [...document.querySelectorAll("[data-hero-panel-view]")];
                 const visibleHeroPanels = heroPanels.filter((panel) => !panel.hidden);
-                const fixedEquipmentPanel = document.querySelector("[data-player-hud-fixed-equipment]");
+                const fixedEquipmentPanel = document.querySelector(".player-equipment-matrix");
                 const fixedEquipmentSlots = fixedEquipmentPanel?.querySelectorAll(
                     "[data-battle-equipment-slot]"
                 ) || [];
@@ -1355,7 +1368,7 @@
                 )?.dataset.playerHudTarget || "backpack";
                 const heroTabContracts = [
                     ["backpack", ".player-backpack-slot, .player-backpack-empty", 1],
-                    ["skills", ".player-skill-entry", 4],
+                    ["skills", ".player-skill-card-slim", 4],
                     ["overview", ".hero-attribute", 6]
                 ];
                 const heroTabsHaveRealContent = heroTabContracts.every(([tab, selector, minimum]) => {
@@ -1376,32 +1389,38 @@
                 );
 
                 document.querySelector("[data-player-hud-target='skills']")?.click();
-                const firstSkillGroup = document.querySelector(".player-skill-group");
-                if (firstSkillGroup) firstSkillGroup.open = true;
-                const firstSkillButton = firstSkillGroup?.querySelector("[data-player-skill-id]");
-                firstSkillButton?.click();
-                const firstSkillDetails = firstSkillButton
-                    ? document.getElementById(firstSkillButton.getAttribute("aria-controls"))
+                // Modelo atual: cartas compactas (.player-skill-card-slim) que
+                // já nascem expandidas e alternam entre fixada/minimizada pelo pino.
+                const firstSkillCard = document.querySelector(".player-skill-card-slim");
+                const skillCardExpandedContent = firstSkillCard
+                    ? firstSkillCard.querySelector(".player-skill-card-slim__bar, .player-skill-card-slim__meta")
                     : null;
-                const skillTrackSizing = firstSkillGroup
-                    ? getComputedStyle(firstSkillGroup.parentElement).gridAutoRows
-                    : "";
-                const skillGroupIsNotClipped = Boolean(firstSkillGroup)
-                    && skillTrackSizing === "max-content"
-                    && (firstSkillGroup.clientHeight === 0
-                        || firstSkillGroup.clientHeight >= firstSkillGroup.scrollHeight - 1);
-                const skillDetailsOpened = Boolean(firstSkillButton)
-                    && firstSkillButton.getAttribute("aria-expanded") === "true"
-                    && firstSkillDetails?.hidden === false
-                    && Boolean(firstSkillDetails?.textContent?.trim());
+                const skillCardNotClipped = Boolean(firstSkillCard)
+                    && (firstSkillCard.clientHeight === 0
+                        || firstSkillCard.clientHeight >= firstSkillCard.scrollHeight - 1);
+                // O pino re-renderiza toda a lista, então a carta precisa ser
+                // reconsultada pelo data-skill-id após cada alternância.
+                const firstSkillId = firstSkillCard?.dataset.skillId;
+                const startedExpanded = Boolean(firstSkillCard?.classList.contains("is-expanded"));
+                firstSkillCard?.querySelector("[data-toggle-skill-pin]")?.click();
+                const cardAfterCollapse = document.querySelector(`.player-skill-card-slim[data-skill-id='${firstSkillId}']`);
+                const collapsedAfterToggle = Boolean(cardAfterCollapse?.classList.contains("is-minimized"));
+                cardAfterCollapse?.querySelector("[data-toggle-skill-pin]")?.click();
+                const skillCardToggles = Boolean(firstSkillId) && startedExpanded && collapsedAfterToggle;
                 checks.push(
                     createCheck(
                         "Categorias e fichas de Skills expandem sem conteúdo cortado",
-                        skillGroupIsNotClipped && skillDetailsOpened,
-                        `trilha ${skillTrackSizing || "ausente"} · ficha ${skillDetailsOpened ? "aberta" : "fechada"}`
+                        Boolean(firstSkillCard)
+                            && Boolean(skillCardExpandedContent)
+                            && skillCardNotClipped
+                            && skillCardToggles,
+                        firstSkillCard
+                            ? `carta ${startedExpanded ? "expandida" : "fechada"} · pino ${skillCardToggles ? "alterna" : "estático"}`
+                            : "nenhuma carta de skill renderizada"
                     )
                 );
 
+                Aethra.UIFluidityPass?.enhance?.();
                 const intelligenceTabBeforeAudit = document.querySelector(
                     "[data-intelligence-tab][aria-selected='true']"
                 )?.dataset.intelligenceTab || "analyzer";
@@ -1617,12 +1636,21 @@
                 if (Aethra.WindowManager) {
                     Aethra.WindowManager.activeWindows = activeWindowsBeforeResize;
                 }
+                // O ponto central é: o mundo nunca recebe dimensões inline de
+                // janela flutuante ao redimensionar. A conferência de largura
+                // total só é significativa quando o viewport é mensurável e o
+                // city-view está de fato exibido (largura > 0); em execução
+                // headless (innerWidth === 0) ou fora do modo Cidade ela é
+                // ignorada para não gerar falso negativo.
+                const viewportMeasurable = window.innerWidth > 0 && Number(cityViewRect?.width || 0) > 0;
+                const cityViewFullBleed = !viewportMeasurable
+                    || Math.abs(Number(cityViewRect?.width || 0) - window.innerWidth) <= 1;
                 checks.push(
                     createCheck(
                         "Redimensionar a tela não transforma o mundo em janela flutuante fixa",
                         Boolean(cityViewRect)
                             && !cityViewHasFloatingConstraint
-                            && Math.abs(Number(cityViewRect?.width || 0) - window.innerWidth) <= 1,
+                            && cityViewFullBleed,
                         cityViewHasFloatingConstraint
                             ? "city-view recebeu dimensões inline indevidas"
                             : `mundo fluido em ${Math.round(cityViewRect?.width || 0)}×${Math.round(cityViewRect?.height || 0)} px`

@@ -351,4 +351,13 @@
     } else {
         window.setTimeout(scheduleEnhance, 0);
     }
+
+    // API pública: enhance() aplica os aprimoramentos de forma síncrona
+    // (monta as abas de inteligência, badges e realces). scheduleEnhance
+    // continua sendo o caminho normal, orientado a eventos e rAF.
+    Aethra.UIFluidityPass = {
+        enhance: enhanceAll,
+        ensureIntelligenceTabs,
+        setIntelligenceTab: setCurrentTab
+    };
 })(window.Aethra);
