@@ -478,7 +478,7 @@
                 return;
             }
 
-            this.renderFrame = window.requestAnimationFrame(() => {
+            const flush = () => {
                 const jobs = [...this.pendingRenders.values()];
                 this.pendingRenders.clear();
                 this.renderFrame = null;
@@ -494,7 +494,13 @@
                         });
                     }
                 });
-            });
+            };
+
+            // requestAnimationFrame fica suspenso em abas ocultas; o timer
+            // garante que HUD e testes automatizados continuem renderizando.
+            this.renderFrame = document.hidden
+                ? window.setTimeout(flush, 32)
+                : window.requestAnimationFrame(flush);
         },
 
         getSelectedBattleMode() {

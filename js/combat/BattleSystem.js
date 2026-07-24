@@ -29,9 +29,11 @@
         randomSource: Math.random,
 
         config: {
-            tickMs: 1000,
-            roundMs: 1000,
-            introMs: 600,
+            // Rodada canônica de 1800ms em 1×; EncounterCombatHUD ajusta via
+            // setTickSpeed(1800 / velocidade). Intro fixa, não escala.
+            tickMs: 1800,
+            roundMs: 1800,
+            introMs: 1200,
             resolutionMs: 600,
             minimumCombatMs: 4000,
             hardcoreGoldPenalty: 0.10,

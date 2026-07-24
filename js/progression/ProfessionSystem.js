@@ -31,6 +31,16 @@
             description: "Capacidade de recuperar HP e Mana ao descansar nas escadarias.", benefit: "Aumenta a cura passiva entre andares.",
             actionTypes: ["survive", "camp", "recover", "endure-trap"]
         },
+        exploration: {
+            id: "exploration", name: "Exploração", icon: "⌖", category: "world", status: "available",
+            description: "Investiga trilhas, santuários e segredos durante a caçada.", benefit: "Melhora frequência e qualidade de eventos.",
+            actionTypes: ["discover", "investigate", "explore-trail"]
+        },
+        survival: {
+            id: "survival", name: "Sobrevivência", icon: "△", category: "world", status: "available",
+            description: "Acampamentos, recuperação e resistência em caçadas longas.", benefit: "Reduz custos e melhora recuperação.",
+            actionTypes: ["camp", "survive", "recover", "endure-trap"]
+        },
         blacksmithing: {
             id: "blacksmithing", name: "Forjaria", icon: "⚒", category: "crafting", status: "available",
             description: "Refina metal e cria armas e armaduras pesadas.", benefit: "Desbloqueia receitas e melhora a qualidade criada.",

@@ -622,12 +622,12 @@
         const apply = () => {
             const query = normalize(input.value);
             uiState().skillSearch = input.value;
-            container.querySelectorAll(".player-skill-entry").forEach((entry) => {
-                entry.hidden = Boolean(query) && !normalize(entry.dataset.search).includes(query);
+            container.querySelectorAll(".player-skill-card-slim").forEach((card) => {
+                card.hidden = Boolean(query) && !normalize(card.dataset.search).includes(query);
             });
-            container.querySelectorAll(".player-skill-group").forEach((group) => {
-                group.hidden = ![...group.querySelectorAll(".player-skill-entry")].some((entry) => !entry.hidden);
-            });
+            const grid = container.querySelector(".player-skill-grid-slim");
+            const empty = grid?.querySelector(".player-skill-empty");
+            if (empty) empty.hidden = false;
         };
         input.addEventListener("input", apply);
         apply();
@@ -711,6 +711,7 @@
 
             return `
                 <article class="player-skill-card-slim ${isMinimized ? "is-minimized" : "is-expanded"} ${trainingLocked ? "is-locked" : ""}" data-skill-id="${esc(entryId)}"
+                    data-search="${esc(`${entry.name} ${entry.category || ""} ${categoryLabel}`)}"
                     data-ui-tooltip data-tooltip-kind="hud"
                     data-tooltip-eyebrow="${esc(categoryLabel.toUpperCase())}"
                     data-tooltip-title="${esc(entry.name)} (Nível ${fmt(entry.level)})"
