@@ -240,9 +240,13 @@
         if (result && result.added.length === 0) return false;
         if (!result) hero.bag.push(item);
 
+        // Itens empilháveis podem ter sido fundidos em uma pilha existente:
+        // a instância guardada é a que vale para venda e devolução.
+        const stored = result?.added?.[0] || item;
+
         const payload = {
-            item: clone(item),
-            items: [clone(item)],
+            item: clone(stored),
+            items: [clone(stored)],
             source
         };
 
@@ -253,7 +257,7 @@
             source,
             bag: clone(hero.bag)
         });
-        return true;
+        return stored;
     }
 
     function removeItemFromBag(index, source) {
@@ -420,6 +424,9 @@
                     sellBackEligible: true,
                     sellBackRate: DEFAULT_SELLBACK_RATE,
                     premium: false,
+                    // Só as unidades compradas podem ser devolvidas: itens
+                    // obtidos como loot na mesma pilha não viram dinheiro.
+                    sellBackQuantity: template.stackable ? amount : 1,
                     quantity: template.stackable ? amount : 1
                 });
 
@@ -438,8 +445,29 @@
                 -totalPrice
             );
 
-            purchasedItems.forEach((item) => {
-                addItemToBag(item, "npc-shop");
+            /*
+             * Itens empilháveis são fundidos na pilha existente pelo BagSystem,
+             * que mantém o instanceId antigo. Devolver a instância recém-criada
+             * entregaria um id órfão e quebraria a devolução na loja, então a
+             * procedência de compra é transferida para a pilha real e as
+             * unidades devolvíveis são acumuladas.
+             */
+            const storedItems = purchasedItems.map((item) => {
+                const stored = addItemToBag(item, "npc-shop");
+                if (!stored) return item;
+                if (stored !== item) {
+                    const alreadyRefundable = Math.max(
+                        0,
+                        Math.floor(Number(stored.market?.sellBackQuantity) || 0)
+                    );
+                    stored.market = {
+                        ...(stored.market || {}),
+                        ...(item.market || {}),
+                        sellBackQuantity: alreadyRefundable
+                            + Math.max(1, Math.floor(Number(item.quantity) || 1))
+                    };
+                }
+                return stored;
             });
 
             const payload = {
@@ -447,7 +475,7 @@
                 quantity: amount,
                 unitPrice,
                 totalPrice,
-                items: clone(purchasedItems)
+                items: clone(storedItems)
             };
 
             Aethra.EventBus.emit("NPCItemPurchased", payload);
@@ -573,11 +601,50 @@
                 )
             );
 
-            const quantity = Math.max(1, Math.floor(Number(item.quantity) || 1));
+            const stackQuantity = Math.max(1, Math.floor(Number(item.quantity) || 1));
+
+            /*
+             * Uma pilha pode misturar unidades compradas e obtidas como loot.
+             * Só as compradas são devolvíveis; o restante permanece na mochila.
+             * Sem sellBackQuantity (compras anteriores a este controle) a pilha
+             * inteira continua elegível, preservando o comportamento antigo.
+             */
+            const refundableQuantity = marketData.sellBackQuantity === undefined
+                ? stackQuantity
+                : Math.max(0, Math.min(
+                    stackQuantity,
+                    Math.floor(Number(marketData.sellBackQuantity) || 0)
+                ));
+
+            if (refundableQuantity <= 0) {
+                return this.fail("sellBack", "item-not-eligible", {
+                    itemId,
+                    instanceId: item.instanceId
+                });
+            }
+
+            const quantity = refundableQuantity;
             const purchasePrice = unitPurchasePrice * quantity;
             const salePrice = Math.floor(purchasePrice * rate);
 
-            const soldItem = removeItemFromBag(found.index, "npc-sellback");
+            let soldItem;
+
+            if (refundableQuantity < stackQuantity) {
+                // Devolução parcial: reduz a pilha e zera o crédito de compra.
+                item.quantity = stackQuantity - refundableQuantity;
+                item.market = {
+                    ...marketData,
+                    sellBackQuantity: 0
+                };
+                soldItem = { ...clone(item), quantity: refundableQuantity };
+                Aethra.EventBus.emit("inventory:changed", {
+                    reason: "item-sold-back",
+                    source: "npc-sellback",
+                    bag: clone(hero.bag)
+                });
+            } else {
+                soldItem = removeItemFromBag(found.index, "npc-sellback");
+            }
 
             setGold(
                 hero.gold + salePrice,

@@ -220,7 +220,10 @@
                         bag
                     });
                     Aethra.EventBus.emit("inventory:changed", { source, item: existing });
-                    return true;
+                    // Devolve a pilha real: em itens empilháveis o instanceId
+                    // recebido é descartado na fusão, e quem chamou precisa da
+                    // instância que de fato ficou na mochila.
+                    return existing;
                 }
             }
 
@@ -245,7 +248,7 @@
                 bag
             });
             Aethra.EventBus.emit("inventory:changed", { source, item: newItem });
-            return true;
+            return newItem;
         },
 
         addItems(payload, source = "bag-system") {
@@ -253,7 +256,10 @@
             const ignored = [];
 
             normalizeItems(payload).forEach((item) => {
-                if (this.addItem(item, source)) added.push(item);
+                // addItem devolve a pilha efetivamente armazenada (que pode ser
+                // uma pilha pré-existente, no caso de itens empilháveis).
+                const stored = this.addItem(item, source);
+                if (stored) added.push(stored);
                 else ignored.push(item);
             });
 

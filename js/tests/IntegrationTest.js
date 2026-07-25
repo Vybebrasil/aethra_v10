@@ -1240,6 +1240,45 @@
                     )
                 );
 
+                /*
+                 * Regressão: comprar um empilhável que já existe na mochila
+                 * funde as pilhas. A devolução precisa achar a pilha real e
+                 * reembolsar somente as unidades compradas, deixando o loot.
+                 */
+                Aethra.GameState.hero.bag = (Aethra.GameState.hero.bag || []).filter(
+                    (item) => (item.templateId || item.id) !== "potion_health"
+                );
+                const lootedPotions = Aethra.ItemSystem?.generateItem?.("potion_health", {
+                    quantity: 4,
+                    source: "integration-loot"
+                });
+                if (lootedPotions) Aethra.BagSystem?.addItems?.([lootedPotions], "integration-loot");
+                const mergedGoldBefore = Number(Aethra.GameState.hero?.gold || 0);
+                const mergedPurchase = Aethra.MarketplaceSystem?.buyItem?.("potion_health", 2);
+                const mergedStack = mergedPurchase?.items?.[0];
+                const mergedStackIsInBag = Boolean(
+                    mergedStack?.instanceId
+                    && Aethra.BagSystem?.hasItem?.(mergedStack.instanceId)
+                );
+                const mergedSellback = mergedStack
+                    ? Aethra.MarketplaceSystem?.sellBack?.(mergedStack.instanceId)
+                    : null;
+                const potionsLeftAfterSellback = Aethra.BagSystem?.countItem?.("potion_health") || 0;
+                checks.push(
+                    createCheck(
+                        "Devolução localiza a pilha fundida e reembolsa só o que foi comprado",
+                        mergedStackIsInBag
+                            && mergedPurchase?.totalPrice === 20
+                            && mergedSellback?.quantity === 2
+                            && mergedSellback?.salePrice === 10
+                            && potionsLeftAfterSellback === 4
+                            && Number(Aethra.GameState.hero?.gold || 0) === mergedGoldBefore - 20 + 10,
+                        mergedStackIsInBag
+                            ? `devolveu ${mergedSellback?.quantity || 0}/2 por ${mergedSellback?.salePrice || 0} G · ${potionsLeftAfterSellback} de loot preservada(s)`
+                            : "pilha comprada não foi localizada na mochila"
+                    )
+                );
+
                 const idleGoldBefore = Number(Aethra.GameState.hero?.gold || 0);
                 const idleLoot = Aethra.ItemSystem?.generateItem?.("wolf_hide", {
                     source: "hunt-system",
