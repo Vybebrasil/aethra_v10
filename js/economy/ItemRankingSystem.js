@@ -134,6 +134,7 @@
         init() {
             if (this.initialized) return this.getStats();
             this.ensureState();
+            this.registerSaveSerializer();
             this.seedWorldRelics();
             this.bindEvents();
             this.rescanOwnedItems();
@@ -141,6 +142,31 @@
             this.initialized = true;
             Aethra.EventBus.emit("item-ranking:ready", this.getStats());
             return this.getStats();
+        },
+
+        /*
+         * As relíquias de mundo são geradas por seedWorldRelics() de forma
+         * determinística, e categoryIndexes é derivado do registry. Nada disso
+         * precisa ir para o disco: só o que pertence ao jogador é persistido, e
+         * o resto é reconstruído no próximo boot (o SaveManager carrega antes
+         * deste módulo inicializar, então worldSeeded=false dispara o re-seed).
+         */
+        registerSaveSerializer() {
+            Aethra.SaveManager?.registerSerializer?.("world.itemRanking", (state) => {
+                const persisted = {};
+
+                Object.entries(state.registry || {}).forEach(([id, entry]) => {
+                    if (entry?.source !== "world-seed") persisted[id] = entry;
+                });
+
+                return {
+                    ...state,
+                    registry: persisted,
+                    categoryIndexes: {},
+                    lastIndexedAt: null,
+                    worldSeeded: false
+                };
+            });
         },
 
         bindEvents() {

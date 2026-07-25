@@ -110,15 +110,77 @@
         }, AUTO_SAVE_DELAY);
     }
 
+    /*
+     * Serializadores por fatia do estado.
+     *
+     * Alguns módulos mantêm em memória dados grandes e reconstruíveis (seeds
+     * determinísticos, índices derivados). Persistir isso incha o save sem
+     * necessidade. Cada módulo dono registra aqui como a sua fatia deve ser
+     * gravada — o SaveManager não conhece as regras de domínio.
+     *
+     * A troca acontece por identidade durante o stringify, então o estado vivo
+     * nunca é modificado: o jogo continua com os dados completos em memória.
+     */
+    const stateSerializers = new Map();
+
+    function resolveStatePath(path) {
+        return String(path).split('.').reduce(
+            (node, key) => (node == null ? node : node[key]),
+            Aethra.GameState
+        );
+    }
+
+    function buildSaveReplacer() {
+        const overrides = new Map();
+
+        stateSerializers.forEach((serialize, path) => {
+            const target = resolveStatePath(path);
+            if (!target || typeof target !== 'object') return;
+            try {
+                overrides.set(target, serialize(target));
+            } catch (error) {
+                console.warn(`[SaveManager] Serializador de "${path}" falhou; gravando estado completo.`, error);
+            }
+        });
+
+        if (overrides.size === 0) return undefined;
+
+        return function replaceRegenerableState(key, value) {
+            return overrides.has(value) ? overrides.get(value) : value;
+        };
+    }
+
     Aethra.SaveManager = {
         key: SAVE_KEY,
         initialized: false,
+
+        /**
+         * Registra como uma fatia do estado deve ser persistida.
+         * @param {string} path caminho em GameState, ex.: "world.itemRanking"
+         * @param {(slice: object) => object} serialize versão a gravar
+         */
+        registerSerializer(path, serialize) {
+            if (!path || typeof serialize !== 'function') return false;
+            stateSerializers.set(String(path), serialize);
+            return true;
+        },
+
+        /**
+         * Mostra como uma fatia ficaria no disco, sem gravar nada.
+         * Usado por diagnósticos e pelo teste de integração.
+         */
+        serializeStateForTest(path) {
+            const serialize = stateSerializers.get(String(path));
+            const target = resolveStatePath(path);
+            if (!serialize || !target || typeof target !== 'object') return null;
+            return serialize(target);
+        },
 
         save(reason = 'manual') {
             try {
                 Aethra.GameState.meta = Aethra.GameState.meta || {};
                 Aethra.GameState.meta.schemaVersion = CURRENT_SCHEMA_VERSION;
-                const data = JSON.stringify(Aethra.GameState);
+                const data = JSON.stringify(Aethra.GameState, buildSaveReplacer());
                 localStorage.setItem(SAVE_KEY, data);
 
                 Aethra.EventBus.emit('save:completed', {

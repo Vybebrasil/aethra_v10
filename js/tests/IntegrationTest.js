@@ -245,6 +245,31 @@
                 Aethra.ItemRankingSystem?.removeItem?.(rankedTestItem.instanceId, "integration-cleanup");
             }
 
+            /*
+             * O seed de relíquias do mundo é determinístico e reconstruído no
+             * boot: ele não pode ser gravado no save (chegou a ocupar 68% do
+             * arquivo). O estado vivo, porém, precisa continuar completo.
+             */
+            const rankingState = Aethra.GameState.world?.itemRanking || {};
+            const liveRankingEntries = Object.values(rankingState.registry || {});
+            const liveSeedEntries = liveRankingEntries.filter((entry) => entry?.source === "world-seed");
+            const rankingSnapshotForSave = Aethra.SaveManager?.serializeStateForTest?.("world.itemRanking");
+            const persistedRankingEntries = Object.values(rankingSnapshotForSave?.registry || {});
+            const persistedSeedEntries = persistedRankingEntries.filter((entry) => entry?.source === "world-seed");
+            checks.push(
+                createCheck(
+                    "Save não persiste o seed regenerável do ranking",
+                    Boolean(rankingSnapshotForSave)
+                        && liveSeedEntries.length > 0
+                        && persistedSeedEntries.length === 0
+                        && rankingSnapshotForSave.worldSeeded === false
+                        && persistedRankingEntries.length === liveRankingEntries.length - liveSeedEntries.length,
+                    rankingSnapshotForSave
+                        ? `${liveSeedEntries.length} seeds vivos · ${persistedRankingEntries.length} entrada(s) gravada(s)`
+                        : "serializador do ranking não registrado"
+                )
+            );
+
             const coliseumSnapshot = Aethra.ColiseumSystem?.getSnapshot?.();
             const strongerExpectedScore = Aethra.ColiseumSystem?.expectedScore?.(
                 { rating: 1000, combatPower: 400 },
