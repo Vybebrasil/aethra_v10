@@ -371,15 +371,13 @@
                 description: "Lâmina leve para explorar velocidade, abertura e oportunismo."
             },
             training_bow: {
-                // Sem arte de arco no pacote atual: o glifo da família é usado
-                // como ícone. Não apontar para um arquivo inexistente (404).
-                id: "training_bow", name: "Arco de Recruta",
+                id: "training_bow", name: "Arco de Recruta", image: "assets/organized/items/weapons/bows/Icon1_no_effect.png",
                 type: "weapon", slot: "weapon", weaponFamily: "bow", tier: 1, levelReq: 1,
                 damage: 4, damageMin: 3, damageMax: 5, price: 5, rarity: "Comum", stackable: false,
                 description: "Um arco curto para dominar distância e precisão."
             },
             novice_focus: {
-                id: "novice_focus", name: "Foco do Iniciado", image: "assets/organized/items/weapons/all/weapons_046.png",
+                id: "novice_focus", name: "Foco do Iniciado", image: "assets/organized/items/weapons/foco/Staves_1/1.png",
                 type: "weapon", slot: "weapon", weaponFamily: "focus", tier: 1, levelReq: 1,
                 damage: 3, damageMin: 2, damageMax: 4, mag: 1, price: 5, rarity: "Comum", stackable: false,
                 description: "Canaliza as primeiras fórmulas de Fogo, Gelo e Trevas."

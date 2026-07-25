@@ -98,17 +98,17 @@
         baseStats: { damageMin: 2, damageMax: 4, precision: 2, critical: 0.013 }, stats: { damageMin: 2, damageMax: 4, precision: 2, critical: 0.013 }, stackable: false, maxStack: 1
     });
     item("eg_bow_l1", {
-        name: "Arco Recruta", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_051.png", price: 21, value: 21,
+        name: "Arco Recruta", icon: "⚔", image: "assets/organized/items/weapons/bows/Icon1_no_effect.png", price: 21, value: 21,
         rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "bow", equipmentClass: "martial", levelReq: 1, tier: 1,
         baseStats: { damageMin: 2, damageMax: 5, precision: 3, critical: 0.005 }, stats: { damageMin: 2, damageMax: 5, precision: 3, critical: 0.005 }, stackable: false, maxStack: 1
     });
     item("eg_focus_l1", {
-        name: "Foco Recruta", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_061.png", price: 21, value: 21,
+        name: "Foco Recruta", icon: "⚔", image: "assets/organized/items/weapons/foco/Staves_1/1.png", price: 21, value: 21,
         rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 1, tier: 1,
         baseStats: { damageMin: 2, damageMax: 4, precision: 1, mag: 2 }, stats: { damageMin: 2, damageMax: 4, precision: 1, mag: 2 }, stackable: false, maxStack: 1
     });
     item("eg_shield_l1", {
-        name: "Escudo Recruta", icon: "⬡", type: "shield", itemType: "SHIELD",
+        name: "Escudo Recruta", icon: "⬡", image: "assets/organized/items/shields/Shield_1/1.png", type: "shield", itemType: "SHIELD",
         slot: "offhand", levelReq: 1, tier: 1, equipmentClass: "defensive", rarity: "Comum",
         price: 19, value: 19,
         stackable: false, maxStack: 1, baseStats: {"defense":2,"blockChance":0.028,"blockReduction":0.188}, stats: {"defense":2,"blockChance":0.028,"blockReduction":0.188},
@@ -170,17 +170,17 @@
         baseStats: { damageMin: 3, damageMax: 6, precision: 2, critical: 0.014 }, stats: { damageMin: 3, damageMax: 6, precision: 2, critical: 0.014 }, stackable: false, maxStack: 1
     });
     item("eg_bow_l2", {
-        name: "Arco Aventureiro", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_052.png", price: 42, value: 42,
+        name: "Arco Aventureiro", icon: "⚔", image: "assets/organized/items/weapons/bows/Icon13_no_effect.png", price: 42, value: 42,
         rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "bow", equipmentClass: "martial", levelReq: 2, tier: 1,
         baseStats: { damageMin: 3, damageMax: 6, precision: 3, critical: 0.006 }, stats: { damageMin: 3, damageMax: 6, precision: 3, critical: 0.006 }, stackable: false, maxStack: 1
     });
     item("eg_focus_l2", {
-        name: "Foco Aventureiro", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_062.png", price: 42, value: 42,
+        name: "Foco Aventureiro", icon: "⚔", image: "assets/organized/items/weapons/foco/Staves_1/2.png", price: 42, value: 42,
         rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 2, tier: 1,
         baseStats: { damageMin: 3, damageMax: 6, precision: 1, mag: 3 }, stats: { damageMin: 3, damageMax: 6, precision: 1, mag: 3 }, stackable: false, maxStack: 1
     });
     item("eg_shield_l2", {
-        name: "Escudo Aventureiro", icon: "⬡", type: "shield", itemType: "SHIELD",
+        name: "Escudo Aventureiro", icon: "⬡", image: "assets/organized/items/shields/Shield_1/2.png", type: "shield", itemType: "SHIELD",
         slot: "offhand", levelReq: 2, tier: 1, equipmentClass: "defensive", rarity: "Comum",
         price: 37, value: 37,
         stackable: false, maxStack: 1, baseStats: {"defense":3,"blockChance":0.031,"blockReduction":0.196}, stats: {"defense":3,"blockChance":0.031,"blockReduction":0.196},
@@ -242,17 +242,17 @@
         baseStats: { damageMin: 4, damageMax: 7, precision: 3, critical: 0.014 }, stats: { damageMin: 4, damageMax: 7, precision: 3, critical: 0.014 }, stackable: false, maxStack: 1
     });
     item("eg_bow_l3", {
-        name: "Arco Vybe", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_053.png", price: 77, value: 77,
+        name: "Arco Vybe", icon: "⚔", image: "assets/organized/items/weapons/bows/Icon20_no_effect.png", price: 77, value: 77,
         rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "bow", equipmentClass: "martial", levelReq: 3, tier: 2,
         baseStats: { damageMin: 4, damageMax: 8, precision: 4, critical: 0.006 }, stats: { damageMin: 4, damageMax: 8, precision: 4, critical: 0.006 }, stackable: false, maxStack: 1
     });
     item("eg_focus_l3", {
-        name: "Foco Vybe", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_063.png", price: 77, value: 77,
+        name: "Foco Vybe", icon: "⚔", image: "assets/organized/items/weapons/foco/Staves_1/3.png", price: 77, value: 77,
         rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 3, tier: 2,
         baseStats: { damageMin: 4, damageMax: 7, precision: 2, mag: 3 }, stats: { damageMin: 4, damageMax: 7, precision: 2, mag: 3 }, stackable: false, maxStack: 1
     });
     item("eg_shield_l3", {
-        name: "Escudo Vybe", icon: "⬡", type: "shield", itemType: "SHIELD",
+        name: "Escudo Vybe", icon: "⬡", image: "assets/organized/items/shields/Shield_2/2.png", type: "shield", itemType: "SHIELD",
         slot: "offhand", levelReq: 3, tier: 2, equipmentClass: "defensive", rarity: "Comum",
         price: 67, value: 67,
         stackable: false, maxStack: 1, baseStats: {"defense":4,"blockChance":0.034,"blockReduction":0.204}, stats: {"defense":4,"blockChance":0.034,"blockReduction":0.204},
@@ -314,17 +314,17 @@
         baseStats: { damageMin: 5, damageMax: 9, precision: 3, critical: 0.015 }, stats: { damageMin: 5, damageMax: 9, precision: 3, critical: 0.015 }, stackable: false, maxStack: 1
     });
     item("eg_bow_l4", {
-        name: "Arco Guarda", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_054.png", price: 126, value: 126,
+        name: "Arco Guarda", icon: "⚔", image: "assets/organized/items/weapons/bows/Icon2_no_effect.png", price: 126, value: 126,
         rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "bow", equipmentClass: "martial", levelReq: 4, tier: 2,
         baseStats: { damageMin: 5, damageMax: 10, precision: 4, critical: 0.007 }, stats: { damageMin: 5, damageMax: 10, precision: 4, critical: 0.007 }, stackable: false, maxStack: 1
     });
     item("eg_focus_l4", {
-        name: "Foco Guarda", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_064.png", price: 126, value: 126,
+        name: "Foco Guarda", icon: "⚔", image: "assets/organized/items/weapons/foco/Staves_1/4.png", price: 126, value: 126,
         rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 4, tier: 2,
         baseStats: { damageMin: 4, damageMax: 8, precision: 2, mag: 4 }, stats: { damageMin: 4, damageMax: 8, precision: 2, mag: 4 }, stackable: false, maxStack: 1
     });
     item("eg_shield_l4", {
-        name: "Escudo Guarda", icon: "⬡", type: "shield", itemType: "SHIELD",
+        name: "Escudo Guarda", icon: "⬡", image: "assets/organized/items/shields/Shield_3/3.png", type: "shield", itemType: "SHIELD",
         slot: "offhand", levelReq: 4, tier: 2, equipmentClass: "defensive", rarity: "Comum",
         price: 109, value: 109,
         stackable: false, maxStack: 1, baseStats: {"defense":5,"blockChance":0.037,"blockReduction":0.212}, stats: {"defense":5,"blockChance":0.037,"blockReduction":0.212},
@@ -386,17 +386,17 @@
         baseStats: { damageMin: 6, damageMax: 10, precision: 3, critical: 0.016 }, stats: { damageMin: 6, damageMax: 10, precision: 3, critical: 0.016 }, stackable: false, maxStack: 1
     });
     item("eg_bow_l5", {
-        name: "Arco Mercenário", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_055.png", price: 189, value: 189,
+        name: "Arco Mercenário", icon: "⚔", image: "assets/organized/items/weapons/bows/Icon25_no_effect.png", price: 189, value: 189,
         rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "bow", equipmentClass: "martial", levelReq: 5, tier: 3,
         baseStats: { damageMin: 6, damageMax: 11, precision: 4, critical: 0.008 }, stats: { damageMin: 6, damageMax: 11, precision: 4, critical: 0.008 }, stackable: false, maxStack: 1
     });
     item("eg_focus_l5", {
-        name: "Foco Mercenário", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_065.png", price: 189, value: 189,
+        name: "Foco Mercenário", icon: "⚔", image: "assets/organized/items/weapons/foco/Staves_1/5.png", price: 189, value: 189,
         rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 5, tier: 3,
         baseStats: { damageMin: 5, damageMax: 10, precision: 2, mag: 4 }, stats: { damageMin: 5, damageMax: 10, precision: 2, mag: 4 }, stackable: false, maxStack: 1
     });
     item("eg_shield_l5", {
-        name: "Escudo Mercenário", icon: "⬡", type: "shield", itemType: "SHIELD",
+        name: "Escudo Mercenário", icon: "⬡", image: "assets/organized/items/shields/Shield_4/3.png", type: "shield", itemType: "SHIELD",
         slot: "offhand", levelReq: 5, tier: 3, equipmentClass: "defensive", rarity: "Incomum",
         price: 163, value: 163,
         stackable: false, maxStack: 1, baseStats: {"defense":6,"blockChance":0.04,"blockReduction":0.22}, stats: {"defense":6,"blockChance":0.04,"blockReduction":0.22},
@@ -458,17 +458,17 @@
         baseStats: { damageMin: 7, damageMax: 12, precision: 4, critical: 0.017 }, stats: { damageMin: 7, damageMax: 12, precision: 4, critical: 0.017 }, stackable: false, maxStack: 1
     });
     item("eg_bow_l6", {
-        name: "Arco Explorador", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_056.png", price: 266, value: 266,
+        name: "Arco Explorador", icon: "⚔", image: "assets/organized/items/weapons/bows/Icon14.png", price: 266, value: 266,
         rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "bow", equipmentClass: "martial", levelReq: 6, tier: 3,
         baseStats: { damageMin: 7, damageMax: 13, precision: 5, critical: 0.009 }, stats: { damageMin: 7, damageMax: 13, precision: 5, critical: 0.009 }, stackable: false, maxStack: 1
     });
     item("eg_focus_l6", {
-        name: "Foco Explorador", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_066.png", price: 266, value: 266,
+        name: "Foco Explorador", icon: "⚔", image: "assets/organized/items/weapons/foco/Staves_8/1.png", price: 266, value: 266,
         rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 6, tier: 3,
         baseStats: { damageMin: 6, damageMax: 11, precision: 3, mag: 5 }, stats: { damageMin: 6, damageMax: 11, precision: 3, mag: 5 }, stackable: false, maxStack: 1
     });
     item("eg_shield_l6", {
-        name: "Escudo Explorador", icon: "⬡", type: "shield", itemType: "SHIELD",
+        name: "Escudo Explorador", icon: "⬡", image: "assets/organized/items/shields/Shield_5/3.png", type: "shield", itemType: "SHIELD",
         slot: "offhand", levelReq: 6, tier: 3, equipmentClass: "defensive", rarity: "Incomum",
         price: 229, value: 229,
         stackable: false, maxStack: 1, baseStats: {"defense":7,"blockChance":0.043,"blockReduction":0.228}, stats: {"defense":7,"blockChance":0.043,"blockReduction":0.228},
@@ -530,17 +530,17 @@
         baseStats: { damageMin: 8, damageMax: 13, precision: 4, critical: 0.018 }, stats: { damageMin: 8, damageMax: 13, precision: 4, critical: 0.018 }, stackable: false, maxStack: 1
     });
     item("eg_bow_l7", {
-        name: "Arco Veterano", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_057.png", price: 357, value: 357,
+        name: "Arco Veterano", icon: "⚔", image: "assets/organized/items/weapons/bows/Icon17.png", price: 357, value: 357,
         rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "bow", equipmentClass: "martial", levelReq: 7, tier: 4,
         baseStats: { damageMin: 9, damageMax: 15, precision: 5, critical: 0.01 }, stats: { damageMin: 9, damageMax: 15, precision: 5, critical: 0.01 }, stackable: false, maxStack: 1
     });
     item("eg_focus_l7", {
-        name: "Foco Veterano", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_067.png", price: 357, value: 357,
+        name: "Foco Veterano", icon: "⚔", image: "assets/organized/items/weapons/foco/Staves_8/2.png", price: 357, value: 357,
         rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 7, tier: 4,
         baseStats: { damageMin: 7, damageMax: 12, precision: 3, mag: 5 }, stats: { damageMin: 7, damageMax: 12, precision: 3, mag: 5 }, stackable: false, maxStack: 1
     });
     item("eg_shield_l7", {
-        name: "Escudo Veterano", icon: "⬡", type: "shield", itemType: "SHIELD",
+        name: "Escudo Veterano", icon: "⬡", image: "assets/organized/items/shields/Shield_6/4.png", type: "shield", itemType: "SHIELD",
         slot: "offhand", levelReq: 7, tier: 4, equipmentClass: "defensive", rarity: "Incomum",
         price: 307, value: 307,
         stackable: false, maxStack: 1, baseStats: {"defense":7,"blockChance":0.046,"blockReduction":0.236}, stats: {"defense":7,"blockChance":0.046,"blockReduction":0.236},
@@ -602,17 +602,17 @@
         baseStats: { damageMin: 8, damageMax: 15, precision: 4, critical: 0.018 }, stats: { damageMin: 8, damageMax: 15, precision: 4, critical: 0.018 }, stackable: false, maxStack: 1
     });
     item("eg_bow_l8", {
-        name: "Arco Coliseu", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_058.png", price: 462, value: 462,
+        name: "Arco Coliseu", icon: "⚔", image: "assets/organized/items/weapons/bows/Icon21.png", price: 462, value: 462,
         rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "bow", equipmentClass: "martial", levelReq: 8, tier: 4,
         baseStats: { damageMin: 10, damageMax: 16, precision: 5, critical: 0.01 }, stats: { damageMin: 10, damageMax: 16, precision: 5, critical: 0.01 }, stackable: false, maxStack: 1
     });
     item("eg_focus_l8", {
-        name: "Foco Coliseu", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_068.png", price: 462, value: 462,
+        name: "Foco Coliseu", icon: "⚔", image: "assets/organized/items/weapons/foco/Staves_8/3.png", price: 462, value: 462,
         rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 8, tier: 4,
         baseStats: { damageMin: 8, damageMax: 14, precision: 3, mag: 6 }, stats: { damageMin: 8, damageMax: 14, precision: 3, mag: 6 }, stackable: false, maxStack: 1
     });
     item("eg_shield_l8", {
-        name: "Escudo Coliseu", icon: "⬡", type: "shield", itemType: "SHIELD",
+        name: "Escudo Coliseu", icon: "⬡", image: "assets/organized/items/shields/Shield_2/5.png", type: "shield", itemType: "SHIELD",
         slot: "offhand", levelReq: 8, tier: 4, equipmentClass: "defensive", rarity: "Incomum",
         price: 397, value: 397,
         stackable: false, maxStack: 1, baseStats: {"defense":8,"blockChance":0.049,"blockReduction":0.244}, stats: {"defense":8,"blockChance":0.049,"blockReduction":0.244},
@@ -674,17 +674,17 @@
         baseStats: { damageMin: 9, damageMax: 16, precision: 5, critical: 0.019 }, stats: { damageMin: 9, damageMax: 16, precision: 5, critical: 0.019 }, stackable: false, maxStack: 1
     });
     item("eg_bow_l9", {
-        name: "Arco Rúnico", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_059.png", price: 581, value: 581,
+        name: "Arco Rúnico", icon: "⚔", image: "assets/organized/items/weapons/bows/Icon24.png", price: 581, value: 581,
         rarity: "Raro", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "bow", equipmentClass: "martial", levelReq: 9, tier: 5,
         baseStats: { damageMin: 11, damageMax: 18, precision: 6, critical: 0.011 }, stats: { damageMin: 11, damageMax: 18, precision: 6, critical: 0.011 }, stackable: false, maxStack: 1
     });
     item("eg_focus_l9", {
-        name: "Foco Rúnico", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_069.png", price: 581, value: 581,
+        name: "Foco Rúnico", icon: "⚔", image: "assets/organized/items/weapons/foco/Staves_8/4.png", price: 581, value: 581,
         rarity: "Raro", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 9, tier: 5,
         baseStats: { damageMin: 9, damageMax: 15, precision: 4, mag: 6 }, stats: { damageMin: 9, damageMax: 15, precision: 4, mag: 6 }, stackable: false, maxStack: 1
     });
     item("eg_shield_l9", {
-        name: "Escudo Rúnico", icon: "⬡", type: "shield", itemType: "SHIELD",
+        name: "Escudo Rúnico", icon: "⬡", image: "assets/organized/items/shields/Shield_5/5.png", type: "shield", itemType: "SHIELD",
         slot: "offhand", levelReq: 9, tier: 5, equipmentClass: "defensive", rarity: "Raro",
         price: 499, value: 499,
         stackable: false, maxStack: 1, baseStats: {"defense":9,"blockChance":0.052,"blockReduction":0.252}, stats: {"defense":9,"blockChance":0.052,"blockReduction":0.252},
@@ -746,17 +746,17 @@
         baseStats: { damageMin: 10, damageMax: 17, precision: 5, critical: 0.02 }, stats: { damageMin: 10, damageMax: 17, precision: 5, critical: 0.02 }, stackable: false, maxStack: 1
     });
     item("eg_bow_l10", {
-        name: "Arco Aetheriano", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_060.png", price: 714, value: 714,
+        name: "Arco Aetheriano", icon: "⚔", image: "assets/organized/items/weapons/bows/Icon22.png", price: 714, value: 714,
         rarity: "Raro", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "bow", equipmentClass: "martial", levelReq: 10, tier: 5,
         baseStats: { damageMin: 12, damageMax: 19, precision: 6, critical: 0.012 }, stats: { damageMin: 12, damageMax: 19, precision: 6, critical: 0.012 }, stackable: false, maxStack: 1
     });
     item("eg_focus_l10", {
-        name: "Foco Aetheriano", icon: "⚔", image: "assets/organized/items/weapons/all/weapons_070.png", price: 714, value: 714,
+        name: "Foco Aetheriano", icon: "⚔", image: "assets/organized/items/weapons/foco/Staves_8/5.png", price: 714, value: 714,
         rarity: "Raro", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 10, tier: 5,
         baseStats: { damageMin: 10, damageMax: 17, precision: 4, mag: 7 }, stats: { damageMin: 10, damageMax: 17, precision: 4, mag: 7 }, stackable: false, maxStack: 1
     });
     item("eg_shield_l10", {
-        name: "Escudo Aetheriano", icon: "⬡", type: "shield", itemType: "SHIELD",
+        name: "Escudo Aetheriano", icon: "⬡", image: "assets/organized/items/shields/Shield_7/5.png", type: "shield", itemType: "SHIELD",
         slot: "offhand", levelReq: 10, tier: 5, equipmentClass: "defensive", rarity: "Raro",
         price: 613, value: 613,
         stackable: false, maxStack: 1, baseStats: {"defense":10,"blockChance":0.055,"blockReduction":0.26}, stats: {"defense":10,"blockChance":0.055,"blockReduction":0.26},
