@@ -1572,6 +1572,8 @@ body > :not(
 ):not(
     #aethra-shop-tooltip
 ):not(
+    #aethra-save-status
+):not(
     script
 ):not(
     style
