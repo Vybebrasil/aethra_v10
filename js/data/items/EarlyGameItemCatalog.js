@@ -83,17 +83,17 @@
         baseStats: { damageMin: 3, damageMax: 5, precision: 1 }, stats: { damageMin: 3, damageMax: 5, precision: 1 }, stackable: false, maxStack: 1
     });
     item("eg_axe_l1", {
-        name: "Machado Recruta", icon: "⚔", image: "assets/organized/items/weapons/axes/throwing_axe1.png", price: 21, value: 21,
+        name: "Machado Recruta", icon: "⚔", image: "assets/organized/items/weapons/axes/axe_l01.png", price: 21, value: 21,
         rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "axe", equipmentClass: "martial", levelReq: 1, tier: 1,
         baseStats: { damageMin: 3, damageMax: 6, precision: 0, critical: 0.007 }, stats: { damageMin: 3, damageMax: 6, precision: 0, critical: 0.007 }, stackable: false, maxStack: 1
     });
     item("eg_mace_l1", {
-        name: "Maça Recruta", icon: "⚔", image: "assets/organized/items/weapons/maces/club.png", price: 21, value: 21,
+        name: "Maça Recruta", icon: "⚔", image: "assets/organized/items/weapons/maces/mace_l01.png", price: 21, value: 21,
         rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "mace", equipmentClass: "martial", levelReq: 1, tier: 1,
         baseStats: { damageMin: 3, damageMax: 6, precision: 0, defense: 1 }, stats: { damageMin: 3, damageMax: 6, precision: 0, defense: 1 }, stackable: false, maxStack: 1
     });
     item("eg_dagger_l1", {
-        name: "Adaga Recruta", icon: "⚔", image: "assets/organized/items/weapons/daggers/knife.png", price: 21, value: 21,
+        name: "Adaga Recruta", icon: "⚔", image: "assets/organized/items/weapons/daggers/dagger_l01.png", price: 21, value: 21,
         rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "dagger", equipmentClass: "martial", levelReq: 1, tier: 1,
         baseStats: { damageMin: 2, damageMax: 4, precision: 2, critical: 0.013 }, stats: { damageMin: 2, damageMax: 4, precision: 2, critical: 0.013 }, stackable: false, maxStack: 1
     });
@@ -103,7 +103,7 @@
         baseStats: { damageMin: 2, damageMax: 5, precision: 3, critical: 0.005 }, stats: { damageMin: 2, damageMax: 5, precision: 3, critical: 0.005 }, stackable: false, maxStack: 1
     });
     item("eg_focus_l1", {
-        name: "Foco Recruta", icon: "⚔", image: "assets/organized/items/weapons/foco/Staves_1/1.png", price: 21, value: 21,
+        name: "Foco Recruta", icon: "⚔", image: "assets/organized/items/weapons/foco/focus_l01.png", price: 21, value: 21,
         rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 1, tier: 1,
         baseStats: { damageMin: 2, damageMax: 4, precision: 1, mag: 2 }, stats: { damageMin: 2, damageMax: 4, precision: 1, mag: 2 }, stackable: false, maxStack: 1
     });
@@ -155,17 +155,17 @@
         baseStats: { damageMin: 4, damageMax: 7, precision: 1 }, stats: { damageMin: 4, damageMax: 7, precision: 1 }, stackable: false, maxStack: 1
     });
     item("eg_axe_l2", {
-        name: "Machado Aventureiro", icon: "⚔", image: "assets/organized/items/weapons/axes/axe4.png", price: 42, value: 42,
+        name: "Machado Aventureiro", icon: "⚔", image: "assets/organized/items/weapons/axes/axe_l02.png", price: 42, value: 42,
         rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "axe", equipmentClass: "martial", levelReq: 2, tier: 1,
         baseStats: { damageMin: 4, damageMax: 8, precision: 0, critical: 0.008 }, stats: { damageMin: 4, damageMax: 8, precision: 0, critical: 0.008 }, stackable: false, maxStack: 1
     });
     item("eg_mace_l2", {
-        name: "Maça Aventureiro", icon: "⚔", image: "assets/organized/items/weapons/maces/club.png", price: 42, value: 42,
+        name: "Maça Aventureiro", icon: "⚔", image: "assets/organized/items/weapons/maces/mace_l02.png", price: 42, value: 42,
         rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "mace", equipmentClass: "martial", levelReq: 2, tier: 1,
         baseStats: { damageMin: 4, damageMax: 7, precision: 0, defense: 1 }, stats: { damageMin: 4, damageMax: 7, precision: 0, defense: 1 }, stackable: false, maxStack: 1
     });
     item("eg_dagger_l2", {
-        name: "Adaga Aventureiro", icon: "⚔", image: "assets/organized/items/weapons/daggers/knife.png", price: 42, value: 42,
+        name: "Adaga Aventureiro", icon: "⚔", image: "assets/organized/items/weapons/daggers/dagger_l02.png", price: 42, value: 42,
         rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "dagger", equipmentClass: "martial", levelReq: 2, tier: 1,
         baseStats: { damageMin: 3, damageMax: 6, precision: 2, critical: 0.014 }, stats: { damageMin: 3, damageMax: 6, precision: 2, critical: 0.014 }, stackable: false, maxStack: 1
     });
@@ -175,7 +175,7 @@
         baseStats: { damageMin: 3, damageMax: 6, precision: 3, critical: 0.006 }, stats: { damageMin: 3, damageMax: 6, precision: 3, critical: 0.006 }, stackable: false, maxStack: 1
     });
     item("eg_focus_l2", {
-        name: "Foco Aventureiro", icon: "⚔", image: "assets/organized/items/weapons/foco/Staves_1/2.png", price: 42, value: 42,
+        name: "Foco Aventureiro", icon: "⚔", image: "assets/organized/items/weapons/foco/focus_l02.png", price: 42, value: 42,
         rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 2, tier: 1,
         baseStats: { damageMin: 3, damageMax: 6, precision: 1, mag: 3 }, stats: { damageMin: 3, damageMax: 6, precision: 1, mag: 3 }, stackable: false, maxStack: 1
     });
@@ -227,17 +227,17 @@
         baseStats: { damageMin: 5, damageMax: 9, precision: 2 }, stats: { damageMin: 5, damageMax: 9, precision: 2 }, stackable: false, maxStack: 1
     });
     item("eg_axe_l3", {
-        name: "Machado Vybe", icon: "⚔", image: "assets/organized/items/weapons/axes/axe4.png", price: 77, value: 77,
+        name: "Machado Vybe", icon: "⚔", image: "assets/organized/items/weapons/axes/axe_l03.png", price: 77, value: 77,
         rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "axe", equipmentClass: "martial", levelReq: 3, tier: 2,
         baseStats: { damageMin: 6, damageMax: 10, precision: 1, critical: 0.008 }, stats: { damageMin: 6, damageMax: 10, precision: 1, critical: 0.008 }, stackable: false, maxStack: 1
     });
     item("eg_mace_l3", {
-        name: "Maça Vybe", icon: "⚔", image: "assets/organized/items/weapons/maces/hammer1.png", price: 77, value: 77,
+        name: "Maça Vybe", icon: "⚔", image: "assets/organized/items/weapons/maces/mace_l03.png", price: 77, value: 77,
         rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "mace", equipmentClass: "martial", levelReq: 3, tier: 2,
         baseStats: { damageMin: 5, damageMax: 9, precision: 1, defense: 1 }, stats: { damageMin: 5, damageMax: 9, precision: 1, defense: 1 }, stackable: false, maxStack: 1
     });
     item("eg_dagger_l3", {
-        name: "Adaga Vybe", icon: "⚔", image: "assets/organized/items/weapons/daggers/dagger1.png", price: 77, value: 77,
+        name: "Adaga Vybe", icon: "⚔", image: "assets/organized/items/weapons/daggers/dagger_l03.png", price: 77, value: 77,
         rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "dagger", equipmentClass: "martial", levelReq: 3, tier: 2,
         baseStats: { damageMin: 4, damageMax: 7, precision: 3, critical: 0.014 }, stats: { damageMin: 4, damageMax: 7, precision: 3, critical: 0.014 }, stackable: false, maxStack: 1
     });
@@ -247,7 +247,7 @@
         baseStats: { damageMin: 4, damageMax: 8, precision: 4, critical: 0.006 }, stats: { damageMin: 4, damageMax: 8, precision: 4, critical: 0.006 }, stackable: false, maxStack: 1
     });
     item("eg_focus_l3", {
-        name: "Foco Vybe", icon: "⚔", image: "assets/organized/items/weapons/foco/Staves_1/3.png", price: 77, value: 77,
+        name: "Foco Vybe", icon: "⚔", image: "assets/organized/items/weapons/foco/focus_l03.png", price: 77, value: 77,
         rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 3, tier: 2,
         baseStats: { damageMin: 4, damageMax: 7, precision: 2, mag: 3 }, stats: { damageMin: 4, damageMax: 7, precision: 2, mag: 3 }, stackable: false, maxStack: 1
     });
@@ -299,17 +299,17 @@
         baseStats: { damageMin: 6, damageMax: 11, precision: 2 }, stats: { damageMin: 6, damageMax: 11, precision: 2 }, stackable: false, maxStack: 1
     });
     item("eg_axe_l4", {
-        name: "Machado Guarda", icon: "⚔", image: "assets/organized/items/weapons/axes/axe2.png", price: 126, value: 126,
+        name: "Machado Guarda", icon: "⚔", image: "assets/organized/items/weapons/axes/axe_l04.png", price: 126, value: 126,
         rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "axe", equipmentClass: "martial", levelReq: 4, tier: 2,
         baseStats: { damageMin: 7, damageMax: 12, precision: 1, critical: 0.009 }, stats: { damageMin: 7, damageMax: 12, precision: 1, critical: 0.009 }, stackable: false, maxStack: 1
     });
     item("eg_mace_l4", {
-        name: "Maça Guarda", icon: "⚔", image: "assets/organized/items/weapons/maces/hammer2.png", price: 126, value: 126,
+        name: "Maça Guarda", icon: "⚔", image: "assets/organized/items/weapons/maces/mace_l04.png", price: 126, value: 126,
         rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "mace", equipmentClass: "martial", levelReq: 4, tier: 2,
         baseStats: { damageMin: 6, damageMax: 11, precision: 1, defense: 2 }, stats: { damageMin: 6, damageMax: 11, precision: 1, defense: 2 }, stackable: false, maxStack: 1
     });
     item("eg_dagger_l4", {
-        name: "Adaga Guarda", icon: "⚔", image: "assets/organized/items/weapons/daggers/dagger1.png", price: 126, value: 126,
+        name: "Adaga Guarda", icon: "⚔", image: "assets/organized/items/weapons/daggers/dagger_l04.png", price: 126, value: 126,
         rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "dagger", equipmentClass: "martial", levelReq: 4, tier: 2,
         baseStats: { damageMin: 5, damageMax: 9, precision: 3, critical: 0.015 }, stats: { damageMin: 5, damageMax: 9, precision: 3, critical: 0.015 }, stackable: false, maxStack: 1
     });
@@ -319,7 +319,7 @@
         baseStats: { damageMin: 5, damageMax: 10, precision: 4, critical: 0.007 }, stats: { damageMin: 5, damageMax: 10, precision: 4, critical: 0.007 }, stackable: false, maxStack: 1
     });
     item("eg_focus_l4", {
-        name: "Foco Guarda", icon: "⚔", image: "assets/organized/items/weapons/foco/Staves_1/4.png", price: 126, value: 126,
+        name: "Foco Guarda", icon: "⚔", image: "assets/organized/items/weapons/foco/focus_l04.png", price: 126, value: 126,
         rarity: "Comum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 4, tier: 2,
         baseStats: { damageMin: 4, damageMax: 8, precision: 2, mag: 4 }, stats: { damageMin: 4, damageMax: 8, precision: 2, mag: 4 }, stackable: false, maxStack: 1
     });
@@ -371,17 +371,17 @@
         baseStats: { damageMin: 7, damageMax: 12, precision: 2 }, stats: { damageMin: 7, damageMax: 12, precision: 2 }, stackable: false, maxStack: 1
     });
     item("eg_axe_l5", {
-        name: "Machado Mercenário", icon: "⚔", image: "assets/organized/items/weapons/axes/axe2.png", price: 189, value: 189,
+        name: "Machado Mercenário", icon: "⚔", image: "assets/organized/items/weapons/axes/axe_l05.png", price: 189, value: 189,
         rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "axe", equipmentClass: "martial", levelReq: 5, tier: 3,
         baseStats: { damageMin: 8, damageMax: 14, precision: 1, critical: 0.01 }, stats: { damageMin: 8, damageMax: 14, precision: 1, critical: 0.01 }, stackable: false, maxStack: 1
     });
     item("eg_mace_l5", {
-        name: "Maça Mercenário", icon: "⚔", image: "assets/organized/items/weapons/maces/mace1.png", price: 189, value: 189,
+        name: "Maça Mercenário", icon: "⚔", image: "assets/organized/items/weapons/maces/mace_l05.png", price: 189, value: 189,
         rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "mace", equipmentClass: "martial", levelReq: 5, tier: 3,
         baseStats: { damageMin: 8, damageMax: 13, precision: 1, defense: 2 }, stats: { damageMin: 8, damageMax: 13, precision: 1, defense: 2 }, stackable: false, maxStack: 1
     });
     item("eg_dagger_l5", {
-        name: "Adaga Mercenário", icon: "⚔", image: "assets/organized/items/weapons/daggers/dagger2.png", price: 189, value: 189,
+        name: "Adaga Mercenário", icon: "⚔", image: "assets/organized/items/weapons/daggers/dagger_l05.png", price: 189, value: 189,
         rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "dagger", equipmentClass: "martial", levelReq: 5, tier: 3,
         baseStats: { damageMin: 6, damageMax: 10, precision: 3, critical: 0.016 }, stats: { damageMin: 6, damageMax: 10, precision: 3, critical: 0.016 }, stackable: false, maxStack: 1
     });
@@ -391,7 +391,7 @@
         baseStats: { damageMin: 6, damageMax: 11, precision: 4, critical: 0.008 }, stats: { damageMin: 6, damageMax: 11, precision: 4, critical: 0.008 }, stackable: false, maxStack: 1
     });
     item("eg_focus_l5", {
-        name: "Foco Mercenário", icon: "⚔", image: "assets/organized/items/weapons/foco/Staves_1/5.png", price: 189, value: 189,
+        name: "Foco Mercenário", icon: "⚔", image: "assets/organized/items/weapons/foco/focus_l05.png", price: 189, value: 189,
         rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 5, tier: 3,
         baseStats: { damageMin: 5, damageMax: 10, precision: 2, mag: 4 }, stats: { damageMin: 5, damageMax: 10, precision: 2, mag: 4 }, stackable: false, maxStack: 1
     });
@@ -443,17 +443,17 @@
         baseStats: { damageMin: 8, damageMax: 14, precision: 3 }, stats: { damageMin: 8, damageMax: 14, precision: 3 }, stackable: false, maxStack: 1
     });
     item("eg_axe_l6", {
-        name: "Machado Explorador", icon: "⚔", image: "assets/organized/items/weapons/axes/axe1.png", price: 266, value: 266,
+        name: "Machado Explorador", icon: "⚔", image: "assets/organized/items/weapons/axes/axe_l06.png", price: 266, value: 266,
         rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "axe", equipmentClass: "martial", levelReq: 6, tier: 3,
         baseStats: { damageMin: 9, damageMax: 16, precision: 2, critical: 0.011 }, stats: { damageMin: 9, damageMax: 16, precision: 2, critical: 0.011 }, stackable: false, maxStack: 1
     });
     item("eg_mace_l6", {
-        name: "Maça Explorador", icon: "⚔", image: "assets/organized/items/weapons/maces/mace1.png", price: 266, value: 266,
+        name: "Maça Explorador", icon: "⚔", image: "assets/organized/items/weapons/maces/mace_l06.png", price: 266, value: 266,
         rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "mace", equipmentClass: "martial", levelReq: 6, tier: 3,
         baseStats: { damageMin: 9, damageMax: 15, precision: 2, defense: 2 }, stats: { damageMin: 9, damageMax: 15, precision: 2, defense: 2 }, stackable: false, maxStack: 1
     });
     item("eg_dagger_l6", {
-        name: "Adaga Explorador", icon: "⚔", image: "assets/organized/items/weapons/daggers/dagger2.png", price: 266, value: 266,
+        name: "Adaga Explorador", icon: "⚔", image: "assets/organized/items/weapons/daggers/dagger_l06.png", price: 266, value: 266,
         rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "dagger", equipmentClass: "martial", levelReq: 6, tier: 3,
         baseStats: { damageMin: 7, damageMax: 12, precision: 4, critical: 0.017 }, stats: { damageMin: 7, damageMax: 12, precision: 4, critical: 0.017 }, stackable: false, maxStack: 1
     });
@@ -463,7 +463,7 @@
         baseStats: { damageMin: 7, damageMax: 13, precision: 5, critical: 0.009 }, stats: { damageMin: 7, damageMax: 13, precision: 5, critical: 0.009 }, stackable: false, maxStack: 1
     });
     item("eg_focus_l6", {
-        name: "Foco Explorador", icon: "⚔", image: "assets/organized/items/weapons/foco/Staves_8/1.png", price: 266, value: 266,
+        name: "Foco Explorador", icon: "⚔", image: "assets/organized/items/weapons/foco/focus_l06.png", price: 266, value: 266,
         rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 6, tier: 3,
         baseStats: { damageMin: 6, damageMax: 11, precision: 3, mag: 5 }, stats: { damageMin: 6, damageMax: 11, precision: 3, mag: 5 }, stackable: false, maxStack: 1
     });
@@ -515,17 +515,17 @@
         baseStats: { damageMin: 9, damageMax: 16, precision: 3 }, stats: { damageMin: 9, damageMax: 16, precision: 3 }, stackable: false, maxStack: 1
     });
     item("eg_axe_l7", {
-        name: "Machado Veterano", icon: "⚔", image: "assets/organized/items/weapons/axes/axe1.png", price: 357, value: 357,
+        name: "Machado Veterano", icon: "⚔", image: "assets/organized/items/weapons/axes/axe_l07.png", price: 357, value: 357,
         rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "axe", equipmentClass: "martial", levelReq: 7, tier: 4,
         baseStats: { damageMin: 11, damageMax: 18, precision: 2, critical: 0.012 }, stats: { damageMin: 11, damageMax: 18, precision: 2, critical: 0.012 }, stackable: false, maxStack: 1
     });
     item("eg_mace_l7", {
-        name: "Maça Veterano", icon: "⚔", image: "assets/organized/items/weapons/maces/mace2.png", price: 357, value: 357,
+        name: "Maça Veterano", icon: "⚔", image: "assets/organized/items/weapons/maces/mace_l07.png", price: 357, value: 357,
         rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "mace", equipmentClass: "martial", levelReq: 7, tier: 4,
         baseStats: { damageMin: 10, damageMax: 17, precision: 2, defense: 2 }, stats: { damageMin: 10, damageMax: 17, precision: 2, defense: 2 }, stackable: false, maxStack: 1
     });
     item("eg_dagger_l7", {
-        name: "Adaga Veterano", icon: "⚔", image: "assets/organized/items/weapons/daggers/dagger3.png", price: 357, value: 357,
+        name: "Adaga Veterano", icon: "⚔", image: "assets/organized/items/weapons/daggers/dagger_l07.png", price: 357, value: 357,
         rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "dagger", equipmentClass: "martial", levelReq: 7, tier: 4,
         baseStats: { damageMin: 8, damageMax: 13, precision: 4, critical: 0.018 }, stats: { damageMin: 8, damageMax: 13, precision: 4, critical: 0.018 }, stackable: false, maxStack: 1
     });
@@ -535,7 +535,7 @@
         baseStats: { damageMin: 9, damageMax: 15, precision: 5, critical: 0.01 }, stats: { damageMin: 9, damageMax: 15, precision: 5, critical: 0.01 }, stackable: false, maxStack: 1
     });
     item("eg_focus_l7", {
-        name: "Foco Veterano", icon: "⚔", image: "assets/organized/items/weapons/foco/Staves_8/2.png", price: 357, value: 357,
+        name: "Foco Veterano", icon: "⚔", image: "assets/organized/items/weapons/foco/focus_l07.png", price: 357, value: 357,
         rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 7, tier: 4,
         baseStats: { damageMin: 7, damageMax: 12, precision: 3, mag: 5 }, stats: { damageMin: 7, damageMax: 12, precision: 3, mag: 5 }, stackable: false, maxStack: 1
     });
@@ -587,17 +587,17 @@
         baseStats: { damageMin: 10, damageMax: 18, precision: 3 }, stats: { damageMin: 10, damageMax: 18, precision: 3 }, stackable: false, maxStack: 1
     });
     item("eg_axe_l8", {
-        name: "Machado Coliseu", icon: "⚔", image: "assets/organized/items/weapons/axes/throwing_axe2.png", price: 462, value: 462,
+        name: "Machado Coliseu", icon: "⚔", image: "assets/organized/items/weapons/axes/axe_l08.png", price: 462, value: 462,
         rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "axe", equipmentClass: "martial", levelReq: 8, tier: 4,
         baseStats: { damageMin: 12, damageMax: 20, precision: 2, critical: 0.012 }, stats: { damageMin: 12, damageMax: 20, precision: 2, critical: 0.012 }, stackable: false, maxStack: 1
     });
     item("eg_mace_l8", {
-        name: "Maça Coliseu", icon: "⚔", image: "assets/organized/items/weapons/maces/morning_star.png", price: 462, value: 462,
+        name: "Maça Coliseu", icon: "⚔", image: "assets/organized/items/weapons/maces/mace_l08.png", price: 462, value: 462,
         rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "mace", equipmentClass: "martial", levelReq: 8, tier: 4,
         baseStats: { damageMin: 11, damageMax: 19, precision: 2, defense: 3 }, stats: { damageMin: 11, damageMax: 19, precision: 2, defense: 3 }, stackable: false, maxStack: 1
     });
     item("eg_dagger_l8", {
-        name: "Adaga Coliseu", icon: "⚔", image: "assets/organized/items/weapons/daggers/dagger4.png", price: 462, value: 462,
+        name: "Adaga Coliseu", icon: "⚔", image: "assets/organized/items/weapons/daggers/dagger_l08.png", price: 462, value: 462,
         rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "dagger", equipmentClass: "martial", levelReq: 8, tier: 4,
         baseStats: { damageMin: 8, damageMax: 15, precision: 4, critical: 0.018 }, stats: { damageMin: 8, damageMax: 15, precision: 4, critical: 0.018 }, stackable: false, maxStack: 1
     });
@@ -607,7 +607,7 @@
         baseStats: { damageMin: 10, damageMax: 16, precision: 5, critical: 0.01 }, stats: { damageMin: 10, damageMax: 16, precision: 5, critical: 0.01 }, stackable: false, maxStack: 1
     });
     item("eg_focus_l8", {
-        name: "Foco Coliseu", icon: "⚔", image: "assets/organized/items/weapons/foco/Staves_8/3.png", price: 462, value: 462,
+        name: "Foco Coliseu", icon: "⚔", image: "assets/organized/items/weapons/foco/focus_l08.png", price: 462, value: 462,
         rarity: "Incomum", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 8, tier: 4,
         baseStats: { damageMin: 8, damageMax: 14, precision: 3, mag: 6 }, stats: { damageMin: 8, damageMax: 14, precision: 3, mag: 6 }, stackable: false, maxStack: 1
     });
@@ -659,17 +659,17 @@
         baseStats: { damageMin: 12, damageMax: 19, precision: 4 }, stats: { damageMin: 12, damageMax: 19, precision: 4 }, stackable: false, maxStack: 1
     });
     item("eg_axe_l9", {
-        name: "Machado Rúnico", icon: "⚔", image: "assets/organized/items/weapons/axes/axe3.png", price: 581, value: 581,
+        name: "Machado Rúnico", icon: "⚔", image: "assets/organized/items/weapons/axes/axe_l09.png", price: 581, value: 581,
         rarity: "Raro", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "axe", equipmentClass: "martial", levelReq: 9, tier: 5,
         baseStats: { damageMin: 13, damageMax: 22, precision: 3, critical: 0.013 }, stats: { damageMin: 13, damageMax: 22, precision: 3, critical: 0.013 }, stackable: false, maxStack: 1
     });
     item("eg_mace_l9", {
-        name: "Maça Rúnico", icon: "⚔", image: "assets/organized/items/weapons/maces/flail.png", price: 581, value: 581,
+        name: "Maça Rúnico", icon: "⚔", image: "assets/organized/items/weapons/maces/mace_l09.png", price: 581, value: 581,
         rarity: "Raro", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "mace", equipmentClass: "martial", levelReq: 9, tier: 5,
         baseStats: { damageMin: 13, damageMax: 21, precision: 3, defense: 3 }, stats: { damageMin: 13, damageMax: 21, precision: 3, defense: 3 }, stackable: false, maxStack: 1
     });
     item("eg_dagger_l9", {
-        name: "Adaga Rúnico", icon: "⚔", image: "assets/organized/items/weapons/daggers/dagger5.png", price: 581, value: 581,
+        name: "Adaga Rúnico", icon: "⚔", image: "assets/organized/items/weapons/daggers/dagger_l09.png", price: 581, value: 581,
         rarity: "Raro", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "dagger", equipmentClass: "martial", levelReq: 9, tier: 5,
         baseStats: { damageMin: 9, damageMax: 16, precision: 5, critical: 0.019 }, stats: { damageMin: 9, damageMax: 16, precision: 5, critical: 0.019 }, stackable: false, maxStack: 1
     });
@@ -679,7 +679,7 @@
         baseStats: { damageMin: 11, damageMax: 18, precision: 6, critical: 0.011 }, stats: { damageMin: 11, damageMax: 18, precision: 6, critical: 0.011 }, stackable: false, maxStack: 1
     });
     item("eg_focus_l9", {
-        name: "Foco Rúnico", icon: "⚔", image: "assets/organized/items/weapons/foco/Staves_8/4.png", price: 581, value: 581,
+        name: "Foco Rúnico", icon: "⚔", image: "assets/organized/items/weapons/foco/focus_l09.png", price: 581, value: 581,
         rarity: "Raro", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 9, tier: 5,
         baseStats: { damageMin: 9, damageMax: 15, precision: 4, mag: 6 }, stats: { damageMin: 9, damageMax: 15, precision: 4, mag: 6 }, stackable: false, maxStack: 1
     });
@@ -731,17 +731,17 @@
         baseStats: { damageMin: 13, damageMax: 21, precision: 4 }, stats: { damageMin: 13, damageMax: 21, precision: 4 }, stackable: false, maxStack: 1
     });
     item("eg_axe_l10", {
-        name: "Machado Aetheriano", icon: "⚔", image: "assets/organized/items/weapons/axes/axe3.png", price: 714, value: 714,
+        name: "Machado Aetheriano", icon: "⚔", image: "assets/organized/items/weapons/axes/axe_l10.png", price: 714, value: 714,
         rarity: "Raro", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "axe", equipmentClass: "martial", levelReq: 10, tier: 5,
         baseStats: { damageMin: 15, damageMax: 24, precision: 3, critical: 0.014 }, stats: { damageMin: 15, damageMax: 24, precision: 3, critical: 0.014 }, stackable: false, maxStack: 1
     });
     item("eg_mace_l10", {
-        name: "Maça Aetheriano", icon: "⚔", image: "assets/organized/items/weapons/maces/flail.png", price: 714, value: 714,
+        name: "Maça Aetheriano", icon: "⚔", image: "assets/organized/items/weapons/maces/mace_l10.png", price: 714, value: 714,
         rarity: "Raro", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "mace", equipmentClass: "martial", levelReq: 10, tier: 5,
         baseStats: { damageMin: 14, damageMax: 23, precision: 3, defense: 3 }, stats: { damageMin: 14, damageMax: 23, precision: 3, defense: 3 }, stackable: false, maxStack: 1
     });
     item("eg_dagger_l10", {
-        name: "Adaga Aetheriano", icon: "⚔", image: "assets/organized/items/weapons/daggers/dagger5.png", price: 714, value: 714,
+        name: "Adaga Aetheriano", icon: "⚔", image: "assets/organized/items/weapons/daggers/dagger_l10.png", price: 714, value: 714,
         rarity: "Raro", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "dagger", equipmentClass: "martial", levelReq: 10, tier: 5,
         baseStats: { damageMin: 10, damageMax: 17, precision: 5, critical: 0.02 }, stats: { damageMin: 10, damageMax: 17, precision: 5, critical: 0.02 }, stackable: false, maxStack: 1
     });
@@ -751,7 +751,7 @@
         baseStats: { damageMin: 12, damageMax: 19, precision: 6, critical: 0.012 }, stats: { damageMin: 12, damageMax: 19, precision: 6, critical: 0.012 }, stackable: false, maxStack: 1
     });
     item("eg_focus_l10", {
-        name: "Foco Aetheriano", icon: "⚔", image: "assets/organized/items/weapons/foco/Staves_8/5.png", price: 714, value: 714,
+        name: "Foco Aetheriano", icon: "⚔", image: "assets/organized/items/weapons/foco/focus_l10.png", price: 714, value: 714,
         rarity: "Raro", type: "weapon", itemType: "WEAPON", slot: "weapon", weaponFamily: "focus", equipmentClass: "arcane", levelReq: 10, tier: 5,
         baseStats: { damageMin: 10, damageMax: 17, precision: 4, mag: 7 }, stats: { damageMin: 10, damageMax: 17, precision: 4, mag: 7 }, stackable: false, maxStack: 1
     });

@@ -13,11 +13,15 @@ As URLs de tokens são preservadas apenas como metadata de origem (`sourceTokenU
 
 ## Ícones de armas — machados, maças e adagas
 
-- Pacote: **Idylwild's Arsenal**
-- Autor: Idylwild
-- Fonte: `https://opengameart.org/content/idylwilds-arsenal`
+- Pacote: **16x16 Weapon RPG Icons**
+- Autor: Shade
+- Fonte: `https://opengameart.org/content/16x16-weapon-rpg-icons`
 - Licença: **CC0 1.0 (domínio público)** — uso comercial permitido, atribuição
   não exigida (creditada aqui por cortesia)
 - Obtido em: 2026-07-25
-- Uso: variantes com contorno (`*border.png`), renomeadas e distribuídas em
-  `assets/organized/items/weapons/{axes,maces,daggers}/`
+- Uso: obra derivada permitida pela CC0. Os ícones de 16×16 das folhas
+  `bronze/iron/steel/gold-weapons.png` foram recortados e ampliados 2× por
+  vizinho-mais-próximo (preservando o pixel art) para 32×32, e distribuídos
+  como `axe_lNN.png`, `mace_lNN.png` e `dagger_lNN.png` em
+  `assets/organized/items/weapons/{axes,maces,daggers}/`. O metal acompanha a
+  progressão de nível: bronze, ferro, aço e ouro.
