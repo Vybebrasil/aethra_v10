@@ -353,19 +353,19 @@
                 description: "Uma lâmina simples para aprender os fundamentos de Espadas."
             },
             training_axe: {
-                id: "training_axe", name: "Machado de Recruta", image: "assets/organized/items/weapons/all/weapons_050.png",
+                id: "training_axe", name: "Machado de Recruta", image: "assets/organized/items/weapons/axes/throwing_axe1.png",
                 type: "weapon", slot: "weapon", weaponFamily: "axe", tier: 1, levelReq: 1,
                 damage: 4, damageMin: 3, damageMax: 5, price: 5, rarity: "Comum", stackable: false,
                 description: "Pesado o bastante para ensinar que todo impacto cobra um risco."
             },
             training_mace: {
-                id: "training_mace", name: "Maça de Recruta", image: "assets/organized/items/weapons/all/weapons_002.png",
+                id: "training_mace", name: "Maça de Recruta", image: "assets/organized/items/weapons/maces/club.png",
                 type: "weapon", slot: "weapon", weaponFamily: "mace", tier: 1, levelReq: 1,
                 damage: 4, damageMin: 3, damageMax: 5, price: 5, rarity: "Comum", stackable: false,
                 description: "Uma arma contundente feita para aprender a quebrar defesas."
             },
             training_dagger: {
-                id: "training_dagger", name: "Adaga de Recruta", image: "assets/organized/items/weapons/all/weapons_069.png",
+                id: "training_dagger", name: "Adaga de Recruta", image: "assets/organized/items/weapons/daggers/knife.png",
                 type: "weapon", slot: "weapon", weaponFamily: "dagger", tier: 1, levelReq: 1,
                 damage: 4, damageMin: 3, damageMax: 5, price: 5, rarity: "Comum", stackable: false,
                 description: "Lâmina leve para explorar velocidade, abertura e oportunismo."
