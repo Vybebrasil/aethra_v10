@@ -129,12 +129,16 @@
         const precision = Math.round(clamp(Number(stats.precision || 0.85), 0, 1) * 100);
         const critical = Math.round(clamp(Number(stats.critical || 0.05), 0, 1) * 100);
         const topDiscipline = getTopDiscipline(hero);
+        const heroSprite = Aethra.SpriteLoader?.normalizeHeroSource?.(
+            hero.sprite_url || hero.spriteUrl || hero.sprite || hero.image,
+            hero
+        ) || "assets/entities/player_idle.png";
 
         root.innerHTML = `
             <section class="player-hud-summary" aria-label="Resumo do personagem">
                 <header class="player-hud-summary__identity">
                     <span class="player-hud-summary__portrait">
-                        <img src="assets/organized/characters/heroes/Fighter2_Idle_without_shadow.png" alt="" draggable="false">
+                        <img src="${esc(heroSprite)}" alt="" draggable="false">
                     </span>
                     <div>
                         <strong>${esc(name)}</strong>

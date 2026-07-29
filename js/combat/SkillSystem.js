@@ -1148,13 +1148,29 @@ window.Aethra = window.Aethra || {};
                 return { usable: true, reason: null };
             }
 
-            const equippedWeapon = Aethra.BattleSystem?.getHeroCombatant?.()?.weapon
-                || Aethra.EquipSystem?.getEquippedItem?.("weapon")
-                || {};
+            const equippedWeapon = [
+                Aethra.BattleSystem?.getHeroCombatant?.()?.weapon,
+                Aethra.EquipSystem?.getEquipped?.("weapon")
+            ].find((entry) => entry && (
+                entry.templateId ||
+                entry.id ||
+                entry.weaponFamily ||
+                entry.weaponType ||
+                entry.name
+            )) || {};
 
             const templateId = equippedWeapon.templateId || equippedWeapon.id || "";
             const template = Aethra.GameData?.items?.[templateId] || {};
-            const weaponType = (equippedWeapon.weaponType || template.weaponType || template.category || "").toLowerCase();
+            const weaponType = (
+                equippedWeapon.weaponFamily ||
+                equippedWeapon.weaponType ||
+                equippedWeapon.family ||
+                template.weaponFamily ||
+                template.weaponType ||
+                template.family ||
+                template.category ||
+                ""
+            ).toLowerCase();
             const weaponName = (equippedWeapon.name || template.name || "").toLowerCase();
 
             const requirements = {

@@ -291,6 +291,15 @@
             state.professions = {};
             state.professionPolicies = {};
             state.crafting = null;
+            state.quests = {
+                contractVersion: Aethra.QuestSystem?.CONTRACT_VERSION || 2,
+                active: [],
+                completed: [],
+                available: [],
+                rewardClaims: []
+            };
+            state.ui = state.ui || {};
+            state.ui.trackedQuestId = null;
             hero.introProfessionId = null;
             state.hunt = {
                 isActive: false,
@@ -422,6 +431,8 @@
             });
             Aethra.EquipSystem?.recalculateStats?.({ emit: false, save: false, source: "character-created" });
             Aethra.ProfessionSystem?.startIntroPath?.(validation.introProfessionId);
+            Aethra.QuestSystem?.acceptQuest?.("tutorial_first_steps");
+            Aethra.QuestSystem?.trackQuest?.("tutorial_first_steps", { save: false });
 
             Aethra.GameState.ui = Aethra.GameState.ui || {};
             Aethra.GameState.ui.primaryView = "city";

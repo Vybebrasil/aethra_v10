@@ -207,18 +207,19 @@
         if (
             !element ||
             element.classList.contains("hidden") ||
-            Aethra.WindowManager?.isWorldWindow?.(windowId)
+            Aethra.WindowManager?.isWorldWindow?.(windowId) ||
+            Aethra.WindowManager?.isOverlayWindow?.(windowId)
         ) return false;
 
         const viewportPadding = 8;
         const safeTop = Aethra.WindowManager?.getSafeTopOffset?.() || 64;
+        const safeBottom = Aethra.WindowManager?.getSafeBottomOffset?.() || viewportPadding;
         const maxWidth = Math.max(320, window.innerWidth - viewportPadding * 2);
-        const maxHeight = Math.max(240, window.innerHeight - safeTop - viewportPadding);
+        const maxHeight = Math.max(240, window.innerHeight - safeTop - safeBottom);
         const preferredSizes = {
             "inventory-view": { width: 780, height: 680 },
             "skills-view": { width: 900, height: maxHeight },
-            "combat-inspect-view": { width: 720, height: Math.min(620, maxHeight) },
-            "hunt-world-map-view": { width: Math.min(1040, maxWidth), height: Math.min(720, maxHeight) }
+            "combat-inspect-view": { width: 720, height: Math.min(620, maxHeight) }
         };
         const preferred = preferredSizes[windowId];
         if (preferred) {
@@ -239,7 +240,10 @@
 
         rect = element.getBoundingClientRect();
         const left = Math.max(viewportPadding, Math.min(rect.left, window.innerWidth - rect.width - viewportPadding));
-        const top = Math.max(safeTop, Math.min(rect.top, window.innerHeight - rect.height - viewportPadding));
+        const top = Math.max(
+            safeTop,
+            Math.min(rect.top, window.innerHeight - safeBottom - rect.height)
+        );
         element.style.setProperty("left", `${Math.round(left)}px`, "important");
         element.style.setProperty("top", `${Math.round(top)}px`, "important");
         element.style.setProperty("right", "auto", "important");
@@ -247,9 +251,13 @@
         return true;
     }
 
-    function releaseWorldWindowConstraints() {
-        const worldWindowIds = Aethra.WindowManager?.config?.worldWindowIds || [];
-        worldWindowIds.forEach((windowId) => {
+    function releaseManagedWindowConstraints() {
+        const manager = Aethra.WindowManager;
+        const managedWindowIds = [
+            ...(manager?.config?.worldWindowIds || []),
+            ...(manager?.config?.overlayWindowIds || [])
+        ];
+        [...new Set(managedWindowIds)].forEach((windowId) => {
             const element = document.getElementById(windowId);
             if (!element) return;
             [
@@ -272,7 +280,7 @@
     }
 
     function stabilizeAll() {
-        releaseWorldWindowConstraints();
+        releaseManagedWindowConstraints();
         syncContextTitles();
         stabilizeEncounterDock();
         stabilizeHeroSections();
@@ -287,7 +295,7 @@
     });
 
     window.addEventListener("resize", () => {
-        releaseWorldWindowConstraints();
+        releaseManagedWindowConstraints();
         Aethra.WindowManager?.activeWindows?.forEach?.((windowId) => clampFloatingWindow(windowId));
     });
 

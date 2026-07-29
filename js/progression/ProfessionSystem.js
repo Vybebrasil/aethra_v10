@@ -317,6 +317,25 @@
             return Aethra.XPSystem?.getDiminishingSkillBonus?.(level, { scale: 18, interval: 18 }) || 0;
         },
 
+        getIntroQuestDefinition(professionId) {
+            const path = INTRO_PATHS[professionId];
+            if (!path) return null;
+            return {
+                id: `intro_profession_${professionId}`,
+                title: path.title,
+                description: path.summary,
+                levelReq: 1,
+                objectives: [{
+                    id: `practice_${professionId}`,
+                    type: "PracticeSkill",
+                    target: professionId,
+                    required: 1,
+                    label: path.objective
+                }],
+                reward: { gold: 0, xp: 0, items: [] }
+            };
+        },
+
         startIntroPath(professionId) {
             const path = INTRO_PATHS[professionId];
             if (!path) return false;
@@ -336,12 +355,10 @@
             }
 
             const questId = `intro_profession_${professionId}`;
-            Aethra.QuestSystem?.registerQuest?.(questId, {
-                name: path.title,
-                description: path.summary,
-                objectives: [{ type: "PracticeSkill", target: professionId, required: 1, label: path.objective }],
-                rewards: { gold: 0, xp: 0 }
-            });
+            Aethra.QuestSystem?.registerQuest?.(
+                questId,
+                this.getIntroQuestDefinition(professionId)
+            );
             Aethra.QuestSystem?.acceptQuest?.(questId);
             Aethra.EventBus.emit("profession:intro-started", { professionId, path: clone(path), questId });
             return { professionId, path: clone(path), questId };

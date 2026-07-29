@@ -49,6 +49,7 @@
             hpThresholdStorageKey:
                 "aethra.skillController.hpThresholds",
             worldWindowIds: ["city-view"],
+            overlayWindowIds: ["hunt-world-map-view"],
             windowAliases: {
                 "shop-window": "npc-shop-view",
                 "shop-view": "npc-shop-view",
@@ -68,7 +69,10 @@
                 ...options,
                 worldWindowIds:
                     options.worldWindowIds ||
-                    this.config.worldWindowIds
+                    this.config.worldWindowIds,
+                overlayWindowIds:
+                    options.overlayWindowIds ||
+                    this.config.overlayWindowIds
             };
 
             this.ensureLayerStructure();
@@ -190,6 +194,11 @@
                 .includes(windowId);
         },
 
+        isOverlayWindow(windowId) {
+            return asArray(this.config.overlayWindowIds)
+                .includes(windowId);
+        },
+
         adoptWindowsIntoLayers() {
             this.registeredWindows.forEach((element, windowId) => {
                 this.placeWindowInCorrectLayer(windowId, element);
@@ -221,6 +230,10 @@
 
             element.classList.remove("world-scene");
             element.classList.add("aethra-floating-window");
+            element.classList.toggle(
+                "aethra-overlay-window",
+                this.isOverlayWindow(windowId)
+            );
             element.dataset.floatingWindow = windowId;
             element.setAttribute("role", "dialog");
             element.setAttribute(
@@ -297,10 +310,18 @@
             );
 
             const hasModal = modalIds.length > 0;
+            const hasBlockingOverlay = modalIds.some((windowId) =>
+                this.isOverlayWindow(windowId)
+                && this.registeredWindows.get(windowId)?.classList.contains(this.config.openClass)
+            );
 
             this.layers.modal?.classList.toggle(
                 "has-open-window",
                 hasModal
+            );
+            this.layers.modal?.classList.toggle(
+                "has-blocking-overlay",
+                hasBlockingOverlay
             );
 
             document.body.classList.toggle(
@@ -689,12 +710,19 @@
 
         getDefaultWindowPosition(windowId, element) {
             const winWidth = Math.min(960, Math.floor(window.innerWidth * 0.85));
-            const winHeight = Math.min(640, Math.max(280, window.innerHeight - 160));
             const safeTop = this.getSafeTopOffset();
-            const safeBottom = 80;
+            const safeBottom = this.getSafeBottomOffset();
+            const availableHeight = Math.max(
+                240,
+                window.innerHeight - safeTop - safeBottom
+            );
+            const winHeight = Math.min(640, availableHeight);
 
             const left = Math.max(16, Math.floor((window.innerWidth - winWidth) / 2));
-            const top = Math.max(safeTop, Math.floor((window.innerHeight - winHeight - safeBottom) / 2));
+            const top = Math.max(
+                safeTop,
+                Math.floor(safeTop + (availableHeight - winHeight) / 2)
+            );
 
             return { left, top };
         },
@@ -705,12 +733,35 @@
             return Math.max(64, Math.ceil(bottom) + 8);
         },
 
+        getSafeBottomOffset() {
+            const actionBar = document.getElementById("battle-actionbar-layer");
+            if (!actionBar || actionBar.hidden) return 16;
+
+            const style = window.getComputedStyle?.(actionBar);
+            const rect = actionBar.getBoundingClientRect?.();
+            const isVisible = style?.display !== "none"
+                && style?.visibility !== "hidden"
+                && Number(rect?.height || 0) > 1
+                && Number(rect?.top || window.innerHeight) < window.innerHeight;
+
+            if (!isVisible) return 16;
+
+            return Math.max(
+                16,
+                Math.ceil(window.innerHeight - Number(rect.top)) + 8
+            );
+        },
+
         positionFloatingWindow(windowId, element, options = {}) {
-            if (!element || this.isWorldWindow(windowId)) return false;
+            if (
+                !element ||
+                this.isWorldWindow(windowId) ||
+                this.isOverlayWindow(windowId)
+            ) return false;
 
             const safeTop = this.getSafeTopOffset();
-            const safeBottom = 80;
-            const availableHeight = Math.max(280, window.innerHeight - safeTop - safeBottom);
+            const safeBottom = this.getSafeBottomOffset();
+            const availableHeight = Math.max(240, window.innerHeight - safeTop - safeBottom);
             element.style.setProperty("max-height", `${Math.floor(availableHeight)}px`, "important");
 
             const stored = options.resetPosition ? null : this.getStoredWindowPositions()[windowId];
@@ -841,7 +892,11 @@
                         : this.config.exclusive,
                 source: options.source || null,
                 renderTriggered: false,
-                layer: isWorld ? "world" : "modal"
+                layer: isWorld
+                    ? "world"
+                    : this.isOverlayWindow(windowId)
+                        ? "overlay"
+                        : "modal"
             };
 
             if (options.render !== false) {

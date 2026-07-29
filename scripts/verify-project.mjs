@@ -67,6 +67,14 @@ for (const htmlPath of ["index.html", "tests/integration.html"]) {
 }
 
 const indexSource = read("index.html");
+const uiSpriteSheetLeaks = jsFiles
+    .filter((file) => projectPath(file).startsWith("js/ui/"))
+    .filter((file) => /Fighter2_(?:Idle|Walk)_without_shadow\.png/i.test(readFileSync(file, "utf8")))
+    .map(projectPath);
+check(
+    uiSpriteSheetLeaks.length === 0,
+    `UI renderiza spritesheet bruto em <img>: ${uiSpriteSheetLeaks.join(", ")}`
+);
 check(
     (indexSource.match(/\bid\s*=\s*["']npc-shop-view["']/g) || []).length === 1,
     "index.html: deve existir exatamente uma janela npc-shop-view"
@@ -103,6 +111,35 @@ check(
 check(
     /recordSupplyUse\?\.\(/.test(consumableSource),
     "ConsumableSystem deve registrar o custo consumido no HuntSystem"
+);
+
+const questSystemSource = read("js/progression/QuestSystem.js");
+const characterCreationSource = read("js/ui/CharacterCreationUI.js");
+const characterBuildSource = read("js/progression/CharacterBuildSystem.js");
+const professionSource = read("js/progression/ProfessionSystem.js");
+const saveManagerSource = read("js/infrastructure/SaveManager.js");
+check(
+    !/registerQuest\(["']tutorial_first_steps["']/.test(characterCreationSource)
+        && !/acceptQuest\(["']tutorial_first_steps["']/.test(characterCreationSource)
+        && /acceptQuest\?\.\(["']tutorial_first_steps["']/.test(characterBuildSource),
+    "CharacterBuildSystem deve iniciar a missão oficial sem lógica de quest na UI"
+);
+check(
+    /getIntroQuestDefinition\(/.test(professionSource)
+        && /reward:\s*\{\s*gold:\s*0,\s*xp:\s*0,\s*items:\s*\[\]/.test(professionSource),
+    "ProfessionSystem deve gerar missões iniciais no contrato canônico"
+);
+check(
+    /CONTRACT_VERSION\s*=\s*2/.test(questSystemSource)
+        && /grantRewards\(quest\)/.test(questSystemSource)
+        && /MonsterCatalog\?\.resolveId/.test(questSystemSource)
+        && /["']hunt:started["']/.test(questSystemSource),
+    "QuestSystem deve migrar estado, normalizar alvos e conceder recompensas"
+);
+check(
+    /CURRENT_SCHEMA_VERSION\s*=\s*74/.test(saveManagerSource)
+        && /quests\.contractVersion\s*=\s*2/.test(saveManagerSource),
+    "Save v74 deve migrar o contrato persistido de missões"
 );
 
 const authorityGatewaySource = read("js/infrastructure/AuthorityGateway.js");

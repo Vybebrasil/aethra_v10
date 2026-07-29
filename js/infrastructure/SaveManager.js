@@ -12,7 +12,7 @@
     // A mudança para combate por rodadas e criação distribuída inaugura um
     // formato de progressão novo. O save anterior permanece preservado.
     const SAVE_KEY = configuredSaveKey || 'aethra_save_v71_disciplines';
-    const CURRENT_SCHEMA_VERSION = 73;
+    const CURRENT_SCHEMA_VERSION = 74;
     const AUTO_SAVE_DELAY = 120;
 
     let initialized = false;
@@ -78,6 +78,26 @@
                     }
                 });
             }
+        }
+
+        // v73 → v74: o domínio de missões passa a ter contrato próprio,
+        // rastreamento seguro e registro idempotente de recompensas.
+        if (fromVersion < 74) {
+            if (!migrated.quests || typeof migrated.quests !== 'object') {
+                migrated.quests = {};
+            }
+            if (!Array.isArray(migrated.quests.active)) migrated.quests.active = [];
+            if (!Array.isArray(migrated.quests.completed)) migrated.quests.completed = [];
+            if (!Array.isArray(migrated.quests.available)) migrated.quests.available = [];
+            if (!Array.isArray(migrated.quests.rewardClaims)) migrated.quests.rewardClaims = [];
+            migrated.quests.completed.forEach((quest) => {
+                if (!quest?.id) return;
+                quest.rewardClaimed = true;
+                if (!migrated.quests.rewardClaims.includes(quest.id)) {
+                    migrated.quests.rewardClaims.push(quest.id);
+                }
+            });
+            migrated.quests.contractVersion = 2;
         }
 
         migrated.meta.schemaVersion = CURRENT_SCHEMA_VERSION;

@@ -69,6 +69,29 @@
         return loadStatus.get(key) === "ready";
     }
 
+    function getHeroSource(heroOrArchetype = "vanguard") {
+        const archetypeId = typeof heroOrArchetype === "string"
+            ? heroOrArchetype
+            : heroOrArchetype?.archetypeId;
+        const key = SPRITE_MANIFEST[archetypeId]
+            ? archetypeId
+            : "vanguard";
+
+        return SPRITE_MANIFEST[key] || "assets/entities/player_idle.png";
+    }
+
+    function normalizeHeroSource(source, heroOrArchetype = "vanguard") {
+        const path = String(source || "").trim();
+
+        // Animation sheets are not portraits. Rendering a 384x128 sheet in an
+        // HTML <img> squeezes every frame into the same HUD slot.
+        if (!path || /Fighter2_(?:Idle|Walk)_without_shadow\.png(?:[?#].*)?$/i.test(path)) {
+            return getHeroSource(heroOrArchetype);
+        }
+
+        return path;
+    }
+
     function drawSprite(ctx, key, dx, dy, dw = 32, dh = 32, options = {}) {
         let img = spriteCache.get(key);
         if (!img) img = loadSprite(key);
@@ -105,6 +128,8 @@
         load: loadSprite,
         draw: drawSprite,
         isReady,
+        getHeroSource,
+        normalizeHeroSource,
         cache: spriteCache,
         manifest: SPRITE_MANIFEST,
         pixelSprites: PIXEL_SPRITES

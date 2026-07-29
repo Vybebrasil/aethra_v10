@@ -143,6 +143,15 @@
         return `assets/entities/${path}`;
     }
 
+    function resolveHeroSpritePath(hero = {}) {
+        const fallback = Aethra.SpriteLoader?.getHeroSource?.(hero)
+            || "assets/entities/player_idle.png";
+        const resolved = resolveSpritePath(hero, fallback);
+
+        return Aethra.SpriteLoader?.normalizeHeroSource?.(resolved, hero)
+            || fallback;
+    }
+
     function getSkillCost(skill) {
         const cost = skill?.cost || {};
         const resource = String(
@@ -318,10 +327,13 @@
                 "quest:updated",
                 "quest:objective-updated",
                 "quest:finished",
-                "quest:reset"
+                "quest:reset",
+                "quest:tracking-changed",
+                "quest:state-repaired"
             ].forEach((eventName) => {
                 bind(eventName, () => {
                     this.schedule("quests", () => this.renderQuests());
+                    this.schedule("questTracker", () => this.renderQuestTracker());
                 });
             });
 
@@ -657,6 +669,7 @@
                             </header>
 
                             <div id="stats-display" class="hero-hub__summary"></div>
+                            <aside class="quest-tracker quest-tracker--hunt" data-quest-tracker-slot="hunt" aria-live="polite" hidden></aside>
 
                             <nav class="hero-hub__tabs" aria-label="Seções do herói">
                                 <button type="button" data-hero-panel-tab="overview" class="is-active" aria-pressed="true">
@@ -877,6 +890,7 @@
                                     organize o herói antes da próxima caçada.
                                 </p>
                             </div>
+                            <aside class="quest-tracker quest-tracker--city" data-quest-tracker-slot="city" aria-live="polite" hidden></aside>
                             <div class="city-hub__status" aria-label="Resumo de preparação">
                                 <span><small>GOLD</small><strong data-city-gold>0 G</strong></span>
                                 <span><small>MOCHILA</small><strong data-city-bag>0 / 40</strong></span>
@@ -1379,7 +1393,7 @@
             const heroMaxMana = Math.max(1, Number(combatProjection?.hero?.resources?.mana?.maximum ?? hero.maxMana ?? stats.maxMana ?? heroMana ?? 1));
             const heroVigor = Number(combatProjection?.hero?.resources?.energy?.current ?? hero.vigor ?? stats.vigor ?? hero.energy ?? stats.energy ?? 0);
             const heroMaxVigor = Math.max(1, Number(combatProjection?.hero?.resources?.energy?.maximum ?? hero.maxVigor ?? stats.maxVigor ?? hero.maxEnergy ?? stats.maxEnergy ?? heroVigor ?? 1));
-            const heroSprite = resolveSpritePath(hero, 'assets/organized/characters/heroes/Fighter2_Idle_without_shadow.png');
+            const heroSprite = resolveHeroSpritePath(hero);
             const currentHuntName = Aethra.HuntSystem?.hunts?.[hunt.huntId]?.name || 'Sem hunt ativa';
             const heroStateTitle = combatActive
                 ? 'Em combate'
@@ -2487,6 +2501,7 @@
             this.renderInventory();
             this.renderEquipment();
             this.renderQuests();
+            this.renderQuestTracker();
             this.renderHunt();
             this.renderCombat();
             this.renderActionBar();
@@ -3507,7 +3522,7 @@
             const activeHTML = questState.active.length > 0
                 ? questState.active
                     .map((quest) => {
-                        const definition = Aethra.GameData?.quests?.[quest.id] || {};
+                        const definition = Aethra.QuestSystem?.getDefinition?.(quest.id) || {};
                         const reward = quest.reward || definition.reward || {};
                         const objectives = (quest.objectives || [])
                             .map((objective) => {
@@ -3573,7 +3588,11 @@
                                 <ul>${objectives}</ul>
                                 <div class="quest-card__progress"><i style="width:${progressPercent}%"></i></div>
                                 <footer>
-                                    <div><small>RECOMPENSAS</small><span>${rewards.length ? rewards.map(escapeHTML).join(" · ") : "Recompensa não informada"}</span></div>
+                                    <div><small>RECOMPENSAS</small><span>${rewards.length
+                                        ? rewards.map(escapeHTML).join(" · ")
+                                        : (quest.objectives || []).some((objective) => objective.type === "PracticeSkill")
+                                            ? "Aprendizado e progresso do ofício"
+                                            : "Sem recompensa material"}</span></div>
                                     <button type="button" data-track-quest="${escapeHTML(quest.id)}" aria-pressed="${isTracked ? "true" : "false"}">${isTracked ? "Acompanhando" : "Acompanhar"}</button>
                                 </footer>
                             </article>
@@ -3610,15 +3629,9 @@
 
             container.querySelectorAll("[data-track-quest]").forEach((button) => {
                 button.addEventListener("click", () => {
-                    Aethra.GameState.ui = Aethra.GameState.ui || {};
                     const questId = button.dataset.trackQuest;
-                    Aethra.GameState.ui.trackedQuestId =
-                        Aethra.GameState.ui.trackedQuestId === questId ? null : questId;
-                    this.renderQuests();
-                    Aethra.SaveManager?.save?.("quest-tracking");
-                    Aethra.EventBus.emit("quest:tracking-changed", {
-                        questId: Aethra.GameState.ui.trackedQuestId
-                    });
+                    const nextId = Aethra.GameState.ui?.trackedQuestId === questId ? null : questId;
+                    Aethra.QuestSystem?.trackQuest?.(nextId);
                 });
             });
 
@@ -3636,6 +3649,74 @@
                 completed: questState.completed.length
             });
 
+            return true;
+        },
+
+        handleQuestGuidance(guidance) {
+            if (!guidance) return false;
+            if (guidance.action === "open-hunt-map") {
+                Aethra.UIManager?.setPrimaryView?.("hunt", { source: "quest-tracker" });
+                return Aethra.openHuntWorldMap?.({
+                    source: "quest-tracker",
+                    huntId: guidance.objective?.type === "StartHunt" ? guidance.target : null
+                }) ?? false;
+            }
+            if (guidance.action === "go-city") {
+                Aethra.UIManager?.setPrimaryView?.("city", { source: "quest-tracker" });
+                return true;
+            }
+            if (guidance.action === "open-workshop") {
+                Aethra.UIManager?.setPrimaryView?.("city", { source: "quest-tracker" });
+                return Aethra.ProfessionWorkshopUI?.open?.(guidance.target) ?? false;
+            }
+            return Aethra.WindowManager?.openWindow?.("quests-view", { source: "quest-tracker" }) ?? false;
+        },
+
+        renderQuestTracker() {
+            const slots = [...document.querySelectorAll("[data-quest-tracker-slot]")];
+            if (slots.length === 0) return false;
+            const quest = Aethra.QuestSystem?.getTrackedQuest?.() || null;
+            const guidance = quest ? Aethra.QuestSystem?.getGuidance?.(quest) : null;
+            const progress = quest
+                ? Aethra.QuestSystem?.getProgress?.(quest) || { progress: 0, required: 1, percent: 0 }
+                : { progress: 0, required: 1, percent: 0 };
+
+            slots.forEach((slot) => {
+                if (!quest || !guidance) {
+                    slot.hidden = true;
+                    slot.replaceChildren();
+                    return;
+                }
+                slot.hidden = false;
+                const objective = guidance.objective;
+                slot.innerHTML = `
+                    <header class="quest-tracker__header">
+                        <span><i aria-hidden="true">✦</i> Próximo passo</span>
+                        <b>${progress.percent}%</b>
+                    </header>
+                    <div class="quest-tracker__body">
+                        <strong>${escapeHTML(quest.title)}</strong>
+                        <p>${escapeHTML(objective.label)} <b>${formatNumber(objective.progress)}/${formatNumber(objective.required)}</b></p>
+                        <small>${escapeHTML(guidance.detail)}</small>
+                    </div>
+                    <div class="quest-tracker__progress" aria-label="Progresso ${progress.percent}%"><i style="width:${progress.percent}%"></i></div>
+                    <footer>
+                        <button type="button" data-quest-next-action>${escapeHTML(guidance.actionLabel)}</button>
+                        <button type="button" class="is-secondary" data-open-tracked-quest>Detalhes</button>
+                    </footer>
+                `;
+                slot.querySelector("[data-quest-next-action]")?.addEventListener("click", () => {
+                    this.handleQuestGuidance(guidance);
+                });
+                slot.querySelector("[data-open-tracked-quest]")?.addEventListener("click", () => {
+                    Aethra.WindowManager?.openWindow?.("quests-view", { source: "quest-tracker-details" });
+                });
+            });
+            Aethra.EventBus.emit("render:quest-tracker", {
+                questId: quest?.id || null,
+                objectiveId: guidance?.objectiveId || null,
+                progress: progress.percent
+            });
             return true;
         },
 
@@ -4406,6 +4487,10 @@
         .replaceAll("'", "&#039;");
     const fmt = (value) => new Intl.NumberFormat("pt-BR").format(Number(value || 0));
     const clamp = (value, min, max) => Math.min(max, Math.max(min, Number(value || 0)));
+    const heroSpritePath = (hero = {}) => Aethra.SpriteLoader?.normalizeHeroSource?.(
+        hero.sprite_url || hero.spriteUrl || hero.sprite || hero.image,
+        hero
+    ) || Aethra.SpriteLoader?.getHeroSource?.(hero) || "assets/entities/player_idle.png";
     const duration = (seconds) => {
         const total = Math.max(0, Math.floor(Number(seconds || 0)));
         const h = Math.floor(total / 3600);
@@ -4539,7 +4624,7 @@
                     <i class="hero-paperdoll__torso"></i>
                     <i class="hero-paperdoll__legs"></i>
                 </span>
-                <img src="assets/organized/characters/heroes/Fighter2_Idle_without_shadow.png" alt="" draggable="false">
+                <img src="${esc(heroSpritePath(Aethra.GameState.hero || {}))}" alt="" draggable="false">
             </div>
             ${slotHTML}
         `;

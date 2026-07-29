@@ -42,6 +42,13 @@ node scripts/verify-project.mjs
 Depois abra `tests/integration.html` e confirme 100% das verificações, sem erros
 de console ou assets ausentes.
 
+A mesma suíte pode ser executada sem interface e em dois tamanhos de monitor:
+
+```bash
+node scripts/run-integration.mjs --timeout 90 --viewport 1280x720
+node scripts/run-integration.mjs --timeout 90 --viewport 1920x1080
+```
+
 Antes de modificar HUD, automação, skills, profissões, coleta, crafting ou save,
 leia `docs/DEVELOPER_HANDOFF.md`. Ele registra o estado atual, o proprietário de
 cada domínio, contratos que não podem ser duplicados, testes e próximos passos.

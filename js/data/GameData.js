@@ -555,9 +555,18 @@
                 id: "tutorial_first_steps",
                 title: "Primeiros Passos em Aethra",
                 description:
-                    "Boas-vindas a Aethra! Para começar sua jornada, explore os arredores da cidade e vença sua primeira batalha.",
+                    "Boas-vindas a Aethra! Escolha o Bosque dos Sussurros no mapa e vença suas primeiras batalhas.",
                 levelReq: 1,
                 objectives: [
+                    {
+                        id: "start_hunt",
+                        type: "StartHunt",
+                        target: "whispering_forest",
+                        label: "Inicie a expedição Bosque dos Sussurros",
+                        required: 1,
+                        progress: 0,
+                        completed: false
+                    },
                     {
                         id: "defeat_first_creature",
                         type: "DefeatEnemy",

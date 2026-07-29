@@ -20,6 +20,7 @@
         "EarlyGameItemCatalog",
         "WindowManager",
         "TooltipManager",
+        "SpriteLoader",
         "EntityManager",
         "CombatSystem",
         "SkillSystem",
@@ -194,6 +195,53 @@
                     )
                 );
             });
+
+            const questDefinitions = Object.entries(Aethra.GameData?.quests || {});
+            const validQuestDefinitions = questDefinitions.filter(([questId, definition]) => {
+                return Aethra.QuestSystem?.validateDefinition?.(definition, questId);
+            });
+            checks.push(
+                createCheck(
+                    "Missões oficiais seguem um contrato único",
+                    questDefinitions.length > 0 && validQuestDefinitions.length === questDefinitions.length,
+                    `${validQuestDefinitions.length}/${questDefinitions.length} definições válidas`
+                )
+            );
+
+            const introQuestDefinitions = Object.keys(Aethra.ProfessionSystem?.introPaths || {})
+                .map((professionId) => Aethra.ProfessionSystem?.getIntroQuestDefinition?.(professionId));
+            checks.push(
+                createCheck(
+                    "Ofícios iniciais geram missões completas",
+                    introQuestDefinitions.length > 0 && introQuestDefinitions.every((definition) => {
+                        return Aethra.QuestSystem?.validateDefinition?.(definition, definition?.id);
+                    }),
+                    `${introQuestDefinitions.length} caminhos de ofício validados`
+                )
+            );
+
+            const repairedLegacyQuest = Aethra.QuestSystem?.repairRuntimeQuest?.({
+                id: "tutorial_first_steps",
+                title: "Legacy",
+                objectives: [
+                    { id: "start_hunt", text: "Iniciar caçada", current: 1, required: 1 },
+                    { id: "defeat_monsters", text: "Derrotar criaturas", current: 2, required: 3 }
+                ],
+                rewards: { xp: 50, gold: 100 }
+            }, "active");
+            checks.push(
+                createCheck(
+                    "Migração repara missões antigas sem perder progresso",
+                    repairedLegacyQuest?.title === "Primeiros Passos em Aethra"
+                        && repairedLegacyQuest.objectives?.[0]?.type === "StartHunt"
+                        && repairedLegacyQuest.objectives?.[0]?.completed === true
+                        && repairedLegacyQuest.objectives?.[1]?.type === "DefeatEnemy"
+                        && repairedLegacyQuest.objectives?.[1]?.progress === 2,
+                    repairedLegacyQuest
+                        ? `${repairedLegacyQuest.objectives[0].progress}/${repairedLegacyQuest.objectives[0].required} e ${repairedLegacyQuest.objectives[1].progress}/${repairedLegacyQuest.objectives[1].required}`
+                        : "missão não reparada"
+                )
+            );
 
             const initialCombatProjection = Aethra.CombatProjection?.getSnapshot?.();
             const legacyCombatView = Aethra.CombatSystem?.getSnapshot?.();
@@ -747,6 +795,75 @@
                 Object.keys(target).forEach((key) => delete target[key]);
                 Object.assign(target, JSON.parse(JSON.stringify(snapshot)));
             };
+
+            const questTransactionBefore = {
+                hero: JSON.parse(JSON.stringify(Aethra.GameState.hero || {})),
+                hunt: JSON.parse(JSON.stringify(Aethra.GameState.hunt || {})),
+                quests: JSON.parse(JSON.stringify(Aethra.GameState.quests || {})),
+                ui: JSON.parse(JSON.stringify(Aethra.GameState.ui || {}))
+            };
+            const rewardQuestId = "integration_quest_reward_once";
+            const rewardGoldBefore = Number(Aethra.GameState.hero?.gold || 0);
+            const rewardXpBefore = Number(Aethra.GameState.hero?.xpTotal || 0);
+            const rewardItemsBefore = Aethra.BagSystem?.countItem?.("potion_health") || 0;
+            Aethra.QuestSystem?.registerQuest?.(rewardQuestId, {
+                title: "Contrato de Recompensa",
+                description: "Missão isolada do teste de integração.",
+                objectives: [{
+                    id: "defeat_alias_target",
+                    type: "DefeatEnemy",
+                    target: "forest_wolf",
+                    label: "Derrote um lobo",
+                    required: 1
+                }],
+                reward: {
+                    xp: 3,
+                    gold: 7,
+                    items: [{ templateId: "potion_health", quantity: 1 }]
+                }
+            });
+            Aethra.QuestSystem?.acceptQuest?.(rewardQuestId);
+            Aethra.QuestSystem?.updateProgress?.("DefeatEnemy", "wolf-xmm-2024", 1, {
+                source: "integration-quest-alias"
+            });
+            const rewardedQuest = Aethra.QuestSystem?.getQuest?.(rewardQuestId);
+            const rewardDeltas = {
+                gold: Number(Aethra.GameState.hero?.gold || 0) - rewardGoldBefore,
+                xp: Number(Aethra.GameState.hero?.xpTotal || 0) - rewardXpBefore,
+                items: (Aethra.BagSystem?.countItem?.("potion_health") || 0) - rewardItemsBefore
+            };
+            Aethra.QuestSystem?.finishQuest?.(rewardQuestId);
+            const rewardDeltasAfterRetry = {
+                gold: Number(Aethra.GameState.hero?.gold || 0) - rewardGoldBefore,
+                xp: Number(Aethra.GameState.hero?.xpTotal || 0) - rewardXpBefore,
+                items: (Aethra.BagSystem?.countItem?.("potion_health") || 0) - rewardItemsBefore
+            };
+            checks.push(
+                createCheck(
+                    "Aliases de criatura avançam a missão oficial",
+                    rewardedQuest?.status === "completed"
+                        && rewardedQuest.objectives?.[0]?.completed === true,
+                    rewardedQuest?.status || "missão não concluída"
+                )
+            );
+            checks.push(
+                createCheck(
+                    "Recompensas de missão são entregues exatamente uma vez",
+                    rewardDeltas.gold === 7
+                        && rewardDeltas.xp === 3
+                        && rewardDeltas.items === 1
+                        && JSON.stringify(rewardDeltasAfterRetry) === JSON.stringify(rewardDeltas),
+                    `${rewardDeltas.xp} XP · ${rewardDeltas.gold} G · ${rewardDeltas.items} item`
+                )
+            );
+            delete Aethra.GameData.quests[rewardQuestId];
+            restoreEnumerableState(Aethra.GameState.hero, questTransactionBefore.hero);
+            restoreEnumerableState(Aethra.GameState.hunt, questTransactionBefore.hunt);
+            Aethra.GameState.quests = Aethra.GameState.quests || {};
+            restoreEnumerableState(Aethra.GameState.quests, questTransactionBefore.quests);
+            Aethra.GameState.ui = Aethra.GameState.ui || {};
+            restoreEnumerableState(Aethra.GameState.ui, questTransactionBefore.ui);
+
             restoreEnumerableState(levelPointHero, deathRouteBefore.hero);
             restoreEnumerableState(Aethra.GameState.battle, deathRouteBefore.battle);
             restoreEnumerableState(Aethra.GameState.combat, deathRouteBefore.combat);
@@ -815,7 +932,8 @@
                 }
             }
 
-            window.setTimeout(() => {
+            queueMicrotask(() => {
+                try {
                 const xpAfter = readXP();
                 const bagAfter = Array.isArray(Aethra.GameState?.hero?.bag)
                     ? Aethra.GameState.hero.bag.length
@@ -1136,6 +1254,49 @@
                             && Number(Aethra.GameState.hero?.disciplines?.mining?.level) === 1
                             && Aethra.BagSystem?.countItem?.("apprentice_pickaxe") === 1,
                         `${equippedStarter?.name || "sem arma"} · ${starterBar?.slots?.filter(Boolean).join(", ") || "sem técnicas"}`
+                    )
+                );
+
+                Aethra.RenderEngine?.renderQuestTracker?.();
+                const trackedIntroQuest = Aethra.QuestSystem?.getTrackedQuest?.();
+                const trackedGuidance = Aethra.QuestSystem?.getGuidance?.(trackedIntroQuest);
+                const questTrackerSlots = [...document.querySelectorAll("[data-quest-tracker-slot]")];
+                checks.push(
+                    createCheck(
+                        "HUD da jornada mostra objetivo e próximo passo",
+                        trackedIntroQuest?.id === "tutorial_first_steps"
+                            && trackedGuidance?.action === "open-hunt-map"
+                            && questTrackerSlots.length === 2
+                            && questTrackerSlots.every((slot) => {
+                                return slot.hidden === false
+                                    && Boolean(slot.querySelector("[data-quest-next-action]"))
+                                    && /Primeiros Passos/.test(slot.textContent || "");
+                            }),
+                        `${questTrackerSlots.length}/2 pontos da HUD · ação ${trackedGuidance?.actionLabel || "ausente"}`
+                    )
+                );
+
+                const starterSkillRequirement = Aethra.SkillSystem
+                    ?.getSkillRequirement?.("precise_strike");
+                checks.push(
+                    createCheck(
+                        "Espada inicial libera a técnica de Espadas",
+                        starterSkillRequirement?.usable === true,
+                        starterSkillRequirement?.reason || "Golpe Preciso utilizável"
+                    )
+                );
+
+                const heroSpriteSources = archetypes.map((entry) =>
+                    Aethra.SpriteLoader?.getHeroSource?.(entry.id)
+                );
+                checks.push(
+                    createCheck(
+                        "Retratos do herói usam frames individuais por arquétipo",
+                        heroSpriteSources.every((source) =>
+                            /^assets\/entities\/.+\.png$/i.test(String(source || ""))
+                            && !/Fighter2_(?:Idle|Walk)_without_shadow/i.test(String(source))
+                        ),
+                        `${new Set(heroSpriteSources).size} sprites individuais`
                     )
                 );
 
@@ -1612,17 +1773,64 @@
                 const skillsRect = document.getElementById("skills-view")?.getBoundingClientRect?.();
                 const topbarBottom = document.querySelector("#hud-layer .topbar, .topbar")
                     ?.getBoundingClientRect?.().bottom || 0;
+                const actionBarTop = document.getElementById("battle-actionbar-layer")
+                    ?.getBoundingClientRect?.().top || window.innerHeight;
                 checks.push(
                     createCheck(
                         "Janelas do HUD são exclusivas e nunca ficam atrás da topbar",
                         Aethra.WindowManager?.config?.exclusive === true
                             && Aethra.WindowManager?.isOpen?.("skills-view") === true
                             && Aethra.WindowManager?.isOpen?.("inventory-view") === false
-                            && Number(skillsRect?.top || 0) >= Number(topbarBottom) + 6,
+                            && Number(skillsRect?.top || 0) >= Number(topbarBottom) + 6
+                            && Number(skillsRect?.bottom || 0) <= Number(actionBarTop) + 1,
                         `inventário ${Aethra.WindowManager?.isOpen?.("inventory-view") ? "aberto" : "fechado"} · skills y=${Math.round(skillsRect?.top || 0)} · topbar=${Math.round(topbarBottom)}`
                     )
                 );
                 Aethra.WindowManager?.closeAll?.({ modalOnly: true, silent: true });
+
+                Aethra.openHuntWorldMap?.({ source: "integration-overlay" });
+                const worldMapWindow = document.getElementById("hunt-world-map-view");
+                const worldMapRect = worldMapWindow?.getBoundingClientRect?.();
+                const worldMapContent = worldMapWindow?.querySelector(".hunt-world-map-content");
+                const worldMapLayout = worldMapWindow?.querySelector(".hunt-world-map-layout");
+                const worldMapDetail = worldMapWindow?.querySelector(".hunt-world-map-detail");
+                const worldMapStart = worldMapWindow?.querySelector("[data-world-hunt-start]");
+                if (worldMapDetail) worldMapDetail.scrollTop = worldMapDetail.scrollHeight;
+                const reportElement = document.getElementById("integration-test-report");
+                const reportWasHidden = reportElement?.hidden === true;
+                if (reportElement) reportElement.hidden = true;
+                const startRect = worldMapStart?.getBoundingClientRect?.();
+                const startHitTarget = startRect
+                    ? document.elementFromPoint(
+                        startRect.left + startRect.width / 2,
+                        startRect.top + startRect.height / 2
+                    )
+                    : null;
+                if (reportElement) reportElement.hidden = reportWasHidden;
+                const mapIsBlockingOverlay = Boolean(worldMapWindow)
+                    && Aethra.WindowManager?.isOverlayWindow?.("hunt-world-map-view") === true
+                    && getComputedStyle(document.getElementById("modal-layer")).pointerEvents === "auto"
+                    && Number(getComputedStyle(document.getElementById("modal-layer")).zIndex || 0)
+                        > Number(getComputedStyle(document.getElementById("hud-layer")).zIndex || 0)
+                    && Number(worldMapRect?.left || 0) <= 1
+                    && Number(worldMapRect?.top || 0) <= 1
+                    && Math.abs(Number(worldMapRect?.width || 0) - window.innerWidth) <= 1
+                    && Math.abs(Number(worldMapRect?.height || 0) - window.innerHeight) <= 1;
+                const startIsReachable = Boolean(worldMapStart)
+                    && Number(startRect?.top || -1) >= 0
+                    && Number(startRect?.bottom || Infinity) <= window.innerHeight
+                    && (startHitTarget === worldMapStart || worldMapStart.contains(startHitTarget));
+                checks.push(
+                    createCheck(
+                        "Mapa Mundi bloqueia o fundo e mantém Entrar na expedição clicável",
+                        mapIsBlockingOverlay && startIsReachable,
+                        `viewport ${window.innerWidth}×${window.innerHeight} · overlay ${Math.round(worldMapRect?.left || 0)},${Math.round(worldMapRect?.top || 0)} ${Math.round(worldMapRect?.width || 0)}×${Math.round(worldMapRect?.height || 0)} pad ${getComputedStyle(worldMapWindow).padding} · conteúdo ${Math.round(worldMapContent?.getBoundingClientRect?.().height || 0)} · layout ${Math.round(worldMapLayout?.getBoundingClientRect?.().height || 0)} · detalhe ${worldMapDetail?.clientHeight || 0}/${worldMapDetail?.scrollHeight || 0}@${Math.round(worldMapDetail?.scrollTop || 0)} · botão ${Math.round(startRect?.top || 0)}–${Math.round(startRect?.bottom || 0)} ${startIsReachable ? "alcançável" : `obstruído por ${startHitTarget?.className || startHitTarget?.tagName || "fora da tela"}`}`
+                    )
+                );
+                Aethra.WindowManager?.closeWindow?.("hunt-world-map-view", {
+                    source: "integration-overlay-cleanup",
+                    silent: true
+                });
 
                 Aethra.WindowManager?.openWindow?.("npc-shop-view", {
                     source: "integration-responsive-shop"
@@ -1853,7 +2061,28 @@
                     "integration:test-finished",
                     this.lastReport
                 );
-            }, 500);
+                } catch (error) {
+                    const completedAt = Date.now();
+                    checks.push(
+                        createCheck(
+                            "Execução da suíte",
+                            false,
+                            error?.stack || error?.message || String(error)
+                        )
+                    );
+                    this.lastReport = {
+                        success: false,
+                        startedAt,
+                        completedAt,
+                        durationMs: completedAt - startedAt,
+                        checks
+                    };
+                    this.running = false;
+                    this.completed = true;
+                    renderReport(this.lastReport);
+                    console.error("Falha não tratada na suíte de integração:", error);
+                }
+            });
         }
     };
 

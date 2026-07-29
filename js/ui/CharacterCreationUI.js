@@ -225,6 +225,8 @@
         const selected = archetype();
         const preview = previewData();
         const starterItem = selected ? (Aethra.GameData?.items?.[selected.starterItemId] || {}) : null;
+        const heroSprite = Aethra.SpriteLoader?.getHeroSource?.(selected?.id)
+            || "assets/entities/player_idle.png";
         const avatarTooltip = starterItem 
             ? `data-ui-tooltip="true" data-tooltip-kind="hud" data-tooltip-eyebrow="EQUIPAMENTO INICIAL" data-tooltip-title="${esc(starterItem.name)}" data-tooltip-body="${esc(starterItem.description || '')} Dano: ${starterItem.damageMin}-${starterItem.damageMax}."`
             : "";
@@ -237,7 +239,7 @@
                 <div class="creation-avatar ${selected ? "has-archetype" : ""}" ${avatarTooltip}>
                     <i></i><i></i><i></i>
                     <div class="creation-avatar__sigil" data-sigil="${esc(selected?.id || "")}">${esc(selected?.icon || "A")}</div>
-                    <img src="assets/organized/characters/heroes/Fighter2_Idle_without_shadow.png" alt="Prévia do herói" draggable="false">
+                    <img src="${esc(heroSprite)}" alt="Prévia do herói" draggable="false">
                     <span>${esc(selected?.name || "Sem arquétipo")}</span>
                 </div>
                 <div class="creation-hero-preview__role">
@@ -694,27 +696,6 @@
             activeStep = result.errors.some((error) => error.includes("atributo")) ? 2 : result.errors.some((error) => error.includes("ofício")) ? 3 : 1;
             renderCreation();
             return false;
-        }
-
-        // Primeira Missão Tutorial estilo RuneScape ("Primeiros Passos em Aethra")
-        try {
-            if (Aethra.QuestSystem) {
-                Aethra.QuestSystem.registerQuest("tutorial_first_steps", {
-                    id: "tutorial_first_steps",
-                    title: "Primeiros Passos em Aethra",
-                    description: "Boas-vindas a Aethra! Abra a aba de Mapa, escolha a Floresta Inicial e teste seu combate contra as criaturas.",
-                    levelReq: 1,
-                    objectives: [
-                        { id: "start_hunt", text: "Iniciar sua primeira caçada (Floresta Inicial)", current: 0, required: 1, completed: false },
-                        { id: "defeat_monsters", text: "Derrotar 3 criaturas locais", current: 0, required: 3, completed: false }
-                    ],
-                    reward: { gold: 100, xp: 50, item: "Anel de Rito Rústico" }
-                });
-                Aethra.QuestSystem.acceptQuest("tutorial_first_steps");
-                if (Aethra.GameState?.ui) Aethra.GameState.ui.trackedQuestId = "tutorial_first_steps";
-            }
-        } catch (e) {
-            console.error("[CharacterCreationUI] Erro ao injetar primeira missão:", e);
         }
 
         closeLayer();

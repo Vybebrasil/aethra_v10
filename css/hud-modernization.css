@@ -963,6 +963,136 @@ summary:focus-visible,
     color: white;
 }
 
+/* Trilha ativa: sempre mostra o que fazer a seguir, sem abrir a janela de missões. */
+.quest-tracker[hidden] {
+    display: none !important;
+}
+
+.quest-tracker {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+    padding: 9px;
+    border: 1px solid rgba(229, 197, 105, 0.34);
+    border-radius: 9px;
+    background:
+        radial-gradient(circle at 100% 0%, rgba(229, 197, 105, 0.12), transparent 42%),
+        linear-gradient(145deg, rgba(10, 29, 29, 0.97), rgba(5, 15, 19, 0.98));
+    box-shadow: inset 3px 0 0 rgba(98, 229, 164, 0.58), 0 8px 22px rgba(0, 0, 0, 0.22);
+}
+
+.quest-tracker--hunt {
+    flex: 0 0 auto;
+    margin: 0 8px 7px;
+}
+
+.quest-tracker__header,
+.quest-tracker footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 7px;
+}
+
+.quest-tracker__header span {
+    color: var(--hud-gold);
+    font-size: 8px;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.quest-tracker__header i {
+    color: var(--hud-green);
+    font-style: normal;
+}
+
+.quest-tracker__header b {
+    color: var(--hud-green-soft);
+    font-size: 10px;
+}
+
+.quest-tracker__body {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.quest-tracker__body > strong,
+.quest-tracker__body > p,
+.quest-tracker__body > small {
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.quest-tracker__body > strong {
+    color: var(--hud-text);
+    font-family: "Cinzel", serif;
+    font-size: 11px;
+}
+
+.quest-tracker__body > p {
+    color: var(--hud-green-soft);
+    font-size: 10px;
+    font-weight: 750;
+}
+
+.quest-tracker__body > p b {
+    color: var(--hud-gold);
+}
+
+.quest-tracker__body > small {
+    color: var(--hud-muted) !important;
+    font-size: 8px !important;
+}
+
+.quest-tracker__progress {
+    height: 3px;
+    overflow: hidden;
+    border-radius: 99px;
+    background: rgba(1, 7, 9, 0.9);
+}
+
+.quest-tracker__progress i {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #36a677, #70e5aa);
+    box-shadow: 0 0 7px rgba(98, 229, 164, 0.5);
+}
+
+.quest-tracker footer button {
+    flex: 1 1 auto;
+    min-height: 27px !important;
+    padding: 4px 7px !important;
+    border: 1px solid rgba(98, 229, 164, 0.4) !important;
+    border-radius: 6px !important;
+    background: linear-gradient(180deg, rgba(38, 115, 84, 0.95), rgba(18, 65, 51, 0.96)) !important;
+    color: #e6fff2 !important;
+    font-size: 8px !important;
+    font-weight: 850 !important;
+    cursor: pointer;
+}
+
+.quest-tracker footer button.is-secondary {
+    flex: 0 0 auto;
+    border-color: rgba(108, 145, 155, 0.28) !important;
+    background: rgba(7, 22, 26, 0.9) !important;
+    color: var(--hud-text-soft) !important;
+}
+
+.quest-tracker--city {
+    width: clamp(290px, 29vw, 420px);
+    margin-left: auto;
+}
+
+.quest-tracker--city .quest-tracker__body > small {
+    display: none;
+}
+
 /* Options */
 #options-view .settings-panel {
     padding: 14px !important;

@@ -18,8 +18,8 @@
     <link rel="stylesheet" href="css/tilemap-canvas.css?v=5">
     <link rel="stylesheet" href="css/idle-loop.css?v=1008">
     <link rel="stylesheet" href="css/npc-shop.css?v=3">
-    <link rel="stylesheet" href="css/hud-modernization.css?v=15">
-    <link rel="stylesheet" href="css/aethra-windows.css?v=16">
+    <link rel="stylesheet" href="css/hud-modernization.css?v=17">
+    <link rel="stylesheet" href="css/aethra-windows.css?v=21">
     <style>
         .integration-test-report {
             position: fixed;
@@ -168,7 +168,7 @@
         <div id="stats-display"></div><div id="hunt-display"></div><div id="combat-display"></div><div id="boss-list"></div><div id="boss-weekly-reward"></div><div id="professions-grid"></div><div id="dungeon-list"></div><div id="hero-sprite" hidden></div>
     </main>
     <script src="js/core/game-core.js?v=3" defer></script>
-    <script src="js/data/GameData.js?v=8" defer></script>
+    <script src="js/data/GameData.js?v=9" defer></script>
     <script src="js/data/monsters/CreatureBalanceConfig.js" defer></script>
     <script src="js/data/monsters/MonsterAbilityParser.js" defer></script>
     <script src="js/data/loot/LootProfileRegistry.js" defer></script>
@@ -177,11 +177,12 @@
     <script src="js/data/monsters/MonsterCatalog.js" defer></script>
     <script src="js/data/hunts/HuntCatalog.js" defer></script>
     <script src="js/world/EntityManager.js" defer></script>
-    <script src="js/infrastructure/SaveManager.js?v=3" defer></script>
+    <script src="js/world/SpriteLoader.js?v=17" defer></script>
+    <script src="js/infrastructure/SaveManager.js?v=8" defer></script>
     <script src="js/infrastructure/SettingsManager.js?v=3" defer></script>
     <script src="js/infrastructure/AuthorityGateway.js?v=1" defer></script>
     <script src="js/economy/EconomyRNGManager.js" defer></script>
-    <script src="js/ui/WindowManager.js?v=3" defer></script>
+    <script src="js/ui/WindowManager.js?v=5" defer></script>
     <script src="js/ui/TooltipManager.js?v=2" defer></script>
     <script src="js/ui/SaveStatusBanner.js?v=1" defer></script>
     <script src="js/items/ItemSystem.js?v=3" defer></script>
@@ -192,7 +193,7 @@
     <script src="js/data/items/EarlyGameItemCatalog.js?v=7" defer></script>
     <script src="js/economy/ItemRankingSystem.js?v=4" defer></script>
     <script src="js/combat/CombatSystem.js?v=2" defer></script>
-    <script src="js/combat/SkillSystem.js?v=4" defer></script>
+    <script src="js/combat/SkillSystem.js?v=5" defer></script>
     <script src="js/progression/DisciplineSystem.js?v=1" defer></script>
     <script src="js/combat/SkillController.js?v=5" defer></script>
     <script src="js/combat/BattleMath.js" defer></script>
@@ -202,36 +203,35 @@
     <script src="js/items/ConsumableSystem.js?v=1" defer></script>
     <script src="js/pvp/ColiseumSystem.js?v=6" defer></script>
     <script src="js/world/HuntSystem.js?v=4" defer></script>
-    <script src="js/progression/ProfessionSystem.js?v=3" defer></script>
+    <script src="js/progression/ProfessionSystem.js?v=4" defer></script>
     <script src="js/data/recipes/RecipeCatalog.js?v=1" defer></script>
     <script src="js/items/CraftingSystem.js?v=2" defer></script>
-    <script src="js/progression/CharacterBuildSystem.js?v=5" defer></script>
+    <script src="js/progression/CharacterBuildSystem.js?v=7" defer></script>
     <script src="js/world/ExplorationSystem.js" defer></script>
     <script src="js/combat/BossSystem.js?v=2" defer></script>
-    <script src="js/progression/QuestSystem.js" defer></script>
+    <script src="js/progression/QuestSystem.js?v=2" defer></script>
     <script src="js/world/DungeonSystem.js" defer></script>
     <script src="js/market/MarketplaceSystem.js?v=3" defer></script>
-    <script src="js/ui/RenderEngine.js?v=7" defer></script>
+    <script src="js/ui/RenderEngine.js?v=12" defer></script>
     <script src="js/ui/UI_Renderer.js" defer></script>
     <script src="js/ui/UIManager.js?v=6" defer></script>
     <script src="js/ui/HudExperience.js?v=2" defer></script>
     <script src="js/ui/HudWorldMapAndDrops.js?v=2" defer></script>
     <script src="js/ui/EncounterInteractionPass.js?v=2" defer></script>
-    <script src="js/ui/UIStabilityPass.js?v=5" defer></script>
+    <script src="js/ui/UIStabilityPass.js?v=6" defer></script>
     <script src="js/ui/UIFluidityPass.js" defer></script>
     <script src="js/ui/ActionBarWorkspace.js" defer></script>
     <script src="js/ui/HuntAnalyzerWorkspace.js?v=2" defer></script>
     <script src="js/ui/CombatHudModernizer.js?v=2" defer></script>
     <script src="js/ui/EncounterCombatHUD.js?v=7" defer></script>
-    <script src="js/ui/PlayerHudWorkspace.js?v=12" defer></script>
+    <script src="js/ui/PlayerHudWorkspace.js?v=13" defer></script>
     <script src="js/ui/ProfessionWorkshopUI.js?v=2" defer></script>
-    <script src="js/ui/CharacterCreationUI.js?v=6" defer></script>
+    <script src="js/ui/CharacterCreationUI.js?v=9" defer></script>
     <script src="js/ui/NpcShopUI.js?v=2" defer></script>
-    <script src="js/world/SpriteLoader.js?v=2" defer></script>
     <script src="js/world/TileMapCanvas.js?v=6" defer></script>
     <script src="js/economy/IdleLoopSystem.js?v=8" defer></script>
     <script src="js/ui/HudModernization.js?v=4" defer></script>
-    <script src="js/tests/IntegrationTest.js?v=30" defer></script>
+    <script src="js/tests/IntegrationTest.js?v=40" defer></script>
     <script src="js/core/GameLoader.js?v=2" defer></script>
 </body>
 </html>
