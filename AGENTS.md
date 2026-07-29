@@ -57,12 +57,29 @@ segunda versão de um sistema sem primeiro identificar o módulo proprietário.
 3. Implementar o menor fluxo vertical completo, sem duplicar lógica.
 4. Adicionar ou atualizar teste de regressão em `js/tests/IntegrationTest.js`.
 5. Executar `node scripts/verify-project.mjs`.
-6. Abrir `tests/integration.html` e exigir 100% das verificações.
+6. Executar `node scripts/run-integration.mjs` e exigir 100% das verificações
+   (equivale a abrir `tests/integration.html`, mas roda headless em ~2s).
 7. Validar a interface real em 1280×720 e 1920×1080, incluindo console e rede.
 
 Uma tarefa não está concluída com testes falhando, erros de sintaxe, IDs
 duplicados, assets ausentes, 404s ou discrepâncias entre duas HUDs que exibem o
 mesmo atributo.
+
+### Barreira automática (pre-commit)
+
+Os passos 5 e 6 são obrigatórios em cada commit, via hook versionado em
+`.githooks/pre-commit`. **Depois de clonar, ative uma vez:**
+
+```
+git config core.hooksPath .githooks
+```
+
+Sem isso o hook não roda e as verificações voltam a depender de memória — foi
+assim que 115 verificações quebradas se acumularam sem ninguém notar.
+
+Ao verificar imagem, não basta checar se o arquivo carrega: confira também a
+proporção renderizada. Ícones muito largos (ex.: 400×128) somem dentro de um
+slot quadrado com `object-fit: contain`, e o teste de carregamento passa.
 
 ## Entrega
 

@@ -1,0 +1,49 @@
+#!/bin/sh
+#
+# Barreira de qualidade antes de cada commit.
+#
+# Este projeto é editado por várias IAs e sessões diferentes. O quality gate e a
+# suíte de integração já existiam, mas rodavam só quando alguém lembrava — foi
+# assim que 115 verificações quebradas se acumularam sem ninguém perceber.
+# Aqui elas passam a ser obrigatórias.
+#
+# Custo típico: ~6 segundos.
+# Em emergência real, use: git commit --no-verify
+#
+set -e
+
+if ! command -v node >/dev/null 2>&1; then
+    echo "pre-commit: Node não encontrado no PATH; não é possível validar o projeto." >&2
+    exit 1
+fi
+
+falhou=0
+
+printf '\n[1/2] Quality gate (arquivos, referências e assets)\n'
+if ! node scripts/verify-project.mjs; then
+    falhou=1
+fi
+
+printf '\n[2/2] Suíte de integração (headless)\n'
+if ! node scripts/run-integration.mjs --timeout 90; then
+    falhou=1
+fi
+
+if [ "$falhou" -ne 0 ]; then
+    cat >&2 <<'MSG'
+
+────────────────────────────────────────────────────────────
+Commit bloqueado: o projeto está quebrado.
+
+Corrija os itens acima e tente de novo. Para inspecionar:
+  node scripts/verify-project.mjs
+  node scripts/run-integration.mjs
+  (ou abra tests/integration.html no navegador)
+
+Se precisar commitar mesmo assim: git commit --no-verify
+────────────────────────────────────────────────────────────
+MSG
+    exit 1
+fi
+
+printf '\nProjeto íntegro. Seguindo com o commit.\n\n'
