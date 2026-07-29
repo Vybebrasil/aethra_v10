@@ -148,6 +148,10 @@
                 "aethra-primary-view-hunt",
                 activeView === "hunt"
             );
+            document.getElementById("city-view")?.classList.toggle(
+                "is-primary-city",
+                activeView === "city"
+            );
 
             const actionBarLayer = this.ensureActionBarLayer();
             if (actionBarLayer) {
@@ -292,6 +296,20 @@
                         heroPanelTab.dataset.heroPanelTab,
                         { source: "hero-panel-navigation" }
                     );
+                    return;
+                }
+
+                const npcControl = event.target.closest("[data-interact-npc]");
+
+                if (npcControl) {
+                    event.preventDefault();
+                    const interaction = Aethra.EntityManager?.interactWithEntity?.(
+                        npcControl.dataset.interactNpc,
+                        { source: "city-service-card" }
+                    );
+                    if (interaction && npcControl.dataset.interactNpc === "profession_mentor") {
+                        Aethra.RenderEngine?.openProfessionMentor?.();
+                    }
                     return;
                 }
 

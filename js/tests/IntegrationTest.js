@@ -231,6 +231,36 @@
                 )
             );
 
+            const legacyProfessionSave = Aethra.SaveManager?.migrateForTest?.({
+                meta: { schemaVersion: 75 },
+                hero: {
+                    characterCreated: true,
+                    introProfessionId: "mining",
+                    introPrepared: null,
+                    introProvisioned: null
+                },
+                quests: { active: [], completed: [], available: [], rewardClaims: [], contractVersion: 3 }
+            });
+            const currentProfessionSave = Aethra.SaveManager?.migrateForTest?.({
+                meta: { schemaVersion: 76 },
+                hero: {
+                    professionPerks: { mining: ["keen_vein"] },
+                    introPrepared: { mining: true },
+                    introProvisioned: {}
+                }
+            });
+            checks.push(
+                createCheck(
+                    "Save v76 migra saves antigos e preserva perks atuais",
+                    legacyProfessionSave?.toVersion === 76
+                        && legacyProfessionSave?.state?.meta?.schemaVersion === 76
+                        && typeof legacyProfessionSave?.state?.hero?.professionPerks === "object"
+                        && typeof legacyProfessionSave?.state?.hero?.introPrepared === "object"
+                        && currentProfessionSave?.state?.hero?.professionPerks?.mining?.[0] === "keen_vein",
+                    `legado v${legacyProfessionSave?.fromVersion || "?"}→v${legacyProfessionSave?.toVersion || "?"} · perk ${currentProfessionSave?.state?.hero?.professionPerks?.mining?.[0] || "ausente"}`
+                )
+            );
+
             const repairedLegacyQuest = Aethra.QuestSystem?.repairRuntimeQuest?.({
                 id: "tutorial_first_steps",
                 title: "Legacy",
@@ -273,11 +303,36 @@
                 const bridge = Aethra.QuestSystem.acceptQuest("tutorial_first_hunt");
                 const bridgeGuidance = Aethra.QuestSystem.getGuidance(bridge);
                 Aethra.QuestSystem.updateProgress("DefeatInHunt", "whispering_forest", 5, { source: "integration-route" });
+                const mentor = Aethra.QuestSystem.getQuest("tutorial_profession_mentor");
+                Aethra.EntityManager.interactWithEntity("profession_mentor", { source: "integration-route" });
                 const introId = `intro_profession_${professionId}`;
                 const intro = Aethra.QuestSystem.getQuest(introId);
                 const queuedGuarantee = Aethra.GameState.exploration?.tutorialGuarantee || null;
                 const provisionedAtStart = professionId !== "blacksmithing"
                     || intro?.objectives?.find((objective) => objective.id === "receive_training_ore")?.completed === true;
+                let guidedWorkshopVisible = true;
+                if (professionId === "blacksmithing") {
+                    Aethra.ProfessionWorkshopUI?.open?.("blacksmithing", "forge", {
+                        recipeId: "smelt_iron",
+                        source: "integration-route"
+                    });
+                    guidedWorkshopVisible = Boolean(
+                        document.querySelector('.workshop-recipe.is-guided [data-craft-recipe="smelt_iron"]')
+                        && document.querySelector(".profession-workshop__guidance")
+                    );
+                    Aethra.WindowManager?.closeWindow?.("profession-workshop-view", { source: "integration-route" });
+                }
+                let guidedEncounterIdentified = true;
+                if (["mining", "herbalism"].includes(professionId)) {
+                    const previousHuntId = Aethra.GameState.hunt?.huntId || null;
+                    Aethra.GameState.hunt = Aethra.GameState.hunt || {};
+                    Aethra.GameState.hunt.huntId = queuedGuarantee?.huntId || "whispering_forest";
+                    const previewEvent = Aethra.ExplorationSystem?.pickEvent?.() || {};
+                    Aethra.GameState.hunt.huntId = previousHuntId;
+                    guidedEncounterIdentified = previewEvent.tutorialGuaranteed === true
+                        && previewEvent.tutorialLabel === "OBJETIVO DE OFÍCIO"
+                        && String(previewEvent.title || "").includes("Treinamento de");
+                }
                 (intro?.objectives || []).forEach((objective) => {
                     Aethra.QuestSystem.updateProgress(
                         objective.type,
@@ -289,12 +344,17 @@
                 return {
                     professionId,
                     bridgeCompleted: Aethra.QuestSystem.getQuest("tutorial_first_hunt")?.status === "completed",
+                    mentorCompleted: Aethra.QuestSystem.getQuest("tutorial_profession_mentor")?.status === "completed",
                     introCompleted: Aethra.QuestSystem.getQuest(introId)?.status === "completed",
+                    perkUnlocked: Aethra.ProfessionSystem.hasPerk(professionId, Aethra.ProfessionSystem.getIntroPerk(professionId)?.id),
+                    perkModifiers: Aethra.ProfessionSystem.getPerkModifiers(professionId),
                     objectiveTypes: intro?.objectives?.map((objective) => objective.type) || [],
                     guaranteeEventId: queuedGuarantee?.professionId === professionId ? queuedGuarantee.eventId : null,
                     provisionedAtStart,
+                    guidedWorkshopVisible,
+                    guidedEncounterIdentified,
                     bridgeAction: bridgeGuidance?.action || null,
-                    accepted: Boolean(bridge && intro)
+                    accepted: Boolean(bridge && mentor && intro)
                 };
             });
             Aethra.GameState.hero = routeBackup.hero;
@@ -318,12 +378,63 @@
                         }[route.professionId];
                         return route.accepted
                             && route.bridgeCompleted
+                            && route.mentorCompleted
                             && route.introCompleted
+                            && route.perkUnlocked
                             && route.provisionedAtStart
+                            && route.guidedWorkshopVisible
+                            && route.guidedEncounterIdentified
                             && route.bridgeAction === "focus-hunt"
                             && (expectedGuarantee ? route.guaranteeEventId === expectedGuarantee : true);
                     }),
-                    introRouteResults.map((route) => `${route.professionId}:${route.introCompleted ? "ok" : "falhou"}`).join(" · ")
+                    introRouteResults.map((route) => `${route.professionId}:${route.introCompleted ? "ok" : "falhou"}/oficina:${route.guidedWorkshopVisible ? "ok" : "falhou"}/encontro:${route.guidedEncounterIdentified ? "ok" : "falhou"}`).join(" · ")
+                )
+            );
+            const expectedIntroModifiers = {
+                mining: { yieldPercent: 5 },
+                skinning: { yieldPercent: 5 },
+                herbalism: { extraResourceChance: 0.08 },
+                blacksmithing: { craftQuality: 3 }
+            };
+            checks.push(
+                createCheck(
+                    "Cada rota concede um benefício permanente funcional",
+                    introRouteResults.every((route) => Object.entries(expectedIntroModifiers[route.professionId] || {})
+                        .every(([key, value]) => route.perkModifiers?.[key] === value)),
+                    introRouteResults.map((route) => `${route.professionId}:${JSON.stringify(route.perkModifiers)}`).join(" · ")
+                )
+            );
+            const liveMentor = Aethra.EntityManager?.getEntity?.("profession_mentor");
+            const entityStateBackup = JSON.parse(JSON.stringify(Aethra.GameState.entities || { list: [] }));
+            Aethra.GameState.entities.list = Aethra.GameState.entities.list
+                .filter((entity) => entity.id !== "profession_mentor");
+            const restoredDefaultCount = Aethra.EntityManager?.seedDefaultEntities?.();
+            const restoredMentor = Aethra.EntityManager?.getEntity?.("profession_mentor");
+            Aethra.GameState.entities = entityStateBackup;
+            checks.push(
+                createCheck(
+                    "Mestra Ilyra existe e é restaurada em saves antigos",
+                    liveMentor?.metadata?.role === "profession_mentor"
+                        && restoredDefaultCount === 1
+                        && restoredMentor?.metadata?.role === "profession_mentor",
+                    restoredMentor?.name || "NPC ausente"
+                )
+            );
+            const mentorPanelOpened = Aethra.RenderEngine?.openProfessionMentor?.();
+            const mentorPanel = document.getElementById("profession-mentor-view");
+            const mentorCurrentGuidance = Aethra.QuestSystem?.getGuidance?.();
+            const mentorPanelFunctional = Boolean(
+                mentorPanelOpened
+                && mentorPanel?.textContent?.includes("SUA ROTA INICIAL")
+                && mentorPanel?.textContent?.includes("BENEFÍCIO PERMANENTE")
+                && (!mentorCurrentGuidance || mentorPanel?.querySelector?.("[data-mentor-follow-guidance]"))
+            );
+            Aethra.WindowManager?.closeWindow?.("profession-mentor-view", { source: "integration-route" });
+            checks.push(
+                createCheck(
+                    "Ilyra apresenta rota, lição, benefício e próximo passo",
+                    mentorPanelFunctional,
+                    mentorPanelFunctional ? "painel orientador completo" : "painel incompleto ou inerte"
                 )
             );
 
@@ -2010,6 +2121,31 @@
                         cityViewHasFloatingConstraint
                             ? "city-view recebeu dimensões inline indevidas"
                             : `mundo fluido em ${Math.round(cityViewRect?.width || 0)}×${Math.round(cityViewRect?.height || 0)} px`
+                    )
+                );
+
+                const previousPrimaryView = Aethra.GameState.ui?.primaryView || "hunt";
+                Aethra.UIManager?.setPrimaryView?.("city", { emit: false, source: "integration-layout" });
+                Aethra.RenderEngine?.renderCityGuidance?.();
+                const cityServiceCards = [...document.querySelectorAll(".city-service-card")];
+                const cityActionsVisible = cityServiceCards.length >= 6 && cityServiceCards.every((card) => {
+                    const action = card.querySelector("button");
+                    if (!action) return false;
+                    const cardRect = card.getBoundingClientRect();
+                    const actionRect = action.getBoundingClientRect();
+                    return actionRect.height >= 30
+                        && actionRect.top >= cardRect.top
+                        && actionRect.bottom <= cardRect.bottom + 1;
+                });
+                const bodyFillsViewport = document.body.getBoundingClientRect().height >= window.innerHeight - 2;
+                const cityViewportAuthority = getComputedStyle(cityView).bottom === "0px"
+                    && cityView?.classList?.contains("is-primary-city");
+                Aethra.UIManager?.setPrimaryView?.(previousPrimaryView, { emit: false, source: "integration-layout-restore" });
+                checks.push(
+                    createCheck(
+                        "Hub da Cidade mantém todas as ações visíveis no viewport",
+                        cityViewportAuthority && (!bodyFillsViewport || cityActionsVisible),
+                        `${cityServiceCards.length} serviços · autoridade inferior ${cityViewportAuthority ? "liberada" : "reservada"} · ${bodyFillsViewport ? `botões ${cityActionsVisible ? "inteiros" : "cortados"}` : "harness com altura reduzida"}`
                     )
                 );
 

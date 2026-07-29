@@ -218,11 +218,12 @@
         },
 
         // ── Cálculo de qualidade ──────────────────────────────────────────────
-        rollQuality(skillLevel, requiredLevel, technique) {
+        rollQuality(skillLevel, requiredLevel, technique, professionId = null) {
             const mastery   = Aethra.XPSystem?.getDiminishingSkillBonus?.(skillLevel, { scale: 14, interval: 14 }) || 0;
             const challenge = clamp((skillLevel - requiredLevel) * 0.7, -12, 18);
             const variance  = (clamp(this.randomSource(), 0, 1) * 16) - 8;
-            return clamp(Math.round(42 + mastery + challenge + technique.qualityDelta + variance), 1, 100);
+            const perkBonus = number(Aethra.ProfessionSystem?.getPerkModifiers?.(professionId)?.craftQuality, 0);
+            return clamp(Math.round(42 + mastery + challenge + technique.qualityDelta + perkBonus + variance), 1, 100);
         },
 
         // ── Transação de craft ────────────────────────────────────────────────
@@ -244,7 +245,7 @@
             const generated = [];
 
             for (let batch = 0; batch < batches; batch += 1) {
-                const quality = this.rollQuality(state.level, requiredLevel, technique);
+                const quality = this.rollQuality(state.level, requiredLevel, technique, recipe.professionId);
                 recipe.outputs.forEach((output) => {
                     const item = Aethra.ItemSystem?.generateItem?.(output.itemId, {
                         quantity: output.quantity,

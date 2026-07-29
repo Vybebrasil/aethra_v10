@@ -88,6 +88,21 @@
                     role: "merchant",
                     opensWindow: "npc-shop-view"
                 }
+            },
+            {
+                id: "profession_mentor",
+                name: "Mestra Ilyra",
+                sprite_url: "assets/entities/npc_guildmaster.png",
+                x: 248,
+                y: 112,
+                type: "npc",
+                width: 32,
+                height: 32,
+                interactive: true,
+                metadata: {
+                    role: "profession_mentor",
+                    title: "Mentora de Ofícios"
+                }
             }
         ],
 
@@ -105,6 +120,28 @@
             return Aethra.GameState.entities;
         },
 
+        seedDefaultEntities() {
+            const state = this.ensureState();
+            state.list = state.list.map(normalizeEntity);
+            let added = 0;
+            this.defaultEntities.forEach((entity) => {
+                if (state.list.some((entry) => entry.id === entity.id)) return;
+                if (this.addEntity(entity, { silent: true, replace: false })) added += 1;
+            });
+            return added;
+        },
+
+        bindStateEvents() {
+            if (this._stateEventsBound) return;
+            this._stateEventsBound = true;
+            ["save:loaded", "save:reset"].forEach((eventName) => {
+                Aethra.EventBus.on(eventName, () => {
+                    const added = this.seedDefaultEntities();
+                    if (added > 0) this.emitChanged("default-entities-restored", null);
+                });
+            });
+        },
+
         init(options = {}) {
             const state = this.ensureState();
 
@@ -114,16 +151,13 @@
 
             const seedDefaults = options.seedDefaults !== false;
 
-            if (seedDefaults && state.list.length === 0) {
-                this.defaultEntities.forEach((entity) => {
-                    this.addEntity(entity, {
-                        silent: true,
-                        replace: false
-                    });
-                });
-            } else {
-                state.list = state.list.map(normalizeEntity);
-            }
+            // O seed é idempotente: entidades introduzidas em versões novas
+            // também entram em saves que já possuíam player e mercador.
+            if (seedDefaults) {
+                this.seedDefaultEntities();
+            } else state.list = state.list.map(normalizeEntity);
+
+            this.bindStateEvents();
 
             this.initialized = true;
 

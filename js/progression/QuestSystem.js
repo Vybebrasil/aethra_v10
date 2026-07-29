@@ -157,6 +157,21 @@
             this.bindEvents();
             this.repairState({ emit: false, save: false });
             const state = ensureQuestState();
+            const routeQuestIds = Object.keys(Aethra.ProfessionSystem?.introPaths || {})
+                .map((professionId) => `intro_profession_${professionId}`);
+            const hasModernProfessionStep = ["tutorial_profession_mentor", ...routeQuestIds]
+                .some((questId) => state.active.some((quest) => quest.id === questId)
+                    || state.completed.some((quest) => quest.id === questId));
+            const completedLegacyCraft = state.completed.some((quest) => quest.id === "tutorial_apprentice_craft");
+            if (
+                Aethra.GameState.hero?.characterCreated
+                && state.completed.some((quest) => quest.id === "tutorial_first_hunt")
+                && !hasModernProfessionStep
+                && !completedLegacyCraft
+            ) {
+                this.acceptQuest("tutorial_profession_mentor");
+                this.trackQuest("tutorial_profession_mentor", { save: false });
+            }
             const activeIntroQuest = state.active.find((quest) => String(quest.id || "").startsWith("intro_profession_"));
             if (activeIntroQuest) {
                 Aethra.ProfessionSystem?.activateIntroPath?.(
@@ -174,6 +189,8 @@
                     : Object.keys(Aethra.GameData.quests || {})[0];
                 if (firstQuestId) this.acceptQuest(firstQuestId);
             }
+
+            Aethra.ProfessionSystem?.reconcileIntroPerks?.();
 
             this.initialized = true;
             this.repairState({ emit: true, save: true });
@@ -592,9 +609,13 @@
                         ? "Confira no mapa onde obter o material necessário."
                         : "Escolha seu destino no mapa de expedições."
             } else if (objective.type === "TalkToNPC") {
-                action = "go-city";
-                actionLabel = "Ir à cidade";
-                detail = "Volte à cidade para encontrar o personagem da missão."
+                const alreadyInCity = Aethra.GameState.ui?.primaryView === "city"
+                    && !Aethra.GameState.hunt?.isActive;
+                action = alreadyInCity ? "interact-npc" : "go-city";
+                actionLabel = alreadyInCity ? "Falar com Ilyra" : "Ir à cidade";
+                detail = alreadyInCity
+                    ? "Mestra Ilyra está destacada entre os serviços do Hub da Cidade."
+                    : "Volte à cidade para encontrar Mestra Ilyra e receber sua orientação."
             } else if (objective.type === "PracticeSkill" && profession?.category === "crafting") {
                 action = "open-workshop";
                 actionLabel = "Abrir oficina";
@@ -677,6 +698,8 @@
                         issues.push({ questId: quest.id, objectiveId: objective.id, reason: "missing-skill", target: objective.target });
                     } else if (objective.type === "CraftRecipe" && !Aethra.RecipeCatalog?.get?.(objective.target)) {
                         issues.push({ questId: quest.id, objectiveId: objective.id, reason: "missing-recipe", target: objective.target });
+                    } else if (objective.type === "TalkToNPC" && !Aethra.EntityManager?.getEntity?.(objective.target)) {
+                        issues.push({ questId: quest.id, objectiveId: objective.id, reason: "missing-npc", target: objective.target });
                     } else if (objective.type === "ItemAcquired") {
                         const itemExists = Boolean(Aethra.GameData.items?.[objective.target]);
                         const sourceExists = explorationResources.has(objective.target)

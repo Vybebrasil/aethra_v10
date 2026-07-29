@@ -13,8 +13,8 @@
 }
 
 .profession-workshop__shell {
-    display: grid;
-    grid-template-rows: auto auto auto auto auto auto minmax(0, 1fr);
+    display: flex;
+    flex-direction: column;
     max-height: inherit;
 }
 
@@ -54,6 +54,18 @@
     border: 1px solid #29404a80; border-radius: 8px; background: #0a171b;
 }
 .profession-workshop__status strong { color: var(--workshop-accent); font-size: 12px; }
+
+.profession-workshop__guidance {
+    display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: center;
+    margin: 0 14px 9px; padding: 9px 11px;
+    border: 1px solid color-mix(in srgb, var(--workshop-accent) 58%, #29404a);
+    border-radius: 9px; background: color-mix(in srgb, var(--workshop-accent) 9%, #081317);
+}
+.profession-workshop__guidance > span { color: var(--workshop-accent); font-size: 20px; text-align: center; }
+.profession-workshop__guidance div { display: grid; gap: 1px; }
+.profession-workshop__guidance small { color: var(--workshop-accent); font: 900 8px "Outfit", sans-serif; letter-spacing: .12em; }
+.profession-workshop__guidance strong { color: #eef4f0; font-size: 12px; }
+.profession-workshop__guidance p { margin: 0; color: #8da1a8; font-size: 9px; }
 
 /* ── Tabs de profissão ───────────────────────────────────────────────────────── */
 .profession-workshop__tabs { display: flex; gap: 7px; padding: 0 14px 9px; }
@@ -130,7 +142,7 @@
 
 /* ── Container de receitas ───────────────────────────────────────────────── */
 .profession-workshop__recipes {
-    display: grid; gap: 0;
+    display: grid; gap: 0; min-height: 0; flex: 1 1 auto;
     overflow: auto; padding: 12px 14px 16px;
 }
 .workshop-empty {
@@ -165,6 +177,10 @@
 .workshop-recipe.is-new {
     border-color: color-mix(in srgb, var(--workshop-accent) 60%, transparent);
     box-shadow: 0 0 12px color-mix(in srgb, var(--workshop-accent) 12%, transparent);
+}
+.workshop-recipe.is-guided {
+    border-color: var(--workshop-accent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--workshop-accent) 28%, transparent), 0 0 20px color-mix(in srgb, var(--workshop-accent) 12%, transparent);
 }
 
 /* Card bloqueado */
@@ -201,6 +217,11 @@
     color: var(--workshop-accent);
     font: 800 8px "Outfit", sans-serif; letter-spacing: .06em;
     vertical-align: middle;
+}
+.badge-guided {
+    display: inline-block; margin-left: 5px; padding: 1px 5px;
+    border-radius: 4px; background: var(--workshop-accent); color: #102019;
+    font: 900 8px "Outfit", sans-serif; letter-spacing: .07em; vertical-align: middle;
 }
 
 /* Fluxo materiais → resultado */

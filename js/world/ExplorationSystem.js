@@ -511,7 +511,12 @@
             const guarantee = this.getActiveIntroGuarantee();
             if (guarantee && EVENT_DEFINITIONS[guarantee.eventId]) {
                 const forced = clone(EVENT_DEFINITIONS[guarantee.eventId]);
+                const professionName = Aethra.ProfessionSystem?.professions?.[guarantee.professionId]?.name || "Ofício";
                 forced.tutorialGuaranteed = true;
+                forced.tutorialProfessionId = guarantee.professionId;
+                forced.tutorialLabel = "OBJETIVO DE OFÍCIO";
+                forced.title = `${forced.title} · Treinamento de ${professionName}`;
+                forced.description = `${forced.description} Esta descoberta foi garantida por Mestra Ilyra para sua primeira lição.`;
                 return forced;
             }
             const modifiers = context.modifiers || Aethra.HuntSystem?.getActiveModifiers?.() || {};
@@ -772,7 +777,11 @@
             }
 
             if (event.id === "herb") {
-                const quantity = scaleQuantity(1 + (this.randomSource() < 0.3 ? 1 : 0), "herbalism");
+                const perkChance = Math.max(0, Number(Aethra.ProfessionSystem?.getPerkModifiers?.("herbalism")?.extraResourceChance || 0));
+                const quantity = scaleQuantity(
+                    1 + (this.randomSource() < 0.3 ? 1 : 0) + (this.randomSource() < perkChance ? 1 : 0),
+                    "herbalism"
+                );
                 return { items: [createItem(RESOURCE_ITEMS.moonleaf, quantity)].filter(Boolean), gold: 0, summary: `${quantity}x Erva Silvestre` };
             }
 
@@ -1009,8 +1018,10 @@
             this.pushFeed({
                 type: "gathering",
                 icon: "◒",
-                title: `${enemyName}: material aproveitado`,
-                detail: `${quantity}x Pele de Fera · +${xpGain} XP de Esfolamento`,
+                title: guaranteedHarvest
+                    ? `Objetivo de Ofício · ${enemyName}`
+                    : `${enemyName}: material aproveitado`,
+                detail: `${quantity}x Pele de Fera · +${xpGain} XP de Esfolamento${guaranteedHarvest ? " · primeira lição concluída" : ""}`,
                 tone: "reward"
             });
             Aethra.EventBus.emit("exploration:resource-collected", {

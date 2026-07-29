@@ -631,8 +631,11 @@
             return true;
         }
 
+        const questGuidance = Aethra.QuestSystem?.getGuidance?.() || null;
+        const recommendedHuntId = questGuidance?.huntId || null;
         const selected = getHuntDefinition(
             selectedId ||
+            recommendedHuntId ||
             Aethra.GameState.ui?.selectedWorldHunt ||
             Aethra.GameState.hunt?.huntId ||
             unlocked[0]?.id ||
@@ -644,11 +647,12 @@
             const locked = heroLevel < Number(definition.minLevel || 1);
             const active = activeId === definition.id;
             const selectedNode = selected.id === definition.id;
+            const questRecommended = recommendedHuntId === definition.id;
             const expeditionTags = getExpeditionTags(definition);
             return `
                 <button
                     type="button"
-                    class="world-map-node ${locked ? "is-locked" : "is-unlocked"} ${active ? "is-active" : ""} ${selectedNode ? "is-selected" : ""}"
+                    class="world-map-node ${locked ? "is-locked" : "is-unlocked"} ${active ? "is-active" : ""} ${selectedNode ? "is-selected" : ""} ${questRecommended ? "is-quest-recommended" : ""}"
                     style="--node-x:${Number(definition.position?.x || 50)}%;--node-y:${Number(definition.position?.y || 50)}%;"
                     data-world-hunt-select="${escapeHTML(definition.id)}"
                     aria-label="${escapeHTML(definition.name)}${locked ? `, bloqueada até o nível ${definition.minLevel}` : ", disponível"}"
@@ -659,6 +663,7 @@
                         <small>NV. ${Number(definition.minLevel || 1)}${active ? " · ATIVA" : ""}</small>
                         <em>${escapeHTML(expeditionTags.slice(-1)[0] || 'SOLO')}</em>
                     </span>
+                    ${questRecommended ? '<mark class="world-map-node__quest">MISSÃO</mark>' : ''}
                 </button>
             `;
         }).join("");
@@ -699,6 +704,11 @@
                         </div>
                         <b>NV. ${Number(selected.minLevel || 1)}</b>
                     </header>
+                    ${selected.id === recommendedHuntId ? `
+                        <div class="hunt-world-map-detail__quest">
+                            <span>✦</span><div><small>DESTINO DA JORNADA</small><strong>Sua próxima atividade acontece nesta expedição.</strong></div>
+                        </div>
+                    ` : ''}
                     <div class="hunt-world-map-detail__danger"><span>Perigo</span><div>${dangers}</div></div>
                     <p class="hunt-world-map-detail__description">${escapeHTML(selected.description || "Expedição disponível.")}</p>
                     

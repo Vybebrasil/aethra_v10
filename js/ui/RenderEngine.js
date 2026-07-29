@@ -334,6 +334,7 @@
                 bind(eventName, () => {
                     this.schedule("quests", () => this.renderQuests());
                     this.schedule("questTracker", () => this.renderQuestTracker());
+                    this.schedule("cityGuidance", () => this.renderCityGuidance());
                 });
             });
 
@@ -927,18 +928,19 @@
                                 </div>
                             </article>
 
-                            <article class="city-service-card">
-                                <div class="city-service-card__icon" aria-hidden="true">◇</div>
-                                <div class="city-service-card__content">
-                                    <small>Comércio local</small>
-                                    <h3>Mercado de Jogadores</h3>
-                                    <p>Consulte ofertas e negocie itens com outros aventureiros.</p>
-                                    <button
-                                        type="button"
-                                        data-open-window="player-market-view"
+                            <article class="city-service-card city-service-card--mentor" data-profession-mentor-card>
+                                <div class="city-service-card__portrait">
+                                    <img
+                                        src="assets/entities/npc_guildmaster.png"
+                                        alt="Mestra Ilyra, mentora de ofícios"
+                                        draggable="false"
                                     >
-                                        Abrir Mercado
-                                    </button>
+                                </div>
+                                <div class="city-service-card__content">
+                                    <small data-mentor-status><span></span>Mentora disponível</small>
+                                    <h3>Mestra Ilyra</h3>
+                                    <p data-mentor-description>Receba orientação para transformar sua escolha inicial em um caminho de progressão.</p>
+                                    <button type="button" data-interact-npc="profession_mentor">Receber orientação</button>
                                 </div>
                             </article>
 
@@ -1024,6 +1026,7 @@
                 });
 
             this.syncHeroPanelTabs();
+            this.renderCityGuidance();
 
             Aethra.EventBus.emit("render:battle-mode-ready", {
                 battleMode: this.battleMode,
@@ -1031,6 +1034,105 @@
             });
 
             return true;
+        },
+
+        renderCityGuidance() {
+            const card = document.querySelector("[data-profession-mentor-card]");
+            if (!card) return false;
+            const professionId = Aethra.GameState.hero?.introProfessionId;
+            const path = Aethra.ProfessionSystem?.introPaths?.[professionId] || null;
+            const perk = Aethra.ProfessionSystem?.getIntroPerk?.(professionId) || null;
+            const mentorQuest = Aethra.QuestSystem?.getQuest?.("tutorial_profession_mentor");
+            const routeQuest = professionId
+                ? Aethra.QuestSystem?.getQuest?.(`intro_profession_${professionId}`)
+                : null;
+            const isMentorObjective = mentorQuest?.status === "active"
+                && mentorQuest.objectives?.some((objective) => objective.type === "TalkToNPC" && !objective.completed);
+            const perkUnlocked = Boolean(perk && Aethra.ProfessionSystem?.hasPerk?.(professionId, perk.id));
+            const status = card.querySelector("[data-mentor-status]");
+            const description = card.querySelector("[data-mentor-description]");
+            const button = card.querySelector("[data-interact-npc]");
+
+            card.classList.toggle("is-quest-target", Boolean(isMentorObjective));
+            card.classList.toggle("is-route-active", routeQuest?.status === "active");
+            card.classList.toggle("is-perk-unlocked", perkUnlocked);
+            if (status) {
+                status.innerHTML = isMentorObjective
+                    ? "<span></span>Objetivo atual · fale comigo"
+                    : perkUnlocked
+                        ? "<span></span>Benefício permanente conquistado"
+                        : path
+                            ? `<span></span>Rota: ${escapeHTML(path.title)}`
+                            : "<span></span>Mentora disponível";
+            }
+            if (description) {
+                description.textContent = perkUnlocked
+                    ? `${perk.name}: ${perk.description}`
+                    : routeQuest?.status === "active"
+                        ? `${path?.objective || "Pratique seu ofício"}. Ilyra continuará acompanhando seu progresso.`
+                        : path
+                            ? `Sua primeira lição será ${path.objective.toLocaleLowerCase("pt-BR")}.`
+                            : "Receba orientação para transformar sua escolha inicial em um caminho de progressão.";
+            }
+            if (button) button.textContent = isMentorObjective ? "Falar com Mestra Ilyra" : "Conversar sobre ofícios";
+            return true;
+        },
+
+        openProfessionMentor() {
+            const windowId = "profession-mentor-view";
+            let element = document.getElementById(windowId);
+            if (!element) {
+                element = document.createElement("section");
+                element.id = windowId;
+                element.className = "game-window profession-mentor-window hidden";
+                element.dataset.aethraWindow = windowId;
+                element.setAttribute("aria-hidden", "true");
+                (document.getElementById("modal-layer") || document.body).appendChild(element);
+                Aethra.WindowManager?.registerWindow?.(windowId, element);
+            }
+
+            const professionId = Aethra.GameState.hero?.introProfessionId;
+            const path = Aethra.ProfessionSystem?.introPaths?.[professionId] || null;
+            const profession = Aethra.ProfessionSystem?.professions?.[professionId] || null;
+            const perk = Aethra.ProfessionSystem?.getIntroPerk?.(professionId) || null;
+            const perkUnlocked = Boolean(perk && Aethra.ProfessionSystem?.hasPerk?.(professionId, perk.id));
+            const routeQuest = professionId
+                ? Aethra.QuestSystem?.getQuest?.(`intro_profession_${professionId}`)
+                : null;
+            const trackedQuest = Aethra.QuestSystem?.getTrackedQuest?.() || null;
+            const guidance = trackedQuest ? Aethra.QuestSystem?.getGuidance?.(trackedQuest) : null;
+            const pendingObjective = routeQuest?.objectives?.find((objective) => !objective.completed) || null;
+
+            element.innerHTML = `
+                <div class="profession-mentor-window__shell">
+                    <header>
+                        <img src="assets/entities/npc_guildmaster.png" alt="Mestra Ilyra" draggable="false">
+                        <div><small>MENTORA DE OFÍCIOS</small><h2>Mestra Ilyra</h2><p>Seu ofício não limita o herói. Ele dá direção para a primeira descoberta.</p></div>
+                        <button type="button" data-close-window="${windowId}" aria-label="Fechar">×</button>
+                    </header>
+                    <section class="profession-mentor-window__route">
+                        <span>${escapeHTML(profession?.icon || "✦")}</span>
+                        <div><small>SUA ROTA INICIAL</small><h3>${escapeHTML(path?.title || "Caminho ainda não escolhido")}</h3><p>${escapeHTML(path?.summary || "Crie um personagem e escolha um ofício para receber uma jornada dirigida.")}</p></div>
+                        <b>${routeQuest?.status === "completed" ? "CONCLUÍDA" : routeQuest?.status === "active" ? "EM ANDAMENTO" : "PREPARAÇÃO"}</b>
+                    </section>
+                    <div class="profession-mentor-window__steps">
+                        <article><small>PRIMEIRA LIÇÃO</small><strong>${escapeHTML(pendingObjective?.label || path?.objective || "Conclua seus primeiros passos em Aethra")}</strong><p>${pendingObjective ? `${formatNumber(pendingObjective.progress)}/${formatNumber(pendingObjective.required)} concluído` : routeQuest?.status === "completed" ? "Lição concluída" : "Ilyra liberará esta etapa no momento certo."}</p></article>
+                        <article class="${perkUnlocked ? "is-unlocked" : ""}"><small>BENEFÍCIO PERMANENTE</small><strong>${escapeHTML(perk?.name || "Benefício da rota")}</strong><p>${escapeHTML(perk?.description || "Conclua a jornada introdutória para desbloquear.")}</p></article>
+                    </div>
+                    <footer>
+                        <p>${escapeHTML(guidance?.detail || "Continue explorando Aethra e volte quando precisar de direção.")}</p>
+                        ${guidance ? `<button type="button" data-mentor-follow-guidance>${escapeHTML(guidance.actionLabel)}</button>` : ""}
+                    </footer>
+                </div>
+            `;
+            element.querySelector("[data-mentor-follow-guidance]")?.addEventListener("click", () => {
+                Aethra.WindowManager?.closeWindow?.(windowId, { source: "profession-mentor-guidance" });
+                this.handleQuestGuidance(guidance);
+            });
+            return Aethra.WindowManager?.openWindow?.(windowId, {
+                source: "profession-mentor",
+                exclusive: true
+            }) ?? false;
         },
 
         buildCombatInspectHTML(combatant, side) {
@@ -1373,6 +1475,7 @@
             heroCard.classList.toggle('is-exploring', !combatActive);
             enemyCard.classList.toggle('is-idle', !enemy && !hasEventCard);
             enemyCard.classList.toggle('is-event-card', hasEventCard);
+            enemyCard.classList.toggle('is-tutorial-guided', Boolean(hasEventCard && pendingEvent?.tutorialGuaranteed));
             enemyCard.hidden = !combatActive && !hasEventCard;
             if (arena) {
                 arena.classList.toggle('is-hero-only', !combatActive && !hasEventCard);
@@ -1615,7 +1718,7 @@
                 enemyCard.innerHTML = `
                     <header class="combatant-card__header combatant-card__header--split">
                         <div>
-                            <small>EVENTO</small>
+                            <small>${escapeHTML(pendingEvent.tutorialLabel || 'EVENTO')}</small>
                             <h3>${escapeHTML(pendingEvent.title || 'Descoberta')}</h3>
                         </div>
                         <div class="combatant-card__header-actions">
@@ -3665,13 +3768,27 @@
                 Aethra.UIManager?.setPrimaryView?.("city", { source: "quest-tracker" });
                 return true;
             }
+            if (guidance.action === "interact-npc") {
+                Aethra.UIManager?.setPrimaryView?.("city", { source: "quest-tracker" });
+                return Aethra.EntityManager?.interactWithEntity?.(
+                    guidance.target,
+                    { source: "quest-tracker" }
+                ) ?? false;
+            }
             if (guidance.action === "focus-hunt") {
                 Aethra.UIManager?.setPrimaryView?.("hunt", { source: "quest-tracker" });
                 return true;
             }
             if (guidance.action === "open-workshop") {
                 Aethra.UIManager?.setPrimaryView?.("city", { source: "quest-tracker" });
-                return Aethra.ProfessionWorkshopUI?.open?.(guidance.professionId || guidance.target) ?? false;
+                return Aethra.ProfessionWorkshopUI?.open?.(
+                    guidance.professionId || guidance.target,
+                    null,
+                    {
+                        recipeId: guidance.objective?.type === "CraftRecipe" ? guidance.target : null,
+                        source: "quest-tracker"
+                    }
+                ) ?? false;
             }
             return Aethra.WindowManager?.openWindow?.("quests-view", { source: "quest-tracker" }) ?? false;
         },
@@ -5048,9 +5165,9 @@
 
         container.innerHTML = `
             ${pending ? `
-                <article class="exploration-active-event is-${esc(pending.category)}">
+                <article class="exploration-active-event is-${esc(pending.category)}${pending.tutorialGuaranteed ? ' is-tutorial-guided' : ''}">
                     <span class="exploration-active-event__icon">${esc(pending.icon)}</span>
-                    <div><small>Evento encontrado</small><strong>${esc(pending.title)}</strong><p>${esc(pending.description)}</p></div>
+                    <div><small>${esc(pending.tutorialLabel || 'Evento encontrado')}</small><strong>${esc(pending.title)}</strong><p>${esc(pending.description)}</p></div>
                     <button type="button" data-resolve-exploration="${esc(pending.eventId)}">${esc(pending.actionLabel)}</button>
                 </article>
             ` : `

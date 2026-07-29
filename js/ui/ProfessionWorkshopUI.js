@@ -14,6 +14,7 @@
         techniqueId: "balanced",
         quantity: 1,
         notice: null,
+        guidedRecipeId: null,
         tab: "known",          // "known" | "undiscovered"
         newlyDiscovered: []    // IDs vistos como novidade desde a última abertura
     };
@@ -62,8 +63,18 @@
         const level   = Aethra.ProfessionSystem?.getState?.(recipe.professionId)?.level || 1;
         const mastery = Aethra.XPSystem?.getDiminishingSkillBonus?.(level, { scale: 14, interval: 14 }) || 0;
         const challenge = Math.min(18, Math.max(-12, (level - recipe.requiredLevel) * 0.7));
-        const center  = Math.min(100, Math.max(1, Math.round(42 + mastery + challenge + Number(technique.qualityDelta || 0))));
+        const perkBonus = Number(Aethra.ProfessionSystem?.getPerkModifiers?.(recipe.professionId)?.craftQuality || 0);
+        const center  = Math.min(100, Math.max(1, Math.round(42 + mastery + challenge + Number(technique.qualityDelta || 0) + perkBonus)));
         return `${Math.max(1, center - 8)}–${Math.min(100, center + 8)}`;
+    }
+
+    function resolveGuidedRecipeId() {
+        const guidance = Aethra.QuestSystem?.getGuidance?.();
+        if (
+            guidance?.objective?.type === "CraftRecipe"
+            && guidance.professionId === ui.professionId
+        ) return guidance.target;
+        return null;
     }
 
     // ─── Renderização de um card de receita conhecida ─────────────────────────
@@ -74,13 +85,14 @@
         const validation = cs.validateCraft(recipe.id, { stationId: ui.stationId, techniqueId: ui.techniqueId, quantity: ui.quantity });
         const output     = recipe.outputs.map((e) => `${e.quantity * ui.quantity}× ${itemName(e.itemId)}`).join(", ");
         const isNew      = ui.newlyDiscovered.includes(recipe.id);
+        const isGuided   = ui.guidedRecipeId === recipe.id;
 
-        return `<article class="workshop-recipe ${validation.allowed ? "is-ready" : "is-blocked"}${isNew ? " is-new" : ""}">
+        return `<article class="workshop-recipe ${validation.allowed ? "is-ready" : "is-blocked"}${isNew ? " is-new" : ""}${isGuided ? " is-guided" : ""}">
             <header>
                 <span>${esc(recipe.icon)}</span>
                 <div>
                     <small>${esc(recipe.action.toUpperCase())} · NV. ${fmt(recipe.requiredLevel)}</small>
-                    <strong>${esc(recipe.name)}${isNew ? " <mark class=\"badge-new\">NOVO</mark>" : ""}</strong>
+                    <strong>${esc(recipe.name)}${isNew ? " <mark class=\"badge-new\">NOVO</mark>" : ""}${isGuided ? " <mark class=\"badge-guided\">MISSÃO</mark>" : ""}</strong>
                     <p>${esc(recipe.description)}</p>
                 </div>
                 <em>+${fmt(recipe.xp * ui.quantity)} XP</em>
@@ -140,9 +152,11 @@
         const skill      = Aethra.ProfessionSystem?.getState?.(ui.professionId) || { level: 1, xpCurrent: 0, xpNext: 1 };
         const cs         = Aethra.CraftingSystem;
         element.style.setProperty("--workshop-accent", meta.color);
+        ui.guidedRecipeId = resolveGuidedRecipeId() || ui.guidedRecipeId;
 
         // Receitas conhecidas agrupadas por tier
-        const known      = cs?.getRecipes?.(ui.professionId) || [];
+        const known      = (cs?.getRecipes?.(ui.professionId) || [])
+            .sort((a, b) => Number(b.id === ui.guidedRecipeId) - Number(a.id === ui.guidedRecipeId));
         const byTier     = {};
         known.forEach((recipe) => {
             const t = recipe.tier || 1;
@@ -189,6 +203,13 @@
                 <button type="button" data-workshop-tab="undiscovered" class="${ui.tab === "undiscovered" ? "is-active" : ""}">A Descobrir${undiscovered.length > 0 ? ` <span class="badge-count">${undiscovered.length}</span>` : ""}${badgeCount > 0 ? ` <span class="badge-new-pill">${badgeCount} novo${badgeCount > 1 ? "s" : ""}</span>` : ""}</button>
             </nav>
 
+            ${ui.guidedRecipeId && cs?.getRecipe?.(ui.guidedRecipeId) ? `
+                <section class="profession-workshop__guidance" role="status">
+                    <span>✦</span>
+                    <div><small>PASSO DA MISSÃO</small><strong>Produza ${esc(cs.getRecipe(ui.guidedRecipeId).name)}</strong><p>A receita correta foi trazida para o topo. Confira os materiais e conclua sua primeira lição.</p></div>
+                </section>
+            ` : ""}
+
             <section class="profession-workshop__controls">
                 <label>Técnica
                     <select data-workshop-technique>
@@ -213,11 +234,12 @@
     }
 
     // ─── Abrir oficina ────────────────────────────────────────────────────────
-    function open(professionId = "blacksmithing", stationId = null) {
+    function open(professionId = "blacksmithing", stationId = null, options = {}) {
         if (professionMeta[professionId]) ui.professionId = professionId;
         const inCity = Aethra.GameState.ui?.primaryView === "city" && !Aethra.GameState.hunt?.isActive;
         ui.stationId  = stationId || (inCity ? professionMeta[ui.professionId].stationId : null);
         ui.notice     = null;
+        ui.guidedRecipeId = options.recipeId || resolveGuidedRecipeId();
         ui.tab        = "known";
 
         // Seeding: se não há receitas descobertas, descobre os starters agora
@@ -300,6 +322,10 @@
 
     // ─── Reatividade a eventos ────────────────────────────────────────────────
     Aethra.EventBus.on("crafting:completed", render);
+    Aethra.EventBus.on("quest:finished", () => {
+        ui.guidedRecipeId = resolveGuidedRecipeId();
+        if (Aethra.WindowManager?.isWindowOpen?.(WINDOW_ID)) render();
+    });
     Aethra.EventBus.on("inventory:changed", () => {
         if (Aethra.WindowManager?.isWindowOpen?.(WINDOW_ID)) render();
     });

@@ -304,6 +304,7 @@
             hero.introProfessionActivatedAt = null;
             hero.introPrepared = {};
             hero.introProvisioned = {};
+            hero.professionPerks = {};
             state.hunt = {
                 isActive: false,
                 isPaused: false,

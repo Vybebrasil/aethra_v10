@@ -222,9 +222,9 @@
 
         root.innerHTML = `
             <div class="journey-dashboard journey-dashboard--continuous">
-                <section class="journey-focus ${pending ? `is-${esc(pending.category)}` : 'is-ambient'}">
+                <section class="journey-focus ${pending ? `is-${esc(pending.category)}${pending.tutorialGuaranteed ? ' is-tutorial-guided' : ''}` : 'is-ambient'}">
                     <span class="journey-focus__icon">${esc(pending?.icon || ambientIcon)}</span>
-                    <div class="journey-focus__copy"><small>${pending ? 'DECISÃO DE EXPLORAÇÃO' : (hunt.isActive ? 'ATIVIDADE ATUAL' : 'EXPEDIÇÃO')}</small><strong>${esc(pending?.title || ambientTitle)}</strong><p>${esc(pending?.description || ambientText)}</p></div>
+                    <div class="journey-focus__copy"><small>${pending ? esc(pending.tutorialLabel || 'DECISÃO DE EXPLORAÇÃO') : (hunt.isActive ? 'ATIVIDADE ATUAL' : 'EXPEDIÇÃO')}</small><strong>${esc(pending?.title || ambientTitle)}</strong><p>${esc(pending?.description || ambientText)}</p></div>
                     ${pending ? `<button type="button" data-resolve-exploration="${esc(pending.eventId)}">${esc(pending.actionLabel)}</button>` : (hunt.isActive ? `<span class="journey-focus__pulse"><i></i>explorando</span>` : `<button type="button" data-open-hunt-map>Abrir Mapa</button>`)}
                 </section>
                 <section class="journey-overview">

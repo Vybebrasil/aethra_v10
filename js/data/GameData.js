@@ -610,6 +610,30 @@
                         { templateId: "ring_bronze_l1", quantity: 1 }
                     ]
                 },
+                nextQuestId: "tutorial_profession_mentor"
+            },
+            tutorial_profession_mentor: {
+                id: "tutorial_profession_mentor",
+                title: "A Mestra dos Ofícios",
+                description:
+                    "Mestra Ilyra aguarda na Cidade para transformar sua escolha inicial em um caminho prático.",
+                levelReq: 1,
+                objectives: [
+                    {
+                        id: "talk_to_profession_mentor",
+                        type: "TalkToNPC",
+                        target: "profession_mentor",
+                        label: "Converse com Mestra Ilyra no Hub da Cidade",
+                        required: 1,
+                        progress: 0,
+                        completed: false
+                    }
+                ],
+                reward: {
+                    xp: 25,
+                    gold: 25,
+                    items: []
+                },
                 nextQuestByIntroProfession: true
             },
             tutorial_apprentice_craft: {

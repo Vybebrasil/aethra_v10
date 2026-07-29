@@ -12,7 +12,7 @@
     // A mudança para combate por rodadas e criação distribuída inaugura um
     // formato de progressão novo. O save anterior permanece preservado.
     const SAVE_KEY = configuredSaveKey || 'aethra_save_v71_disciplines';
-    const CURRENT_SCHEMA_VERSION = 75;
+    const CURRENT_SCHEMA_VERSION = 76;
     const AUTO_SAVE_DELAY = 120;
 
     let initialized = false;
@@ -112,6 +112,16 @@
             if (!Array.isArray(migrated.quests.rewardClaims)) migrated.quests.rewardClaims = [];
         }
 
+        // v75 → v76: introduz a mentora de ofícios e benefícios permanentes.
+        // A lista de NPCs é completada pelo EntityManager de forma idempotente;
+        // aqui normalizamos apenas os dados persistentes do herói.
+        if (fromVersion < 76) {
+            migrated.hero = isObject(migrated.hero) ? migrated.hero : {};
+            if (!isObject(migrated.hero.professionPerks)) migrated.hero.professionPerks = {};
+            if (!isObject(migrated.hero.introPrepared)) migrated.hero.introPrepared = {};
+            if (!isObject(migrated.hero.introProvisioned)) migrated.hero.introProvisioned = {};
+        }
+
         migrated.meta.schemaVersion = CURRENT_SCHEMA_VERSION;
         return { state: migrated, fromVersion, toVersion: CURRENT_SCHEMA_VERSION };
     }
@@ -185,6 +195,10 @@
     Aethra.SaveManager = {
         key: SAVE_KEY,
         initialized: false,
+
+        migrateForTest(saved) {
+            return migrateSave(saved);
+        },
 
         /**
          * Registra como uma fatia do estado deve ser persistida.

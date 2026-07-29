@@ -141,9 +141,10 @@ check(
     "QuestSystem deve migrar estado, normalizar alvos e conceder recompensas"
 );
 check(
-    /CURRENT_SCHEMA_VERSION\s*=\s*75/.test(saveManagerSource)
-        && /quests\.contractVersion\s*=\s*3/.test(saveManagerSource),
-    "Save v75 deve migrar o contrato persistido de missões"
+    /CURRENT_SCHEMA_VERSION\s*=\s*76/.test(saveManagerSource)
+        && /quests\.contractVersion\s*=\s*3/.test(saveManagerSource)
+        && /hero\.professionPerks/.test(saveManagerSource),
+    "Save v76 deve migrar missões e benefícios permanentes de ofício"
 );
 
 const authorityGatewaySource = read("js/infrastructure/AuthorityGateway.js");

@@ -92,10 +92,38 @@
         }
     });
 
+    const INTRO_PERKS = Object.freeze({
+        mining: {
+            id: "keen_vein",
+            name: "Olhar de Veio",
+            description: "+5% de rendimento ao minerar.",
+            modifiers: { yieldPercent: 5 }
+        },
+        skinning: {
+            id: "clean_cut",
+            name: "Corte Limpo",
+            description: "+5% de rendimento ao extrair couro.",
+            modifiers: { yieldPercent: 5 }
+        },
+        herbalism: {
+            id: "botanical_instinct",
+            name: "Instinto Botânico",
+            description: "+8% de chance de encontrar uma erva extra.",
+            modifiers: { extraResourceChance: 0.08 }
+        },
+        blacksmithing: {
+            id: "steady_hammer",
+            name: "Martelo Firme",
+            description: "+3 de qualidade em itens produzidos na forja.",
+            modifiers: { craftQuality: 3 }
+        }
+    });
+
     Aethra.ProfessionSystem = {
         initialized: false,
         professions: clone(DEFINITIONS),
         introPaths: clone(INTRO_PATHS),
+        introPerks: clone(INTRO_PERKS),
 
         init() {
             this.ensureState();
@@ -119,6 +147,10 @@
                 if (!String(id || "").startsWith("intro_profession_")) return;
                 this.activateIntroPath(String(id).replace("intro_profession_", ""));
             });
+            Aethra.EventBus.on("quest:finished", ({ id } = {}) => {
+                if (!String(id || "").startsWith("intro_profession_")) return;
+                this.unlockIntroPerk(String(id).replace("intro_profession_", ""));
+            });
         },
 
         getXPRequired(level) {
@@ -128,6 +160,15 @@
         ensureState(forceReset = false) {
             Aethra.DisciplineSystem?.ensureState?.(forceReset);
             const hero = Aethra.GameState.hero || (Aethra.GameState.hero = {});
+            if (forceReset || !hero.professionPerks || typeof hero.professionPerks !== "object" || Array.isArray(hero.professionPerks)) {
+                hero.professionPerks = {};
+            }
+            Object.keys(INTRO_PERKS).forEach((professionId) => {
+                if (!Array.isArray(hero.professionPerks[professionId])) {
+                    hero.professionPerks[professionId] = [];
+                }
+                hero.professionPerks[professionId] = [...new Set(hero.professionPerks[professionId].map(String))];
+            });
             const legacy = Aethra.GameState.professions && typeof Aethra.GameState.professions === "object"
                 ? Aethra.GameState.professions
                 : {};
@@ -322,7 +363,63 @@
 
         getYieldBonus(professionId) {
             const level = this.getState(professionId)?.level || 1;
-            return Aethra.XPSystem?.getDiminishingSkillBonus?.(level, { scale: 18, interval: 18 }) || 0;
+            const progressionBonus = Aethra.XPSystem?.getDiminishingSkillBonus?.(level, { scale: 18, interval: 18 }) || 0;
+            return progressionBonus + number(this.getPerkModifiers(professionId).yieldPercent, 0);
+        },
+
+        getIntroPerk(professionId) {
+            return INTRO_PERKS[professionId] ? clone(INTRO_PERKS[professionId]) : null;
+        },
+
+        hasPerk(professionId, perkId) {
+            this.ensureState();
+            return Aethra.GameState.hero.professionPerks?.[professionId]?.includes(String(perkId)) === true;
+        },
+
+        getUnlockedPerks(professionId) {
+            this.ensureState();
+            const ids = Aethra.GameState.hero.professionPerks?.[professionId] || [];
+            return ids.map((perkId) => {
+                const introPerk = INTRO_PERKS[professionId];
+                return introPerk?.id === perkId ? clone(introPerk) : { id: perkId, name: perkId, description: "", modifiers: {} };
+            });
+        },
+
+        getPerkModifiers(professionId) {
+            return this.getUnlockedPerks(professionId).reduce((total, perk) => {
+                Object.entries(perk.modifiers || {}).forEach(([key, value]) => {
+                    total[key] = number(total[key], 0) + number(value, 0);
+                });
+                return total;
+            }, {});
+        },
+
+        unlockPerk(professionId, perkId, options = {}) {
+            this.ensureState();
+            const perk = INTRO_PERKS[professionId];
+            if (!perk || perk.id !== perkId || this.hasPerk(professionId, perkId)) return false;
+            Aethra.GameState.hero.professionPerks[professionId].push(perkId);
+            const payload = { professionId, perk: clone(perk), source: options.source || "profession-progression" };
+            if (options.emit !== false) Aethra.EventBus.emit("profession:perk-unlocked", payload);
+            if (options.save !== false) Aethra.SaveManager?.save?.("profession-perk-unlocked");
+            return clone(payload);
+        },
+
+        unlockIntroPerk(professionId, options = {}) {
+            const perk = INTRO_PERKS[professionId];
+            return perk ? this.unlockPerk(professionId, perk.id, { source: "intro-profession-quest", ...options }) : false;
+        },
+
+        reconcileIntroPerks() {
+            this.ensureState();
+            const completedIds = new Set((Aethra.GameState.quests?.completed || []).map((quest) => quest?.id));
+            const unlocked = [];
+            Object.keys(INTRO_PERKS).forEach((professionId) => {
+                if (!completedIds.has(`intro_profession_${professionId}`)) return;
+                const result = this.unlockIntroPerk(professionId, { emit: false, save: false });
+                if (result) unlocked.push(result);
+            });
+            return unlocked;
         },
 
         getIntroQuestDefinition(professionId) {

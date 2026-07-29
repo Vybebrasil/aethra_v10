@@ -1380,6 +1380,8 @@ summary:focus-visible,
 
 .city-hub__grid {
     grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    grid-auto-rows: minmax(216px, 1fr);
+    align-content: start;
     gap: 10px !important;
 }
 
@@ -1394,6 +1396,99 @@ summary:focus-visible,
 .city-service-card:hover {
     border-color: var(--hud-border-strong) !important;
     transform: translateY(-2px);
+}
+
+.city-service-card--mentor {
+    position: relative;
+    overflow: hidden;
+}
+
+.city-service-card--mentor.is-quest-target {
+    border-color: #e5bc63 !important;
+    box-shadow: 0 0 0 1px rgba(229, 188, 99, 0.24), 0 0 24px rgba(229, 188, 99, 0.12);
+    animation: mentorQuestPulse 1.8s ease-in-out infinite;
+}
+
+.city-service-card--mentor.is-quest-target::after {
+    content: "MISSÃO";
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 2;
+    padding: 3px 7px;
+    border: 1px solid #e5bc63;
+    border-radius: 999px;
+    color: #17231e;
+    background: #e5bc63;
+    font-size: 8px;
+    font-weight: 950;
+    letter-spacing: .09em;
+}
+
+.city-service-card--mentor.is-perk-unlocked {
+    border-color: rgba(80, 209, 143, 0.6) !important;
+}
+
+.profession-mentor-window {
+    width: min(680px, calc(100vw - 28px));
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: calc(100dvh - var(--hud-topbar) - 20px);
+    resize: none !important;
+    overflow: auto;
+    border: 1px solid rgba(229, 188, 99, 0.48);
+    border-radius: 14px;
+    color: var(--hud-text);
+    background: linear-gradient(145deg, #0b1d1e, #050d10 72%);
+    box-shadow: 0 28px 90px rgba(0, 0, 0, 0.72);
+}
+
+body #modal-layer #profession-mentor-view.game-window.profession-mentor-window {
+    width: min(680px, calc(100vw - 28px)) !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: calc(100dvh - var(--hud-topbar) - 20px) !important;
+    resize: none !important;
+}
+
+.profession-mentor-window__shell { display: grid; gap: 12px; padding: 14px; }
+.profession-mentor-window__shell > header {
+    display: grid; grid-template-columns: 82px minmax(0, 1fr) 34px; gap: 12px; align-items: center;
+    padding-bottom: 12px; border-bottom: 1px solid var(--hud-border);
+}
+.profession-mentor-window__shell > header img { width: 76px; height: 76px; object-fit: contain; image-rendering: pixelated; }
+.profession-mentor-window__shell small { color: var(--hud-gold); font-size: 8px; font-weight: 900; letter-spacing: .1em; }
+.profession-mentor-window__shell h2,
+.profession-mentor-window__shell h3,
+.profession-mentor-window__shell p { margin: 0; }
+.profession-mentor-window__shell h2 { margin: 2px 0; color: #f0d99d; font: 900 22px "Cinzel", serif; }
+.profession-mentor-window__shell p { color: var(--hud-text-soft); font-size: 10px; line-height: 1.45; }
+.profession-mentor-window__shell > header > button {
+    width: 34px; height: 34px; border: 1px solid var(--hud-border); border-radius: 8px;
+    color: var(--hud-text-soft); background: #0a1719; font-size: 20px;
+}
+.profession-mentor-window__route {
+    display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 10px; align-items: center;
+    padding: 12px; border: 1px solid rgba(229, 188, 99, 0.3); border-radius: 10px; background: rgba(229, 188, 99, 0.06);
+}
+.profession-mentor-window__route > span { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 9px; color: #e7c568; background: #132625; font-size: 21px; }
+.profession-mentor-window__route h3 { margin: 2px 0; color: #eef4f1; font: 800 15px "Cinzel", serif; }
+.profession-mentor-window__route > b { padding: 4px 7px; border-radius: 999px; color: #7ce5ac; background: rgba(60, 193, 121, 0.12); font-size: 8px; letter-spacing: .07em; }
+.profession-mentor-window__steps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.profession-mentor-window__steps article { display: grid; gap: 4px; padding: 12px; border: 1px solid var(--hud-border); border-radius: 9px; background: rgba(5, 17, 19, 0.72); }
+.profession-mentor-window__steps article.is-unlocked { border-color: rgba(80, 209, 143, 0.48); }
+.profession-mentor-window__steps strong { color: #e8efeb; font-size: 12px; }
+.profession-mentor-window__shell > footer { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding-top: 2px; }
+.profession-mentor-window__shell > footer p { max-width: 420px; }
+.profession-mentor-window__shell > footer button { min-height: 36px; padding: 7px 14px; border: 1px solid #50b986; border-radius: 8px; color: #e8fff3; background: linear-gradient(180deg, #23684f, #103c30); font-size: 10px; font-weight: 900; }
+
+@media (max-width: 700px) {
+    .profession-mentor-window__steps { grid-template-columns: 1fr; }
+    .profession-mentor-window__shell > footer { align-items: stretch; flex-direction: column; }
+}
+
+@keyframes mentorQuestPulse {
+    50% { box-shadow: 0 0 0 2px rgba(229, 188, 99, 0.34), 0 0 30px rgba(229, 188, 99, 0.18); }
 }
 
 .city-service-card__portrait,
@@ -1577,6 +1672,13 @@ summary:focus-visible,
 
 body.aethra-battle-mode #city-view {
     inset: var(--hud-topbar) 0 var(--hud-actionbar) 0 !important;
+}
+
+/* A Cidade não usa ActionBar: devolve ao Hub a altura que o palco de Hunt
+   reserva para os comandos. Sem esta autoridade tardia, os cards comprimiam
+   os botões em monitores de 720px. */
+body.aethra-battle-mode.aethra-primary-view-city #city-view {
+    inset: var(--hud-topbar) 0 0 0 !important;
 }
 
 #battle-actionbar-layer,
@@ -1966,4 +2068,15 @@ html[data-hud-viewport="ultrawide"] {
         transition: none !important;
         animation: none !important;
     }
+}
+
+/* Autoridade final do viewport da Cidade. Mantida no fim da folha para não
+   voltar a herdar o recuo inferior reservado exclusivamente à ActionBar. */
+html body.aethra-fluid-ui.aethra-battle-mode.aethra-primary-view-city #world-layer > #city-view.world-scene,
+html body.aethra-fluid-ui.aethra-battle-mode.aethra-primary-view-city #game-container #city-view.world-scene {
+    bottom: 0 !important;
+}
+
+#city-view.world-scene.is-primary-city {
+    bottom: 0 !important;
 }
