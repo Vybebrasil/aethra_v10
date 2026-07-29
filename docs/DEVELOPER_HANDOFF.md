@@ -3,7 +3,7 @@
 Atualizado em: 2026-07-29
 Branch de continuidade: `main`  
 Baseline recebida antes deste ciclo: `f356719`
-Checkpoint imediatamente anterior: `6a1ccd6`
+Checkpoint imediatamente anterior: `42126b9`
 
 Este documento é o ponto de entrada para continuar a versão atual. Leia-o antes
 de alterar HUD, automação de hunt, progressão, profissões, coleta, crafting ou
@@ -38,6 +38,13 @@ paralelos que leem e escrevem o mesmo estado.
 - Concluir a rota libera um perk permanente e idempotente: `Olhar de Veio`
   (+5% minério), `Corte Limpo` (+5% couro), `Instinto Botânico` (+8% chance de
   erva extra) ou `Martelo Firme` (+3 qualidade na Forjaria).
+- Mineração, Esfolamento, Herbalismo, Forjaria e Couraria agora possuem duas
+  especializações de longo prazo. A escolha permanente abre no nível 10, ativa
+  novos nós nos níveis 30/60 e continua gerando pulsos de maestria a cada 25
+  níveis depois do 60, com retorno marginal decrescente e sem nível máximo.
+- Os ramos alteram gameplay real: rendimento/qualidade da coleta, chance de
+  erva extra, qualidade de fabricação ou XP de craft. Skills, oficina e Mestra
+  Ilyra abrem a mesma árvore funcional; a UI apenas envia o comando ao sistema.
 - Missões usam contrato único (`title`, `objectives[].id/type/target/label/required`
   e `reward`). A criação de personagem não pode redefinir missões do `GameData`.
 - A jornada rastreada aparece na cidade e na Hunt, mostra objetivo, progresso e
@@ -68,7 +75,7 @@ paralelos que leem e escrevem o mesmo estado.
 |---|---|---|---|---|
 | XP e nível de skills | `js/progression/XPSystem.js` | `GameState.hero.disciplines` | HUD, profissões, crafting | Somar XP diretamente na HUD ou em sistemas de coleta |
 | Definições de disciplinas | `js/progression/DisciplineSystem.js` | catálogo + projeção em `hero.disciplines` | XP, HUD, combate | Criar outro catálogo de skills com níveis próprios |
-| Ações, ferramentas, políticas e perks de profissão | `js/progression/ProfessionSystem.js` | `hero.disciplines` + `hero.professionPerks` | Hunt, exploração, oficina | Tratar `GameState.professions` como segunda autoridade ou aplicar perk na UI |
+| Ações, ferramentas, políticas, perks e especializações de profissão | `js/progression/ProfessionSystem.js` | `hero.disciplines` + `hero.professionPerks` | Hunt, exploração, oficina e árvore visual | Tratar `GameState.professions` como segunda autoridade ou aplicar perk na UI |
 | **Dados declarativos de receitas** | **`js/data/recipes/RecipeCatalog.js`** | **catálogo imutável em memória** | **CraftingSystem** | **Adicionar lógica de gameplay ou estado de gameplay aqui** |
 | Fabricação, descoberta e estado de receitas | `js/items/CraftingSystem.js` | receitas ativas + `GameState.crafting.discovered` | `ProfessionWorkshopUI` | Consumir material ou gerar item diretamente na UI |
 | Itens e inventário | `ItemSystem` e `BagSystem` | `GameState.hero.bag` | loot, crafting, HUD | Usar `bag.push`, objetos crus ou IDs inventados fora do catálogo |
@@ -128,7 +135,8 @@ materiais, criação de resultados, qualidade e XP de fabricação.
 - Profissões: `profession:policy-changed`, `profession:xpChanged`,
   `profession:xpRejected`, `profession:rankUp`, `profession:updated`,
   `profession:intro-prepared`, `profession:intro-started` e
-  `profession:perk-unlocked`.
+  `profession:perk-unlocked`, `profession:specialization-chosen` e
+  `profession:specialization-rejected`.
 - Crafting: `crafting:ready`, `crafting:completed`, `crafting:rejected`,
   `crafting:recipe-discovered` (ao descobrir nova receita por nível),
   `crafting:catalog-loaded` (ao carregar o RecipeCatalog).
@@ -168,6 +176,11 @@ Personagens existentes recebem Ilyra e retomam a ponte de tutorial quando
 necessário, sem repetir uma rota já concluída; personagens novos ou resetados
 seguem o fluxo completo.
 
+As escolhas de especialização usam IDs `specialization_*` dentro de
+`hero.professionPerks`; por isso permanecem no schema 76 e não criam uma segunda
+estrutura persistida. O contrato detalhado está em
+`docs/PROFESSION_SPECIALIZATIONS.md`.
+
 ## 7. Como rodar e verificar
 
 Na raiz do projeto:
@@ -191,8 +204,8 @@ node scripts/run-integration.mjs --timeout 90 --viewport 1920x1080
 
 Resultado do checkpoint atual antes do commit:
 
-- quality gate: 619/619 verificações;
-- integração headless: 144/144 verificações em 1280x720 e 1920x1080;
+- quality gate: 631/631 verificações;
+- integração headless: 148/148 verificações em 1280x720 e 1920x1080;
 - as quatro rotas introdutórias foram simuladas até a conclusão; a suíte também
   prova o provisionamento de Forjaria e a fila determinística dos três ofícios
   de coleta;
@@ -217,12 +230,14 @@ save migrado. Atualize estes números se a suíte crescer.
 5. Levar inventário, moeda, crafting e RNG valioso para backend autoritativo,
    conforme `docs/BACKEND_AUTHORITY_CONTRACT.md`.
 6. Ampliar catálogo de receitas com Tier 3 (Mestre) e materiais de dungeon.
-7. Criar árvores de especialização de longo prazo para cada profissão usando
-   `hero.professionPerks`, sem introduzir limite máximo de nível.
+7. ~~Criar árvores de especialização de longo prazo para cada profissão usando
+   `hero.professionPerks`, sem introduzir limite máximo de nível.~~ ✅ **Concluído
+   para Mineração, Esfolamento, Herbalismo, Forjaria e Couraria**
 
-Limitações deliberadas: o conteúdo de fabricação ainda cobre somente o primeiro
-ciclo de ferro/couro; reparo não foi implementado; não há árvore completa de
-especialização; o cliente local ainda não é autoridade segura para economia
+Limitações deliberadas: o conteúdo de fabricação ainda cobre somente o
+primeiro ciclo de ferro/couro; reparo não foi implementado; profissões de mundo
+e utilidade ainda não possuem árvores próprias; troca de especialização não foi
+liberada; o cliente local ainda não é autoridade segura para economia
 competitiva.
 
 ## 9. Checklist para não duplicar ou quebrar sistemas

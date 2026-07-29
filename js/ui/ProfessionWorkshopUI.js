@@ -63,7 +63,7 @@
         const level   = Aethra.ProfessionSystem?.getState?.(recipe.professionId)?.level || 1;
         const mastery = Aethra.XPSystem?.getDiminishingSkillBonus?.(level, { scale: 14, interval: 14 }) || 0;
         const challenge = Math.min(18, Math.max(-12, (level - recipe.requiredLevel) * 0.7));
-        const perkBonus = Number(Aethra.ProfessionSystem?.getPerkModifiers?.(recipe.professionId)?.craftQuality || 0);
+        const perkBonus = Number(Aethra.ProfessionSystem?.getProfessionModifiers?.(recipe.professionId)?.craftQuality || 0);
         const center  = Math.min(100, Math.max(1, Math.round(42 + mastery + challenge + Number(technique.qualityDelta || 0) + perkBonus)));
         return `${Math.max(1, center - 8)}–${Math.min(100, center + 8)}`;
     }
@@ -86,6 +86,8 @@
         const output     = recipe.outputs.map((e) => `${e.quantity * ui.quantity}× ${itemName(e.itemId)}`).join(", ");
         const isNew      = ui.newlyDiscovered.includes(recipe.id);
         const isGuided   = ui.guidedRecipeId === recipe.id;
+        const xpBonus    = Number(Aethra.ProfessionSystem?.getProfessionModifiers?.(recipe.professionId)?.craftXpPercent || 0);
+        const earnedXp   = Math.max(1, Math.round(recipe.xp * ui.quantity * (1 + (xpBonus / 100))));
 
         return `<article class="workshop-recipe ${validation.allowed ? "is-ready" : "is-blocked"}${isNew ? " is-new" : ""}${isGuided ? " is-guided" : ""}">
             <header>
@@ -95,7 +97,7 @@
                     <strong>${esc(recipe.name)}${isNew ? " <mark class=\"badge-new\">NOVO</mark>" : ""}${isGuided ? " <mark class=\"badge-guided\">MISSÃO</mark>" : ""}</strong>
                     <p>${esc(recipe.description)}</p>
                 </div>
-                <em>+${fmt(recipe.xp * ui.quantity)} XP</em>
+                <em>+${fmt(earnedXp)} XP${xpBonus > 0 ? ` <small>(+${xpBonus.toFixed(1)}%)</small>` : ""}</em>
             </header>
             <div class="workshop-recipe__flow">
                 <div><small>MATERIAIS</small>${requirements.inputs.map((input) => {
@@ -191,6 +193,10 @@
                 <span><small>PROGRESSO</small><strong>${fmt(skill.xpCurrent)}/${fmt(skill.xpNext)} XP</strong></span>
                 <span><small>MODO DE XP</small><strong>${skill.trainingMode === "locked" ? "Travado" : "Treinando"}</strong></span>
             </section>
+
+            <button type="button" class="profession-workshop__specialization" data-open-profession-specialization="${esc(ui.professionId)}">
+                ✦ Ver especialização e maestria infinita
+            </button>
 
             <nav class="profession-workshop__tabs">
                 ${Object.entries(professionMeta).map(([id, entry]) =>

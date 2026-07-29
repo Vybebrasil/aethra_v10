@@ -222,7 +222,7 @@
             const mastery   = Aethra.XPSystem?.getDiminishingSkillBonus?.(skillLevel, { scale: 14, interval: 14 }) || 0;
             const challenge = clamp((skillLevel - requiredLevel) * 0.7, -12, 18);
             const variance  = (clamp(this.randomSource(), 0, 1) * 16) - 8;
-            const perkBonus = number(Aethra.ProfessionSystem?.getPerkModifiers?.(professionId)?.craftQuality, 0);
+            const perkBonus = number(Aethra.ProfessionSystem?.getProfessionModifiers?.(professionId)?.craftQuality, 0);
             return clamp(Math.round(42 + mastery + challenge + technique.qualityDelta + perkBonus + variance), 1, 100);
         },
 
@@ -273,7 +273,10 @@
             const added = generated.filter((item) => Aethra.BagSystem?.addItem?.(item, `crafting:${recipeId}`));
             if (added.length !== generated.length) return { accepted: false, reason: "transaction-add-failed", recipeId };
 
-            const xp = Aethra.ProfessionSystem?.grantActionXP?.(recipe.professionId, recipe.xp * batches, recipe.action, {
+            const professionModifiers = Aethra.ProfessionSystem?.getProfessionModifiers?.(recipe.professionId) || {};
+            const baseXp = recipe.xp * batches;
+            const professionXp = Math.max(1, Math.round(baseXp * (1 + (number(professionModifiers.craftXpPercent, 0) / 100))));
+            const xp = Aethra.ProfessionSystem?.grantActionXP?.(recipe.professionId, professionXp, recipe.action, {
                 source: `crafting:${recipeId}`, difficulty: requiredLevel
             });
 
@@ -285,7 +288,7 @@
 
             const payload = {
                 accepted: true, recipeId, recipe: Object.assign({}, recipe), technique: clone(technique),
-                batches, inputs: clone(inputs), outputs: clone(added), xp, commandId,
+                batches, inputs: clone(inputs), outputs: clone(added), xp, baseXp, professionXp, commandId,
                 completedAt: new Date().toISOString()
             };
             Aethra.EventBus.emit("crafting:completed", payload);

@@ -1096,6 +1096,7 @@
             const profession = Aethra.ProfessionSystem?.professions?.[professionId] || null;
             const perk = Aethra.ProfessionSystem?.getIntroPerk?.(professionId) || null;
             const perkUnlocked = Boolean(perk && Aethra.ProfessionSystem?.hasPerk?.(professionId, perk.id));
+            const specialization = Aethra.ProfessionSystem?.getSpecializationState?.(professionId) || null;
             const routeQuest = professionId
                 ? Aethra.QuestSystem?.getQuest?.(`intro_profession_${professionId}`)
                 : null;
@@ -1118,10 +1119,14 @@
                     <div class="profession-mentor-window__steps">
                         <article><small>PRIMEIRA LIÇÃO</small><strong>${escapeHTML(pendingObjective?.label || path?.objective || "Conclua seus primeiros passos em Aethra")}</strong><p>${pendingObjective ? `${formatNumber(pendingObjective.progress)}/${formatNumber(pendingObjective.required)} concluído` : routeQuest?.status === "completed" ? "Lição concluída" : "Ilyra liberará esta etapa no momento certo."}</p></article>
                         <article class="${perkUnlocked ? "is-unlocked" : ""}"><small>BENEFÍCIO PERMANENTE</small><strong>${escapeHTML(perk?.name || "Benefício da rota")}</strong><p>${escapeHTML(perk?.description || "Conclua a jornada introdutória para desbloquear.")}</p></article>
+                        ${specialization ? `<article class="${specialization.branch ? "is-unlocked" : ""}"><small>PROGRESSÃO DE LONGO PRAZO</small><strong>${escapeHTML(specialization.branch?.name || `Especialização no nível ${specialization.unlockLevel}`)}</strong><p>${specialization.branch ? `Próximo pulso de maestria no nível ${specialization.nextMasteryLevel}.` : `Você está no nível ${specialization.level}. Conheça os dois caminhos antes de decidir.`}</p></article>` : ""}
                     </div>
                     <footer>
                         <p>${escapeHTML(guidance?.detail || "Continue explorando Aethra e volte quando precisar de direção.")}</p>
-                        ${guidance ? `<button type="button" data-mentor-follow-guidance>${escapeHTML(guidance.actionLabel)}</button>` : ""}
+                        <div class="profession-mentor-window__actions">
+                            ${specialization ? `<button type="button" data-open-profession-specialization="${escapeHTML(professionId)}">Ver árvore do ofício</button>` : ""}
+                            ${guidance ? `<button type="button" data-mentor-follow-guidance>${escapeHTML(guidance.actionLabel)}</button>` : ""}
+                        </div>
                     </footer>
                 </div>
             `;

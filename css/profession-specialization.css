@@ -1,0 +1,141 @@
+/* Árvore de especialização de profissões. Gameplay permanece no ProfessionSystem. */
+.profession-specialization {
+    width: min(980px, calc(100vw - 32px));
+    max-height: min(850px, calc(100dvh - 86px));
+    overflow: hidden;
+    border: 1px solid #4b765f;
+    border-radius: 14px;
+    color: #dce8e4;
+    background: #06110f;
+    box-shadow: 0 24px 80px #000c, inset 0 1px 0 #ffffff0d;
+}
+
+.profession-specialization__shell { display: flex; flex-direction: column; max-height: inherit; }
+.profession-specialization__header {
+    display: grid; grid-template-columns: 54px minmax(0, 1fr) 36px; gap: 12px; align-items: center;
+    padding: 14px 16px; border-bottom: 1px solid #2a4a3d;
+    background: linear-gradient(105deg, #1d493329, transparent 64%);
+}
+.profession-specialization__header > span {
+    display: grid; width: 52px; height: 52px; place-items: center; border: 1px solid #4f886b;
+    border-radius: 12px; color: #70e2a6; background: #0b2119; font-size: 25px;
+}
+.profession-specialization__header small,
+.profession-specialization__effects > small,
+.profession-specialization__mastery small,
+.profession-specialization__confirm small { color: #61d99a; font: 900 8px "Outfit", sans-serif; letter-spacing: .13em; }
+.profession-specialization__header h2 { margin: 1px 0; color: #f0dcaa; font: 900 23px Georgia, serif; }
+.profession-specialization__header p { margin: 0; color: #87a099; font-size: 10px; }
+.profession-specialization__header button {
+    width: 34px; height: 34px; border: 1px solid #42665a; border-radius: 9px;
+    color: #bdd0ca; background: #0a1a16; font-size: 20px; cursor: pointer;
+}
+
+.profession-specialization__tabs {
+    display: flex; gap: 6px; padding: 9px 14px; overflow-x: auto; border-bottom: 1px solid #1d342c;
+}
+.profession-specialization__tabs button {
+    flex: 0 0 auto; min-height: 31px; padding: 0 11px; border: 1px solid #304e43; border-radius: 7px;
+    color: #849e96; background: #081612; font: 800 9px "Outfit", sans-serif; cursor: pointer;
+}
+.profession-specialization__tabs button.is-active { border-color: #58b985; color: #7ce7ae; background: #123324; }
+
+.profession-specialization__summary {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; padding: 9px 14px 7px;
+}
+.profession-specialization__summary > span,
+.profession-specialization__effects div > span {
+    display: grid; gap: 2px; padding: 8px 10px; border: 1px solid #28483b; border-radius: 8px; background: #091814;
+}
+.profession-specialization__summary small,
+.profession-specialization__effects span small { color: #718d84; font: 800 8px "Outfit", sans-serif; letter-spacing: .06em; }
+.profession-specialization__summary strong { color: #ead397; font-size: 12px; }
+
+.profession-specialization__effects { padding: 4px 14px 9px; }
+.profession-specialization__effects > small { display: block; margin-bottom: 5px; }
+.profession-specialization__effects > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.profession-specialization__effects div > span { min-width: 130px; padding: 6px 9px; }
+.profession-specialization__effects div > span strong { color: #75dfaa; font-size: 11px; }
+.profession-specialization__effects div > p { margin: 0; color: #718b82; font-size: 10px; }
+
+.profession-specialization__notice { margin: 0 14px 8px; padding: 8px 10px; border: 1px solid #47685d; border-radius: 7px; font-size: 10px; }
+.profession-specialization__notice.is-success { border-color: #43c780; color: #83e8b2; background: #113c2866; }
+.profession-specialization__notice.is-error { border-color: #c96959; color: #eca18f; background: #421d1766; }
+
+.profession-specialization__confirm {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center;
+    margin: 0 14px 9px; padding: 9px 11px; border: 1px solid #d8ab4d; border-radius: 9px;
+    background: #33240c99;
+}
+.profession-specialization__confirm div { display: grid; gap: 1px; }
+.profession-specialization__confirm strong { color: #f1d68d; font-size: 12px; }
+.profession-specialization__confirm p { margin: 0; color: #b7a67b; font-size: 9px; }
+.profession-specialization__confirm button,
+.profession-specialization__branch > button {
+    min-height: 31px; padding: 0 11px; border: 1px solid #5c806f; border-radius: 7px;
+    color: #b7d7c8; background: #0b2119; font: 900 8px "Outfit", sans-serif; cursor: pointer;
+}
+.profession-specialization__confirm button:last-child { border-color: #d8ab4d; color: #f0d288; background: #3a290e; }
+
+.profession-specialization__branches {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;
+    min-height: 0; overflow: auto; padding: 0 14px 12px;
+}
+.profession-specialization__branch {
+    display: grid; grid-template-rows: auto 1fr auto; gap: 9px; padding: 12px;
+    border: 1px solid #2d4c40; border-radius: 11px; background: linear-gradient(145deg, #0b1c17, #06100d);
+}
+.profession-specialization__branch.is-chosen { border-color: #5fc98e; box-shadow: inset 0 0 22px #39b87510; }
+.profession-specialization__branch.is-excluded { opacity: .48; filter: saturate(.55); }
+.profession-specialization__branch header { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 9px; align-items: center; }
+.profession-specialization__branch header > span {
+    display: grid; width: 38px; height: 38px; place-items: center; border: 1px solid #47725f;
+    border-radius: 9px; color: #73dda7; background: #10291f; font-size: 19px;
+}
+.profession-specialization__branch header small { color: #66877b; font: 900 7px "Outfit", sans-serif; letter-spacing: .11em; }
+.profession-specialization__branch h3 { margin: 1px 0; color: #e9d69e; font: 900 16px Georgia, serif; }
+.profession-specialization__branch header p { margin: 0; color: #7f9990; font-size: 9px; }
+.profession-specialization__branch ol { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.profession-specialization__branch li {
+    display: grid; grid-template-columns: 25px minmax(0, 1fr); gap: 8px; padding: 8px;
+    border: 1px solid #263f36; border-radius: 8px; background: #07130f;
+}
+.profession-specialization__branch li > span { color: #526f64; text-align: center; font-size: 13px; }
+.profession-specialization__branch li small { color: #617b72; font: 900 7px "Outfit", sans-serif; }
+.profession-specialization__branch li strong { display: block; color: #aebfba; font-size: 10px; }
+.profession-specialization__branch li p { margin: 1px 0 0; color: #70867e; font-size: 8px; }
+.profession-specialization__branch li.is-ready { border-color: #7d693b; }
+.profession-specialization__branch li.is-active { border-color: #448c68; background: #0c281d; }
+.profession-specialization__branch li.is-active > span,
+.profession-specialization__branch li.is-active strong { color: #76e1aa; }
+.profession-specialization__branch > button:disabled { border-color: #30463d; color: #61746d; background: #09120f; cursor: not-allowed; }
+
+.profession-specialization__mastery {
+    display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 10px; align-items: center;
+    margin: 0 14px 12px; padding: 9px 11px; border: 1px solid #705e35; border-radius: 9px;
+    background: linear-gradient(90deg, #30250d73, #0a1712);
+}
+.profession-specialization__mastery > span { color: #e5bd62; font: 900 28px Georgia, serif; text-align: center; }
+.profession-specialization__mastery strong { display: block; color: #e8d39b; font-size: 11px; }
+.profession-specialization__mastery p { margin: 1px 0 0; color: #8e9d91; font-size: 9px; }
+
+.profession-workshop__specialization {
+    margin: 0 14px 9px; min-height: 31px; border: 1px solid #4d8068; border-radius: 8px;
+    color: #78dfaa; background: #0c261c; font: 900 9px "Outfit", sans-serif; cursor: pointer;
+}
+.player-skill-card__btn.btn--specialization { border-color: #4c8b6b; color: #78dfaa; background: #102c2080; }
+.player-skill-card-slim__actions { flex-wrap: wrap; justify-content: flex-end; max-width: 132px; }
+
+@media (max-width: 720px) {
+    .profession-specialization { width: calc(100vw - 12px); max-height: calc(100dvh - 68px); }
+    .profession-specialization__header { grid-template-columns: 42px minmax(0, 1fr) 32px; padding: 10px; }
+    .profession-specialization__header > span { width: 40px; height: 40px; }
+    .profession-specialization__header h2 { font-size: 18px; }
+    .profession-specialization__summary { grid-template-columns: 1fr; padding-inline: 10px; }
+    .profession-specialization__tabs,
+    .profession-specialization__effects,
+    .profession-specialization__branches { padding-inline: 10px; }
+    .profession-specialization__branches { grid-template-columns: 1fr; }
+    .profession-specialization__confirm { grid-template-columns: 1fr 1fr; margin-inline: 10px; }
+    .profession-specialization__confirm div { grid-column: 1 / -1; }
+}

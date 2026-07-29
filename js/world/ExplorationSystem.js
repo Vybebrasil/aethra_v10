@@ -745,14 +745,18 @@
         },
 
         generateRewards(event, context = {}) {
-            const createItem = (template, quantity = 1) => Aethra.ItemSystem?.generateItem?.(template.templateId, {
-                quantity,
-                source: `exploration:${event.id}`,
-                professionId: event.professionId,
-                huntId: Aethra.GameState.hunt?.huntId || null,
-                quality: 20,
-                potential: 20
-            });
+            const createItem = (template, quantity = 1) => {
+                const modifiers = Aethra.ProfessionSystem?.getProfessionModifiers?.(event.professionId) || {};
+                const resourceQuality = clamp(20 + Number(modifiers.resourceQuality || 0), 1, 100);
+                return Aethra.ItemSystem?.generateItem?.(template.templateId, {
+                    quantity,
+                    source: `exploration:${event.id}`,
+                    professionId: event.professionId,
+                    huntId: Aethra.GameState.hunt?.huntId || null,
+                    quality: resourceQuality,
+                    potential: resourceQuality
+                });
+            };
             const quantityMultiplier = Math.max(0, Number(Aethra.HuntSystem?.getModifier?.("resourceQuantity", 1) ?? 1));
             const goldMultiplier = Math.max(0, Number(Aethra.HuntSystem?.getModifier?.("gold", 1) ?? 1));
             const scaleQuantity = (value, professionId = null) => {
@@ -777,7 +781,7 @@
             }
 
             if (event.id === "herb") {
-                const perkChance = Math.max(0, Number(Aethra.ProfessionSystem?.getPerkModifiers?.("herbalism")?.extraResourceChance || 0));
+                const perkChance = Math.max(0, Number(Aethra.ProfessionSystem?.getProfessionModifiers?.("herbalism")?.extraResourceChance || 0));
                 const quantity = scaleQuantity(
                     1 + (this.randomSource() < 0.3 ? 1 : 0) + (this.randomSource() < perkChance ? 1 : 0),
                     "herbalism"
@@ -992,9 +996,11 @@
             const yieldMultiplier = 1 + (Math.max(0, Number(Aethra.ProfessionSystem?.getYieldBonus?.("skinning") || 0)) / 100);
             const scaledQuantity = Math.max(1, baseQuantity * quantityMultiplier * yieldMultiplier);
             const quantity = Math.max(1, Math.floor(scaledQuantity) + (this.randomSource() < scaledQuantity - Math.floor(scaledQuantity) ? 1 : 0));
+            const skinningModifiers = Aethra.ProfessionSystem?.getProfessionModifiers?.("skinning") || {};
+            const skinningQuality = clamp(20 + Number(skinningModifiers.resourceQuality || 0), 1, 100);
             const item = Aethra.ItemSystem?.generateItem?.("beast_hide", {
                 quantity, source: "exploration:skinning", professionId: "skinning",
-                huntId: Aethra.GameState.hunt?.huntId || null, quality: 20, potential: 20
+                huntId: Aethra.GameState.hunt?.huntId || null, quality: skinningQuality, potential: skinningQuality
             });
             if (!item) return;
             const stored = Aethra.BagSystem?.addItem?.(item, "exploration:skinning");

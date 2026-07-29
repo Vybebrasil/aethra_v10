@@ -1481,10 +1481,13 @@ body #modal-layer #profession-mentor-view.game-window.profession-mentor-window {
 .profession-mentor-window__shell > footer { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding-top: 2px; }
 .profession-mentor-window__shell > footer p { max-width: 420px; }
 .profession-mentor-window__shell > footer button { min-height: 36px; padding: 7px 14px; border: 1px solid #50b986; border-radius: 8px; color: #e8fff3; background: linear-gradient(180deg, #23684f, #103c30); font-size: 10px; font-weight: 900; }
+.profession-mentor-window__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
 
 @media (max-width: 700px) {
     .profession-mentor-window__steps { grid-template-columns: 1fr; }
     .profession-mentor-window__shell > footer { align-items: stretch; flex-direction: column; }
+    .profession-mentor-window__actions { justify-content: stretch; }
+    .profession-mentor-window__actions button { flex: 1 1 auto; }
 }
 
 @keyframes mentorQuestPulse {

@@ -707,6 +707,7 @@
             const isGathering = profession?.policy === true;
             const policyEnabled = isGathering && Aethra.ProfessionSystem?.getPolicy?.(entryId)?.enabled === true;
             const isCrafting = ["blacksmithing", "leatherworking"].includes(entryId);
+            const isSpecializable = Boolean(Aethra.ProfessionSystem?.getSpecializationTree?.(entryId));
             const trainingLocked = entry.trainingMode === "locked";
             const [icon, categoryLabel] = skillGroupLabel(entry.category);
 
@@ -761,6 +762,10 @@
                         ${!isMinimized && isCrafting ? `
                             <button type="button" class="player-skill-card__btn btn--workshop" data-open-profession-workshop="${esc(entryId)}">
                                 ⚒ Oficina
+                            </button>` : ""}
+                        ${!isMinimized && isSpecializable ? `
+                            <button type="button" class="player-skill-card__btn btn--specialization" data-open-profession-specialization="${esc(entryId)}">
+                                ✦ Árvore
                             </button>` : ""}
                     </div>
                 </article>`;

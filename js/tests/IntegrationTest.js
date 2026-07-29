@@ -55,6 +55,7 @@
         "CombatHudModernizer",
         "EncounterCombatHUD",
         "PlayerHudWorkspace",
+        "ProfessionSpecializationUI",
         "CharacterCreationUI",
         "GameLoader"
     ];
@@ -244,7 +245,7 @@
             const currentProfessionSave = Aethra.SaveManager?.migrateForTest?.({
                 meta: { schemaVersion: 76 },
                 hero: {
-                    professionPerks: { mining: ["keen_vein"] },
+                    professionPerks: { mining: ["keen_vein", "specialization_extractor"] },
                     introPrepared: { mining: true },
                     introProvisioned: {}
                 }
@@ -256,8 +257,9 @@
                         && legacyProfessionSave?.state?.meta?.schemaVersion === 76
                         && typeof legacyProfessionSave?.state?.hero?.professionPerks === "object"
                         && typeof legacyProfessionSave?.state?.hero?.introPrepared === "object"
-                        && currentProfessionSave?.state?.hero?.professionPerks?.mining?.[0] === "keen_vein",
-                    `legado v${legacyProfessionSave?.fromVersion || "?"}→v${legacyProfessionSave?.toVersion || "?"} · perk ${currentProfessionSave?.state?.hero?.professionPerks?.mining?.[0] || "ausente"}`
+                        && currentProfessionSave?.state?.hero?.professionPerks?.mining?.[0] === "keen_vein"
+                        && currentProfessionSave?.state?.hero?.professionPerks?.mining?.[1] === "specialization_extractor",
+                    `legado v${legacyProfessionSave?.fromVersion || "?"}→v${legacyProfessionSave?.toVersion || "?"} · ${currentProfessionSave?.state?.hero?.professionPerks?.mining?.length || 0} perks preservados`
                 )
             );
 
@@ -685,6 +687,73 @@
             );
             Aethra.GameState.hero.disciplines.sword = infiniteSwordBackup;
 
+            const specializationBackup = {
+                perks: JSON.parse(JSON.stringify(Aethra.GameState.hero.professionPerks || {})),
+                mining: JSON.parse(JSON.stringify(Aethra.GameState.hero.disciplines.mining || {}))
+            };
+            Aethra.GameState.hero.professionPerks.mining = [];
+            Aethra.GameState.hero.disciplines.mining.level = 9;
+            Aethra.GameState.hero.disciplines.mining.xpNext = Aethra.XPSystem.getSkillXPRequired(9);
+            const specializationLocked = Aethra.ProfessionSystem.canChooseSpecialization("mining", "extractor");
+            Aethra.GameState.hero.disciplines.mining.level = 10;
+            Aethra.GameState.hero.disciplines.mining.xpNext = Aethra.XPSystem.getSkillXPRequired(10);
+            const specializationChosen = Aethra.ProfessionSystem.chooseSpecialization("mining", "extractor", { source: "integration", save: false });
+            const specializationRejected = Aethra.ProfessionSystem.chooseSpecialization("mining", "prospector", { source: "integration", save: false });
+            Aethra.GameState.hero.disciplines.mining.level = 60;
+            const level60Yield = Number(Aethra.ProfessionSystem.getSpecializationModifiers("mining").yieldPercent || 0);
+            Aethra.GameState.hero.disciplines.mining.level = 85;
+            const level85Yield = Number(Aethra.ProfessionSystem.getSpecializationModifiers("mining").yieldPercent || 0);
+            Aethra.GameState.hero.disciplines.mining.level = 110;
+            const level110Yield = Number(Aethra.ProfessionSystem.getSpecializationModifiers("mining").yieldPercent || 0);
+            Aethra.GameState.hero.disciplines.mining.level = 135;
+            const level135Yield = Number(Aethra.ProfessionSystem.getSpecializationModifiers("mining").yieldPercent || 0);
+            checks.push(
+                createCheck(
+                    "Especialização exige nível 10, é exclusiva e segue sem teto",
+                    specializationLocked?.reason === "insufficient-level"
+                        && specializationChosen?.accepted === true
+                        && specializationRejected?.reason === "specialization-already-chosen"
+                        && level60Yield === 12
+                        && level85Yield > level60Yield
+                        && level110Yield > level85Yield
+                        && level135Yield > level110Yield
+                        && (level135Yield - level110Yield) < (level110Yield - level85Yield),
+                    `NV60 +${level60Yield.toFixed(2)}% · NV85 +${level85Yield.toFixed(2)}% · NV110 +${level110Yield.toFixed(2)}% · NV135 +${level135Yield.toFixed(2)}%`
+                )
+            );
+            Aethra.ProfessionSpecializationUI?.open?.("mining");
+            const specializationWindow = document.getElementById("profession-specialization-view");
+            const specializationUIWorks = Boolean(specializationWindow)
+                && specializationWindow.querySelectorAll(".profession-specialization__branch").length === 2
+                && specializationWindow.querySelectorAll(".profession-specialization__branch li").length === 6
+                && specializationWindow.textContent.includes("MAESTRIA INFINITA")
+                && specializationWindow.querySelector(".profession-specialization__branch.is-chosen");
+            checks.push(
+                createCheck(
+                    "Árvore de ofício mostra escolha, marcos e maestria infinita",
+                    specializationUIWorks,
+                    specializationUIWorks ? "2 caminhos · 6 marcos · escolha ativa" : "árvore incompleta"
+                )
+            );
+            Aethra.WindowManager?.closeWindow?.("profession-specialization-view", { source: "integration", silent: true });
+
+            Aethra.GameState.hero.professionPerks.mining = [];
+            Aethra.GameState.hero.disciplines.mining.level = 10;
+            Aethra.ProfessionSystem.chooseSpecialization("mining", "prospector", { source: "integration", save: false });
+            Aethra.GameState.hero.disciplines.mining.level = 60;
+            Aethra.ExplorationSystem.setRandomSource(() => 0.99);
+            const specializedOre = Aethra.ExplorationSystem.generateRewards({ id: "mining", professionId: "mining" }, {});
+            Aethra.ExplorationSystem.setRandomSource(Math.random);
+            checks.push(
+                createCheck(
+                    "Especialização de coleta altera o recurso oficial gerado",
+                    Number(specializedOre?.items?.[0]?.quality) === 30,
+                    `qualidade do minério ${specializedOre?.items?.[0]?.quality || 0}`
+                )
+            );
+            Aethra.GameState.hero.professionPerks = specializationBackup.perks;
+            Aethra.GameState.hero.disciplines.mining = specializationBackup.mining;
+
             const fieldBackup = {
                 bag: JSON.parse(JSON.stringify(Aethra.GameState.hero.bag || [])),
                 policies: JSON.parse(JSON.stringify(Aethra.GameState.professionPolicies || {}))
@@ -709,6 +778,7 @@
             const craftingBackup = {
                 bag: JSON.parse(JSON.stringify(Aethra.GameState.hero.bag || [])),
                 discipline: JSON.parse(JSON.stringify(Aethra.GameState.hero.disciplines.blacksmithing)),
+                perks: JSON.parse(JSON.stringify(Aethra.GameState.hero.professionPerks || {})),
                 crafting: JSON.parse(JSON.stringify(Aethra.GameState.crafting || null)),
                 hunt: JSON.parse(JSON.stringify(Aethra.GameState.hunt || {}))
             };
@@ -778,6 +848,10 @@
             const testIngots = Aethra.ItemSystem.generateItem("refined_ingot", { quantity: 6, quality: 20, potential: 20, source: "integration" });
             Aethra.BagSystem.addItem(testIngots, "integration");
             const ingotsBeforeCraft = Aethra.BagSystem.countItem("refined_ingot");
+            Aethra.GameState.hero.disciplines.blacksmithing.level = 10;
+            Aethra.GameState.hero.disciplines.blacksmithing.xpNext = Aethra.XPSystem.getSkillXPRequired(10);
+            Aethra.GameState.hero.professionPerks.blacksmithing = [];
+            Aethra.ProfessionSystem.chooseSpecialization("blacksmithing", "forge_rhythm", { source: "integration", save: false });
             Aethra.CraftingSystem.setRandomSource(() => 0.5);
             const craftedSword = Aethra.CraftingSystem.craft("forge_iron_sword", {
                 stationId: "forge", techniqueId: "balanced", quantity: 1, commandId: "integration-craft-sword"
@@ -790,12 +864,14 @@
                         && Aethra.BagSystem.countItem("refined_ingot") === ingotsBeforeCraft - 3
                         && craftedSword.outputs?.[0]?.templateId === "eg_sword_l1"
                         && craftedSword.outputs?.[0]?.crafting?.recipeId === "forge_iron_sword"
-                        && craftedSword.xp?.accepted === true,
-                    craftedSword?.accepted ? `${craftedSword.outputs[0].name} · qualidade ${craftedSword.outputs[0].quality}` : craftedSword?.reason
+                        && craftedSword.xp?.accepted === true
+                        && craftedSword.professionXp > craftedSword.baseXp,
+                    craftedSword?.accepted ? `${craftedSword.outputs[0].name} · qualidade ${craftedSword.outputs[0].quality} · XP ${craftedSword.baseXp}→${craftedSword.professionXp}` : craftedSword?.reason
                 )
             );
             Aethra.GameState.hero.bag = craftingBackup.bag;
             Aethra.GameState.hero.disciplines.blacksmithing = craftingBackup.discipline;
+            Aethra.GameState.hero.professionPerks = craftingBackup.perks;
             Aethra.GameState.crafting = craftingBackup.crafting || { completed: 0, recipeCounts: {}, processedCommands: [], discovered: discoveredBefore };
             Aethra.GameState.hunt = craftingBackup.hunt;
 

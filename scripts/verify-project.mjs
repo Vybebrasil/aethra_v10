@@ -117,6 +117,7 @@ const questSystemSource = read("js/progression/QuestSystem.js");
 const characterCreationSource = read("js/ui/CharacterCreationUI.js");
 const characterBuildSource = read("js/progression/CharacterBuildSystem.js");
 const professionSource = read("js/progression/ProfessionSystem.js");
+const professionSpecializationUiSource = read("js/ui/ProfessionSpecializationUI.js");
 const saveManagerSource = read("js/infrastructure/SaveManager.js");
 check(
     !/registerQuest\(["']tutorial_first_steps["']/.test(characterCreationSource)
@@ -130,6 +131,21 @@ check(
         && /queueIntroGuarantee/.test(professionSource)
         && /reward:\s*\{\s*gold:\s*40,\s*xp:\s*75,\s*items:\s*\[\]/.test(professionSource),
     "ProfessionSystem deve gerar missões iniciais no contrato canônico"
+);
+check(
+    /SPECIALIZATION_UNLOCK_LEVEL\s*=\s*10/.test(professionSource)
+        && /SPECIALIZATION_MASTERY_INTERVAL\s*=\s*25/.test(professionSource)
+        && /Math\.log2\(pulses \+ 1\)/.test(professionSource)
+        && /chooseSpecialization\(/.test(professionSource)
+        && /getProfessionModifiers\(/.test(professionSource),
+    "ProfessionSystem deve possuir escolha exclusiva e maestria infinita com retorno decrescente"
+);
+check(
+    indexSource.includes("css/profession-specialization.css")
+        && indexSource.includes("js/ui/ProfessionSpecializationUI.js")
+        && /chooseSpecialization\?\.\(/.test(professionSpecializationUiSource)
+        && !/professionPerks\s*\[/.test(professionSpecializationUiSource),
+    "Árvore de profissão deve estar indexada e enviar comandos sem mutar perks na UI"
 );
 check(
     /CONTRACT_VERSION\s*=\s*3/.test(questSystemSource)
