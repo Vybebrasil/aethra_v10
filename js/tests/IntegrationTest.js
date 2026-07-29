@@ -790,13 +790,48 @@
             // --- Testes do catálogo declarativo de receitas ---
             const catalogAll = Aethra.RecipeCatalog?.all?.() || [];
             const catalogBySmith = Aethra.RecipeCatalog?.byProfession?.("blacksmithing") || [];
+            const catalogTier3 = catalogAll.filter((recipe) => recipe.tier === 3);
+            const catalogReferencesExist = catalogAll.every((recipe) =>
+                [...recipe.inputs, ...recipe.outputs].every((entry) =>
+                    Boolean(Aethra.GameData?.items?.[entry.itemId] || Aethra.ItemSystem?.templates?.[entry.itemId])
+                )
+            );
             checks.push(
                 createCheck(
                     "RecipeCatalog contém receitas declarativas",
-                    catalogAll.length >= 20
-                        && catalogBySmith.length >= 10
+                    catalogAll.length >= 28
+                        && catalogBySmith.length >= 14
+                        && catalogTier3.length === 8
+                        && catalogReferencesExist
                         && catalogAll.every((r) => r.id && r.professionId && r.unlockLevel >= 1 && r.tier >= 1),
                     `${catalogAll.length} total · ${catalogBySmith.length} Forjaria · tiers OK`
+                )
+            );
+
+            const leatherRecipeOutputs = catalogAll
+                .filter((recipe) => recipe.professionId === "leatherworking" && recipe.action === "craft-leather")
+                .flatMap((recipe) => recipe.outputs)
+                .map((output) => Aethra.GameData?.items?.[output.itemId] || Aethra.ItemSystem?.templates?.[output.itemId]);
+            checks.push(
+                createCheck(
+                    "Couraria fabrica armaduras leves próprias",
+                    leatherRecipeOutputs.length >= 10
+                        && leatherRecipeOutputs.every((template) => template?.armorType === "leather"),
+                    `${leatherRecipeOutputs.length} peças leves próprias`
+                )
+            );
+
+            const specterDrops = Aethra.EarlyGameItemCatalog?.getCreatureDrops?.("specter-xmm-2024") || [];
+            const clawHasSource = Object.values(Aethra.EarlyGameItemCatalog?.creatureTables || {})
+                .some((table) => table.some((drop) => drop.id === "chipped_claw"));
+            checks.push(
+                createCheck(
+                    "Materiais especiais possuem fonte de loot",
+                    Boolean(Aethra.GameData?.items?.shadow_thread)
+                        && Boolean(Aethra.GameData?.items?.chipped_claw)
+                        && specterDrops.some((drop) => drop.id === "shadow_thread")
+                        && clawHasSource,
+                    `Fio Sombrio ${specterDrops.some((drop) => drop.id === "shadow_thread") ? "na Cripta" : "sem fonte"} · Garra ${clawHasSource ? "em feras" : "sem fonte"}`
                 )
             );
 
@@ -828,6 +863,34 @@
                     "Receitas T2 só aparecem após atingir nível de ofício",
                     t2BeforeLevel === false && t2AfterLevel === true && discoveredByRankUp.includes("smelt_steel"),
                     `antes nv5: ${t2BeforeLevel} · após nv5: ${t2AfterLevel} · descobertas: ${discoveredByRankUp.length}`
+                )
+            );
+
+            const tier3Ids = catalogTier3.map((recipe) => recipe.id);
+            Aethra.GameState.crafting.discovered = Aethra.GameState.crafting.discovered
+                .filter((recipeId) => !tier3Ids.includes(recipeId));
+            const tier3AtNine = Aethra.CraftingSystem.discoverByProfessionLevel("blacksmithing", 9);
+            const tier3Reconciled = Aethra.CraftingSystem.reconcileDiscoveries({
+                levels: { blacksmithing: 10, leatherworking: 10 },
+                save: false
+            });
+            checks.push(
+                createCheck(
+                    "Save existente recebe Tier 3 exatamente no nível 10",
+                    tier3AtNine.every((recipeId) => !tier3Ids.includes(recipeId))
+                        && tier3Ids.every((recipeId) => Aethra.CraftingSystem.isDiscovered(recipeId))
+                        && tier3Reconciled.filter((recipeId) => tier3Ids.includes(recipeId)).length === tier3Ids.length,
+                    `nv9 ${tier3AtNine.length} novas · reconciliação T3 ${tier3Reconciled.filter((recipeId) => tier3Ids.includes(recipeId)).length}/${tier3Ids.length}`
+                )
+            );
+
+            Aethra.ProfessionWorkshopUI?.render?.();
+            const sourceGuidance = document.querySelector("#profession-workshop-view .workshop-recipe__source");
+            checks.push(
+                createCheck(
+                    "Oficina orienta onde conseguir materiais raros",
+                    Boolean(sourceGuidance?.textContent?.includes("ONDE CONSEGUIR")),
+                    sourceGuidance ? sourceGuidance.textContent.trim() : "orientação ausente"
                 )
             );
 
@@ -867,6 +930,37 @@
                         && craftedSword.xp?.accepted === true
                         && craftedSword.professionXp > craftedSword.baseXp,
                     craftedSword?.accepted ? `${craftedSword.outputs[0].name} · qualidade ${craftedSword.outputs[0].quality} · XP ${craftedSword.baseXp}→${craftedSword.professionXp}` : craftedSword?.reason
+                )
+            );
+
+            [
+                ["steel_ingot", 6],
+                ["aether_fragment", 6],
+                ["monster_core", 3]
+            ].forEach(([templateId, quantity]) => {
+                const material = Aethra.ItemSystem.generateItem(templateId, {
+                    quantity, quality: 40, potential: 40, source: "integration-tier3"
+                });
+                Aethra.BagSystem.addItem(material, "integration-tier3");
+            });
+            Aethra.CraftingSystem.setRandomSource(() => 0.5);
+            const temperedAlloy = Aethra.CraftingSystem.craft("temper_aether_alloy", {
+                stationId: "forge", techniqueId: "balanced", quantity: 3, commandId: "integration-temper-tier3"
+            });
+            const craftedAetherSword = Aethra.CraftingSystem.craft("forge_aether_sword", {
+                stationId: "forge", techniqueId: "balanced", quantity: 1, commandId: "integration-forge-tier3"
+            });
+            Aethra.CraftingSystem.resetRandomSource();
+            checks.push(
+                createCheck(
+                    "Tier 3 completa loot, refino e equipamento raro",
+                    temperedAlloy?.accepted === true
+                        && craftedAetherSword?.accepted === true
+                        && craftedAetherSword.outputs?.[0]?.templateId === "eg_sword_l10"
+                        && craftedAetherSword.outputs?.[0]?.crafting?.recipeId === "forge_aether_sword",
+                    temperedAlloy?.accepted && craftedAetherSword?.accepted
+                        ? `${temperedAlloy.outputs.length} ligas → ${craftedAetherSword.outputs[0].name}`
+                        : `${temperedAlloy?.reason || "liga falhou"} · ${craftedAetherSword?.reason || "arma falhou"}`
                 )
             );
             Aethra.GameState.hero.bag = craftingBackup.bag;
@@ -1259,6 +1353,18 @@
                         "Paperdoll completo do herói",
                         equipmentSlots.length === 11,
                         `${equipmentSlots.length}/11 slots renderizados`
+                    )
+                );
+                const heroHubBounds = document.querySelector("[data-hero-hub]")?.getBoundingClientRect?.();
+                const compactEquipmentFits = window.innerHeight > 820 || [...equipmentSlots].every((slot) => {
+                    const bounds = slot.getBoundingClientRect();
+                    return bounds.left >= heroHubBounds.left - 1 && bounds.right <= heroHubBounds.right + 1;
+                });
+                checks.push(
+                    createCheck(
+                        "Faixa compacta mantém os onze equipamentos dentro da Central",
+                        Boolean(heroHubBounds) && compactEquipmentFits,
+                        compactEquipmentFits ? "11/11 slots dentro da coluna" : "há slot cortado na lateral"
                     )
                 );
                 checks.push(
@@ -1885,6 +1991,23 @@
                 );
 
                 document.querySelector("[data-player-hud-target='skills']")?.click();
+                const activeSkillPanel = document.querySelector("[data-hero-panel-view='skills']");
+                const inactiveHeroPanels = heroPanels.filter((panel) => panel !== activeSkillPanel);
+                const heroWorkspaceRect = document.querySelector(".hero-hub--cockpit .player-hud-workspace")
+                    ?.getBoundingClientRect?.();
+                const activeSkillRect = activeSkillPanel?.getBoundingClientRect?.();
+                const activePanelStartsInView = !heroWorkspaceRect?.height
+                    || (activeSkillRect.top >= heroWorkspaceRect.top - 1
+                        && activeSkillRect.top < heroWorkspaceRect.bottom);
+                checks.push(
+                    createCheck(
+                        "Aba ativa da Central aparece imediatamente e as demais não ocupam espaço",
+                        getComputedStyle(activeSkillPanel).display !== "none"
+                            && inactiveHeroPanels.every((panel) => getComputedStyle(panel).display === "none")
+                            && activePanelStartsInView,
+                        `${inactiveHeroPanels.filter((panel) => getComputedStyle(panel).display === "none").length}/${inactiveHeroPanels.length} ocultas · início ${activePanelStartsInView ? "visível" : "fora da rolagem"}`
+                    )
+                );
                 // Modelo atual: cartas compactas (.player-skill-card-slim) que
                 // já nascem expandidas e alternam entre fixada/minimizada pelo pino.
                 const firstSkillCard = document.querySelector(".player-skill-card-slim");

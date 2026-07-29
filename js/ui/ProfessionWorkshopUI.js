@@ -77,6 +77,11 @@
         return null;
     }
 
+    function sourceGuidance(recipe) {
+        if (!recipe?.sourceHint) return "";
+        return `<aside class="workshop-recipe__source"><small>ONDE CONSEGUIR</small><span>${esc(recipe.sourceHint)}</span></aside>`;
+    }
+
     // ─── Renderização de um card de receita conhecida ─────────────────────────
     function recipeCard(recipe) {
         const cs         = Aethra.CraftingSystem;
@@ -111,6 +116,7 @@
                     <span>Qualidade estimada ${qualityEstimate(recipe, technique)}</span>
                 </div>
             </div>
+            ${sourceGuidance(recipe)}
             <footer>
                 <small>${validation.allowed ? `Pronto em ${professionMeta[recipe.professionId].station}` : esc(reasonText(validation))}</small>
                 <button type="button" data-craft-recipe="${esc(recipe.id)}" ${validation.allowed ? "" : "disabled"}>Criar ${fmt(ui.quantity)}</button>
@@ -132,6 +138,7 @@
                     <p>${esc(recipe.description)}</p>
                 </div>
             </header>
+            ${sourceGuidance(recipe)}
             <footer>
                 <small>${delta > 0 ? `Descobre no nível ${needed} de ${professionMeta[recipe.professionId]?.name || recipe.professionId} (faltam ${delta} nível${delta > 1 ? "is" : ""})` : "Reinicie ou crie um personagem novo para descobrir esta receita."}</small>
             </footer>

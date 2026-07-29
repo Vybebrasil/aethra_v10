@@ -234,6 +234,10 @@
             button.setAttribute("aria-selected", active ? "true" : "false");
             button.setAttribute("aria-current", active ? "page" : "false");
         });
+
+        // Cada aba funciona como uma tela própria. Voltar ao topo evita que a
+        // posição de rolagem da aba anterior faça o novo conteúdo parecer vazio.
+        views.scrollTop = 0;
     }
 
     function bindNavigation(hub, views) {

@@ -49,6 +49,76 @@
         templates[id] = { id, ...definition };
     }
 
+    const rarityIds = { Comum: "common", Incomum: "uncommon", Raro: "rare", Épico: "epic" };
+
+    // Materiais próprios da progressão produtiva. Mantê-los no catálogo oficial
+    // garante que todo ingrediente exibido por uma receita também possa existir
+    // como item real na mochila.
+    const CRAFT_MATERIALS = {
+        refined_ingot: ["Lingote Refinado", "▰", 16, "Incomum", "Ferro purificado e pronto para a forja."],
+        steel_ingot: ["Lingote de Aço", "▰", 28, "Incomum", "Liga endurecida usada por ferreiros oficiais."],
+        treated_leather: ["Couro Tratado", "▧", 14, "Incomum", "Pele curtida e preparada para costura."],
+        reinforced_leather: ["Couro Reforçado", "▧", 27, "Incomum", "Couro rígido reforçado com componentes de fera."],
+        aether_alloy: ["Liga Aetheriana", "◈", 48, "Raro", "Liga de aço estabilizada com éter e núcleo de criatura."],
+        shadow_leather: ["Couro Sombrio", "◒", 45, "Raro", "Couro reforçado costurado com fios espectrais."]
+    };
+
+    Object.entries({ ...EXTRA_MATERIALS, ...CRAFT_MATERIALS }).forEach(([id, definition]) => {
+        const [name, icon, price, rarity, description] = definition;
+        item(id, {
+            name,
+            icon,
+            price,
+            value: price,
+            rarity,
+            rarityId: rarityIds[rarity] || "common",
+            type: "material",
+            itemType: "MATERIAL",
+            category: "resource",
+            stackable: true,
+            maxStack: 999,
+            description: description || "Material obtido de criaturas e usado nos ofícios de Aethra."
+        });
+    });
+
+    // Couraria produz armadura leve própria. Antes estas receitas apontavam para
+    // peças de placa da Forjaria, o que fazia dois ofícios criarem o mesmo set.
+    const LEATHER_ARMOR = [
+        ["crafted_leather_feet_l1", "Botas de Couro", "⌄", "FEET", "feet", 1, 1, 18, "Comum", { defense: 1, hpMax: 1, evasion: 0.008 }],
+        ["crafted_leather_head_l1", "Capuz de Couro", "⌃", "HEAD", "head", 1, 1, 21, "Comum", { defense: 1, hpMax: 2, evasion: 0.004 }],
+        ["crafted_leather_legs_l1", "Calças de Couro", "Ⅱ", "LEGS", "legs", 1, 1, 25, "Comum", { defense: 1, hpMax: 2, evasion: 0.005 }],
+        ["crafted_leather_chest_l1", "Peitoral de Couro", "▣", "CHEST", "chest", 1, 1, 30, "Comum", { defense: 2, hpMax: 3, evasion: 0.006 }],
+        ["crafted_reinforced_feet_l6", "Botas Reforçadas", "⌄", "FEET", "feet", 6, 3, 58, "Incomum", { defense: 2, hpMax: 6, evasion: 0.015 }],
+        ["crafted_reinforced_head_l6", "Capuz Reforçado", "⌃", "HEAD", "head", 6, 3, 65, "Incomum", { defense: 3, hpMax: 7, evasion: 0.008 }],
+        ["crafted_reinforced_chest_l6", "Peitoral Reforçado", "▣", "CHEST", "chest", 6, 3, 82, "Incomum", { defense: 7, hpMax: 15, evasion: 0.012 }],
+        ["crafted_shadow_feet_l10", "Botas do Véu", "⌄", "FEET", "feet", 10, 5, 126, "Raro", { defense: 4, hpMax: 13, evasion: 0.02 }],
+        ["crafted_shadow_head_l10", "Capuz do Véu", "⌃", "HEAD", "head", 10, 5, 145, "Raro", { defense: 5, hpMax: 16, evasion: 0.012, precision: 1 }],
+        ["crafted_shadow_chest_l10", "Peitoral do Véu", "▣", "CHEST", "chest", 10, 5, 190, "Raro", { defense: 11, hpMax: 32, evasion: 0.018, critical: 0.005 }]
+    ];
+
+    LEATHER_ARMOR.forEach(([id, name, icon, itemType, slot, levelReq, tier, price, rarity, stats]) => {
+        item(id, {
+            name,
+            icon,
+            price,
+            value: price,
+            rarity,
+            rarityId: rarityIds[rarity] || "common",
+            type: "armor",
+            itemType,
+            slot,
+            equipmentClass: "armor",
+            armorType: "leather",
+            levelReq,
+            tier,
+            baseStats: { ...stats },
+            stats: { ...stats },
+            stackable: false,
+            maxStack: 1,
+            description: "Armadura leve produzida por Couraria, com mobilidade superior à placa."
+        });
+    });
+
     // ── Armaduras e Armas baseadas nos Assets Curados (Nível 1 a 10) ──
 
     // Set Recruta (Nível 1)
@@ -823,6 +893,8 @@
         const materials = FAMILY_MATERIALS[type] || FAMILY_MATERIALS.default;
         const name = normalize(monster?.name || monster?.id);
         const extras = [];
+        if (type === "beast" || type === "monstrosity") extras.push("chipped_claw");
+        if (type === "beast") extras.push("coarse_fur");
         if (/venom|poison|serpente|snake|spider|aranha|scorpion/.test(name)) extras.push("venom_sac");
         if (/fire|fogo|magma/.test(name)) extras.push("ember_gland");
         if (/ice|gelo|frost/.test(name)) extras.push("frost_crystal");
@@ -846,7 +918,13 @@
         return [
             { id: materials[0], chance: 0.42, minQuantity: 1, maxQuantity: level >= 8 ? 3 : 2, sourceClass: "family-material" },
             { id: materials[1] || materials[0], chance: 0.18, minQuantity: 1, maxQuantity: 1, sourceClass: "family-material" },
-            ...(materials[2] ? [{ id: materials[2], chance: 0.055, minQuantity: 1, maxQuantity: 1, sourceClass: "rare-material" }] : []),
+            ...materials.slice(2).map((id, index) => ({
+                id,
+                chance: index === 0 ? 0.055 : 0.04,
+                minQuantity: 1,
+                maxQuantity: 1,
+                sourceClass: index === 0 ? "rare-material" : "signature-material"
+            })),
             { id: equipmentA, chance: elite ? 0.055 : 0.018, minQuantity: 1, maxQuantity: 1, qualityMin: 22 + level * 3, qualityMax: 100, sourceClass: "normal-equipment" },
             { id: equipmentB, chance: elite ? 0.032 : 0.009, minQuantity: 1, maxQuantity: 1, qualityMin: 35 + level * 2, qualityMax: 100, sourceClass: "normal-equipment" },
             { id: equipmentC, chance: elite ? 0.08 : 0.028, minQuantity: 1, maxQuantity: 1, qualityMin: 15 + level * 2, qualityMax: 92, sourceClass: "normal-equipment" }

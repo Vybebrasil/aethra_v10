@@ -227,7 +227,7 @@
             requiredLevel: 2,
             xp: 15,
             inputs: [{ itemId: "treated_leather", quantity: 2 }],
-            outputs: [{ itemId: "eg_feet_l1", quantity: 1 }],
+            outputs: [{ itemId: "crafted_leather_feet_l1", quantity: 1 }],
             description: "Cria botas leves com qualidade individual e bônus de evasão."
         },
         {
@@ -242,7 +242,7 @@
             requiredLevel: 2,
             xp: 15,
             inputs: [{ itemId: "treated_leather", quantity: 2 }],
-            outputs: [{ itemId: "eg_head_l1", quantity: 1 }],
+            outputs: [{ itemId: "crafted_leather_head_l1", quantity: 1 }],
             description: "Capuz de couro que equilibra proteção e mobilidade."
         },
         {
@@ -257,7 +257,7 @@
             requiredLevel: 3,
             xp: 20,
             inputs: [{ itemId: "treated_leather", quantity: 3 }],
-            outputs: [{ itemId: "eg_legs_l1", quantity: 1 }],
+            outputs: [{ itemId: "crafted_leather_legs_l1", quantity: 1 }],
             description: "Calças de couro com boa cobertura e evasão adicional."
         },
         {
@@ -272,7 +272,7 @@
             requiredLevel: 4,
             xp: 25,
             inputs: [{ itemId: "treated_leather", quantity: 4 }],
-            outputs: [{ itemId: "eg_chest_l1", quantity: 1 }],
+            outputs: [{ itemId: "crafted_leather_chest_l1", quantity: 1 }],
             description: "Costura uma proteção leve com qualidade variável."
         },
 
@@ -304,7 +304,7 @@
             requiredLevel: 6,
             xp: 38,
             inputs: [{ itemId: "reinforced_leather", quantity: 4 }],
-            outputs: [{ itemId: "eg_chest_l2", quantity: 1 }],
+            outputs: [{ itemId: "crafted_reinforced_chest_l6", quantity: 1 }],
             description: "Proteção de couro reforçado com evasão e HP superiores."
         },
         {
@@ -319,7 +319,7 @@
             requiredLevel: 6,
             xp: 30,
             inputs: [{ itemId: "reinforced_leather", quantity: 2 }],
-            outputs: [{ itemId: "eg_feet_l2", quantity: 1 }],
+            outputs: [{ itemId: "crafted_reinforced_feet_l6", quantity: 1 }],
             description: "Botas reforçadas com alta evasão para caçadores experientes."
         },
         {
@@ -334,8 +334,150 @@
             requiredLevel: 7,
             xp: 35,
             inputs: [{ itemId: "reinforced_leather", quantity: 3 }],
-            outputs: [{ itemId: "eg_head_l2", quantity: 1 }],
+            outputs: [{ itemId: "crafted_reinforced_head_l6", quantity: 1 }],
             description: "Capacete de couro reforçado com resistência adicional."
+        },
+
+        // ── Forjaria T3 (Mestre) ──────────────────────────────────────────────
+        {
+            id: "temper_aether_alloy",
+            name: "Temperar Liga Aetheriana",
+            icon: "◈",
+            professionId: "blacksmithing",
+            action: "smelt",
+            stationId: "forge",
+            tier: 3,
+            unlockLevel: 10,
+            requiredLevel: 10,
+            xp: 40,
+            inputs: [
+                { itemId: "steel_ingot", quantity: 2 },
+                { itemId: "aether_fragment", quantity: 2 },
+                { itemId: "monster_core", quantity: 1 }
+            ],
+            outputs: [{ itemId: "aether_alloy", quantity: 1 }],
+            sourceHuntId: "forgotten_crypt",
+            sourceHint: "Cace mortos-vivos poderosos na Cripta Esquecida para obter Fragmentos de Éter e Núcleos de Criatura.",
+            description: "Estabiliza aço com energia de Éter para criar uma liga de mestre."
+        },
+        {
+            id: "forge_aether_sword",
+            name: "Espada Aetheriana",
+            icon: "⚔",
+            professionId: "blacksmithing",
+            action: "forge",
+            stationId: "forge",
+            tier: 3,
+            unlockLevel: 10,
+            requiredLevel: 10,
+            xp: 75,
+            inputs: [{ itemId: "aether_alloy", quantity: 3 }],
+            outputs: [{ itemId: "eg_sword_l10", quantity: 1 }],
+            sourceHint: "Produza Liga Aetheriana na Forja antes de montar a arma.",
+            description: "Forja uma arma rara de nível 10 com dano e precisão elevados."
+        },
+        {
+            id: "forge_aether_chest",
+            name: "Peitoral Aetheriano",
+            icon: "▣",
+            professionId: "blacksmithing",
+            action: "forge",
+            stationId: "forge",
+            tier: 3,
+            unlockLevel: 10,
+            requiredLevel: 10,
+            xp: 95,
+            inputs: [{ itemId: "aether_alloy", quantity: 5 }],
+            outputs: [{ itemId: "eg_chest_l10", quantity: 1 }],
+            sourceHint: "Produza Liga Aetheriana na Forja antes de montar a armadura.",
+            description: "Molda uma couraça pesada rara para os desafios após o nível 10."
+        },
+        {
+            id: "forge_aether_helm",
+            name: "Elmo Aetheriano",
+            icon: "⌃",
+            professionId: "blacksmithing",
+            action: "forge",
+            stationId: "forge",
+            tier: 3,
+            unlockLevel: 10,
+            requiredLevel: 10,
+            xp: 75,
+            inputs: [{ itemId: "aether_alloy", quantity: 3 }],
+            outputs: [{ itemId: "eg_head_l10", quantity: 1 }],
+            sourceHint: "Produza Liga Aetheriana na Forja antes de montar a armadura.",
+            description: "Forja um elmo raro de placa com grande defesa e vitalidade."
+        },
+
+        // ── Couraria T3 (Mestre) ──────────────────────────────────────────────
+        {
+            id: "tan_shadow_leather",
+            name: "Curtir Couro Sombrio",
+            icon: "◒",
+            professionId: "leatherworking",
+            action: "tan",
+            stationId: "tannery",
+            tier: 3,
+            unlockLevel: 10,
+            requiredLevel: 10,
+            xp: 40,
+            inputs: [
+                { itemId: "reinforced_leather", quantity: 2 },
+                { itemId: "shadow_thread", quantity: 1 },
+                { itemId: "aether_fragment", quantity: 1 }
+            ],
+            outputs: [{ itemId: "shadow_leather", quantity: 1 }],
+            sourceHuntId: "forgotten_crypt",
+            sourceHint: "Espectros da Cripta Esquecida podem fornecer o Fio Sombrio.",
+            description: "Une couro reforçado e fios espectrais em um material leve raro."
+        },
+        {
+            id: "craft_shadow_chest",
+            name: "Peitoral do Véu",
+            icon: "▣",
+            professionId: "leatherworking",
+            action: "craft-leather",
+            stationId: "tannery",
+            tier: 3,
+            unlockLevel: 10,
+            requiredLevel: 10,
+            xp: 90,
+            inputs: [{ itemId: "shadow_leather", quantity: 4 }],
+            outputs: [{ itemId: "crafted_shadow_chest_l10", quantity: 1 }],
+            sourceHint: "Produza Couro Sombrio no Curtume antes de costurar esta peça.",
+            description: "Costura uma armadura rara que equilibra defesa, vida e evasão."
+        },
+        {
+            id: "craft_shadow_boots",
+            name: "Botas do Véu",
+            icon: "⌄",
+            professionId: "leatherworking",
+            action: "craft-leather",
+            stationId: "tannery",
+            tier: 3,
+            unlockLevel: 10,
+            requiredLevel: 10,
+            xp: 68,
+            inputs: [{ itemId: "shadow_leather", quantity: 2 }],
+            outputs: [{ itemId: "crafted_shadow_feet_l10", quantity: 1 }],
+            sourceHint: "Produza Couro Sombrio no Curtume antes de costurar esta peça.",
+            description: "Botas raras de caçador com alta mobilidade e boa proteção."
+        },
+        {
+            id: "craft_shadow_hood",
+            name: "Capuz do Véu",
+            icon: "⌃",
+            professionId: "leatherworking",
+            action: "craft-leather",
+            stationId: "tannery",
+            tier: 3,
+            unlockLevel: 10,
+            requiredLevel: 10,
+            xp: 75,
+            inputs: [{ itemId: "shadow_leather", quantity: 3 }],
+            outputs: [{ itemId: "crafted_shadow_head_l10", quantity: 1 }],
+            sourceHint: "Produza Couro Sombrio no Curtume antes de costurar esta peça.",
+            description: "Capuz raro que protege sem sacrificar precisão e evasão."
         }
     ]);
 

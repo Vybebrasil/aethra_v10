@@ -96,6 +96,34 @@
         },
 
         /**
+         * Reaplica o catálogo sobre um save já existente. Assim, receitas
+         * adicionadas em versões novas aparecem para quem já alcançou o nível
+         * necessário, sem exigir um novo rank-up nem recriar o personagem.
+         */
+        reconcileDiscoveries(options = {}) {
+            const professionIds = [...new Set(
+                Object.values(_catalog).map((recipe) => recipe.professionId).filter(Boolean)
+            )];
+            const added = [];
+            professionIds.forEach((professionId) => {
+                const level = Math.max(1, Math.floor(number(
+                    options.levels?.[professionId]
+                    ?? Aethra.ProfessionSystem?.getState?.(professionId)?.level,
+                    1
+                )));
+                Object.values(_catalog)
+                    .filter((recipe) => recipe.professionId === professionId && recipe.unlockLevel <= level)
+                    .forEach((recipe) => {
+                        if (this.discoverRecipe(recipe.id, { source: "catalog-reconcile", save: false })) {
+                            added.push(recipe.id);
+                        }
+                    });
+            });
+            if (added.length > 0 && options.save !== false) Aethra.SaveManager?.save?.();
+            return added;
+        },
+
+        /**
          * Descobre as receitas iniciais (tier 1 nível 1) de uma profissão.
          * Chamado na criação do personagem e na migração de save.
          */
@@ -304,6 +332,7 @@
             if (Aethra.RecipeCatalog) {
                 this.loadCatalog(Aethra.RecipeCatalog.all());
             }
+            this.reconcileDiscoveries();
             this.initialized = true;
             Aethra.EventBus.emit("crafting:ready", this.getSnapshot());
             return this.getSnapshot();

@@ -3,7 +3,7 @@
 Atualizado em: 2026-07-29
 Branch de continuidade: `main`  
 Baseline recebida antes deste ciclo: `f356719`
-Checkpoint imediatamente anterior: `42126b9`
+Checkpoint imediatamente anterior: `863641e`
 
 Este documento é o ponto de entrada para continuar a versão atual. Leia-o antes
 de alterar HUD, automação de hunt, progressão, profissões, coleta, crafting ou
@@ -13,6 +13,9 @@ paralelos que leem e escrevem o mesmo estado.
 ## 1. Estado entregue neste checkpoint
 
 - HUD principal modernizada e responsiva, validada em 1280x720 e 1920x1080.
+- A Central do Herói alterna painéis de verdade: elementos com `hidden` não
+  ocupam layout, toda troca volta a área rolável ao topo e, em monitores baixos,
+  os 11 equipamentos formam uma faixa compacta sem cortar o último slot.
 - Resumo do herói, recursos e equipamento permanecem visíveis; mochila, skills e
   build são áreas funcionais, não abas decorativas.
 - Action bar e grade de serviços da cidade respondem à largura disponível.
@@ -57,6 +60,13 @@ paralelos que leem e escrevem o mesmo estado.
 - Primeiro ciclo completo de produção implementado:
   - minério de ferro -> lingote refinado -> espada/peitoral de ferro;
   - couro bruto -> couro tratado -> peitoral/botas de couro.
+- Primeiro Tier 3 funcional no nível 10:
+  - aço + Éter + núcleo -> Liga Aetheriana -> arma/placa Aetheriana;
+  - couro reforçado + Fio Sombrio -> Couro Sombrio -> set leve do Véu;
+  - Cripta Esquecida fornece o Fio Sombrio e componentes raros, e a Oficina
+    explica “Onde conseguir” materiais menos óbvios.
+- Couraria agora produz somente templates leves próprios (`armorType: leather`);
+  receitas antigas deixaram de gerar peças de placa da Forjaria.
 - Oficina de profissão permite escolher receita, técnica e de 1 a 20 lotes.
 - `WindowManager` distingue cena, janela flutuante e overlay bloqueante. O Mapa
   Mundi ocupa o viewport, fica acima de toda a HUD e captura o ponteiro; janelas
@@ -126,6 +136,11 @@ materiais, criação de resultados, qualidade e XP de fabricação.
   insere. Materiais são removidos somente por `BagSystem.consumeItem(...)`.
 - Não adicione receitas dentro da UI ou do `CraftingSystem`. Amplie somente
   `js/data/recipes/RecipeCatalog.js`; o `CraftingSystem` consome esse catálogo.
+- `CraftingSystem.reconcileDiscoveries()` deve continuar sendo chamado após o
+  catálogo ser carregado para que saves acima do nível de desbloqueio recebam
+  receitas novas sem depender de outro rank-up.
+- O contrato completo do Tier 3, materiais, fontes e cobertura está em
+  `docs/TIER3_PRODUCTION_LOOP.md`.
 
 ## 5. Eventos relevantes
 
@@ -205,7 +220,7 @@ node scripts/run-integration.mjs --timeout 90 --viewport 1920x1080
 Resultado do checkpoint atual antes do commit:
 
 - quality gate: 631/631 verificações;
-- integração headless: 148/148 verificações em 1280x720 e 1920x1080;
+- integração headless: 155/155 verificações em 1280x720 e 1920x1080;
 - as quatro rotas introdutórias foram simuladas até a conclusão; a suíte também
   prova o provisionamento de Forjaria e a fila determinística dos três ofícios
   de coleta;
@@ -216,6 +231,9 @@ Resultado do checkpoint atual antes do commit:
   abre Skills; console sem erros e nenhuma imagem 404 no fluxo;
 - layout verificado no navegador em 1280x720 e 1920x1080, sem overflow
   horizontal e sem erros de console.
+- Central verificada no navegador em 1280x720: painel ativo começa dentro da
+  área visível, dois painéis inativos têm `display: none`, matriz com 11 slots
+  mede 260 px e permanece dentro da coluna; nenhuma imagem quebrada.
 
 Ao continuar, confirme também console sem erros, rede sem 404, personagem novo e
 save migrado. Atualize estes números se a suíte crescer.
@@ -227,18 +245,20 @@ save migrado. Atualize estes números se a suíte crescer.
 3. ~~Adicionar o primeiro perk permanente de cada rota de profissão.~~ ✅ **Concluído**
 4. ~~Tornar a mentora e as estações introdutórias presença interativa e guiada
    na Cidade.~~ ✅ **Concluído**
-5. Levar inventário, moeda, crafting e RNG valioso para backend autoritativo,
+5. ~~Criar o primeiro Tier 3 de Forjaria/Couraria com fontes, materiais
+   intermediários, equipamentos distintos e reconciliação de saves.~~ ✅ **Concluído**
+6. Levar inventário, moeda, crafting e RNG valioso para backend autoritativo,
    conforme `docs/BACKEND_AUTHORITY_CONTRACT.md`.
-6. Ampliar catálogo de receitas com Tier 3 (Mestre) e materiais de dungeon.
-7. ~~Criar árvores de especialização de longo prazo para cada profissão usando
+7. Ampliar o catálogo para Tier 4+ e novos materiais de dungeon preservando o
+   contrato de fonte → processamento → equipamento.
+8. ~~Criar árvores de especialização de longo prazo para cada profissão usando
    `hero.professionPerks`, sem introduzir limite máximo de nível.~~ ✅ **Concluído
    para Mineração, Esfolamento, Herbalismo, Forjaria e Couraria**
 
-Limitações deliberadas: o conteúdo de fabricação ainda cobre somente o
-primeiro ciclo de ferro/couro; reparo não foi implementado; profissões de mundo
-e utilidade ainda não possuem árvores próprias; troca de especialização não foi
-liberada; o cliente local ainda não é autoridade segura para economia
-competitiva.
+Limitações deliberadas: o conteúdo de fabricação cobre Forjaria e Couraria até
+o primeiro Tier 3; reparo não foi implementado; profissões de mundo e utilidade
+ainda não possuem árvores próprias; troca de especialização não foi liberada;
+o cliente local ainda não é autoridade segura para economia competitiva.
 
 ## 9. Checklist para não duplicar ou quebrar sistemas
 

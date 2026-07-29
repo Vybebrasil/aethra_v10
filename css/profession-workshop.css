@@ -238,6 +238,28 @@
 .workshop-recipe__flow .has-item b    { color: #68d89d; }
 .workshop-recipe__flow .missing-item b { color: #e8866d; }
 
+.workshop-recipe__source {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0;
+    padding: 7px 8px;
+    border: 1px solid color-mix(in srgb, var(--workshop-accent) 28%, #263b44);
+    border-radius: 7px;
+    background: color-mix(in srgb, var(--workshop-accent) 6%, #071014);
+}
+
+.workshop-recipe__source small {
+    color: var(--workshop-accent);
+    white-space: nowrap;
+}
+
+.workshop-recipe__source span {
+    color: #aabcc2;
+    font: 700 9px/1.35 "Outfit", sans-serif;
+}
+
 /* Rodapé do card */
 .workshop-recipe > footer {
     display: flex; align-items: center; justify-content: space-between; gap: 10px;
