@@ -233,6 +233,12 @@
         }
     };
 
+    const INTRO_GUARANTEE_EVENTS = Object.freeze({
+        mining: "mining",
+        herbalism: "herb",
+        skinning: "creature-harvest"
+    });
+
     Aethra.ExplorationSystem = {
         initialized: false,
         randomSource: Math.random,
@@ -264,10 +270,17 @@
             Aethra.ItemSystem?.syncFromGameData?.();
         },
 
+        getResourceTemplateIds() {
+            return [...new Set(Object.values(RESOURCE_ITEMS).map((definition) => definition.templateId).filter(Boolean))];
+        },
+
         ensureState() {
             const state = Aethra.GameState.exploration || {};
             state.events = Array.isArray(state.events) ? state.events : [];
             state.pendingEvent = state.pendingEvent || null;
+            state.tutorialGuarantee = state.tutorialGuarantee && typeof state.tutorialGuarantee === "object"
+                ? state.tutorialGuarantee
+                : null;
             state.lastEventTick = integer(state.lastEventTick, -99);
             state.totals = {
                 events: integer(state.totals?.events),
@@ -370,6 +383,31 @@
             return true;
         },
 
+        queueIntroGuarantee(professionId) {
+            const eventId = INTRO_GUARANTEE_EVENTS[professionId];
+            if (!eventId) return false;
+            const state = this.ensureState();
+            if (state.tutorialGuarantee?.professionId === professionId) return clone(state.tutorialGuarantee);
+            state.tutorialGuarantee = {
+                professionId,
+                eventId,
+                huntId: "whispering_forest",
+                queuedAt: new Date().toISOString()
+            };
+            Aethra.EventBus.emit("exploration:tutorial-guarantee-queued", clone(state.tutorialGuarantee));
+            Aethra.EventBus.emit("exploration:updated", this.getSnapshot());
+            return clone(state.tutorialGuarantee);
+        },
+
+        getActiveIntroGuarantee(professionId = null) {
+            const guarantee = this.ensureState().tutorialGuarantee;
+            if (!guarantee) return null;
+            if (professionId && guarantee.professionId !== professionId) return null;
+            const activeHuntId = Aethra.GameState.hunt?.huntId;
+            if (guarantee.huntId && activeHuntId !== guarantee.huntId) return null;
+            return guarantee;
+        },
+
         tryTriggerStairsEvent(context = {}) {
             const state = this.ensureState();
             const huntState = Aethra.GameState.hunt || {};
@@ -380,11 +418,12 @@
             // But let's give a high chance (e.g. 70%) to find an event.
             const focusMultiplier = Math.max(0, Number(context.modifiers?.eventChance ?? Aethra.HuntSystem?.getModifier?.("eventChance", 1) ?? 1));
             const chance = clamp(0.70 * focusMultiplier, 0, 1.0);
+            const guaranteedEvent = this.getActiveIntroGuarantee();
             
             // Also, trigger passive Resilience heal
             this.triggerResilienceHeal();
 
-            if (this.randomSource() > chance) {
+            if (!guaranteedEvent && this.randomSource() > chance) {
                 // No event found, just wait at stairs
                 return false;
             }
@@ -468,6 +507,13 @@
         },
 
         pickEvent(context = {}) {
+            const state = this.ensureState();
+            const guarantee = this.getActiveIntroGuarantee();
+            if (guarantee && EVENT_DEFINITIONS[guarantee.eventId]) {
+                const forced = clone(EVENT_DEFINITIONS[guarantee.eventId]);
+                forced.tutorialGuaranteed = true;
+                return forced;
+            }
             const modifiers = context.modifiers || Aethra.HuntSystem?.getActiveModifiers?.() || {};
             const weights = modifiers.eventWeights || {};
             const entries = Object.values(EVENT_DEFINITIONS)
@@ -654,6 +700,15 @@
             event.xpGain = xpGain;
             event.baseXp = baseXp;
             event.skillCheck = clone(skillCheck || {});
+            if (event.tutorialGuaranteed && state.tutorialGuarantee?.eventId === event.id) {
+                const guarantee = clone(state.tutorialGuarantee);
+                state.tutorialGuarantee = null;
+                Aethra.EventBus.emit("exploration:tutorial-guarantee-used", {
+                    professionId: guarantee.professionId,
+                    eventId: guarantee.eventId,
+                    huntId: guarantee.huntId
+                });
+            }
             state.pendingEvent = null;
             state.totals.events += 1;
             state.totals.skillXP += xpGain;
@@ -912,7 +967,8 @@
 
             const harvestMultiplier = Math.max(0, Number(Aethra.HuntSystem?.getModifier?.("harvestChance", 1) ?? 1));
             const baseHarvestChance = 0.38;
-            if (this.randomSource() > clamp(baseHarvestChance * harvestMultiplier, 0, 0.95)) {
+            const guaranteedHarvest = this.getActiveIntroGuarantee("skinning");
+            if (!guaranteedHarvest && this.randomSource() > clamp(baseHarvestChance * harvestMultiplier, 0, 0.95)) {
                 this.pushFeed({
                     type: "combat",
                     icon: "⚔",
@@ -922,7 +978,6 @@
                 });
                 return;
             }
-
             const quantityMultiplier = Math.max(0, Number(Aethra.HuntSystem?.getModifier?.("resourceQuantity", 1) ?? 1));
             const baseQuantity = 1 + (this.randomSource() < 0.18 ? 1 : 0);
             const yieldMultiplier = 1 + (Math.max(0, Number(Aethra.ProfessionSystem?.getYieldBonus?.("skinning") || 0)) / 100);
@@ -933,7 +988,16 @@
                 huntId: Aethra.GameState.hunt?.huntId || null, quality: 20, potential: 20
             });
             if (!item) return;
-            Aethra.BagSystem?.addItem?.(item, "exploration:skinning");
+            const stored = Aethra.BagSystem?.addItem?.(item, "exploration:skinning");
+            if (!stored) return;
+            if (guaranteedHarvest) {
+                state.tutorialGuarantee = null;
+                Aethra.EventBus.emit("exploration:tutorial-guarantee-used", {
+                    professionId: "skinning",
+                    eventId: "creature-harvest",
+                    huntId: guaranteedHarvest.huntId
+                });
+            }
             const baseXp = 5 + integer(this.randomSource() * 7);
             const creatureDifficulty = Math.max(1, integer(creature.level || payload.level || 1, 1));
             const xpPayload = Aethra.ProfessionSystem?.grantActionXP?.("skinning", baseXp, "skin", { source: "creature-harvest", difficulty: creatureDifficulty });
@@ -983,6 +1047,7 @@
             return clone({
                 events: state.events,
                 pendingEvent: state.pendingEvent,
+                tutorialGuarantee: state.tutorialGuarantee,
                 totals: state.totals
             });
         }

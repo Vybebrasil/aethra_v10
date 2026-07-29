@@ -6,7 +6,7 @@
         throw new Error("QuestSystem.js requer game-core.js e GameData.js.");
     }
 
-    const CONTRACT_VERSION = 2;
+    const CONTRACT_VERSION = 3;
     const clone = (value) => JSON.parse(JSON.stringify(value));
     const number = (value, fallback = 0) => Number.isFinite(Number(value))
         ? Number(value)
@@ -52,6 +52,7 @@
         const completed = Boolean(objective.completed) || progress >= required;
 
         return {
+            ...clone(objective),
             id: String(objective.id || `${questId}_objective_${index}`),
             type,
             target,
@@ -156,6 +157,12 @@
             this.bindEvents();
             this.repairState({ emit: false, save: false });
             const state = ensureQuestState();
+            const activeIntroQuest = state.active.find((quest) => String(quest.id || "").startsWith("intro_profession_"));
+            if (activeIntroQuest) {
+                Aethra.ProfessionSystem?.activateIntroPath?.(
+                    activeIntroQuest.id.replace("intro_profession_", "")
+                );
+            }
 
             if (
                 state.active.length === 0 &&
@@ -181,6 +188,8 @@
             Aethra.EventBus.on("EnemyDefeated", (data = {}) => {
                 const enemyId = data.enemyId || data.id || data.enemy?.id;
                 if (enemyId) this.updateProgress("DefeatEnemy", enemyId, 1, data);
+                const huntId = data.huntId || data.state?.huntId || Aethra.GameState.hunt?.huntId;
+                if (huntId) this.updateProgress("DefeatInHunt", huntId, 1, data);
             });
             Aethra.EventBus.on("hunt:started", (data = {}) => {
                 const huntId = data.huntId || data.state?.huntId || data.id;
@@ -188,6 +197,16 @@
             });
             Aethra.EventBus.on("ItemAcquired", (data) => this.handleItemsAcquired(data, "ItemAcquired"));
             Aethra.EventBus.on("itemObtained", (data) => this.handleItemsAcquired(data, "itemObtained"));
+            Aethra.EventBus.on("exploration:resource-collected", (data = {}) => {
+                if (data.item) this.handleItemsAcquired(data.item, "exploration:resource-collected");
+            });
+            Aethra.EventBus.on("exploration:event-resolved", (data = {}) => {
+                this.handleItemsAcquired(data.rewards?.items || [], "exploration:event-resolved");
+            });
+            Aethra.EventBus.on("crafting:completed", (data = {}) => {
+                if (data.recipeId) this.updateProgress("CraftRecipe", data.recipeId, Math.max(1, number(data.batches, 1)), data);
+                this.handleItemsAcquired(data.outputs || [], "crafting:completed");
+            });
             Aethra.EventBus.on("NPCInteracted", (data = {}) => {
                 const npcId = data.npcId || data.id || data.npc?.id;
                 if (npcId) this.updateProgress("TalkToNPC", npcId, 1, data);
@@ -203,6 +222,11 @@
 
         getDefinition(questId) {
             let definition = Aethra.GameData.quests?.[questId] || null;
+            if (questId === "tutorial_apprentice_craft" && Aethra.GameState.hero?.introProfessionId) {
+                definition = Aethra.ProfessionSystem?.getIntroQuestDefinition?.(
+                    Aethra.GameState.hero.introProfessionId
+                ) || definition;
+            }
             if (!definition && String(questId).startsWith("intro_profession_")) {
                 const professionId = String(questId).replace("intro_profession_", "");
                 definition = Aethra.ProfessionSystem?.getIntroQuestDefinition?.(professionId) || null;
@@ -225,7 +249,9 @@
                         const previousType = inferObjectiveType(entry);
                         return previousType === objective.type && targetsMatch(objective.type, inferObjectiveTarget(entry, previousType), objective.target);
                     })
-                    || previousObjectives[index]
+                    || (previousObjectives[index]?.type == null && previousObjectives[index]?.target == null
+                        ? previousObjectives[index]
+                        : null)
                     || {};
                 const rawProgress = previous.progress ?? previous.current ?? objective.progress ?? 0;
                 const wasCompleted = Boolean(previous.completed) || status === "completed";
@@ -268,7 +294,11 @@
             const active = [];
             const activeIds = new Set();
             state.active.forEach((rawQuest) => {
-                const repaired = this.repairRuntimeQuest(rawQuest, "active");
+                const introProfessionId = Aethra.GameState.hero?.introProfessionId;
+                const migratedQuest = rawQuest?.id === "tutorial_apprentice_craft" && introProfessionId
+                    ? { ...rawQuest, id: `intro_profession_${introProfessionId}` }
+                    : rawQuest;
+                const repaired = this.repairRuntimeQuest(migratedQuest, "active");
                 if (!repaired || completedIds.has(repaired.id) || activeIds.has(repaired.id)) return;
                 activeIds.add(repaired.id);
                 active.push(repaired);
@@ -467,15 +497,26 @@
             Aethra.EventBus.emit("QuestFinished", clone(quest));
             Aethra.EventBus.emit("quest:finished", clone(quest));
 
-            if (quest.nextQuestId && this.getDefinition(quest.nextQuestId)) {
-                this.acceptQuest(quest.nextQuestId);
-                this.trackQuest(quest.nextQuestId, { save: false });
+            const nextQuestId = this.resolveNextQuestId(quest);
+            if (nextQuestId && this.getDefinition(nextQuestId)) {
+                this.acceptQuest(nextQuestId);
+                this.trackQuest(nextQuestId, { save: false });
             } else if (Aethra.GameState.ui?.trackedQuestId === questId) {
                 this.trackQuest(state.active[0]?.id || null, { save: false });
             }
 
             this.save("quest-finished");
             return quest;
+        },
+
+        resolveNextQuestId(quest) {
+            if (quest?.nextQuestByIntroProfession) {
+                const professionId = Aethra.GameState.hero?.introProfessionId;
+                return Aethra.ProfessionSystem?.introPaths?.[professionId]
+                    ? `intro_profession_${professionId}`
+                    : null;
+            }
+            return quest?.nextQuestId || null;
         },
 
         registerQuest(questId, definition, options = {}) {
@@ -538,7 +579,11 @@
             let actionLabel = "Ver missão";
             let detail = objective.label;
 
-            if (["StartHunt", "DefeatEnemy", "EnterZone", "ItemAcquired"].includes(objective.type)) {
+            if (objective.type === "DefeatInHunt") {
+                action = "focus-hunt";
+                actionLabel = "Continuar expedição";
+                detail = "Continue combatendo nesta expedição; qualquer criatura derrotada conta.";
+            } else if (["StartHunt", "DefeatEnemy", "EnterZone", "ItemAcquired"].includes(objective.type)) {
                 action = "open-hunt-map";
                 actionLabel = objective.type === "StartHunt" ? "Escolher expedição" : "Abrir mapa";
                 detail = objective.type === "DefeatEnemy"
@@ -560,6 +605,13 @@
                 detail = profession
                     ? `Procure recursos de ${profession.name} durante uma expedição.`
                     : "Procure uma atividade compatível durante uma expedição.";
+            } else if (objective.type === "CraftRecipe") {
+                const recipe = Aethra.RecipeCatalog?.get?.(objective.target);
+                action = "open-workshop";
+                actionLabel = "Abrir oficina";
+                detail = recipe
+                    ? `Produza ${recipe.name} na oficina usando os materiais indicados.`
+                    : "Abra a oficina e conclua a receita indicada.";
             }
 
             return {
@@ -569,6 +621,8 @@
                 action,
                 actionLabel,
                 target: objective.target,
+                huntId: objective.huntId || (["StartHunt", "DefeatInHunt"].includes(objective.type) ? objective.target : null),
+                professionId: objective.professionId || Aethra.RecipeCatalog?.get?.(objective.target)?.professionId || profession?.id || null,
                 detail
             };
         },
@@ -580,6 +634,73 @@
                 ...totals,
                 percent: Math.round((totals.progress / Math.max(1, totals.required)) * 100)
             };
+        },
+
+        auditReachability() {
+            const issues = [];
+            const definitions = [
+                ...Object.entries(Aethra.GameData.quests || {}).map(([id, definition]) => normalizeDefinition(id, definition)),
+                ...Object.keys(Aethra.ProfessionSystem?.introPaths || {}).map((professionId) => {
+                    const id = `intro_profession_${professionId}`;
+                    return normalizeDefinition(id, Aethra.ProfessionSystem.getIntroQuestDefinition(professionId));
+                })
+            ].filter(Boolean);
+            const hunts = Aethra.HuntCatalog?.getDefinitions?.() || Aethra.HuntSystem?.hunts || {};
+            const huntEntries = Object.values(hunts);
+            const accessibleHunts = (levelReq) => huntEntries.filter((hunt) => number(hunt.minLevel, 1) <= number(levelReq, 1));
+            const hasEnemyAtLevel = (target, levelReq) => accessibleHunts(levelReq).some((hunt) => {
+                return (hunt.enemies || []).some((enemy) => targetsMatch("DefeatEnemy", target, enemy.id));
+            });
+            const recipeOutputs = new Set((Aethra.RecipeCatalog?.all?.() || [])
+                .flatMap((recipe) => (recipe.outputs || []).map((output) => output.itemId)));
+            const explorationResources = new Set(Aethra.ExplorationSystem?.getResourceTemplateIds?.() || []);
+            const monsterDrops = new Set(Object.values(Aethra.GameData.creatures || {})
+                .flatMap((creature) => (creature.lootTable || []).map((drop) => drop.templateId || drop.itemId || drop.id))
+                .filter(Boolean));
+
+            definitions.forEach((quest) => {
+                if (!validateDefinition(quest)) {
+                    issues.push({ questId: quest?.id || null, reason: "invalid-definition" });
+                    return;
+                }
+                quest.objectives.forEach((objective) => {
+                    if (["StartHunt", "DefeatInHunt"].includes(objective.type)) {
+                        const hunt = hunts[objective.target];
+                        if (!hunt) {
+                            issues.push({ questId: quest.id, objectiveId: objective.id, reason: "missing-hunt", target: objective.target });
+                        } else if (number(hunt.minLevel, 1) > quest.levelReq) {
+                            issues.push({ questId: quest.id, objectiveId: objective.id, reason: "hunt-level-gated", target: objective.target });
+                        }
+                    } else if (objective.type === "DefeatEnemy" && !hasEnemyAtLevel(objective.target, quest.levelReq)) {
+                        issues.push({ questId: quest.id, objectiveId: objective.id, reason: "enemy-unreachable", target: objective.target });
+                    } else if (objective.type === "PracticeSkill" && !Aethra.ProfessionSystem?.professions?.[objective.target]) {
+                        issues.push({ questId: quest.id, objectiveId: objective.id, reason: "missing-skill", target: objective.target });
+                    } else if (objective.type === "CraftRecipe" && !Aethra.RecipeCatalog?.get?.(objective.target)) {
+                        issues.push({ questId: quest.id, objectiveId: objective.id, reason: "missing-recipe", target: objective.target });
+                    } else if (objective.type === "ItemAcquired") {
+                        const itemExists = Boolean(Aethra.GameData.items?.[objective.target]);
+                        const sourceExists = explorationResources.has(objective.target)
+                            || recipeOutputs.has(objective.target)
+                            || monsterDrops.has(objective.target);
+                        if (!itemExists || !sourceExists) {
+                            issues.push({
+                                questId: quest.id,
+                                objectiveId: objective.id,
+                                reason: !itemExists ? "missing-item" : "item-source-unreachable",
+                                target: objective.target
+                            });
+                        }
+                    }
+                });
+                if (quest.nextQuestId && !Aethra.GameData.quests?.[quest.nextQuestId] && !String(quest.nextQuestId).startsWith("intro_profession_")) {
+                    issues.push({ questId: quest.id, reason: "missing-next-quest", target: quest.nextQuestId });
+                }
+                if (quest.nextQuestByIntroProfession && Object.keys(Aethra.ProfessionSystem?.introPaths || {}).length === 0) {
+                    issues.push({ questId: quest.id, reason: "missing-intro-profession-routes" });
+                }
+            });
+
+            return { valid: issues.length === 0, checked: definitions.length, issues };
         },
 
         resetQuest(questId) {

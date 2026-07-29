@@ -3658,16 +3658,20 @@
                 Aethra.UIManager?.setPrimaryView?.("hunt", { source: "quest-tracker" });
                 return Aethra.openHuntWorldMap?.({
                     source: "quest-tracker",
-                    huntId: guidance.objective?.type === "StartHunt" ? guidance.target : null
+                    huntId: guidance.huntId || null
                 }) ?? false;
             }
             if (guidance.action === "go-city") {
                 Aethra.UIManager?.setPrimaryView?.("city", { source: "quest-tracker" });
                 return true;
             }
+            if (guidance.action === "focus-hunt") {
+                Aethra.UIManager?.setPrimaryView?.("hunt", { source: "quest-tracker" });
+                return true;
+            }
             if (guidance.action === "open-workshop") {
                 Aethra.UIManager?.setPrimaryView?.("city", { source: "quest-tracker" });
-                return Aethra.ProfessionWorkshopUI?.open?.(guidance.target) ?? false;
+                return Aethra.ProfessionWorkshopUI?.open?.(guidance.professionId || guidance.target) ?? false;
             }
             return Aethra.WindowManager?.openWindow?.("quests-view", { source: "quest-tracker" }) ?? false;
         },

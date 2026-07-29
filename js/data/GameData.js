@@ -569,9 +569,9 @@
                     },
                     {
                         id: "defeat_first_creature",
-                        type: "DefeatEnemy",
-                        target: "forest_wolf",
-                        label: "Derrote 3 Criaturas nas Arredores",
+                        type: "DefeatInHunt",
+                        target: "whispering_forest",
+                        label: "Derrote 3 criaturas no Bosque dos Sussurros",
                         required: 3,
                         progress: 0,
                         completed: false
@@ -588,16 +588,16 @@
             },
             tutorial_first_hunt: {
                 id: "tutorial_first_hunt",
-                title: "A Primeira Caçada nas Arredores",
+                title: "Conheça sua Rota",
                 description:
-                    "Sua primeira vitória provou seu valor! O guarda da cidade solicita que você limpe a infestação dos arredores.",
+                    "Continue no Bosque para dominar o combate. Depois desta etapa, sua jornada seguirá o ofício escolhido na criação do herói.",
                 levelReq: 1,
                 objectives: [
                     {
-                        id: "defeat_goblin_scouts",
-                        type: "DefeatEnemy",
-                        target: "goblin_scout",
-                        label: "Derrote 5 Goblins Batedores",
+                        id: "defeat_more_forest_creatures",
+                        type: "DefeatInHunt",
+                        target: "whispering_forest",
+                        label: "Derrote mais 5 criaturas no Bosque",
                         required: 5,
                         progress: 0,
                         completed: false
@@ -610,7 +610,7 @@
                         { templateId: "ring_bronze_l1", quantity: 1 }
                     ]
                 },
-                nextQuestId: "tutorial_apprentice_craft"
+                nextQuestByIntroProfession: true
             },
             tutorial_apprentice_craft: {
                 id: "tutorial_apprentice_craft",

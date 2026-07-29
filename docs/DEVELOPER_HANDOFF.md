@@ -3,6 +3,7 @@
 Atualizado em: 2026-07-29
 Branch de continuidade: `main`  
 Baseline recebida antes deste ciclo: `f356719`
+Checkpoint imediatamente anterior: `d35f68a`
 
 Este documento é o ponto de entrada para continuar a versão atual. Leia-o antes
 de alterar HUD, automação de hunt, progressão, profissões, coleta, crafting ou
@@ -22,12 +23,19 @@ paralelos que leem e escrevem o mesmo estado.
   usar a atividade, descobrir a skill ou produzir itens.
 - Ofício inicial direciona introdução, missão e ferramenta. Não concede nível ou
   XP gratuito.
+- A introdução tem uma sequência única e alcançável: primeiros combates no
+  Bosque -> domínio básico da Hunt -> ramificação pelo ofício escolhido.
+- Mineração, Esfolamento e Herbalismo recebem uma primeira oportunidade
+  determinística no Bosque; Forjaria recebe 2 minérios de treino e ensina a
+  receita `smelt_iron`. A garantia é consumida uma única vez.
 - Missões usam contrato único (`title`, `objectives[].id/type/target/label/required`
   e `reward`). A criação de personagem não pode redefinir missões do `GameData`.
 - A jornada rastreada aparece na cidade e na Hunt, mostra objetivo, progresso e
   um comando funcional para o próximo passo (mapa, cidade, oficina ou detalhes).
 - Saves com missões antigas ou malformadas são reparados preservando progresso;
   recompensas de missão são entregues uma única vez.
+- `QuestSystem.auditReachability()` valida hunts, inimigos, skills, itens,
+  fontes de recurso, receitas e encadeamentos para impedir objetivos impossíveis.
 - Mineração, esfola e herbalismo possuem política explícita de participação.
 - Primeiro ciclo completo de produção implementado:
   - minério de ferro -> lingote refinado -> espada/peitoral de ferro;
@@ -56,6 +64,7 @@ paralelos que leem e escrevem o mesmo estado.
 | Itens e inventário | `ItemSystem` e `BagSystem` | `GameState.hero.bag` | loot, crafting, HUD | Usar `bag.push`, objetos crus ou IDs inventados fora do catálogo |
 | Loot, venda e reposição de supplies | `js/economy/IdleLoopSystem.js` | configuração do idle loop | modal de supplies, hunt | Reimplementar compra automática em componentes visuais |
 | Missões, progresso, rastreamento e recompensa | `js/progression/QuestSystem.js` | `GameState.quests` + definições de `GameData.quests` | `RenderEngine`, profissão, hunt | Registrar a mesma missão na UI, comparar ID de monstro sem normalização ou conceder recompensa no render |
+| Eventos e garantia introdutória de recursos | `js/world/ExplorationSystem.js` | `GameState.exploration.tutorialGuarantee` | profissão, Hunt e tracker | Sortear ou conceder recursos introdutórios diretamente na HUD |
 | Janelas | `js/ui/WindowManager.js` | registro, papel (`world`/`floating`/`overlay`) e estado | `UIStabilityPass` e todas as HUDs | Criar overlay solto ou calcular outra área segura fora do manager |
 | Geometria final de janelas | `js/ui/UIStabilityPass.js` + `css/aethra-windows.css` | offsets seguros do `WindowManager` e apresentação CSS | janelas registradas | Gravar tamanho/posição de overlay em outro pass |
 | Sprites de personagem | `js/world/SpriteLoader.js` | manifesto e normalização de fonte | `RenderEngine`, criação e HUD do herói | Usar spritesheet de animação bruto em `<img>` |
@@ -107,15 +116,20 @@ materiais, criação de resultados, qualidade e XP de fabricação.
   `skill:xp-changed`, `skill:xp-rejected`, `discipline:xp-changed` e
   `discipline:level-up`.
 - Profissões: `profession:policy-changed`, `profession:xpChanged`,
-  `profession:xpRejected`, `profession:rankUp` e `profession:updated`.
+  `profession:xpRejected`, `profession:rankUp`, `profession:updated`,
+  `profession:intro-prepared` e `profession:intro-started`.
 - Crafting: `crafting:ready`, `crafting:completed`, `crafting:rejected`,
   `crafting:recipe-discovered` (ao descobrir nova receita por nível),
   `crafting:catalog-loaded` (ao carregar o RecipeCatalog).
 - Hunt: `hunt:profession-delay`.
+- Exploração introdutória: `exploration:tutorial-guarantee-queued` e
+  `exploration:tutorial-guarantee-used`.
 - Missões: `QuestAccepted`, `QuestUpdated`, `QuestObjectiveUpdated`,
   `QuestFinished`, `quest:tracking-changed`, `quest:state-repaired` e
-  `quest:reward-granted`. `hunt:started` avança objetivos `StartHunt`; IDs de
-  criatura passam por `MonsterCatalog.resolveId(...)`.
+  `quest:reward-granted`. `hunt:started` avança objetivos `StartHunt`;
+  `EnemyDefeated` também avança `DefeatInHunt`; `crafting:completed` avança
+  `CraftRecipe`; recursos da exploração avançam `ItemAcquired`. IDs de criatura
+  passam por `MonsterCatalog.resolveId(...)`.
 
 Eventos servem para projeção e atualização visual. Um consumidor não deve usar
 o mesmo evento para aplicar novamente a mutação econômica que o originou.
@@ -129,11 +143,13 @@ exploração e quests. `js/core/GameLoader.js` já inclui `CraftingSystem` na or
 correta. Mudar a ordem exige rodar a suíte completa.
 
 O save ativo usa `aethra_save_v71_disciplines` e metadata
-`schemaVersion: 74`. A migração v72 → v73 garante `crafting.discovered`
+`schemaVersion: 75`. A migração v72 → v73 garante `crafting.discovered`
 como array; personagens com crafts anteriores recebem as 12 receitas base como
 descobertas. A migração v73 → v74 cria o contrato persistido de missões,
 `rewardClaims` e marca missões já concluídas como recompensadas; em seguida o
-`QuestSystem` repara definições legadas com `contractVersion: 2`. A migração de
+`QuestSystem` repara definições legadas. A migração v74 → v75 atualiza para
+`contractVersion: 3`, converte a missão genérica de ofício para a rota escolhida
+e reconstrói os objetivos canônicos sem carregar progresso incompatível. A migração de
 profissões usa `hero.professionMigrationVersion: 2`.
 Personagens existentes são migrados sem refazer a introdução; personagens novos
 ou resetados seguem o novo fluxo.
@@ -162,13 +178,17 @@ node scripts/run-integration.mjs --timeout 90 --viewport 1920x1080
 Resultado do checkpoint atual antes do commit:
 
 - quality gate: 619/619 verificações;
-- integração headless: 137/137 verificações em 1280x720 e 1920x1080;
+- integração headless: 139/139 verificações em 1280x720 e 1920x1080;
+- as quatro rotas introdutórias foram simuladas até a conclusão; a suíte também
+  prova o provisionamento de Forjaria e a fila determinística dos três ofícios
+  de coleta;
 - navegador real: save existente reparado, títulos/objetivos/recompensas
   renderizados, botão `Escolher expedição` abre o Mapa Mundi e `Detalhes` abre a
   janela oficial de missões;
 - clique real validado: `Entrar na expedição` inicia a Hunt, fecha o mapa e não
   abre Skills; console sem erros e nenhuma imagem 404 no fluxo;
-- layout verificado em 1280x720 e via runner headless em 1920x1080.
+- layout verificado no navegador em 1280x720 e 1920x1080, sem overflow
+  horizontal e sem erros de console.
 
 Ao continuar, confirme também console sem erros, rede sem 404, personagem novo e
 save migrado. Atualize estes números se a suíte crescer.
@@ -179,7 +199,8 @@ save migrado. Atualize estes números se a suíte crescer.
 2. Criar durabilidade e reparo transacional usando os mesmos donos de item/bag.
 3. Adicionar especializações e perks de profissão com retornos decrescentes.
 4. Tornar NPCs e estações das missões introdutórias presença interativa no
-   mundo/cidade (o rastreador e os comandos de direção já estão concluídos).
+   mundo/cidade (cadeia, recursos garantidos, tracker e comandos já estão
+   concluídos).
 5. Levar inventário, moeda, crafting e RNG valioso para backend autoritativo,
    conforme `docs/BACKEND_AUTHORITY_CONTRACT.md`.
 6. Ampliar catálogo de receitas com Tier 3 (Mestre) e materiais de dungeon.

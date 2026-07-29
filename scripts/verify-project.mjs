@@ -126,20 +126,24 @@ check(
 );
 check(
     /getIntroQuestDefinition\(/.test(professionSource)
-        && /reward:\s*\{\s*gold:\s*0,\s*xp:\s*0,\s*items:\s*\[\]/.test(professionSource),
+        && /CraftRecipe/.test(professionSource)
+        && /queueIntroGuarantee/.test(professionSource)
+        && /reward:\s*\{\s*gold:\s*40,\s*xp:\s*75,\s*items:\s*\[\]/.test(professionSource),
     "ProfessionSystem deve gerar missões iniciais no contrato canônico"
 );
 check(
-    /CONTRACT_VERSION\s*=\s*2/.test(questSystemSource)
+    /CONTRACT_VERSION\s*=\s*3/.test(questSystemSource)
         && /grantRewards\(quest\)/.test(questSystemSource)
         && /MonsterCatalog\?\.resolveId/.test(questSystemSource)
-        && /["']hunt:started["']/.test(questSystemSource),
+        && /["']hunt:started["']/.test(questSystemSource)
+        && /auditReachability\(\)/.test(questSystemSource)
+        && /DefeatInHunt/.test(questSystemSource),
     "QuestSystem deve migrar estado, normalizar alvos e conceder recompensas"
 );
 check(
-    /CURRENT_SCHEMA_VERSION\s*=\s*74/.test(saveManagerSource)
-        && /quests\.contractVersion\s*=\s*2/.test(saveManagerSource),
-    "Save v74 deve migrar o contrato persistido de missões"
+    /CURRENT_SCHEMA_VERSION\s*=\s*75/.test(saveManagerSource)
+        && /quests\.contractVersion\s*=\s*3/.test(saveManagerSource),
+    "Save v75 deve migrar o contrato persistido de missões"
 );
 
 const authorityGatewaySource = read("js/infrastructure/AuthorityGateway.js");

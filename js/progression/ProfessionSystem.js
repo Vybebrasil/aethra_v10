@@ -115,6 +115,10 @@
             });
             Aethra.EventBus.on("save:loaded", () => this.ensureState());
             Aethra.EventBus.on("game:reset", () => this.ensureState(true));
+            Aethra.EventBus.on("quest:accepted", ({ id } = {}) => {
+                if (!String(id || "").startsWith("intro_profession_")) return;
+                this.activateIntroPath(String(id).replace("intro_profession_", ""));
+            });
         },
 
         getXPRequired(level) {
@@ -292,6 +296,10 @@
             });
             if (!payload?.accepted) return payload || false;
             this.syncCompatibilityState();
+            Aethra.QuestSystem?.updateProgress?.("PracticeSkill", professionId, 1, {
+                source: options.source || "profession-action",
+                action
+            });
             const professionPayload = { ...clone(payload), professionId, action, definition: clone(definition), state: this.getState(professionId) };
             Aethra.EventBus.emit("profession:xpChanged", professionPayload);
             Aethra.EventBus.emit("profession:updated", professionPayload);
@@ -320,19 +328,87 @@
         getIntroQuestDefinition(professionId) {
             const path = INTRO_PATHS[professionId];
             if (!path) return null;
+            const objectivesByProfession = {
+                mining: [
+                    {
+                        id: "practice_mining",
+                        type: "PracticeSkill",
+                        target: "mining",
+                        huntId: "whispering_forest",
+                        required: 1,
+                        label: "Minere um veio no Bosque dos Sussurros"
+                    },
+                    {
+                        id: "collect_first_iron_ore",
+                        type: "ItemAcquired",
+                        target: "iron_ore",
+                        huntId: "whispering_forest",
+                        required: 1,
+                        label: "Colete seu primeiro Minério de Ferro"
+                    }
+                ],
+                skinning: [
+                    {
+                        id: "practice_skinning",
+                        type: "PracticeSkill",
+                        target: "skinning",
+                        huntId: "whispering_forest",
+                        required: 1,
+                        label: "Aproveite o couro de uma fera derrotada"
+                    },
+                    {
+                        id: "collect_first_beast_hide",
+                        type: "ItemAcquired",
+                        target: "beast_hide",
+                        huntId: "whispering_forest",
+                        required: 1,
+                        label: "Colete seu primeiro Couro de Fera"
+                    }
+                ],
+                herbalism: [
+                    {
+                        id: "practice_herbalism",
+                        type: "PracticeSkill",
+                        target: "herbalism",
+                        huntId: "whispering_forest",
+                        required: 1,
+                        label: "Colha um foco de ervas no Bosque dos Sussurros"
+                    },
+                    {
+                        id: "collect_first_wild_herb",
+                        type: "ItemAcquired",
+                        target: "wild_herb",
+                        huntId: "whispering_forest",
+                        required: 1,
+                        label: "Colete sua primeira Erva Silvestre"
+                    }
+                ],
+                blacksmithing: [
+                    {
+                        id: "receive_training_ore",
+                        type: "ItemAcquired",
+                        target: "iron_ore",
+                        professionId: "blacksmithing",
+                        required: 2,
+                        label: "Receba 2 Minérios de Ferro para treinamento"
+                    },
+                    {
+                        id: "craft_first_ingot",
+                        type: "CraftRecipe",
+                        target: "smelt_iron",
+                        professionId: "blacksmithing",
+                        required: 1,
+                        label: "Funda seu primeiro Lingote de Ferro na oficina"
+                    }
+                ]
+            };
             return {
                 id: `intro_profession_${professionId}`,
                 title: path.title,
                 description: path.summary,
                 levelReq: 1,
-                objectives: [{
-                    id: `practice_${professionId}`,
-                    type: "PracticeSkill",
-                    target: professionId,
-                    required: 1,
-                    label: path.objective
-                }],
-                reward: { gold: 0, xp: 0, items: [] }
+                objectives: clone(objectivesByProfession[professionId] || []),
+                reward: { gold: 40, xp: 75, items: [] }
             };
         },
 
@@ -340,8 +416,17 @@
             const path = INTRO_PATHS[professionId];
             if (!path) return false;
             const hero = Aethra.GameState.hero || (Aethra.GameState.hero = {});
+            hero.introPrepared = hero.introPrepared && typeof hero.introPrepared === "object"
+                ? hero.introPrepared
+                : {};
+            const policy = DEFINITIONS[professionId]?.policy ? this.getPolicy(professionId) : null;
+            const alreadyPrepared = hero.introPrepared[professionId] === true
+                || Boolean(policy?.changedAt)
+                || (path.toolId && number(Aethra.BagSystem?.countItem?.(path.toolId), 0) > 0);
             hero.introProfessionId = professionId;
-            if (DEFINITIONS[professionId]?.policy) this.setCollectionPolicy(professionId, true, "intro-path");
+            if (DEFINITIONS[professionId]?.policy && !alreadyPrepared) {
+                this.setCollectionPolicy(professionId, true, "intro-path");
+            }
 
             if (path.toolId && number(Aethra.BagSystem?.countItem?.(path.toolId), 0) === 0) {
                 const tool = Aethra.ItemSystem?.generateItem?.(path.toolId, {
@@ -353,15 +438,50 @@
                     Aethra.BagSystem?.addItem?.(tool, "intro-profession");
                 }
             }
+            hero.introPrepared[professionId] = true;
 
             const questId = `intro_profession_${professionId}`;
             Aethra.QuestSystem?.registerQuest?.(
                 questId,
                 this.getIntroQuestDefinition(professionId)
             );
-            Aethra.QuestSystem?.acceptQuest?.(questId);
-            Aethra.EventBus.emit("profession:intro-started", { professionId, path: clone(path), questId });
+            Aethra.EventBus.emit("profession:intro-prepared", { professionId, path: clone(path), questId });
             return { professionId, path: clone(path), questId };
+        },
+
+        activateIntroPath(professionId) {
+            const path = INTRO_PATHS[professionId];
+            if (!path) return false;
+            const prepared = this.startIntroPath(professionId);
+            const hero = Aethra.GameState.hero || (Aethra.GameState.hero = {});
+            hero.introProvisioned = hero.introProvisioned && typeof hero.introProvisioned === "object"
+                ? hero.introProvisioned
+                : {};
+
+            if (professionId === "blacksmithing" && !hero.introProvisioned.blacksmithing) {
+                const ore = Aethra.ItemSystem?.generateItem?.("iron_ore", {
+                    quantity: 2,
+                    source: "intro-profession:blacksmithing",
+                    origin: "intro-profession",
+                    quality: 20,
+                    potential: 20,
+                    tradeable: false
+                });
+                if (ore && Aethra.BagSystem?.addItem?.(ore, "intro-profession:blacksmithing")) {
+                    hero.introProvisioned.blacksmithing = true;
+                    Aethra.EventBus.emit("ItemAcquired", ore);
+                }
+            } else if (["mining", "skinning", "herbalism"].includes(professionId)) {
+                Aethra.ExplorationSystem?.queueIntroGuarantee?.(professionId);
+            }
+
+            hero.introProfessionActivatedAt = hero.introProfessionActivatedAt || new Date().toISOString();
+            Aethra.EventBus.emit("profession:intro-started", {
+                professionId,
+                path: clone(path),
+                questId: prepared.questId
+            });
+            return prepared;
         },
 
         unlock(professionId) {

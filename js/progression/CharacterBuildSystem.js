@@ -292,7 +292,7 @@
             state.professionPolicies = {};
             state.crafting = null;
             state.quests = {
-                contractVersion: Aethra.QuestSystem?.CONTRACT_VERSION || 2,
+                contractVersion: Aethra.QuestSystem?.CONTRACT_VERSION || 3,
                 active: [],
                 completed: [],
                 available: [],
@@ -301,6 +301,9 @@
             state.ui = state.ui || {};
             state.ui.trackedQuestId = null;
             hero.introProfessionId = null;
+            hero.introProfessionActivatedAt = null;
+            hero.introPrepared = {};
+            hero.introProvisioned = {};
             state.hunt = {
                 isActive: false,
                 isPaused: false,

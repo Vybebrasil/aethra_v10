@@ -12,7 +12,7 @@
     // A mudança para combate por rodadas e criação distribuída inaugura um
     // formato de progressão novo. O save anterior permanece preservado.
     const SAVE_KEY = configuredSaveKey || 'aethra_save_v71_disciplines';
-    const CURRENT_SCHEMA_VERSION = 74;
+    const CURRENT_SCHEMA_VERSION = 75;
     const AUTO_SAVE_DELAY = 120;
 
     let initialized = false;
@@ -98,6 +98,18 @@
                 }
             });
             migrated.quests.contractVersion = 2;
+        }
+
+        // v74 → v75: tutorial acessível e ramificado pelo ofício inicial.
+        // O QuestSystem v3 reconstrói objetivos canônicos e converte a missão
+        // genérica antiga para a rota escolhida pelo personagem.
+        if (fromVersion < 75) {
+            if (!migrated.quests || typeof migrated.quests !== 'object') migrated.quests = {};
+            migrated.quests.contractVersion = 3;
+            if (!Array.isArray(migrated.quests.active)) migrated.quests.active = [];
+            if (!Array.isArray(migrated.quests.completed)) migrated.quests.completed = [];
+            if (!Array.isArray(migrated.quests.available)) migrated.quests.available = [];
+            if (!Array.isArray(migrated.quests.rewardClaims)) migrated.quests.rewardClaims = [];
         }
 
         migrated.meta.schemaVersion = CURRENT_SCHEMA_VERSION;

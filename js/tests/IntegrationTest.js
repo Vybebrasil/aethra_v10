@@ -220,6 +220,17 @@
                 )
             );
 
+            const questReachability = Aethra.QuestSystem?.auditReachability?.();
+            checks.push(
+                createCheck(
+                    "Missões só apontam para conteúdo alcançável",
+                    questReachability?.valid === true,
+                    questReachability?.valid
+                        ? `${questReachability.checked} missões auditadas`
+                        : JSON.stringify(questReachability?.issues || [])
+                )
+            );
+
             const repairedLegacyQuest = Aethra.QuestSystem?.repairRuntimeQuest?.({
                 id: "tutorial_first_steps",
                 title: "Legacy",
@@ -235,11 +246,84 @@
                     repairedLegacyQuest?.title === "Primeiros Passos em Aethra"
                         && repairedLegacyQuest.objectives?.[0]?.type === "StartHunt"
                         && repairedLegacyQuest.objectives?.[0]?.completed === true
-                        && repairedLegacyQuest.objectives?.[1]?.type === "DefeatEnemy"
+                        && repairedLegacyQuest.objectives?.[1]?.type === "DefeatInHunt"
                         && repairedLegacyQuest.objectives?.[1]?.progress === 2,
                     repairedLegacyQuest
                         ? `${repairedLegacyQuest.objectives[0].progress}/${repairedLegacyQuest.objectives[0].required} e ${repairedLegacyQuest.objectives[1].progress}/${repairedLegacyQuest.objectives[1].required}`
                         : "missão não reparada"
+                )
+            );
+
+            const routeBackup = {
+                hero: JSON.parse(JSON.stringify(Aethra.GameState.hero || {})),
+                quests: JSON.parse(JSON.stringify(Aethra.GameState.quests || {})),
+                ui: JSON.parse(JSON.stringify(Aethra.GameState.ui || {})),
+                policies: JSON.parse(JSON.stringify(Aethra.GameState.professionPolicies || {})),
+                exploration: JSON.parse(JSON.stringify(Aethra.GameState.exploration || {})),
+                questIds: new Set(Object.keys(Aethra.GameData.quests || {}))
+            };
+            const introRouteResults = Object.keys(Aethra.ProfessionSystem?.introPaths || {}).map((professionId) => {
+                Aethra.GameState.hero.introProfessionId = professionId;
+                Aethra.GameState.hero.introProvisioned = {};
+                Aethra.GameState.quests = {
+                    contractVersion: Aethra.QuestSystem.CONTRACT_VERSION,
+                    active: [], completed: [], available: [], rewardClaims: []
+                };
+                Aethra.GameState.ui.trackedQuestId = null;
+                const bridge = Aethra.QuestSystem.acceptQuest("tutorial_first_hunt");
+                const bridgeGuidance = Aethra.QuestSystem.getGuidance(bridge);
+                Aethra.QuestSystem.updateProgress("DefeatInHunt", "whispering_forest", 5, { source: "integration-route" });
+                const introId = `intro_profession_${professionId}`;
+                const intro = Aethra.QuestSystem.getQuest(introId);
+                const queuedGuarantee = Aethra.GameState.exploration?.tutorialGuarantee || null;
+                const provisionedAtStart = professionId !== "blacksmithing"
+                    || intro?.objectives?.find((objective) => objective.id === "receive_training_ore")?.completed === true;
+                (intro?.objectives || []).forEach((objective) => {
+                    Aethra.QuestSystem.updateProgress(
+                        objective.type,
+                        objective.target,
+                        objective.required,
+                        { source: "integration-route" }
+                    );
+                });
+                return {
+                    professionId,
+                    bridgeCompleted: Aethra.QuestSystem.getQuest("tutorial_first_hunt")?.status === "completed",
+                    introCompleted: Aethra.QuestSystem.getQuest(introId)?.status === "completed",
+                    objectiveTypes: intro?.objectives?.map((objective) => objective.type) || [],
+                    guaranteeEventId: queuedGuarantee?.professionId === professionId ? queuedGuarantee.eventId : null,
+                    provisionedAtStart,
+                    bridgeAction: bridgeGuidance?.action || null,
+                    accepted: Boolean(bridge && intro)
+                };
+            });
+            Aethra.GameState.hero = routeBackup.hero;
+            Aethra.GameState.quests = routeBackup.quests;
+            Aethra.GameState.ui = routeBackup.ui;
+            Aethra.GameState.professionPolicies = routeBackup.policies;
+            Aethra.GameState.exploration = routeBackup.exploration;
+            Object.keys(Aethra.GameData.quests || {}).forEach((questId) => {
+                if (!routeBackup.questIds.has(questId) && questId.startsWith("intro_profession_")) {
+                    delete Aethra.GameData.quests[questId];
+                }
+            });
+            checks.push(
+                createCheck(
+                    "As quatro rotas iniciais podem ser concluídas",
+                    introRouteResults.length === 4 && introRouteResults.every((route) => {
+                        const expectedGuarantee = {
+                            mining: "mining",
+                            skinning: "creature-harvest",
+                            herbalism: "herb"
+                        }[route.professionId];
+                        return route.accepted
+                            && route.bridgeCompleted
+                            && route.introCompleted
+                            && route.provisionedAtStart
+                            && route.bridgeAction === "focus-hunt"
+                            && (expectedGuarantee ? route.guaranteeEventId === expectedGuarantee : true);
+                    }),
+                    introRouteResults.map((route) => `${route.professionId}:${route.introCompleted ? "ok" : "falhou"}`).join(" · ")
                 )
             );
 
