@@ -39,6 +39,7 @@
         "XPSystem",
         "ProfessionSystem",
         "RecipeCatalog",
+        "EquipmentMaintenanceSystem",
         "CharacterBuildSystem",
         "BossSystem",
         "QuestSystem",
@@ -240,28 +241,126 @@
                     introPrepared: null,
                     introProvisioned: null
                 },
+                playerEquipment: {
+                    weapon: {
+                        instanceId: "legacy_weapon",
+                        templateId: "iron_sword",
+                        slot: "weapon",
+                        stackable: false
+                    }
+                },
                 quests: { active: [], completed: [], available: [], rewardClaims: [], contractVersion: 3 }
             });
             const currentProfessionSave = Aethra.SaveManager?.migrateForTest?.({
-                meta: { schemaVersion: 76 },
+                meta: { schemaVersion: 77 },
                 hero: {
                     professionPerks: { mining: ["keen_vein", "specialization_extractor"] },
                     introPrepared: { mining: true },
                     introProvisioned: {}
+                },
+                maintenance: {
+                    policy: { enabled: true, thresholdPercent: 30, reserveGold: 50, maxGoldPerCycle: 80 }
                 }
             });
             checks.push(
                 createCheck(
-                    "Save v76 migra saves antigos e preserva perks atuais",
-                    legacyProfessionSave?.toVersion === 76
-                        && legacyProfessionSave?.state?.meta?.schemaVersion === 76
+                    "Save v77 migra durabilidade e preserva políticas atuais",
+                    legacyProfessionSave?.toVersion === 77
+                        && legacyProfessionSave?.state?.meta?.schemaVersion === 77
                         && typeof legacyProfessionSave?.state?.hero?.professionPerks === "object"
                         && typeof legacyProfessionSave?.state?.hero?.introPrepared === "object"
+                        && legacyProfessionSave?.state?.playerEquipment?.weapon?.durability?.current === 100
+                        && legacyProfessionSave?.state?.maintenance?.policy?.enabled === false
                         && currentProfessionSave?.state?.hero?.professionPerks?.mining?.[0] === "keen_vein"
-                        && currentProfessionSave?.state?.hero?.professionPerks?.mining?.[1] === "specialization_extractor",
+                        && currentProfessionSave?.state?.hero?.professionPerks?.mining?.[1] === "specialization_extractor"
+                        && currentProfessionSave?.state?.maintenance?.policy?.enabled === true
+                        && currentProfessionSave?.state?.maintenance?.policy?.thresholdPercent === 30,
                     `legado v${legacyProfessionSave?.fromVersion || "?"}→v${legacyProfessionSave?.toVersion || "?"} · ${currentProfessionSave?.state?.hero?.professionPerks?.mining?.length || 0} perks preservados`
                 )
             );
+
+            const maintenanceProbe = Aethra.ItemSystem?.generateItem?.("training_sword", {
+                quality: 35,
+                potential: 35,
+                source: "integration-maintenance"
+            });
+            const maintenanceWear = Aethra.EquipmentMaintenanceSystem?.applyWear?.(
+                maintenanceProbe,
+                10,
+                { emit: false, source: "integration-maintenance" }
+            );
+            maintenanceProbe.durability.current = 20;
+            const lowDurabilityEffectiveness = Aethra.EquipmentMaintenanceSystem?.getEffectiveness?.(maintenanceProbe);
+            maintenanceProbe.durability.current = 0;
+            const brokenEffectiveness = Aethra.EquipmentMaintenanceSystem?.getEffectiveness?.(maintenanceProbe);
+            checks.push(
+                createCheck(
+                    "Equipamentos nascem com durabilidade e perdem condição pelo domínio oficial",
+                    maintenanceProbe?.durability?.max === 100
+                        && maintenanceWear?.before === 100
+                        && maintenanceWear?.after === 90,
+                    `${maintenanceWear?.before ?? "?"}→${maintenanceWear?.after ?? "?"} de ${maintenanceProbe?.durability?.max || "?"}`
+                )
+            );
+            checks.push(
+                createCheck(
+                    "Baixa durabilidade reduz atributos e item quebrado fica inativo",
+                    Number(lowDurabilityEffectiveness) > 0.75
+                        && Number(lowDurabilityEffectiveness) < 1
+                        && brokenEffectiveness === 0,
+                    `20% = ${Math.round(Number(lowDurabilityEffectiveness || 0) * 100)}% ativo · quebrado = ${brokenEffectiveness}`
+                )
+            );
+
+            const maintenanceTransactionBackup = {
+                bag: JSON.parse(JSON.stringify(Aethra.GameState.hero?.bag || [])),
+                gold: Number(Aethra.GameState.hero?.gold || 0),
+                maintenance: JSON.parse(JSON.stringify(Aethra.GameState.maintenance || {})),
+                skillProgression: JSON.parse(JSON.stringify(Aethra.GameState.hero?.skillProgression || {})),
+                professions: JSON.parse(JSON.stringify(Aethra.GameState.professions || {}))
+            };
+            maintenanceProbe.durability.current = 50;
+            const repairMaterial = Aethra.ItemSystem?.generateItem?.("iron_ore", {
+                quantity: 3,
+                quality: 20,
+                potential: 20,
+                source: "integration-maintenance"
+            });
+            Aethra.BagSystem?.addItem?.(repairMaterial, "integration-maintenance");
+            Aethra.GameState.hero.gold = 1000;
+            const materialBeforeRepair = Aethra.BagSystem?.countItem?.("iron_ore") || 0;
+            const repairResult = Aethra.EquipmentMaintenanceSystem?.repairItem?.(maintenanceProbe, {
+                bypassStation: true,
+                commandId: "integration-maintenance-repair",
+                save: false,
+                source: "integration-maintenance"
+            });
+            const duplicateRepair = Aethra.EquipmentMaintenanceSystem?.repairItem?.(maintenanceProbe, {
+                bypassStation: true,
+                commandId: "integration-maintenance-repair",
+                save: false,
+                source: "integration-maintenance"
+            });
+            const materialAfterRepair = Aethra.BagSystem?.countItem?.("iron_ore") || 0;
+            checks.push(
+                createCheck(
+                    "Reparo consome material e Gold uma única vez e concede XP de ofício",
+                    repairResult?.accepted === true
+                        && maintenanceProbe.durability.current === maintenanceProbe.durability.max
+                        && Number(repairResult.gold) > 0
+                        && materialAfterRepair < materialBeforeRepair
+                        && Number(repairResult.xp) > 0
+                        && duplicateRepair?.reason === "duplicate-command",
+                    repairResult?.accepted
+                        ? `${repairResult.gold} G · ${repairResult.materialQuantity} material · +${repairResult.xp} XP`
+                        : `falha: ${repairResult?.reason || "desconhecida"}`
+                )
+            );
+            Aethra.GameState.hero.bag = maintenanceTransactionBackup.bag;
+            Aethra.GameState.hero.gold = maintenanceTransactionBackup.gold;
+            Aethra.GameState.maintenance = maintenanceTransactionBackup.maintenance;
+            Aethra.GameState.hero.skillProgression = maintenanceTransactionBackup.skillProgression;
+            Aethra.GameState.professions = maintenanceTransactionBackup.professions;
 
             const repairedLegacyQuest = Aethra.QuestSystem?.repairRuntimeQuest?.({
                 id: "tutorial_first_steps",

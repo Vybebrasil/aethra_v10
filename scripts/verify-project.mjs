@@ -119,6 +119,7 @@ const characterBuildSource = read("js/progression/CharacterBuildSystem.js");
 const professionSource = read("js/progression/ProfessionSystem.js");
 const professionSpecializationUiSource = read("js/ui/ProfessionSpecializationUI.js");
 const saveManagerSource = read("js/infrastructure/SaveManager.js");
+const maintenanceSource = read("js/items/EquipmentMaintenanceSystem.js");
 check(
     !/registerQuest\(["']tutorial_first_steps["']/.test(characterCreationSource)
         && !/acceptQuest\(["']tutorial_first_steps["']/.test(characterCreationSource)
@@ -157,10 +158,19 @@ check(
     "QuestSystem deve migrar estado, normalizar alvos e conceder recompensas"
 );
 check(
-    /CURRENT_SCHEMA_VERSION\s*=\s*76/.test(saveManagerSource)
+    /CURRENT_SCHEMA_VERSION\s*=\s*77/.test(saveManagerSource)
         && /quests\.contractVersion\s*=\s*3/.test(saveManagerSource)
-        && /hero\.professionPerks/.test(saveManagerSource),
-    "Save v76 deve migrar missões e benefícios permanentes de ofício"
+        && /hero\.professionPerks/.test(saveManagerSource)
+        && /item\.durability/.test(saveManagerSource),
+    "Save v77 deve migrar missões, perks e durabilidade de equipamentos"
+);
+check(
+    /battle:damage-dealt/.test(maintenanceSource)
+        && /primary-attack:used/.test(maintenanceSource)
+        && /BagSystem\?\.consumeItem/.test(maintenanceSource)
+        && /ProfessionSystem\?\.grantActionXP/.test(maintenanceSource)
+        && /maintenance:policy-changed/.test(maintenanceSource),
+    "EquipmentMaintenanceSystem deve ser a autoridade de desgaste, reparo e automação"
 );
 
 const authorityGatewaySource = read("js/infrastructure/AuthorityGateway.js");

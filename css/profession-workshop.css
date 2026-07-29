@@ -106,6 +106,7 @@
     border-radius: 8px; background: #1f3d49;
     color: #9cbeca; font: 800 8px "Outfit", sans-serif;
 }
+.badge-count.is-alert { background: #5a281f; color: #ffc0a4; }
 .badge-new-pill {
     display: inline-grid; place-items: center;
     height: 16px; padding: 0 5px;
@@ -280,6 +281,88 @@
     border-color: #33464d; color: #60747b; background: #0a1316; cursor: not-allowed;
 }
 
+/* Manutencao de equipamentos */
+.workshop-maintenance-dashboard { display: grid; gap: 10px; min-width: 0; }
+.workshop-maintenance-summary {
+    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px;
+}
+.workshop-maintenance-summary span {
+    display: grid; gap: 3px; padding: 9px;
+    border: 1px solid #29434c; border-radius: 8px; background: #081519;
+}
+.workshop-maintenance-summary small,
+.workshop-maintenance-policy small,
+.workshop-maintenance-card small {
+    color: #738a93; font: 900 8px "Outfit", sans-serif; letter-spacing: .07em;
+}
+.workshop-maintenance-summary strong { color: var(--workshop-accent); font-size: 13px; }
+.workshop-maintenance-policy {
+    display: grid; grid-template-columns: minmax(220px, 1.4fr) auto repeat(3, minmax(105px, .55fr));
+    gap: 8px; align-items: end; padding: 10px;
+    border: 1px solid color-mix(in srgb, var(--workshop-accent) 35%, #29434c);
+    border-radius: 10px; background: color-mix(in srgb, var(--workshop-accent) 5%, #071216);
+}
+.workshop-maintenance-policy > div { align-self: center; }
+.workshop-maintenance-policy > div strong { display: block; margin: 2px 0; color: #e3e9e8; font-size: 11px; }
+.workshop-maintenance-policy p { margin: 0; color: #80949b; font-size: 9px; }
+.workshop-maintenance-policy label {
+    position: relative; display: grid; gap: 4px; color: #84979e; font: 800 8px "Outfit", sans-serif;
+}
+.workshop-maintenance-policy label input[type="number"] {
+    width: 100%; height: 30px; padding: 0 24px 0 8px;
+    border: 1px solid #35515c; border-radius: 7px; color: #dce6e8; background: #050d10;
+    font: 800 10px "Outfit", sans-serif;
+}
+.workshop-maintenance-policy label > em { position: absolute; right: 8px; bottom: 8px; color: #607780; font-style: normal; }
+.workshop-policy-toggle { display: flex !important; align-items: center; align-self: center; gap: 6px !important; }
+.workshop-policy-toggle input { accent-color: var(--workshop-accent); }
+.workshop-policy-toggle span { color: #dce6e8; font-size: 9px; }
+.workshop-maintenance-actions {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 8px 10px; border: 1px solid #243c45; border-radius: 8px; background: #061014;
+}
+.workshop-maintenance-actions p { display: grid; gap: 1px; margin: 0; }
+.workshop-maintenance-actions strong { color: #dce6e8; font-size: 10px; }
+.workshop-maintenance-actions small { color: #71868e; font-size: 8px; }
+.workshop-maintenance-actions button,
+.workshop-maintenance-card footer button {
+    min-width: 118px; height: 31px; border: 1px solid color-mix(in srgb, var(--workshop-accent) 60%, #344b53);
+    border-radius: 7px; color: #f2d996; background: color-mix(in srgb, var(--workshop-accent) 12%, #09171b);
+    font: 900 9px "Outfit", sans-serif; cursor: pointer;
+}
+.workshop-maintenance-actions button:disabled,
+.workshop-maintenance-card footer button:disabled { opacity: .42; cursor: not-allowed; }
+.workshop-maintenance-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.workshop-maintenance-card {
+    display: grid; gap: 9px; padding: 10px; min-width: 0;
+    border: 1px solid #29434c; border-radius: 10px;
+    background: linear-gradient(135deg, #0b191d, #061014);
+}
+.workshop-maintenance-card.is-worn { border-color: #8d713a; }
+.workshop-maintenance-card.is-critical { border-color: #c66b43; box-shadow: inset 3px 0 #d98150; }
+.workshop-maintenance-card.is-broken { border-color: #a64141; box-shadow: inset 3px 0 #df5959; }
+.workshop-maintenance-card > header { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.workshop-maintenance-card > header > span {
+    display: grid; width: 34px; height: 34px; place-items: center;
+    border: 1px solid #3b555e; border-radius: 8px; color: var(--workshop-accent); font-size: 17px;
+}
+.workshop-maintenance-card header strong { display: block; overflow: hidden; color: #e1e8e8; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.workshop-maintenance-card header p { margin: 2px 0 0; color: #82969d; font-size: 8px; }
+.workshop-maintenance-card header em { color: #d9c67f; font: 900 12px "Outfit", sans-serif; }
+.workshop-maintenance-card.is-critical header em,
+.workshop-maintenance-card.is-broken header em { color: #ef8b66; }
+.workshop-durability { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.workshop-durability i { height: 7px; overflow: hidden; border-radius: 5px; background: #14242a; }
+.workshop-durability b { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #c05c42, var(--workshop-accent), #4bc784); }
+.workshop-durability span { color: #91a2a8; font: 800 8px "Outfit", sans-serif; }
+.workshop-maintenance-card__cost { display: grid; grid-template-columns: .55fr 1.4fr .55fr; gap: 6px; }
+.workshop-maintenance-card__cost span { display: grid; gap: 2px; padding: 6px; border: 1px solid #203840; border-radius: 6px; background: #050d10; }
+.workshop-maintenance-card__cost strong { overflow: hidden; color: #c9d4d6; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+.workshop-maintenance-card__cost .has-item strong { color: #6bd49c; }
+.workshop-maintenance-card__cost .missing-item strong { color: #e6856a; }
+.workshop-maintenance-card footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.workshop-maintenance-card footer small { max-width: 62%; color: #789099; line-height: 1.35; }
+
 /* ── Responsive ─────────────────────────────────────────────────────────────── */
 @media (max-width: 680px) {
     .profession-workshop { width: calc(100vw - 12px); max-height: calc(100dvh - 68px); }
@@ -294,4 +377,13 @@
     .profession-workshop__recipes { padding: 10px; }
     .workshop-recipe__flow { grid-template-columns: 1fr; }
     .workshop-recipe__flow > i { transform: rotate(90deg); }
+    .workshop-maintenance-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .workshop-maintenance-policy { grid-template-columns: 1fr 1fr; }
+    .workshop-maintenance-policy > div { grid-column: 1 / -1; }
+    .workshop-maintenance-list { grid-template-columns: 1fr; }
+}
+
+@media (min-width: 681px) and (max-width: 980px) {
+    .workshop-maintenance-policy { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .workshop-maintenance-policy > div { grid-column: 1 / -1; }
 }

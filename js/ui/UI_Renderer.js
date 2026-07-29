@@ -2285,6 +2285,14 @@
                 Aethra.ItemRankingSystem?.getItemRanking?.(merged) ||
                 merged.worldRanking ||
                 null;
+            const durabilityState = Aethra.EquipmentMaintenanceSystem?.isMaintainable?.(merged)
+                ? {
+                    ...(Aethra.EquipmentMaintenanceSystem.ensureItemDurability(merged) || {}),
+                    percent: Aethra.EquipmentMaintenanceSystem.getPercent(merged),
+                    status: Aethra.EquipmentMaintenanceSystem.getStatus(merged),
+                    effectiveness: Aethra.EquipmentMaintenanceSystem.getEffectiveness(merged)
+                }
+                : null;
 
             return {
                 name:
@@ -2327,6 +2335,7 @@
                 affixRolls:
                     inspection?.affixRolls || [],
                 worldRanking,
+                durability: durabilityState,
                 resaleValue: sell.price,
                 resaleLabel: sell.label,
                 ...extra
@@ -2593,6 +2602,19 @@
                 `
                 : "";
 
+            const durability = data.durability || null;
+            const durabilityHTML = durability
+                ? `<section class="aethra-item-tooltip__durability is-${escapeHTML(durability.status || "good")}">
+                    <header><span>DURABILIDADE</span><strong>${formatNumber(durability.current || 0)}/${formatNumber(durability.max || 100)} · ${formatNumber(durability.percent || 0)}%</strong></header>
+                    <i><b style="width:${Math.max(0, Math.min(100, Number(durability.percent || 0)))}%"></b></i>
+                    <p>${Number(durability.effectiveness ?? 1) <= 0
+                        ? "Quebrado: o item esta inativo ate ser reparado."
+                        : Number(durability.effectiveness ?? 1) < 1
+                            ? `${Math.round(Number(durability.effectiveness) * 100)}% dos atributos ativos. Repare na Cidade.`
+                            : "Atributos completos. Penalidades comecam abaixo de 25%."}</p>
+                </section>`
+                : "";
+
             const comparisonData = data.comparison?.data || null;
             const comparisonStats = comparisonData
                 ? Array.from(new Set([
@@ -2677,6 +2699,8 @@
                 ${worldRankingHTML}
 
                 ${stackHTML}
+
+                ${durabilityHTML}
 
                 <div class="aethra-item-tooltip__overall-iv">
                     <span>Roll global da peça</span>

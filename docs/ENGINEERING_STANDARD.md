@@ -55,7 +55,11 @@ ouve o resultado emitido pelo `BattleSystem`.
 
 - Template descreve o tipo; instância descreve aquele item específico.
 - Todo equipamento persistente precisa de `instanceId`, origem, vínculo,
-  qualidade e rolls já resolvidos.
+  qualidade, rolls já resolvidos e durabilidade quando aplicável.
+- `EquipmentMaintenanceSystem` é a única porta para desgaste, efetividade e
+  reparo. Combate publica ações/impactos; não altera `item.durability`.
+- Reparo segue a mesma ordem transacional de compra/crafting e exige
+  `commandId`; repetir o comando não pode consumir Gold, material ou conceder XP.
 - A mochila não recebe objetos crus por `push`.
 - Compra e venda são transações: validar → calcular → mutar uma vez → emitir um
   evento → salvar.

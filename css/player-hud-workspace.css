@@ -724,6 +724,19 @@
     background: var(--slot-rarity, #73bddd) !important;
 }
 
+.player-equipment-slot[data-durability-percent]::after {
+    content: ""; position: absolute; left: 4px; right: 4px; bottom: 3px; height: 2px;
+    border-radius: 3px; background: linear-gradient(90deg, #d35746 var(--item-durability), #192a30 var(--item-durability));
+}
+.player-equipment-slot .equipment-durability-chip {
+    position: absolute; right: 3px; bottom: 6px; z-index: 2; padding: 1px 3px;
+    border-radius: 4px; color: #a7bbc1; background: #071115e6; font: 900 7px "Outfit", sans-serif;
+}
+.player-equipment-slot.is-durability-critical { border-color: #c86a45 !important; box-shadow: inset 0 0 0 1px #c86a453d; }
+.player-equipment-slot.is-durability-broken { border-color: #d34f4f !important; filter: saturate(.55); }
+.player-equipment-slot.is-durability-critical .equipment-durability-chip,
+.player-equipment-slot.is-durability-broken .equipment-durability-chip { color: #ff9d79; }
+
 /* Container do Paperdoll Fixo no cockpit */
 .hero-hub--cockpit .player-hud-fixed-equipment {
     flex: 0 0 auto !important;

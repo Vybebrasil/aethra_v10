@@ -294,6 +294,7 @@
             if (!item) return;
 
             const itemStats =
+                Aethra.ItemSystem?.getEffectiveItemStats?.(item) ||
                 Aethra.GameData.calculateItemStats(item);
 
             item.stats = clone(itemStats);

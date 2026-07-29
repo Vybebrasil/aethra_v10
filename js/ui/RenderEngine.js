@@ -305,7 +305,8 @@
             [
                 "itemEquipped",
                 "itemUnequipped",
-                "equipment:changed"
+                "equipment:changed",
+                "equipment:durability-changed"
             ].forEach((eventName) => {
                 bind(eventName, () => {
                     this.schedule("equipment", () => this.renderEquipment());
@@ -4727,17 +4728,21 @@
             const rarity = item ? Aethra.GameData?.getRarityPresentation?.(item) : null;
             const inspect = item ? Aethra.ItemSystem?.getItemInspection?.(item) : null;
             const iv = clamp(inspect?.ivPercent || 0, 0, 100);
+            const durabilityPercent = item ? Aethra.EquipmentMaintenanceSystem?.getPercent?.(item) : null;
+            const durabilityStatus = item ? Aethra.EquipmentMaintenanceSystem?.getStatus?.(item) : null;
             return `
                 <button type="button"
-                    class="hero-paperdoll__slot hero-paperdoll__slot--${slot.id} ${item ? "is-filled" : ""}"
+                    class="hero-paperdoll__slot hero-paperdoll__slot--${slot.id} ${item ? "is-filled" : ""}${durabilityStatus ? ` is-durability-${durabilityStatus}` : ""}"
                     data-battle-equipment-slot="${slot.id}"
-                    style="--slot-rarity:${esc(rarity?.color || "#33444e")};"
+                    ${durabilityPercent === null ? "" : `data-durability-percent="${durabilityPercent}"`}
+                    style="--slot-rarity:${esc(rarity?.color || "#33444e")};--item-durability:${durabilityPercent ?? 100}%;"
                     aria-label="${esc(item?.name || `${slot.label} vazio`)}">
                     <span class="hero-paperdoll__slot-icon">
                         ${image ? `<img src="${esc(image)}" alt="${esc(item.name)}" draggable="false" onerror="this.style.display='none'; this.nextElementSibling.removeAttribute('style');"><b style="display:none;" aria-hidden="true">${slot.icon}</b>` : `<b>${slot.icon}</b>`}
                     </span>
                     <small>${slot.label}</small>
                     ${item ? `<em>${Number(inspect?.multiplier || 1).toFixed(2)}x · IV ${iv.toFixed(0)}%</em>` : `<em>Vazio</em>`}
+                    ${item ? `<span class="equipment-durability-chip" aria-label="Durabilidade ${Math.round(durabilityPercent)}%">${Math.round(durabilityPercent)}%</span>` : ""}
                 </button>
             `;
         }).join("");

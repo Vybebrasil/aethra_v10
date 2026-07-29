@@ -2478,6 +2478,21 @@ body > :not(
     color: var(--gold-light);
 }
 
+.aethra-item-tooltip__durability {
+    display: grid; gap: 5px; margin: 8px 0; padding: 8px 9px;
+    border: 1px solid #31505a; border-radius: 8px; background: #071418;
+}
+.aethra-item-tooltip__durability header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.aethra-item-tooltip__durability header span { color: #8299a1; font-size: 8px; font-weight: 900; letter-spacing: .08em; }
+.aethra-item-tooltip__durability header strong { color: #d4dfdf; font-size: 9px; }
+.aethra-item-tooltip__durability > i { display: block; height: 6px; overflow: hidden; border-radius: 5px; background: #17272d; }
+.aethra-item-tooltip__durability > i b { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #c74d42, #d3a449, #4dc585); }
+.aethra-item-tooltip__durability p { margin: 0; color: #83979e; font-size: 8px; line-height: 1.35; }
+.aethra-item-tooltip__durability.is-critical,
+.aethra-item-tooltip__durability.is-broken { border-color: #a64b3e; background: #21100e; }
+.aethra-item-tooltip__durability.is-critical header strong,
+.aethra-item-tooltip__durability.is-broken header strong { color: #f39a78; }
+
 .aethra-world-entity[data-entity-type="npc"] {
     cursor: pointer;
 }
@@ -2505,6 +2520,16 @@ body > :not(
     filter: grayscale(0.62) brightness(0.72);
     cursor: not-allowed;
 }
+
+.hero-paperdoll__slot { position: relative; }
+.hero-paperdoll__slot .equipment-durability-chip {
+    position: absolute; right: 3px; bottom: 3px; z-index: 3; padding: 1px 3px;
+    border-radius: 4px; color: #a8bbc0; background: #061014e8; font: 900 7px "Outfit", sans-serif;
+}
+.hero-paperdoll__slot.is-durability-critical { border-color: #c86a45 !important; }
+.hero-paperdoll__slot.is-durability-broken { border-color: #d34f4f !important; filter: saturate(.55); }
+.hero-paperdoll__slot.is-durability-critical .equipment-durability-chip,
+.hero-paperdoll__slot.is-durability-broken .equipment-durability-chip { color: #ff9d79; }
 
 .inventory-selected__stat-row,
 .aethra-item-tooltip__stat-row {

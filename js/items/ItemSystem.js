@@ -635,6 +635,10 @@ window.Aethra = window.Aethra || {};
                 description: template.description || "",
                 image: template.image || template.icon || null,
                 weaponFamily: template.weaponFamily || template.family || null,
+                armorType: template.armorType || null,
+                equipmentClass: template.equipmentClass || null,
+                tier: Math.max(1, Math.floor(Number(template.tier) || 1)),
+                levelReq: Math.max(1, Math.floor(Number(template.levelReq) || 1)),
                 type: template.type || "misc",
                 itemType: String(
                     template.itemType ||
@@ -667,7 +671,15 @@ window.Aethra = window.Aethra || {};
                 manaAmount:
                     Number(template.manaAmount) || 0,
                 energyAmount:
-                    Number(template.energyAmount) || 0
+                    Number(template.energyAmount) || 0,
+                durability: template.stackable || !template.slot
+                    ? null
+                    : {
+                        current: 100,
+                        max: 100,
+                        lastChangedAt: null,
+                        brokenAt: null
+                    }
             };
 
             const finalStats =
@@ -769,6 +781,20 @@ window.Aethra = window.Aethra || {};
 
         calculateItemStats(item) {
             return Aethra.GameData.calculateItemStats(item);
+        },
+
+        getDurability(item) {
+            return Aethra.EquipmentMaintenanceSystem?.ensureItemDurability?.(item)
+                || (item?.durability ? deepClone(item.durability) : null);
+        },
+
+        getDurabilityEffectiveness(item) {
+            return Aethra.EquipmentMaintenanceSystem?.getEffectiveness?.(item) ?? 1;
+        },
+
+        getEffectiveItemStats(item) {
+            return Aethra.EquipmentMaintenanceSystem?.getEffectiveStats?.(item)
+                || Aethra.GameData.calculateItemStats(item);
         },
 
         /**

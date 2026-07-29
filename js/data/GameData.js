@@ -607,7 +607,7 @@
                     xp: 100,
                     gold: 100,
                     items: [
-                        { templateId: "ring_bronze_l1", quantity: 1 }
+                        { templateId: "eg_ring_l1", quantity: 1 }
                     ]
                 },
                 nextQuestId: "tutorial_profession_mentor"

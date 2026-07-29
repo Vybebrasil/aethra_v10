@@ -37,6 +37,7 @@
         "ProfessionSystem",
         "RecipeCatalog",
         "CraftingSystem",
+        "EquipmentMaintenanceSystem",
         "CharacterBuildSystem",
         "ExplorationSystem",
         "QuestSystem"
@@ -67,6 +68,7 @@
         "ProfessionSystem",
         "RecipeCatalog",
         "CraftingSystem",
+        "EquipmentMaintenanceSystem",
         "CharacterBuildSystem",
         "ExplorationSystem",
         "QuestSystem"

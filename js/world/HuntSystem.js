@@ -340,6 +340,13 @@
                 return false;
             }
 
+            // O servico automatico da Cidade e executado antes de a expedicao
+            // assumir o estado ativo. Falhas de material/orcamento nao bloqueiam
+            // a Hunt; itens quebrados simplesmente permanecem inativos.
+            Aethra.EquipmentMaintenanceSystem?.runAutoRepair?.({
+                trigger: "before-hunt"
+            });
+
             const previousSession = this.getSnapshot();
             if (previousSession.huntId && (
                 previousSession.elapsedMs > 0

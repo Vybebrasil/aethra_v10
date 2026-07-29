@@ -53,7 +53,7 @@ window.Aethra = window.Aethra || {};
         return {
             meta: {
                 version: SAVE_VERSION,
-                schemaVersion: 76,
+                schemaVersion: 77,
                 lastSavedAt: null
             },
 
@@ -83,6 +83,22 @@ window.Aethra = window.Aethra || {};
                 isActive: false,
                 kills: 0,
                 xp: 0
+            },
+
+            maintenance: {
+                policy: {
+                    enabled: false,
+                    thresholdPercent: 35,
+                    reserveGold: 25,
+                    maxGoldPerCycle: 100
+                },
+                processedCommands: [],
+                totals: {
+                    repairs: 0,
+                    durabilityRestored: 0,
+                    goldSpent: 0
+                },
+                lastAutoRepair: null
             }
         };
     };

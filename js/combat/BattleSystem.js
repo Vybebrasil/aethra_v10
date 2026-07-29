@@ -487,6 +487,10 @@
                 ? equipment.offhand || null
                 : equipment.weapon || null;
 
+            if (item && Number(Aethra.ItemSystem?.getDurabilityEffectiveness?.(item) ?? 1) <= 0) {
+                return null;
+            }
+
             if (slot !== "right") return item;
             if (!item) return null;
 
@@ -942,16 +946,23 @@
             const hero = state.hero || {};
             const normalizedSlot = slot === "offhand" ? "offhand" : "weapon";
 
-            return (
+            const weapon = (
                 state.playerEquipment?.[normalizedSlot] ||
                 hero.equipment?.[normalizedSlot] ||
                 null
             );
+            return weapon && Number(Aethra.ItemSystem?.getDurabilityEffectiveness?.(weapon) ?? 1) > 0
+                ? weapon
+                : null;
         },
 
         getWeaponDamageProfile(weapon = this.getEquippedWeapon()) {
             const hero = Aethra.GameState.hero || {};
             const heroBaseStats = hero.baseStats || hero.stats || {};
+
+            if (weapon && Number(Aethra.ItemSystem?.getDurabilityEffectiveness?.(weapon) ?? 1) <= 0) {
+                weapon = null;
+            }
 
             if (!weapon) {
                 const baseMin = Math.max(
@@ -1058,7 +1069,7 @@
                         weapon.multiplier,
                         1
                     )
-                ),
+                ) * Number(Aethra.ItemSystem?.getDurabilityEffectiveness?.(weapon) ?? 1),
                 individualMin: Math.max(
                     0.01,
                     number(

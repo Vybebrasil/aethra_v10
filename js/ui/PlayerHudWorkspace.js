@@ -519,14 +519,17 @@
             const image = item ? Aethra.GameData?.getItemImage?.(item) : "";
             const rarity = item ? Aethra.GameData?.getRarityPresentation?.(item) : null;
             const fallback = esc((item?.icon && String(item.icon).trim()) || slot.icon);
+            const durabilityPercent = item ? Aethra.EquipmentMaintenanceSystem?.getPercent?.(item) : null;
+            const durabilityStatus = item ? Aethra.EquipmentMaintenanceSystem?.getStatus?.(item) : null;
             return `
-                <button type="button" class="hero-paperdoll__slot player-equipment-slot player-equipment-slot--${slot.id} ${item ? "is-filled" : "is-empty"}"
-                    data-battle-equipment-slot="${slot.id}" style="--slot-rarity:${esc(rarity?.color || "#415661")};"
+                <button type="button" class="hero-paperdoll__slot player-equipment-slot player-equipment-slot--${slot.id} ${item ? "is-filled" : "is-empty"}${durabilityStatus ? ` is-durability-${durabilityStatus}` : ""}"
+                    data-battle-equipment-slot="${slot.id}" ${durabilityPercent === null ? "" : `data-durability-percent="${durabilityPercent}"`} style="--slot-rarity:${esc(rarity?.color || "#415661")};--item-durability:${durabilityPercent ?? 100}%;"
                     aria-label="${esc(item?.name || `${slot.label} vazio`)}"
                     ${item ? "" : `data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="${esc(slot.label)}" data-tooltip-value="Vazio" data-tooltip-body="Clique para abrir a mochila e equipar este slot."`}>
                     <span class="hero-paperdoll__slot-icon">${image ? `<img src="${esc(image)}" alt="" draggable="false" onerror="this.style.display='none'; this.nextElementSibling.removeAttribute('style');"><b style="display:none;" aria-hidden="true">${fallback}</b>` : `<b aria-hidden="true">${fallback}</b>`}</span>
                     <span class="player-equipment-slot__copy"><small>${slot.label}</small><strong>${esc(item?.name || "Vazio")}</strong></span>
                     ${item ? `<i class="player-equipment-slot__rarity"></i>` : ""}
+                    ${item ? `<span class="equipment-durability-chip" aria-label="Durabilidade ${Math.round(durabilityPercent)}%">${Math.round(durabilityPercent)}%</span>` : ""}
                 </button>`;
         }).join("");
 
@@ -899,7 +902,7 @@
     ["HealthChanged", "ManaChanged", "EnergyChanged", "resourceChanged", "hero:level-changed", "hunt:started", "hunt:stopped", "hunt:updated", "coliseum:rank-updated", "coliseum:match-resolved"].forEach((eventName) => {
         Aethra.EventBus.on(eventName, renderSummary);
     });
-    ["itemEquipped", "itemUnequipped", "equipment:changed"].forEach((eventName) => {
+    ["itemEquipped", "itemUnequipped", "equipment:changed", "equipment:durability-changed"].forEach((eventName) => {
         Aethra.EventBus.on(eventName, () => {
             ensurePanelStructure();
             renderEquipmentMatrix();

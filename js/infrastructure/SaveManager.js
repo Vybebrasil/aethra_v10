@@ -12,7 +12,7 @@
     // A mudança para combate por rodadas e criação distribuída inaugura um
     // formato de progressão novo. O save anterior permanece preservado.
     const SAVE_KEY = configuredSaveKey || 'aethra_save_v71_disciplines';
-    const CURRENT_SCHEMA_VERSION = 76;
+    const CURRENT_SCHEMA_VERSION = 77;
     const AUTO_SAVE_DELAY = 120;
 
     let initialized = false;
@@ -120,6 +120,58 @@
             if (!isObject(migrated.hero.professionPerks)) migrated.hero.professionPerks = {};
             if (!isObject(migrated.hero.introPrepared)) migrated.hero.introPrepared = {};
             if (!isObject(migrated.hero.introProvisioned)) migrated.hero.introProvisioned = {};
+        }
+
+        // v76 -> v77: ciclo persistente de durabilidade e manutencao.
+        // Itens equipaveis antigos entram com 100/100; materiais e consumiveis
+        // continuam sem durabilidade. A politica automatica nasce desligada.
+        if (fromVersion < 77) {
+            const maintainableSlots = new Set([
+                'weapon', 'offhand', 'head', 'chest', 'hands', 'legs', 'feet',
+                'neck', 'ring1', 'ring2', 'relic'
+            ]);
+            const normalizeItemDurability = (item, slotHint = null) => {
+                if (!isObject(item) || item.stackable === true) return;
+                const slot = String(item.slot || slotHint || '').toLowerCase();
+                if (!maintainableSlots.has(slot)) return;
+                const source = isObject(item.durability) ? item.durability : {};
+                const max = Math.max(1, Number(source.max) || 100);
+                const current = Math.min(max, Math.max(0, Number(source.current ?? max)));
+                item.durability = {
+                    current,
+                    max,
+                    lastChangedAt: source.lastChangedAt || null,
+                    brokenAt: source.brokenAt || null
+                };
+            };
+
+            migrated.hero = isObject(migrated.hero) ? migrated.hero : {};
+            if (Array.isArray(migrated.hero.bag)) {
+                migrated.hero.bag.forEach((item) => normalizeItemDurability(item));
+            }
+            if (isObject(migrated.playerEquipment)) {
+                Object.entries(migrated.playerEquipment).forEach(([slot, item]) => normalizeItemDurability(item, slot));
+            }
+            if (isObject(migrated.hero.equipment)) {
+                Object.entries(migrated.hero.equipment).forEach(([slot, item]) => normalizeItemDurability(item, slot));
+            }
+
+            migrated.maintenance = isObject(migrated.maintenance) ? migrated.maintenance : {};
+            migrated.maintenance.policy = {
+                enabled: false,
+                thresholdPercent: 35,
+                reserveGold: 25,
+                maxGoldPerCycle: 100,
+                ...(isObject(migrated.maintenance.policy) ? migrated.maintenance.policy : {})
+            };
+            if (!Array.isArray(migrated.maintenance.processedCommands)) migrated.maintenance.processedCommands = [];
+            migrated.maintenance.totals = {
+                repairs: 0,
+                durabilityRestored: 0,
+                goldSpent: 0,
+                ...(isObject(migrated.maintenance.totals) ? migrated.maintenance.totals : {})
+            };
+            migrated.maintenance.lastAutoRepair = migrated.maintenance.lastAutoRepair || null;
         }
 
         migrated.meta.schemaVersion = CURRENT_SCHEMA_VERSION;
@@ -365,6 +417,9 @@
                 'profession:policy-changed',
                 'crafting:completed',
                 'crafting:recipe-discovered',
+                'maintenance:policy-changed',
+                'maintenance:repaired',
+                'equipment:durability-changed',
                 'hero:death-penalty',
                 'goldChanged',
                 'statsChanged',

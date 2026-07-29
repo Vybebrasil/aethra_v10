@@ -15,7 +15,7 @@
         quantity: 1,
         notice: null,
         guidedRecipeId: null,
-        tab: "known",          // "known" | "undiscovered"
+        tab: "known",          // "known" | "undiscovered" | "maintenance"
         newlyDiscovered: []    // IDs vistos como novidade desde a última abertura
     };
     let quantityRenderTimer = null;
@@ -145,6 +145,101 @@
         </article>`;
     }
 
+    function maintenanceReasonText(validation = {}) {
+        const reasons = {
+            "not-damaged": "Este item já está em condição máxima.",
+            "not-in-city": "Visite a oficina correta na Cidade.",
+            "wrong-station": `Use ${professionMeta[ui.professionId]?.station || "a oficina correta"}.`,
+            "missing-materials": `Falta ${validation.materialName || "material de reparo"}.`,
+            "insufficient-gold": "A reserva de Gold impede este reparo.",
+            "cycle-budget": "O limite de gasto deste ciclo foi atingido.",
+            "item-not-maintainable": "Este item não exige manutenção."
+        };
+        return reasons[validation.reason] || "Este reparo não pode ser realizado agora.";
+    }
+
+    function durabilityLabel(status) {
+        return {
+            good: "Estável",
+            worn: "Desgastado",
+            critical: "Crítico",
+            broken: "Quebrado"
+        }[status] || "Estável";
+    }
+
+    function maintenanceCard(entry) {
+        const item = entry.item || {};
+        const validation = Aethra.EquipmentMaintenanceSystem?.validateRepair?.(
+            item.instanceId,
+            { stationId: ui.stationId }
+        ) || { allowed: false, reason: "item-not-maintainable" };
+        const percent = Math.max(0, Math.min(100, Number(entry.percent || 0)));
+        const isDamaged = percent < 100;
+        const icon = item.icon || Aethra.GameData?.items?.[item.templateId]?.icon || "◇";
+        return `<article class="workshop-maintenance-card is-${esc(entry.status)}${entry.equipped ? " is-equipped" : ""}">
+            <header>
+                <span>${esc(icon)}</span>
+                <div>
+                    <small>${entry.equipped ? `EQUIPADO · ${esc(String(entry.slot || "slot").toUpperCase())}` : "NA MOCHILA"}</small>
+                    <strong>${esc(item.name || item.baseName || item.templateId || "Equipamento")}</strong>
+                    <p>${durabilityLabel(entry.status)}${entry.effectiveness < 1 ? ` · ${Math.round(entry.effectiveness * 100)}% dos atributos ativos` : " · atributos completos"}</p>
+                </div>
+                <em>${percent.toFixed(0)}%</em>
+            </header>
+            <div class="workshop-durability" role="meter" aria-label="Durabilidade" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percent.toFixed(0)}">
+                <i><b style="width:${percent}%"></b></i>
+                <span>${fmt(entry.before)}/${fmt(entry.after)}</span>
+            </div>
+            <div class="workshop-maintenance-card__cost">
+                <span><small>GOLD</small><strong>${isDamaged ? `${fmt(entry.gold)} G` : "—"}</strong></span>
+                <span class="${entry.hasMaterial || !isDamaged ? "has-item" : "missing-item"}"><small>MATERIAL</small><strong>${isDamaged ? `${fmt(entry.ownedMaterial)}/${fmt(entry.materialQuantity)} ${esc(entry.materialName)}` : "Peça íntegra"}</strong></span>
+                <span><small>OFÍCIO</small><strong>+${fmt(entry.xp)} XP</strong></span>
+            </div>
+            <footer>
+                <small>${validation.allowed ? `Pronto em ${esc(professionMeta[entry.professionId]?.station || "oficina")}` : esc(maintenanceReasonText(validation))}</small>
+                <button type="button" data-repair-item="${esc(item.instanceId || "")}" ${validation.allowed ? "" : "disabled"}>Reparar</button>
+            </footer>
+        </article>`;
+    }
+
+    function maintenancePanel() {
+        const system = Aethra.EquipmentMaintenanceSystem;
+        const snapshot = system?.getSnapshot?.(ui.professionId) || {
+            policy: { enabled: false, thresholdPercent: 35, reserveGold: 25, maxGoldPerCycle: 100 },
+            items: [], damaged: 0, critical: 0, broken: 0, estimatedGold: 0
+        };
+        const policy = snapshot.policy;
+        const items = [...snapshot.items].sort((a, b) => Number(a.percent) - Number(b.percent));
+        const damaged = items.filter((entry) => Number(entry.percent) < 100);
+        const cards = items.length
+            ? items.map(maintenanceCard).join("")
+            : `<p class="workshop-empty">Nenhum equipamento atendido por esta oficina.</p>`;
+        return `<section class="workshop-maintenance-dashboard">
+            <header class="workshop-maintenance-summary">
+                <span><small>DANIFICADOS</small><strong>${fmt(snapshot.damaged)}</strong></span>
+                <span><small>CRÍTICOS</small><strong>${fmt(snapshot.critical)}</strong></span>
+                <span><small>QUEBRADOS</small><strong>${fmt(snapshot.broken)}</strong></span>
+                <span><small>ESTIMATIVA</small><strong>${fmt(snapshot.estimatedGold)} G</strong></span>
+            </header>
+            <section class="workshop-maintenance-policy">
+                <div>
+                    <small>SERVIÇO AUTOMÁTICO DA CIDADE</small>
+                    <strong>Reparar antes de iniciar uma Hunt</strong>
+                    <p>Prioriza os itens mais danificados e respeita sua reserva e o teto por ciclo.</p>
+                </div>
+                <label class="workshop-policy-toggle"><input type="checkbox" data-maintenance-policy="enabled" ${policy.enabled ? "checked" : ""}><span>${policy.enabled ? "Ativo" : "Desligado"}</span></label>
+                <label>Reparar abaixo de <input type="number" min="5" max="90" step="5" value="${fmt(policy.thresholdPercent)}" data-maintenance-policy="thresholdPercent"><em>%</em></label>
+                <label>Reserva de Gold <input type="number" min="0" step="5" value="${fmt(policy.reserveGold)}" data-maintenance-policy="reserveGold"><em>G</em></label>
+                <label>Limite por ciclo <input type="number" min="0" step="5" value="${fmt(policy.maxGoldPerCycle)}" data-maintenance-policy="maxGoldPerCycle"><em>G</em></label>
+            </section>
+            <div class="workshop-maintenance-actions">
+                <p><strong>${fmt(damaged.length)} peça(s) aguardando manutenção</strong><small>Reparos manuais restauram a peça por completo.</small></p>
+                <button type="button" data-repair-all ${damaged.length > 0 ? "" : "disabled"}>Reparar elegíveis</button>
+            </div>
+            <div class="workshop-maintenance-list">${cards}</div>
+        </section>`;
+    }
+
     // ─── Seção por tier ───────────────────────────────────────────────────────
     function tierSection(tier, recipes, renderFn) {
         const label = TIER_LABELS[tier] || `Tier ${tier}`;
@@ -214,16 +309,17 @@
             <nav class="profession-workshop__subtabs">
                 <button type="button" data-workshop-tab="known"        class="${ui.tab === "known"        ? "is-active" : ""}">Conhecidas</button>
                 <button type="button" data-workshop-tab="undiscovered" class="${ui.tab === "undiscovered" ? "is-active" : ""}">A Descobrir${undiscovered.length > 0 ? ` <span class="badge-count">${undiscovered.length}</span>` : ""}${badgeCount > 0 ? ` <span class="badge-new-pill">${badgeCount} novo${badgeCount > 1 ? "s" : ""}</span>` : ""}</button>
+                <button type="button" data-workshop-tab="maintenance" class="${ui.tab === "maintenance" ? "is-active" : ""}">Manutenção${Aethra.EquipmentMaintenanceSystem?.getSnapshot?.(ui.professionId)?.critical > 0 ? ` <span class="badge-count is-alert">${Aethra.EquipmentMaintenanceSystem.getSnapshot(ui.professionId).critical}</span>` : ""}</button>
             </nav>
 
-            ${ui.guidedRecipeId && cs?.getRecipe?.(ui.guidedRecipeId) ? `
+            ${ui.tab !== "maintenance" && ui.guidedRecipeId && cs?.getRecipe?.(ui.guidedRecipeId) ? `
                 <section class="profession-workshop__guidance" role="status">
                     <span>✦</span>
                     <div><small>PASSO DA MISSÃO</small><strong>Produza ${esc(cs.getRecipe(ui.guidedRecipeId).name)}</strong><p>A receita correta foi trazida para o topo. Confira os materiais e conclua sua primeira lição.</p></div>
                 </section>
             ` : ""}
 
-            <section class="profession-workshop__controls">
+            ${ui.tab !== "maintenance" ? `<section class="profession-workshop__controls">
                 <label>Técnica
                     <select data-workshop-technique>
                         ${Object.values(cs?.techniques || {}).map((t) =>
@@ -234,12 +330,12 @@
                 <label>Quantidade
                     <input type="number" min="1" max="20" value="${ui.quantity}" data-workshop-quantity>
                 </label>
-            </section>
+            </section>` : ""}
 
             ${ui.notice ? `<div class="profession-workshop__notice is-${esc(ui.notice.tone)}" role="status">${esc(ui.notice.message)}</div>` : ""}
 
             <div class="profession-workshop__recipes">
-                ${ui.tab === "known" ? knownHTML : undiscoveredHTML}
+                ${ui.tab === "maintenance" ? maintenancePanel() : ui.tab === "known" ? knownHTML : undiscoveredHTML}
             </div>
         </div>`;
 
@@ -253,7 +349,7 @@
         ui.stationId  = stationId || (inCity ? professionMeta[ui.professionId].stationId : null);
         ui.notice     = null;
         ui.guidedRecipeId = options.recipeId || resolveGuidedRecipeId();
-        ui.tab        = "known";
+        ui.tab        = options.tab === "maintenance" ? "maintenance" : "known";
 
         // Seeding: se não há receitas descobertas, descobre os starters agora
         const cs = Aethra.CraftingSystem;
@@ -279,6 +375,33 @@
         ui.notice = result?.accepted
             ? { tone: "success", message: `${result.recipe.name}: ${result.outputs.length} resultado(s) criado(s).` }
             : { tone: "error",   message: reasonText(result || {}) };
+        render();
+        return result;
+    }
+
+    function repair(instanceId) {
+        const result = Aethra.EquipmentMaintenanceSystem?.repairItem?.(instanceId, {
+            stationId: ui.stationId,
+            commandId: window.crypto?.randomUUID?.() || `repair_${Date.now()}_${Math.random()}`,
+            source: "profession-workshop"
+        });
+        ui.notice = result?.accepted
+            ? { tone: "success", message: `${result.item.name}: +${fmt(result.restored)} de durabilidade por ${fmt(result.gold)} G.` }
+            : { tone: "error", message: maintenanceReasonText(result || {}) };
+        render();
+        return result;
+    }
+
+    function repairAll() {
+        const result = Aethra.EquipmentMaintenanceSystem?.repairEligible?.({
+            professionId: ui.professionId,
+            stationId: ui.stationId,
+            commandId: window.crypto?.randomUUID?.() || `repair_cycle_${Date.now()}_${Math.random()}`,
+            source: "profession-workshop"
+        });
+        ui.notice = result?.repaired?.length
+            ? { tone: "success", message: `${result.repaired.length} peça(s) reparada(s) · ${fmt(result.restored)} de durabilidade · ${fmt(result.goldSpent)} G.` }
+            : { tone: "error", message: maintenanceReasonText(result?.skipped?.[0] || result || {}) };
         render();
         return result;
     }
@@ -317,11 +440,27 @@
         // Executar craft
         const recipe = event.target.closest(`#${WINDOW_ID} [data-craft-recipe]`);
         if (recipe) craft(recipe.dataset.craftRecipe);
+        const repairButton = event.target.closest(`#${WINDOW_ID} [data-repair-item]`);
+        if (repairButton) repair(repairButton.dataset.repairItem);
+        const repairAllButton = event.target.closest(`#${WINDOW_ID} [data-repair-all]`);
+        if (repairAllButton) repairAll();
     });
 
     document.addEventListener("change", (event) => {
         if (event.target.matches(`#${WINDOW_ID} [data-workshop-technique]`)) {
             ui.techniqueId = event.target.value;
+            render();
+        }
+        if (event.target.matches(`#${WINDOW_ID} [data-maintenance-policy]`)) {
+            const controls = document.querySelectorAll(`#${WINDOW_ID} [data-maintenance-policy]`);
+            const patch = {};
+            controls.forEach((control) => {
+                patch[control.dataset.maintenancePolicy] = control.type === "checkbox"
+                    ? control.checked
+                    : Number(control.value);
+            });
+            Aethra.EquipmentMaintenanceSystem?.setPolicy?.(patch, "profession-workshop");
+            ui.notice = { tone: "success", message: "Política de manutenção atualizada." };
             render();
         }
     });
@@ -342,6 +481,11 @@
     Aethra.EventBus.on("inventory:changed", () => {
         if (Aethra.WindowManager?.isWindowOpen?.(WINDOW_ID)) render();
     });
+    ["maintenance:repaired", "maintenance:policy-changed", "equipment:durability-changed"].forEach((eventName) => {
+        Aethra.EventBus.on(eventName, () => {
+            if (Aethra.WindowManager?.isWindowOpen?.(WINDOW_ID)) render();
+        });
+    });
     Aethra.EventBus.on("crafting:recipe-discovered", ({ recipeId } = {}) => {
         if (recipeId && !ui.newlyDiscovered.includes(recipeId)) {
             ui.newlyDiscovered.push(recipeId);
@@ -354,7 +498,7 @@
     });
 
     // ─── API pública ──────────────────────────────────────────────────────────
-    Aethra.ProfessionWorkshopUI = { open, render, craft, getState: () => clone(ui) };
+    Aethra.ProfessionWorkshopUI = { open, render, craft, repair, repairAll, getState: () => clone(ui) };
 
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ensureWindow, { once: true });
     else ensureWindow();
