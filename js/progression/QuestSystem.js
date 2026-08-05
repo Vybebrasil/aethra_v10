@@ -667,9 +667,14 @@
                     ? `Produza ${recipe.name} na oficina usando os materiais indicados.`
                     : "Abra a oficina e conclua a receita indicada.";
             } else if (objective.type === "CraftEquipment") {
+                const allowedNames = (objective.allowedRecipeIds || [])
+                    .map((recipeId) => Aethra.RecipeCatalog?.get?.(recipeId)?.name)
+                    .filter(Boolean);
                 action = "open-workshop";
-                actionLabel = "Forjar equipamento";
-                detail = "Escolha uma das receitas de equipamento disponíveis e produza sua primeira peça de ferro.";
+                actionLabel = objective.target === "leatherworking" ? "Criar equipamento" : "Forjar equipamento";
+                detail = allowedNames.length > 0
+                    ? `Escolha entre ${allowedNames.join(", ")} e produza a peça que combina com seu estilo.`
+                    : "Escolha uma das receitas de equipamento disponíveis e produza sua primeira peça.";
             }
 
             return {

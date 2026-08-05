@@ -98,6 +98,20 @@
             weight: 6,
             category: "crafting"
         },
+        "creature-harvest": {
+            id: "creature-harvest",
+            icon: "◒",
+            title: "Criatura pronta para esfola",
+            description: "A pele pode ser retirada agora ou deixada para que a Hunt continue.",
+            actionLabel: "Esfolar",
+            professionId: "skinning",
+            actionType: "skin",
+            requiredLevel: 1,
+            xp: [5, 11],
+            weight: 0,
+            category: "gathering",
+            requiresManual: true
+        },
         locked_chest: {
             id: "locked_chest",
             icon: "▤",
@@ -616,6 +630,7 @@
                 });
                 Aethra.EventBus.emit("exploration:event-skipped", clone(event));
                 Aethra.EventBus.emit("exploration:updated", this.getSnapshot());
+                this.resumeHuntAfterEvent(event);
                 return clone(event);
             }
 
@@ -628,6 +643,7 @@
                     state.pendingEvent = null;
                     Aethra.EventBus.emit("exploration:event-skipped", clone(event));
                     Aethra.EventBus.emit("exploration:updated", this.getSnapshot());
+                    this.resumeHuntAfterEvent(event);
                     return clone(event);
                 }
             }
@@ -681,6 +697,7 @@
                 });
                 Aethra.EventBus.emit("exploration:event-failed", clone(event));
                 Aethra.EventBus.emit("exploration:updated", this.getSnapshot());
+                this.resumeHuntAfterEvent(event);
                 return clone(event);
             }
 
@@ -780,6 +797,9 @@
             if (event.id === "chest") state.totals.chests += 1;
             if (event.id === "mining") state.totals.miningNodes += 1;
             if (event.id === "herb") state.totals.herbs += 1;
+            if (event.id === "creature-harvest") {
+                state.totals.hides += rewards.items.reduce((sum, item) => sum + Number(item.quantity || 1), 0);
+            }
             if (event.id === "locked_chest") state.totals.lockedChests += 1;
             if (event.id === "secret_door") state.totals.secretDoors += 1;
             if (event.id === "trap") state.totals.traps += 1;
@@ -800,7 +820,13 @@
             Aethra.EventBus.emit("exploration:event-resolved", clone(event));
             Aethra.EventBus.emit("exploration:updated", this.getSnapshot());
             Aethra.EventBus.emit("inventory:changed", { source: `exploration:${event.id}` });
+            this.resumeHuntAfterEvent(event);
             return clone(event);
+        },
+
+        resumeHuntAfterEvent(event = {}) {
+            if (!event.resumeHunt || !Aethra.GameState.hunt?.isActive) return false;
+            return Aethra.HuntSystem?.resumeHunt?.() || false;
         },
 
         generateRewards(event, context = {}) {
@@ -835,6 +861,14 @@
                     scaleQuantity(1 + (this.randomSource() < 0.25 ? 1 : 0), "mining")
                 );
                 return { items: [createItem(RESOURCE_ITEMS.iron_ore, quantity)].filter(Boolean), gold: 0, summary: `${quantity}x Minério de Ferro` };
+            }
+
+            if (event.id === "creature-harvest") {
+                const quantity = Math.max(
+                    Math.max(1, integer(event.minimumQuantity, 1)),
+                    scaleQuantity(1 + (this.randomSource() < 0.18 ? 1 : 0), "skinning")
+                );
+                return { items: [createItem(RESOURCE_ITEMS.beast_hide, quantity)].filter(Boolean), gold: 0, summary: `${quantity}x Pele de Fera` };
             }
 
             if (event.id === "forge") {
@@ -1052,6 +1086,40 @@
                     tone: "combat"
                 });
                 return;
+            }
+            if (guaranteedHarvest?.manual) {
+                if (state.pendingEvent) return clone(state.pendingEvent);
+                const definition = EVENT_DEFINITIONS["creature-harvest"];
+                const event = {
+                    ...clone(definition),
+                    eventId: `harvest_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
+                    createdAt: new Date().toISOString(),
+                    huntId: Aethra.GameState.hunt?.huntId || guaranteedHarvest.huntId,
+                    status: "pending",
+                    enemyId,
+                    enemyName,
+                    title: `${enemyName}: oportunidade de esfola`,
+                    description: `A criatura foi derrotada. Escolha Esfolar para aproveitar a pele ou Ignorar para seguir a Hunt.`,
+                    requiredLevel: Math.max(1, integer(creature.level || payload.level || 1, 1)),
+                    tutorialGuaranteed: true,
+                    tutorialLabel: guaranteedHarvest.source === "focus-training" ? "CONTRATO DE FOCO" : "OBJETIVO DE OFÍCIO",
+                    guaranteedSuccess: guaranteedHarvest.guaranteedSuccess === true,
+                    minimumQuantity: Math.max(1, integer(guaranteedHarvest.minimumQuantity, 1)),
+                    resumeHunt: false
+                };
+                state.pendingEvent = event;
+                event.resumeHunt = Boolean(Aethra.HuntSystem?.pauseHunt?.());
+                this.pushFeed({
+                    type: "event-found",
+                    icon: event.icon,
+                    title: event.title,
+                    detail: event.description,
+                    tone: "event",
+                    eventId: event.eventId
+                });
+                Aethra.EventBus.emit("exploration:event-found", clone(event));
+                Aethra.EventBus.emit("exploration:updated", this.getSnapshot());
+                return clone(event);
             }
             const quantityMultiplier = Math.max(0, Number(Aethra.HuntSystem?.getModifier?.("resourceQuantity", 1) ?? 1));
             const baseQuantity = 1 + (this.randomSource() < 0.18 ? 1 : 0);

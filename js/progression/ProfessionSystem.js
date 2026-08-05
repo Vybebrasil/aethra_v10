@@ -101,6 +101,15 @@
             huntId: "apprentice_mines_focus",
             guaranteedEvents: 3,
             minimumQuantity: 2
+        },
+        skinning: {
+            id: "skinning",
+            questId: "focus_training_skinning",
+            title: "Ciclo do Curtidor",
+            summary: "Escolha quais criaturas esfolar, curta as peles e produza seu primeiro equipamento de couro.",
+            huntId: "whispering_woods_focus",
+            guaranteedEvents: 3,
+            minimumQuantity: 2
         }
     });
 
@@ -297,7 +306,7 @@
             Aethra.EventBus.on("quest:objective-updated", ({ questId, objective } = {}) => {
                 if (!String(questId || "").startsWith("focus_training_")) return;
                 const professionId = String(questId).replace("focus_training_", "");
-                if (objective?.id === "collect_focus_ore" && objective.completed) {
+                if (objective?.type === "ItemAcquired" && objective.completed) {
                     Aethra.ExplorationSystem?.cancelTrainingGuarantee?.(professionId, "focus-materials-complete");
                 }
             });
@@ -824,6 +833,53 @@
                     reward: { gold: 0, xp: 0, items: [] }
                 };
             }
+            if (professionId === "skinning") {
+                return {
+                    id: path.questId,
+                    title: path.title,
+                    description: path.summary,
+                    levelReq: 1,
+                    objectives: [
+                        {
+                            id: "practice_focus_skinning",
+                            type: "PracticeSkill",
+                            target: "skinning",
+                            huntId: path.huntId,
+                            required: 1,
+                            label: "Esfole manualmente uma criatura na Floresta dos Sussurros"
+                        },
+                        {
+                            id: "collect_focus_hides",
+                            type: "ItemAcquired",
+                            target: "beast_hide",
+                            huntId: path.huntId,
+                            required: 6,
+                            dependsOn: ["practice_focus_skinning"],
+                            label: "Reúna 6 Peles de Fera"
+                        },
+                        {
+                            id: "tan_focus_leather",
+                            type: "CraftRecipe",
+                            target: "tan_beast_hide",
+                            professionId: "leatherworking",
+                            required: 3,
+                            dependsOn: ["collect_focus_hides"],
+                            label: "Produza 3 Couros Tratados no Curtume da Cidade"
+                        },
+                        {
+                            id: "craft_focus_leather_equipment",
+                            type: "CraftEquipment",
+                            target: "leatherworking",
+                            professionId: "leatherworking",
+                            allowedRecipeIds: ["craft_leather_boots", "craft_leather_helm", "craft_leather_legs"],
+                            required: 1,
+                            dependsOn: ["tan_focus_leather"],
+                            label: "Escolha e produza seu primeiro equipamento de couro"
+                        }
+                    ],
+                    reward: { gold: 0, xp: 0, items: [] }
+                };
+            }
             return null;
         },
 
@@ -930,9 +986,9 @@
                 ? Aethra.QuestSystem?.getQuest?.(path.questId)
                 : Aethra.QuestSystem?.acceptQuest?.(path.questId);
             const activeQuest = Aethra.QuestSystem?.getQuest?.(path.questId) || quest;
-            const oreObjective = activeQuest?.objectives?.find((entry) => entry.id === "collect_focus_ore");
-            if (activeQuest?.status === "active" && !oreObjective?.completed) {
-                const missing = Math.max(1, Number(oreObjective?.required || 6) - Number(oreObjective?.progress || 0));
+            const resourceObjective = activeQuest?.objectives?.find((entry) => entry.type === "ItemAcquired");
+            if (activeQuest?.status === "active" && !resourceObjective?.completed) {
+                const missing = Math.max(1, Number(resourceObjective?.required || 6) - Number(resourceObjective?.progress || 0));
                 const remaining = Math.max(1, Math.ceil(missing / Math.max(1, Number(path.minimumQuantity || 1))));
                 Aethra.ExplorationSystem?.queueTrainingGuarantee?.(professionId, {
                     huntId: options.huntId || path.huntId,

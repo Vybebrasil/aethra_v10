@@ -1924,6 +1924,142 @@
                     )
                 );
 
+                const skinningFocus = Aethra.DisciplineSystem?.setFocus?.("skinning", "integration-test");
+                const skinningGuidance = Aethra.DisciplineSystem?.getFocusedGuidance?.();
+                const skinningContractStart = Aethra.ProfessionSystem?.getFocusTrainingState?.("skinning");
+                const skinningGuaranteeStart = Aethra.ExplorationSystem?.getSnapshot?.().tutorialGuarantee;
+                checks.push(
+                    createCheck(
+                        "Foco de Esfolamento ativa rota e contrato vertical",
+                        skinningFocus?.disciplineId === "skinning"
+                            && skinningGuidance?.huntId === "whispering_woods_focus"
+                            && skinningGuidance?.mapMode === "hunts"
+                            && skinningContractStart?.active === true
+                            && skinningContractStart?.quest?.objectives?.length === 4
+                            && skinningContractStart?.guidance?.objective?.id === "practice_focus_skinning"
+                            && skinningGuaranteeStart?.professionId === "skinning"
+                            && skinningGuaranteeStart?.remaining === 3
+                            && skinningGuaranteeStart?.manual === true
+                            && skinningGuaranteeStart?.minimumQuantity === 2,
+                        `${skinningGuidance?.name || "sem skill"} → ${skinningGuidance?.recommendation?.name || "sem rota"} · ${skinningGuaranteeStart?.remaining || 0} esfolas`
+                    )
+                );
+
+                Aethra.GameState.hunt = {
+                    ...(Aethra.GameState.hunt || {}),
+                    isActive: true,
+                    huntId: "whispering_woods_focus",
+                    currentRoom: 1
+                };
+                Aethra.ExplorationSystem?.setRandomSource?.(() => 0.99);
+                const skinnableCreature = Aethra.HuntSystem?.getCreature?.("wolf-xmm-2024")
+                    || Aethra.GameData?.creatures?.["wolf-xmm-2024"];
+                Aethra.ExplorationSystem?.handleCreatureHarvest?.({
+                    enemyId: "wolf-xmm-2024",
+                    enemy: skinnableCreature,
+                    name: skinnableCreature?.name || "Lobo",
+                    level: 1
+                });
+                const skippedSkinningEvent = Aethra.ExplorationSystem?.getSnapshot?.().pendingEvent;
+                const skippedSkinningResult = skippedSkinningEvent
+                    ? Aethra.ExplorationSystem?.resolveEvent?.(skippedSkinningEvent.eventId, { manual: true, skip: true })
+                    : null;
+                const skinningGuaranteeAfterSkip = Aethra.ExplorationSystem?.getSnapshot?.().tutorialGuarantee;
+                checks.push(
+                    createCheck(
+                        "Esfola guiada oferece Esfolar/Ignorar sem consumir ao ignorar",
+                        skippedSkinningEvent?.id === "creature-harvest"
+                            && skippedSkinningEvent?.actionLabel === "Esfolar"
+                            && skippedSkinningEvent?.requiresManual === true
+                            && skippedSkinningEvent?.tutorialLabel === "CONTRATO DE FOCO"
+                            && skippedSkinningResult?.status === "skipped"
+                            && skinningGuaranteeAfterSkip?.remaining === 3
+                            && Aethra.ExplorationSystem?.getSnapshot?.().pendingEvent === null,
+                        skippedSkinningResult ? `ignorada · ${skinningGuaranteeAfterSkip?.remaining || 0} esfolas restantes` : "decisão manual ausente"
+                    )
+                );
+
+                const hidesBeforeFocusLoop = Aethra.BagSystem?.countItem?.("beast_hide") || 0;
+                const skinningXPBeforeFocusLoop = Aethra.ProfessionSystem?.getState?.("skinning")?.xpTotal || 0;
+                const skinnedFocusEvents = [];
+                for (let index = 0; index < 3; index += 1) {
+                    Aethra.ExplorationSystem?.handleCreatureHarvest?.({
+                        enemyId: "wolf-xmm-2024",
+                        enemy: skinnableCreature,
+                        name: skinnableCreature?.name || "Lobo",
+                        level: 1
+                    });
+                    const event = Aethra.ExplorationSystem?.getSnapshot?.().pendingEvent;
+                    if (!event) break;
+                    skinnedFocusEvents.push(Aethra.ExplorationSystem.resolveEvent(event.eventId, { manual: true }));
+                }
+                Aethra.ExplorationSystem?.setRandomSource?.(Math.random);
+                const skinningContractAfterHides = Aethra.ProfessionSystem?.getFocusTrainingState?.("skinning");
+                const hidesAfterFocusLoop = Aethra.BagSystem?.countItem?.("beast_hide") || 0;
+                const skinningXPAfterFocusLoop = Aethra.ProfessionSystem?.getState?.("skinning")?.xpTotal || 0;
+                const skinningXPFromEvents = skinnedFocusEvents.reduce((sum, event) => sum + Number(event?.xpGain || 0), 0);
+                checks.push(
+                    createCheck(
+                        "Esfolamento manual entrega XP, seis peles e avança ao Curtume",
+                        skinnedFocusEvents.length === 3
+                            && skinnedFocusEvents.every((event) => event?.status === "resolved" && event?.manual === true)
+                            && hidesAfterFocusLoop - hidesBeforeFocusLoop === 6
+                            && skinningXPAfterFocusLoop - skinningXPBeforeFocusLoop === skinningXPFromEvents
+                            && skinningContractAfterHides?.guidance?.objective?.id === "tan_focus_leather"
+                            && skinningContractAfterHides?.guidance?.professionId === "leatherworking"
+                            && Aethra.ExplorationSystem?.getSnapshot?.().tutorialGuarantee === null,
+                        `${skinnedFocusEvents.length}/3 criaturas · +${hidesAfterFocusLoop - hidesBeforeFocusLoop} peles · +${skinningXPAfterFocusLoop - skinningXPBeforeFocusLoop} XP · ${skinningContractAfterHides?.guidance?.actionLabel || "sem próximo passo"}`
+                    )
+                );
+
+                Aethra.GameState.hunt.isActive = false;
+                Aethra.UIManager?.setPrimaryView?.("city", { emit: false, source: "integration-skinning-contract" });
+                Aethra.ProfessionWorkshopUI?.open?.("leatherworking", "tannery", { source: "integration-skinning-contract" });
+                const guidedTanningVisible = Boolean(
+                    document.querySelector('.workshop-recipe.is-guided [data-craft-recipe="tan_beast_hide"]')
+                    && /Produza Curtir Pele/.test(document.querySelector(".profession-workshop__guidance")?.textContent || "")
+                );
+                const tanningResult = Aethra.CraftingSystem?.craft?.("tan_beast_hide", {
+                    stationId: "tannery",
+                    techniqueId: "balanced",
+                    quantity: 3,
+                    commandId: "integration-focus-tanning"
+                });
+                const skinningContractAfterTan = Aethra.ProfessionSystem?.getFocusTrainingState?.("skinning");
+                Aethra.ProfessionWorkshopUI?.open?.("leatherworking", "tannery", { source: "integration-skinning-contract-equipment" });
+                const guidedLeatherCards = [...document.querySelectorAll(".workshop-recipe.is-guided [data-craft-recipe]")];
+                const leatherChoiceVisible = guidedLeatherCards.length === 3
+                    && /Botas, Chapéu e Calças de Couro/.test(document.querySelector(".profession-workshop__guidance")?.textContent || "");
+                checks.push(
+                    createCheck(
+                        "Curtume conduz do tratamento para três escolhas de equipamento",
+                        guidedTanningVisible
+                            && tanningResult?.accepted === true
+                            && skinningContractAfterTan?.guidance?.objective?.id === "craft_focus_leather_equipment"
+                            && leatherChoiceVisible,
+                        `curtimento ${guidedTanningVisible ? "guiado" : "ausente"} · ${guidedLeatherCards.length}/3 equipamentos destacados`
+                    )
+                );
+
+                const craftedLeatherEquipment = Aethra.CraftingSystem?.craft?.("craft_leather_legs", {
+                    stationId: "tannery",
+                    techniqueId: "balanced",
+                    quantity: 1,
+                    commandId: "integration-focus-leather-equipment"
+                });
+                const completedSkinningContract = Aethra.ProfessionSystem?.getFocusTrainingState?.("skinning");
+                checks.push(
+                    createCheck(
+                        "Equipamento escolhido conclui o Ciclo do Curtidor",
+                        craftedLeatherEquipment?.accepted === true
+                            && completedSkinningContract?.completed === true
+                            && Aethra.QuestSystem?.getQuest?.("focus_training_skinning")?.status === "completed"
+                            && Boolean(craftedLeatherEquipment?.outputs?.some((item) => item?.slot === "legs")),
+                        `${craftedLeatherEquipment?.recipe?.name || "sem equipamento"} · contrato ${completedSkinningContract?.status || "ausente"}`
+                    )
+                );
+                Aethra.WindowManager?.closeWindow?.("profession-workshop-view", { source: "integration-skinning-contract" });
+
                 const starterSkillRequirement = Aethra.SkillSystem
                     ?.getSkillRequirement?.("precise_strike");
                 checks.push(

@@ -118,6 +118,7 @@ const gameCoreSource = read("js/core/game-core.js");
 const characterCreationSource = read("js/ui/CharacterCreationUI.js");
 const characterBuildSource = read("js/progression/CharacterBuildSystem.js");
 const professionSource = read("js/progression/ProfessionSystem.js");
+const xpSystemSource = read("js/progression/XPSystem.js");
 const recipeCatalogSource = read("js/data/recipes/RecipeCatalog.js");
 const professionSpecializationUiSource = read("js/ui/ProfessionSpecializationUI.js");
 const professionWorkshopUiSource = read("js/ui/ProfessionWorkshopUI.js");
@@ -223,6 +224,15 @@ check(
     "ProfessionSystem deve definir o contrato vertical oficial de Mineração"
 );
 check(
+    /focus_training_skinning/.test(professionSource)
+        && /practice_focus_skinning/.test(professionSource)
+        && /collect_focus_hides/.test(professionSource)
+        && /tan_focus_leather/.test(professionSource)
+        && /craft_focus_leather_equipment/.test(professionSource)
+        && /whispering_woods_focus/.test(professionSource),
+    "ProfessionSystem deve definir o contrato vertical oficial de Esfolamento"
+);
+check(
     /data-skip-exploration/.test(renderEngineSource)
         && /skip:\s*true/.test(renderEngineSource)
         && /remaining/.test(explorationSource)
@@ -231,12 +241,33 @@ check(
     "Exploração guiada deve permitir Minerar/Ignorar sem consumir a garantia ao ignorar"
 );
 check(
+    /["']creature-harvest["']:\s*\{/.test(explorationSource)
+        && /actionLabel:\s*["']Esfolar["']/.test(explorationSource)
+        && /guaranteedHarvest\?\.manual/.test(explorationSource)
+        && /pauseHunt\?\.\(/.test(explorationSource)
+        && /resumeHuntAfterEvent/.test(explorationSource)
+        && /event\.id === ["']creature-harvest["']/.test(explorationSource),
+    "Esfolamento guiado deve pausar a Hunt e resolver Esfolar/Ignorar pelo ExplorationSystem"
+);
+check(
+    /grantSkillXP\(skillId,[\s\S]{0,220}let state = this\.getSkillState\(skillId\)/.test(xpSystemSource)
+        && /state = this\.getSkillState\(skillId\) \|\| state/.test(xpSystemSource),
+    "XPSystem deve preservar o primeiro XP quando a descoberta normaliza o estado da skill"
+);
+check(
     /CraftEquipment/.test(professionWorkshopUiSource)
         && /isEquipmentRecipe/.test(professionWorkshopUiSource)
         && /Escolha seu primeiro equipamento/.test(professionWorkshopUiSource)
         && !/BagSystem\?\.(?:addItem|consumeItem)/.test(professionWorkshopUiSource)
         && /id:\s*["']forge_iron_sword["'][\s\S]{0,250}requiredLevel:\s*1/.test(recipeCatalogSource),
     "Oficina deve projetar a escolha de equipamento sem mutar a economia na UI"
+);
+check(
+    ["craft_leather_boots", "craft_leather_helm", "craft_leather_legs"].every((recipeId) => (
+        new RegExp(`id:\\s*["']${recipeId}["'][\\s\\S]{0,250}requiredLevel:\\s*1`).test(recipeCatalogSource)
+    ))
+        && /Botas, Chapéu e Calças de Couro/.test(professionWorkshopUiSource),
+    "Curtume inicial deve oferecer três escolhas de equipamento acessíveis no nível 1"
 );
 check(
     /battle:damage-dealt/.test(maintenanceSource)

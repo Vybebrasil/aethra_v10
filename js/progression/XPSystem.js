@@ -115,7 +115,7 @@ window.Aethra = window.Aethra || {};
 
         grantSkillXP(skillId, amount, context = {}) {
             const definition = Aethra.DisciplineSystem?.definitions?.[skillId];
-            const state = this.getSkillState(skillId);
+            let state = this.getSkillState(skillId);
             if (!definition || !state) {
                 return { accepted: false, amount: 0, skillId, reason: "unknown-skill" };
             }
@@ -132,6 +132,10 @@ window.Aethra = window.Aethra || {};
                     source: context.source || "skill-action",
                     occurredAt
                 });
+                // Listeners da descoberta podem normalizar as disciplinas e
+                // substituir o objeto salvo. Reobtenha a referência canônica
+                // antes de aplicar o primeiro XP para não perdê-lo.
+                state = this.getSkillState(skillId) || state;
             }
 
             if (state.trainingMode === "locked") {

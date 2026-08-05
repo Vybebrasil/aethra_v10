@@ -114,7 +114,9 @@
                 ? `Produza ${recipe.name}`
                 : guidance.objective?.label;
         const detail = choosingEquipment
-            ? "Espada, Machado e Maça de Ferro concluem o contrato. Compare as opções destacadas e escolha a que combina com seu estilo."
+            ? guidance.professionId === "leatherworking"
+                ? "Botas, Chapéu e Calças de Couro concluem o contrato. Compare as opções destacadas e escolha a que combina com seu estilo."
+                : "Espada, Machado e Maça de Ferro concluem o contrato. Compare as opções destacadas e escolha a que combina com seu estilo."
             : "A receita necessária foi trazida para o topo. Confira os materiais e conclua esta etapa do contrato.";
         return `<section class="profession-workshop__guidance" role="status">
             <span>✦</span>
