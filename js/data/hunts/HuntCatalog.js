@@ -417,6 +417,35 @@
                 { id: "goblin-mm", weight: 24 }
             ]
         },
+        apprentice_mines_focus: {
+            id: "apprentice_mines_focus",
+            mode: "specialized",
+            name: "Galerias do Aprendiz",
+            region: "Subsolo da Fronteira",
+            biome: "Túneis de ferro rasos",
+            description: "Primeira rota dedicada à Mineração: veios frequentes, ameaças leves e acesso direto à cadeia minério → lingote → equipamento.",
+            focus: { id: "mining", name: "Mineração inicial", skill: "mining", icon: "⛏" },
+            minLevel: 1,
+            maxLevel: 10,
+            danger: 1,
+            icon: "⛏",
+            rewards: ["Minério de Ferro", "Componentes metálicos"],
+            maxRooms: 10,
+            baseMobsPerRoom: [1, 2, 2, 2, 3, 3, 3, 4, 4, 1],
+            modifiers: {
+                combatXp: 0.55,
+                gold: 0.55,
+                materialChance: 1.8,
+                resourceQuantity: 1.55,
+                eventChance: 2.1,
+                professionXp: { mining: 2.4, blacksmithing: 1.25, exploration: 0.5 },
+                eventWeights: { mining: 4.2, forge: 1.2 }
+            },
+            enemies: [
+                { id: "giant-rat-xmm-2024", weight: 42 },
+                { id: "goblin-mm", weight: 18 }
+            ]
+        },
         deep_mines_focus: {
             id: "deep_mines_focus",
             mode: "specialized",

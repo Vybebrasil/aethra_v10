@@ -14,7 +14,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="css/style.css?v=19">
+    <link rel="stylesheet" href="css/style.css?v=20">
     <link rel="stylesheet" href="css/style-stability.css?v=16">
     <link rel="stylesheet" href="css/ui-fluidity.css?v=16">
     <link rel="stylesheet" href="css/actionbar-workspace.css?v=16">
@@ -24,6 +24,7 @@
     <link rel="stylesheet" href="css/player-hud-workspace.css?v=21">
     <link rel="stylesheet" href="css/profession-workshop.css?v=20">
     <link rel="stylesheet" href="css/profession-specialization.css?v=1">
+    <link rel="stylesheet" href="css/progression-journal.css?v=8">
     <link rel="stylesheet" href="css/character-creation.css?v=16">
     <link rel="stylesheet" href="css/coliseum-workspace.css?v=16">
     <link rel="stylesheet" href="css/npc-shop.css?v=16">
@@ -31,7 +32,7 @@
     <link rel="stylesheet" href="css/death-modal.css?v=16">
     <link rel="stylesheet" href="css/tilemap-canvas.css?v=16">
     <link rel="stylesheet" href="css/idle-loop.css?v=16">
-    <link rel="stylesheet" href="css/hud-modernization.css?v=30">
+    <link rel="stylesheet" href="css/hud-modernization.css?v=31">
     <link rel="stylesheet" href="css/aethra-windows.css?v=21">
 </head>
 
@@ -50,23 +51,23 @@
                 class="window-tabs hud-icon-menu"
                 aria-label="Menu principal"
             >
-                <button type="button" class="primary-view-button is-active" data-primary-view="hunt" aria-pressed="true" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="NAVEGAÇÃO" data-tooltip-title="Hunt" data-tooltip-body="Exibe as cartas de combate, o log e o Hunt Analyzer." data-tooltip-hint="Use Iniciar Caçada no card do inimigo para buscar um alvo.">
+                <button type="button" class="primary-view-button is-active" data-primary-view="hunt" aria-label="Hunt" aria-pressed="true" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="NAVEGAÇÃO" data-tooltip-title="Hunt" data-tooltip-body="Exibe as cartas de combate, o log e o Hunt Analyzer." data-tooltip-hint="Use Iniciar Caçada no card do inimigo para buscar um alvo.">
                     <span class="hud-menu-icon" aria-hidden="true">⚔</span><span>Hunt</span>
                 </button>
-                <button type="button" class="primary-view-button" data-primary-view="city" aria-pressed="false" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="NAVEGAÇÃO" data-tooltip-title="Cidade" data-tooltip-body="Abre o hub de preparação com NPCs, mercadores e serviços.">
+                <button type="button" class="primary-view-button" data-primary-view="city" aria-label="Cidade" aria-pressed="false" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="NAVEGAÇÃO" data-tooltip-title="Cidade" data-tooltip-body="Abre o hub de preparação com NPCs, mercadores e serviços.">
                     <span class="hud-menu-icon" aria-hidden="true">⌂</span><span>Cidade</span>
                 </button>
-                <button type="button" data-open-window="inventory-view" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="INVENTÁRIO" data-tooltip-title="Mochila" data-tooltip-body="Gerencia itens, compara atributos e equipa peças da build.">
+                <button type="button" data-open-window="inventory-view" aria-label="Mochila" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="INVENTÁRIO" data-tooltip-title="Mochila" data-tooltip-body="Gerencia itens, compara atributos e equipa peças da build.">
                     <span class="hud-menu-icon" aria-hidden="true">▦</span><span>Mochila</span>
                 </button>
-                <button type="button" data-open-window="npc-shop-view" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="LOJA NPC" data-tooltip-title="Mercador" data-tooltip-body="Compra itens e vende loot ao Velho Varian, o mercador da cidade.">
+                <button type="button" data-open-window="npc-shop-view" aria-label="Loja" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="LOJA NPC" data-tooltip-title="Mercador" data-tooltip-body="Compra itens e vende loot ao Velho Varian, o mercador da cidade.">
                     <span class="hud-menu-icon" aria-hidden="true">◇</span><span>Loja</span>
                 </button>
-                <button type="button" data-open-window="skills-view" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="BUILD" data-tooltip-title="Skills" data-tooltip-body="Organiza habilidades, prioridade automática e limites de ativação.">
+                <button type="button" data-open-window="skills-view" aria-label="Skills" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-eyebrow="BUILD" data-tooltip-title="Skills" data-tooltip-body="Organiza habilidades, prioridade automática e limites de ativação.">
                     <span class="hud-menu-icon" aria-hidden="true">✦</span><span>Skills</span>
                 </button>
                 <div class="hud-more" data-hud-more>
-                    <button type="button" class="hud-more__toggle" data-hud-more-toggle aria-haspopup="menu" aria-expanded="false">
+                    <button type="button" class="hud-more__toggle" data-hud-more-toggle aria-label="Mais opções" aria-haspopup="menu" aria-expanded="false">
                         <span class="hud-menu-icon" aria-hidden="true">•••</span><span>Mais</span>
                     </button>
                     <div class="hud-more__menu" data-hud-more-menu role="menu" hidden>
@@ -386,8 +387,8 @@
         >
             <header class="window-header">
                 <div>
-                    <small>ActionBar e sobrevivência</small>
-                    <h2>Skills e Prioridades</h2>
+                    <small>Treino, ofícios e ActionBar</small>
+                    <h2>Skills e Progressão</h2>
                 </div>
 
                 <button
@@ -400,6 +401,16 @@
                 </button>
             </header>
 
+            <nav class="skills-workspace-tabs" aria-label="Áreas de Skills">
+                <button type="button" data-skills-workspace-tab="journal" aria-selected="true">Diário de Progressão</button>
+                <button type="button" data-skills-workspace-tab="actionbar" aria-selected="false">ActionBar e Automação</button>
+            </nav>
+
+            <section class="skills-workspace-panel" data-skills-workspace-panel="journal">
+                <div id="progression-journal-root"></div>
+            </section>
+
+            <section class="skills-workspace-panel" data-skills-workspace-panel="actionbar" hidden>
             <div class="skills-priority-guide">
                 <strong>Ordem de decisão por tick</strong>
 
@@ -429,6 +440,7 @@
                 id="skills-config-list"
                 class="skills-config-list"
             ></div>
+            </section>
         </section>
 
         <section
@@ -633,7 +645,7 @@
     </main>
 
     <!-- Core e dados -->
-    <script src="js/core/game-core.js?v=4" defer></script>
+    <script src="js/core/game-core.js?v=5" defer></script>
     <script src="js/data/GameData.js?v=11" defer></script>
     <script src="js/data/monsters/CreatureBalanceConfig.js" defer></script>
     <script src="js/data/monsters/MonsterAbilityParser.js" defer></script>
@@ -641,16 +653,16 @@
     <script src="js/data/monsters/MonsterCatalogAdapter.js" defer></script>
     <script src="js/data/monsters/MonsterCatalogData.js" defer></script>
     <script src="js/data/monsters/MonsterCatalog.js" defer></script>
-    <script src="js/data/hunts/HuntCatalog.js" defer></script>
+    <script src="js/data/hunts/HuntCatalog.js?v=2" defer></script>
     <script src="js/world/EntityManager.js?v=3" defer></script>
     <script src="js/world/SpriteLoader.js?v=17" defer></script>
-    <script src="js/infrastructure/SaveManager.js?v=11" defer></script>
+    <script src="js/infrastructure/SaveManager.js?v=12" defer></script>
     <script src="js/infrastructure/SettingsManager.js?v=3" defer></script>
     <script src="js/infrastructure/AuthorityGateway.js?v=1" defer></script>
     <script src="js/economy/EconomyRNGManager.js" defer></script>
 
     <!-- UI base -->
-    <script src="js/ui/WindowManager.js?v=5" defer></script>
+    <script src="js/ui/WindowManager.js?v=7" defer></script>
     <script src="js/ui/TooltipManager.js?v=2" defer></script>
 
     <!-- Itens e progressão -->
@@ -665,7 +677,7 @@
     <!-- Combate e mundo -->
     <script src="js/combat/CombatSystem.js?v=2" defer></script>
     <script src="js/combat/SkillSystem.js?v=5" defer></script>
-    <script src="js/progression/DisciplineSystem.js?v=1" defer></script>
+    <script src="js/progression/DisciplineSystem.js?v=6" defer></script>
     <script src="js/combat/SkillController.js?v=5" defer></script>
     <script src="js/combat/BattleMath.js" defer></script>
     <script src="js/combat/BattleLogger.js" defer></script>
@@ -674,23 +686,23 @@
     <script src="js/items/ConsumableSystem.js?v=1" defer></script>
     <script src="js/pvp/ColiseumSystem.js?v=6" defer></script>
     <script src="js/world/HuntSystem.js?v=5" defer></script>
-    <script src="js/progression/ProfessionSystem.js?v=6" defer></script>
-    <script src="js/data/recipes/RecipeCatalog.js?v=2" defer></script>
+    <script src="js/progression/ProfessionSystem.js?v=8" defer></script>
+    <script src="js/data/recipes/RecipeCatalog.js?v=3" defer></script>
     <script src="js/items/CraftingSystem.js?v=5" defer></script>
     <script src="js/items/EquipmentMaintenanceSystem.js?v=1" defer></script>
     <script src="js/progression/CharacterBuildSystem.js?v=8" defer></script>
-    <script src="js/world/ExplorationSystem.js?v=3" defer></script>
+    <script src="js/world/ExplorationSystem.js?v=4" defer></script>
     <script src="js/combat/BossSystem.js?v=2" defer></script>
-    <script src="js/progression/QuestSystem.js?v=3" defer></script>
+    <script src="js/progression/QuestSystem.js?v=5" defer></script>
     <script src="js/world/DungeonSystem.js" defer></script>
 
     <!-- Mercado e renderização -->
     <script src="js/market/MarketplaceSystem.js?v=3" defer></script>
-    <script src="js/ui/RenderEngine.js?v=18" defer></script>
+    <script src="js/ui/RenderEngine.js?v=21" defer></script>
     <script src="js/ui/UI_Renderer.js?v=2" defer></script>
     <script src="js/ui/UIManager.js?v=9" defer></script>
     <script src="js/ui/HudExperience.js?v=3" defer></script>
-    <script src="js/ui/HudWorldMapAndDrops.js?v=3" defer></script>
+    <script src="js/ui/HudWorldMapAndDrops.js?v=4" defer></script>
     <script src="js/ui/EncounterInteractionPass.js?v=2" defer></script>
     <script src="js/ui/UIStabilityPass.js?v=6" defer></script>
     <script src="js/ui/UIFluidityPass.js" defer></script>
@@ -698,9 +710,10 @@
     <script src="js/ui/HuntAnalyzerWorkspace.js?v=2" defer></script>
     <script src="js/ui/CombatHudModernizer.js?v=2" defer></script>
     <script src="js/ui/EncounterCombatHUD.js?v=7" defer></script>
-    <script src="js/ui/PlayerHudWorkspace.js?v=16" defer></script>
-    <script src="js/ui/ProfessionWorkshopUI.js?v=7" defer></script>
+    <script src="js/ui/PlayerHudWorkspace.js?v=17" defer></script>
+    <script src="js/ui/ProfessionWorkshopUI.js?v=9" defer></script>
     <script src="js/ui/ProfessionSpecializationUI.js?v=1" defer></script>
+    <script src="js/ui/ProgressionJournalUI.js?v=3" defer></script>
     <script src="js/ui/LobbyUI.js?v=2" defer></script>
     <script src="js/ui/CharacterCreationUI.js?v=9" defer></script>
     <script src="js/ui/ColiseumWorkspace.js?v=6" defer></script>

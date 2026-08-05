@@ -12,7 +12,7 @@
     // A mudança para combate por rodadas e criação distribuída inaugura um
     // formato de progressão novo. O save anterior permanece preservado.
     const SAVE_KEY = configuredSaveKey || 'aethra_save_v71_disciplines';
-    const CURRENT_SCHEMA_VERSION = 77;
+    const CURRENT_SCHEMA_VERSION = 78;
     const AUTO_SAVE_DELAY = 120;
 
     let initialized = false;
@@ -172,6 +172,27 @@
                 ...(isObject(migrated.maintenance.totals) ? migrated.maintenance.totals : {})
             };
             migrated.maintenance.lastAutoRepair = migrated.maintenance.lastAutoRepair || null;
+        }
+
+        // v77 -> v78: contrato vertical de foco em Mineracao. O contrato de
+        // quests passa a conhecer dependencias entre objetivos e a garantia de
+        // exploracao preserva a quantidade restante quando o jogador ignora o veio.
+        if (fromVersion < 78) {
+            migrated.quests = isObject(migrated.quests) ? migrated.quests : {};
+            migrated.quests.contractVersion = 4;
+            if (!Array.isArray(migrated.quests.active)) migrated.quests.active = [];
+            if (!Array.isArray(migrated.quests.completed)) migrated.quests.completed = [];
+            if (!Array.isArray(migrated.quests.available)) migrated.quests.available = [];
+            if (!Array.isArray(migrated.quests.rewardClaims)) migrated.quests.rewardClaims = [];
+
+            migrated.exploration = isObject(migrated.exploration) ? migrated.exploration : {};
+            if (isObject(migrated.exploration.tutorialGuarantee)) {
+                const guarantee = migrated.exploration.tutorialGuarantee;
+                guarantee.remaining = Math.max(1, Math.floor(Number(guarantee.remaining) || 1));
+                guarantee.manual = guarantee.manual === true;
+                guarantee.guaranteedSuccess = guarantee.guaranteedSuccess === true;
+                guarantee.minimumQuantity = Math.max(1, Math.floor(Number(guarantee.minimumQuantity) || 1));
+            }
         }
 
         migrated.meta.schemaVersion = CURRENT_SCHEMA_VERSION;

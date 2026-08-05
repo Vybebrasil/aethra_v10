@@ -654,6 +654,7 @@
 
         const state = uiState();
         state.minimizedSkills = state.minimizedSkills || {};
+        const focusedSkillId = Aethra.DisciplineSystem?.getFocusId?.() || null;
         const activeCategory = state.selectedSkillCategory || "all";
         const searchQuery = normalize(state.skillSearch || "");
 
@@ -681,6 +682,9 @@
         filteredMasteries.sort((a, b) => {
             const aId = String(a.id || a.name || "");
             const bId = String(b.id || b.name || "");
+            const aFocused = aId === focusedSkillId;
+            const bFocused = bId === focusedSkillId;
+            if (aFocused !== bFocused) return aFocused ? -1 : 1;
             const aMinimized = state.minimizedSkills[aId] === true;
             const bMinimized = state.minimizedSkills[bId] === true;
 
@@ -717,12 +721,13 @@
             const isSpecializable = Boolean(Aethra.ProfessionSystem?.getSpecializationTree?.(entryId));
             const trainingLocked = entry.trainingMode === "locked";
             const [icon, categoryLabel] = skillGroupLabel(entry.category);
+            const isFocused = entryId === focusedSkillId;
 
             const isExplicitlyMinimized = state.minimizedSkills[entryId] === true;
             const isMinimized = isExplicitlyMinimized;
 
             return `
-                <article class="player-skill-card-slim ${isMinimized ? "is-minimized" : "is-expanded"} ${trainingLocked ? "is-locked" : ""}" data-skill-id="${esc(entryId)}"
+                <article class="player-skill-card-slim ${isMinimized ? "is-minimized" : "is-expanded"} ${trainingLocked ? "is-locked" : ""} ${isFocused ? "is-focused" : ""}" data-skill-id="${esc(entryId)}"
                     data-search="${esc(`${entry.name} ${entry.category || ""} ${categoryLabel}`)}"
                     data-ui-tooltip data-tooltip-kind="hud"
                     data-tooltip-eyebrow="${esc(categoryLabel.toUpperCase())}"
@@ -757,6 +762,10 @@
                     </div>
 
                     <div class="player-skill-card-slim__actions">
+                        <button type="button" class="player-skill-card__btn ${isFocused ? "btn--focused" : "btn--focus"}"
+                            data-focus-discipline="${esc(entryId)}" ${isFocused ? "disabled" : ""}>
+                            ${isFocused ? "★ Foco" : "☆ Focar"}
+                        </button>
                         <button type="button" class="player-skill-card__btn ${trainingLocked ? "btn--locked" : "btn--training"}"
                             data-skill-training-mode="${esc(entryId)}" data-next-mode="${trainingLocked ? "training" : "locked"}">
                             ${trainingLocked ? "🔒 Travado" : "◆ Treinando"}
@@ -840,6 +849,13 @@
             });
         });
 
+        container.querySelectorAll("[data-focus-discipline]").forEach((button) => {
+            button.addEventListener("click", () => {
+                Aethra.DisciplineSystem?.setFocus?.(button.dataset.focusDiscipline, "hero-skills");
+                renderCategorizedSkills();
+            });
+        });
+
         // Event listeners para política de coleta
         container.querySelectorAll("[data-profession-policy]").forEach((button) => {
             button.addEventListener("click", () => {
@@ -910,7 +926,7 @@
             renderOverview();
         });
     });
-    ["skillXPChanged", "profession:xpChanged", "profession:rankUp", "mastery:updated", "levelUp", "skill-point:spent", "discipline:xp-changed", "discipline:level-up", "discipline:invested", "skill:discovered", "skill:training-mode-changed", "profession:policy-changed", "crafting:completed"].forEach((eventName) => {
+    ["skillXPChanged", "profession:xpChanged", "profession:rankUp", "mastery:updated", "levelUp", "skill-point:spent", "discipline:xp-changed", "discipline:level-up", "discipline:invested", "discipline:focus-changed", "skill:discovered", "skill:training-mode-changed", "profession:policy-changed", "crafting:completed"].forEach((eventName) => {
         Aethra.EventBus.on(eventName, () => {
             ensurePanelStructure();
             renderCategorizedSkills();

@@ -709,16 +709,25 @@
         },
 
         getDefaultWindowPosition(windowId, element) {
-            const winWidth = Math.min(960, Math.floor(window.innerWidth * 0.85));
+            const measuredWidth = Number(element?.getBoundingClientRect?.().width || 0);
+            const fallbackWidth = Math.min(960, Math.floor(window.innerWidth * 0.85));
+            const winWidth = Math.min(
+                Math.max(0, window.innerWidth - 16),
+                measuredWidth > 0 ? measuredWidth : fallbackWidth
+            );
             const safeTop = this.getSafeTopOffset();
             const safeBottom = this.getSafeBottomOffset();
             const availableHeight = Math.max(
                 240,
                 window.innerHeight - safeTop - safeBottom
             );
-            const winHeight = Math.min(640, availableHeight);
+            const measuredHeight = Number(element?.getBoundingClientRect?.().height || 0);
+            const winHeight = Math.min(
+                availableHeight,
+                measuredHeight > 0 ? measuredHeight : 640
+            );
 
-            const left = Math.max(16, Math.floor((window.innerWidth - winWidth) / 2));
+            const left = Math.max(8, Math.floor((window.innerWidth - winWidth) / 2));
             const top = Math.max(
                 safeTop,
                 Math.floor(safeTop + (availableHeight - winHeight) / 2)

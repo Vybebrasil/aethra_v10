@@ -281,6 +281,12 @@
             state.tutorialGuarantee = state.tutorialGuarantee && typeof state.tutorialGuarantee === "object"
                 ? state.tutorialGuarantee
                 : null;
+            if (state.tutorialGuarantee) {
+                state.tutorialGuarantee.remaining = Math.max(1, integer(state.tutorialGuarantee.remaining, 1));
+                state.tutorialGuarantee.manual = state.tutorialGuarantee.manual === true;
+                state.tutorialGuarantee.guaranteedSuccess = state.tutorialGuarantee.guaranteedSuccess === true;
+                state.tutorialGuarantee.minimumQuantity = Math.max(1, integer(state.tutorialGuarantee.minimumQuantity, 1));
+            }
             state.lastEventTick = integer(state.lastEventTick, -99);
             state.totals = {
                 events: integer(state.totals?.events),
@@ -383,20 +389,52 @@
             return true;
         },
 
-        queueIntroGuarantee(professionId) {
+        queueIntroGuarantee(professionId, options = {}) {
+            return this.queueTrainingGuarantee(professionId, {
+                ...options,
+                remaining: options.remaining || 1,
+                source: options.source || "intro-profession"
+            });
+        },
+
+        queueTrainingGuarantee(professionId, options = {}) {
             const eventId = INTRO_GUARANTEE_EVENTS[professionId];
             if (!eventId) return false;
             const state = this.ensureState();
-            if (state.tutorialGuarantee?.professionId === professionId) return clone(state.tutorialGuarantee);
-            state.tutorialGuarantee = {
+            const requested = {
                 professionId,
                 eventId,
-                huntId: "whispering_forest",
+                huntId: options.huntId || "whispering_forest",
+                remaining: Math.max(1, integer(options.remaining, 1)),
+                manual: options.manual === true,
+                guaranteedSuccess: options.guaranteedSuccess === true,
+                minimumQuantity: Math.max(1, integer(options.minimumQuantity, 1)),
+                source: options.source || "profession-training",
                 queuedAt: new Date().toISOString()
             };
+            const current = state.tutorialGuarantee;
+            state.tutorialGuarantee = current?.professionId === professionId && current?.huntId === requested.huntId
+                ? {
+                    ...current,
+                    ...requested,
+                    remaining: Math.max(integer(current.remaining, 1), requested.remaining),
+                    queuedAt: current.queuedAt || requested.queuedAt
+                }
+                : requested;
             Aethra.EventBus.emit("exploration:tutorial-guarantee-queued", clone(state.tutorialGuarantee));
             Aethra.EventBus.emit("exploration:updated", this.getSnapshot());
             return clone(state.tutorialGuarantee);
+        },
+
+        cancelTrainingGuarantee(professionId = null, source = "training-cancelled") {
+            const state = this.ensureState();
+            const guarantee = state.tutorialGuarantee;
+            if (!guarantee || (professionId && guarantee.professionId !== professionId)) return false;
+            state.tutorialGuarantee = null;
+            const payload = { ...clone(guarantee), source };
+            Aethra.EventBus.emit("exploration:tutorial-guarantee-cancelled", payload);
+            Aethra.EventBus.emit("exploration:updated", this.getSnapshot());
+            return payload;
         },
 
         getActiveIntroGuarantee(professionId = null) {
@@ -514,9 +552,16 @@
                 const professionName = Aethra.ProfessionSystem?.professions?.[guarantee.professionId]?.name || "Ofício";
                 forced.tutorialGuaranteed = true;
                 forced.tutorialProfessionId = guarantee.professionId;
-                forced.tutorialLabel = "OBJETIVO DE OFÍCIO";
+                forced.trainingGuaranteeSource = guarantee.source;
+                forced.trainingGuaranteeRemaining = guarantee.remaining;
+                forced.minimumQuantity = guarantee.minimumQuantity;
+                forced.guaranteedSuccess = guarantee.guaranteedSuccess;
+                forced.requiresManual = guarantee.manual || forced.requiresManual;
+                forced.tutorialLabel = guarantee.source === "focus-training" ? "CONTRATO DE FOCO" : "OBJETIVO DE OFÍCIO";
                 forced.title = `${forced.title} · Treinamento de ${professionName}`;
-                forced.description = `${forced.description} Esta descoberta foi garantida por Mestra Ilyra para sua primeira lição.`;
+                forced.description = guarantee.manual
+                    ? `${forced.description} Você decide se deseja minerar agora ou ignorar e continuar a Hunt.`
+                    : `${forced.description} Esta descoberta foi garantida por Mestra Ilyra para sua primeira lição.`;
                 return forced;
             }
             const modifiers = context.modifiers || Aethra.HuntSystem?.getActiveModifiers?.() || {};
@@ -590,7 +635,16 @@
             const requiresCheck = Boolean(event.requiresManual || event.requiredLevel > 1);
             const appliedProfessionId = options.professionId || event.professionId || "exploration";
             
-            const skillCheck = requiresCheck
+            const skillCheck = event.guaranteedSuccess
+                ? {
+                    success: true,
+                    level: Aethra.ProfessionSystem?.getState?.(appliedProfessionId)?.level || 1,
+                    requiredLevel: event.requiredLevel || 1,
+                    chance: 1,
+                    roll: 0,
+                    reason: "training-guarantee"
+                }
+                : requiresCheck
                 ? Aethra.ProfessionSystem?.check?.(
                     appliedProfessionId,
                     event.requiredLevel || 1,
@@ -707,11 +761,16 @@
             event.skillCheck = clone(skillCheck || {});
             if (event.tutorialGuaranteed && state.tutorialGuarantee?.eventId === event.id) {
                 const guarantee = clone(state.tutorialGuarantee);
-                state.tutorialGuarantee = null;
+                const remaining = Math.max(0, integer(state.tutorialGuarantee.remaining, 1) - 1);
+                state.tutorialGuarantee = remaining > 0
+                    ? { ...state.tutorialGuarantee, remaining }
+                    : null;
                 Aethra.EventBus.emit("exploration:tutorial-guarantee-used", {
                     professionId: guarantee.professionId,
                     eventId: guarantee.eventId,
-                    huntId: guarantee.huntId
+                    huntId: guarantee.huntId,
+                    remaining,
+                    completed: remaining === 0
                 });
             }
             state.pendingEvent = null;
@@ -771,7 +830,10 @@
             const checkBonus = Math.max(0, Number(context.skillCheck?.level || 1) - Number(context.skillCheck?.requiredLevel || 1));
 
             if (event.id === "mining") {
-                const quantity = scaleQuantity(1 + (this.randomSource() < 0.25 ? 1 : 0), "mining");
+                const quantity = Math.max(
+                    Math.max(1, integer(event.minimumQuantity, 1)),
+                    scaleQuantity(1 + (this.randomSource() < 0.25 ? 1 : 0), "mining")
+                );
                 return { items: [createItem(RESOURCE_ITEMS.iron_ore, quantity)].filter(Boolean), gold: 0, summary: `${quantity}x Minério de Ferro` };
             }
 

@@ -12117,6 +12117,25 @@ body > #aethra-ui-tooltip {
     font-weight: 900;
 }
 
+.exploration-active-event .exploration-active-event__actions {
+    grid-column: 1 / 3;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px;
+}
+
+.exploration-active-event .exploration-active-event__actions button {
+    grid-column: auto;
+    min-width: 76px;
+}
+
+.exploration-active-event button.is-secondary,
+.combatant-card__event-button.is-secondary {
+    border-color: rgba(115, 143, 154, 0.3);
+    background: rgba(8, 20, 25, 0.88);
+    color: #9bb0b9;
+}
+
 .exploration-timeline {
     display: grid;
     align-content: start;
@@ -15122,6 +15141,8 @@ body > #aethra-ui-tooltip {
 
 .combatant-card__event-actions {
     display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
     justify-content: flex-start;
 }
 

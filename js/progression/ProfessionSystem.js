@@ -76,7 +76,7 @@
     const INTRO_PATHS = Object.freeze({
         mining: {
             id: "mining", title: "Aprendiz de Mineração", summary: "Aprenda a reconhecer e extrair seu primeiro veio.",
-            toolId: "apprentice_pickaxe", action: "mine", objective: "Extraia seu primeiro minério"
+            toolId: "apprentice_pickaxe", action: "mine", objective: "Extraia seu primeiro minério", huntId: "apprentice_mines_focus"
         },
         skinning: {
             id: "skinning", title: "Aprendiz de Esfolamento", summary: "Aprenda a aproveitar os materiais de uma criatura.",
@@ -89,6 +89,18 @@
         blacksmithing: {
             id: "blacksmithing", title: "Aprendiz de Forjaria", summary: "Visite a forja e refine seu primeiro metal.",
             toolId: "smith_hammer", action: "smelt", objective: "Refine seu primeiro lingote"
+        }
+    });
+
+    const FOCUS_TRAINING_PATHS = Object.freeze({
+        mining: {
+            id: "mining",
+            questId: "focus_training_mining",
+            title: "Ciclo do Prospector",
+            summary: "Extraia minério, refine lingotes e escolha seu primeiro equipamento forjado.",
+            huntId: "apprentice_mines_focus",
+            guaranteedEvents: 3,
+            minimumQuantity: 2
         }
     });
 
@@ -249,6 +261,7 @@
         initialized: false,
         professions: clone(DEFINITIONS),
         introPaths: clone(INTRO_PATHS),
+        focusTrainingPaths: clone(FOCUS_TRAINING_PATHS),
         introPerks: clone(INTRO_PERKS),
         specializationTrees: clone(SPECIALIZATION_TREES),
         specializationUnlockLevel: SPECIALIZATION_UNLOCK_LEVEL,
@@ -280,6 +293,13 @@
             Aethra.EventBus.on("quest:finished", ({ id } = {}) => {
                 if (!String(id || "").startsWith("intro_profession_")) return;
                 this.unlockIntroPerk(String(id).replace("intro_profession_", ""));
+            });
+            Aethra.EventBus.on("quest:objective-updated", ({ questId, objective } = {}) => {
+                if (!String(questId || "").startsWith("focus_training_")) return;
+                const professionId = String(questId).replace("focus_training_", "");
+                if (objective?.id === "collect_focus_ore" && objective.completed) {
+                    Aethra.ExplorationSystem?.cancelTrainingGuarantee?.(professionId, "focus-materials-complete");
+                }
             });
         },
 
@@ -754,7 +774,60 @@
             };
         },
 
-        startIntroPath(professionId) {
+        getFocusTrainingQuestDefinition(professionId) {
+            const path = FOCUS_TRAINING_PATHS[professionId];
+            if (!path) return null;
+            if (professionId === "mining") {
+                return {
+                    id: path.questId,
+                    title: path.title,
+                    description: path.summary,
+                    levelReq: 1,
+                    objectives: [
+                        {
+                            id: "practice_focus_mining",
+                            type: "PracticeSkill",
+                            target: "mining",
+                            huntId: path.huntId,
+                            required: 1,
+                            label: "Minere manualmente um veio nas Galerias do Aprendiz"
+                        },
+                        {
+                            id: "collect_focus_ore",
+                            type: "ItemAcquired",
+                            target: "iron_ore",
+                            huntId: path.huntId,
+                            required: 6,
+                            dependsOn: ["practice_focus_mining"],
+                            label: "Reúna 6 Minérios de Ferro"
+                        },
+                        {
+                            id: "smelt_focus_ingots",
+                            type: "CraftRecipe",
+                            target: "smelt_iron",
+                            professionId: "blacksmithing",
+                            required: 3,
+                            dependsOn: ["collect_focus_ore"],
+                            label: "Funda 3 Lingotes de Ferro na Forja da Cidade"
+                        },
+                        {
+                            id: "forge_focus_equipment",
+                            type: "CraftEquipment",
+                            target: "blacksmithing",
+                            professionId: "blacksmithing",
+                            allowedRecipeIds: ["forge_iron_sword", "forge_iron_axe", "forge_iron_mace"],
+                            required: 1,
+                            dependsOn: ["smelt_focus_ingots"],
+                            label: "Escolha e forje seu primeiro equipamento de ferro"
+                        }
+                    ],
+                    reward: { gold: 0, xp: 0, items: [] }
+                };
+            }
+            return null;
+        },
+
+        prepareTrainingPath(professionId, options = {}) {
             const path = INTRO_PATHS[professionId];
             if (!path) return false;
             const hero = Aethra.GameState.hero || (Aethra.GameState.hero = {});
@@ -765,22 +838,36 @@
             const alreadyPrepared = hero.introPrepared[professionId] === true
                 || Boolean(policy?.changedAt)
                 || (path.toolId && number(Aethra.BagSystem?.countItem?.(path.toolId), 0) > 0);
-            hero.introProfessionId = professionId;
             if (DEFINITIONS[professionId]?.policy && !alreadyPrepared) {
-                this.setCollectionPolicy(professionId, true, "intro-path");
+                this.setCollectionPolicy(professionId, true, options.source || "profession-training");
             }
 
             if (path.toolId && number(Aethra.BagSystem?.countItem?.(path.toolId), 0) === 0) {
                 const tool = Aethra.ItemSystem?.generateItem?.(path.toolId, {
-                    origin: "intro-profession", quality: 20, potential: 20, tradeable: false
+                    origin: options.origin || "profession-training",
+                    quality: 20,
+                    potential: 20,
+                    tradeable: false
                 });
                 if (tool) {
                     tool.bound = true;
                     tool.tradeable = false;
-                    Aethra.BagSystem?.addItem?.(tool, "intro-profession");
+                    Aethra.BagSystem?.addItem?.(tool, options.source || "profession-training");
                 }
             }
             hero.introPrepared[professionId] = true;
+            return { professionId, path: clone(path), alreadyPrepared };
+        },
+
+        startIntroPath(professionId, options = {}) {
+            const path = INTRO_PATHS[professionId];
+            if (!path) return false;
+            const hero = Aethra.GameState.hero || (Aethra.GameState.hero = {});
+            const training = this.prepareTrainingPath(professionId, {
+                source: options.source || "intro-profession",
+                origin: "intro-profession"
+            });
+            if (!hero.introProfessionId || options.setAsOrigin === true) hero.introProfessionId = professionId;
 
             const questId = `intro_profession_${professionId}`;
             Aethra.QuestSystem?.registerQuest?.(
@@ -788,13 +875,13 @@
                 this.getIntroQuestDefinition(professionId)
             );
             Aethra.EventBus.emit("profession:intro-prepared", { professionId, path: clone(path), questId });
-            return { professionId, path: clone(path), questId };
+            return { professionId, path: clone(path), questId, alreadyPrepared: training?.alreadyPrepared === true };
         },
 
-        activateIntroPath(professionId) {
+        activateIntroPath(professionId, options = {}) {
             const path = INTRO_PATHS[professionId];
             if (!path) return false;
-            const prepared = this.startIntroPath(professionId);
+            const prepared = this.startIntroPath(professionId, options);
             const hero = Aethra.GameState.hero || (Aethra.GameState.hero = {});
             hero.introProvisioned = hero.introProvisioned && typeof hero.introProvisioned === "object"
                 ? hero.introProvisioned
@@ -814,7 +901,9 @@
                     Aethra.EventBus.emit("ItemAcquired", ore);
                 }
             } else if (["mining", "skinning", "herbalism"].includes(professionId)) {
-                Aethra.ExplorationSystem?.queueIntroGuarantee?.(professionId);
+                Aethra.ExplorationSystem?.queueIntroGuarantee?.(professionId, {
+                    huntId: path.huntId || "whispering_forest"
+                });
             }
 
             hero.introProfessionActivatedAt = hero.introProfessionActivatedAt || new Date().toISOString();
@@ -824,6 +913,65 @@
                 questId: prepared.questId
             });
             return prepared;
+        },
+
+        activateFocusTraining(professionId, options = {}) {
+            const path = FOCUS_TRAINING_PATHS[professionId];
+            if (!path) return false;
+            this.prepareTrainingPath(professionId, {
+                source: options.source || "focus-training",
+                origin: "focus-training"
+            });
+            Aethra.QuestSystem?.registerQuest?.(
+                path.questId,
+                this.getFocusTrainingQuestDefinition(professionId)
+            );
+            const quest = options.accept === false
+                ? Aethra.QuestSystem?.getQuest?.(path.questId)
+                : Aethra.QuestSystem?.acceptQuest?.(path.questId);
+            const activeQuest = Aethra.QuestSystem?.getQuest?.(path.questId) || quest;
+            const oreObjective = activeQuest?.objectives?.find((entry) => entry.id === "collect_focus_ore");
+            if (activeQuest?.status === "active" && !oreObjective?.completed) {
+                const missing = Math.max(1, Number(oreObjective?.required || 6) - Number(oreObjective?.progress || 0));
+                const remaining = Math.max(1, Math.ceil(missing / Math.max(1, Number(path.minimumQuantity || 1))));
+                Aethra.ExplorationSystem?.queueTrainingGuarantee?.(professionId, {
+                    huntId: options.huntId || path.huntId,
+                    remaining,
+                    manual: true,
+                    guaranteedSuccess: true,
+                    minimumQuantity: path.minimumQuantity,
+                    source: "focus-training",
+                    activationSource: options.source || "focus-training"
+                });
+            }
+            const payload = this.getFocusTrainingState(professionId);
+            Aethra.EventBus.emit("profession:focus-training-activated", clone(payload || { professionId }));
+            return payload;
+        },
+
+        pauseFocusTraining(professionId, source = "focus-changed") {
+            return Aethra.ExplorationSystem?.cancelTrainingGuarantee?.(professionId, source) || false;
+        },
+
+        getFocusTrainingState(professionId) {
+            const path = FOCUS_TRAINING_PATHS[professionId];
+            if (!path) return null;
+            const quest = Aethra.QuestSystem?.getQuest?.(path.questId) || null;
+            const guidance = quest?.status === "active" ? Aethra.QuestSystem?.getGuidance?.(quest) : null;
+            const progress = quest ? Aethra.QuestSystem?.getProgress?.(quest) : { progress: 0, required: 0, percent: 0 };
+            return {
+                professionId,
+                questId: path.questId,
+                title: path.title,
+                summary: path.summary,
+                huntId: path.huntId,
+                status: quest?.status || "available",
+                active: quest?.status === "active",
+                completed: quest?.status === "completed",
+                quest: quest ? clone(quest) : null,
+                guidance: guidance ? clone(guidance) : null,
+                progress: clone(progress)
+            };
         },
 
         unlock(professionId) {

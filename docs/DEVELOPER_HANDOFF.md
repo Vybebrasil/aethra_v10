@@ -3,7 +3,7 @@
 Atualizado em: 2026-08-05
 Branch de continuidade: `main`  
 Baseline recebida antes deste ciclo: `25f328f`
-Checkpoint imediatamente anterior: `25f328f`
+Checkpoint imediatamente anterior: `a7c4bf7`
 
 Este documento é o ponto de entrada para continuar a versão atual. Leia-o antes
 de alterar HUD, automação de hunt, progressão, profissões, coleta, crafting ou
@@ -12,6 +12,42 @@ paralelos que leem e escrevem o mesmo estado.
 
 ## 1. Estado entregue neste checkpoint
 
+- O foco do Diário agora pertence ao `DisciplineSystem`: `setFocus()` persiste a
+  escolha, publica `discipline:focus-changed` e `getFocusedGuidance()` resolve a
+  próxima atividade oficial sem a UI criar progressão ou rotas paralelas.
+- Central do Herói, painel `Próximo passo`, Diário e Atlas de Hunts projetam o
+  mesmo foco. O CTA abre diretamente a oficina para skills de criação ou a Hunt
+  recomendada para combate/coleta/mundo.
+- Mineração agora fecha o primeiro contrato vertical de foco: o jogador escolhe
+  Minerar ou Ignorar nos veios das `Galerias do Aprendiz`, coleta 6 minérios,
+  funde 3 lingotes e escolhe entre Espada, Machado ou Maça de Ferro. Ignorar não
+  consome a garantia e nenhuma etapa escolhe ou fabrica automaticamente.
+- O Diário apresenta os quatro objetivos dependentes e seu progresso; a oficina
+  destaca a receita de fundição e depois as três opções válidas de equipamento.
+  O contrato técnico está em `docs/MINING_FOCUS_CONTRACT.md`.
+- Recomendações são calculadas a partir dos metadados reais do `HuntCatalog`
+  (`focus`, multiplicadores de XP e pesos de eventos), priorizando conteúdo já
+  liberado. Mineração ganhou `Galerias do Aprendiz`, uma rota especializada de
+  nível 1 que explica e inicia a cadeia minério → lingote → equipamento.
+- O Atlas de Hunts voltou a expor `Criaturas | Focos de skill`; a rota sugerida
+  recebe `SEU FOCO`, mostra multiplicadores, eventos e inicia pelo comando
+  oficial do `HuntSystem`.
+- O menu superior possui nomes acessíveis mesmo quando o perfil compacto oculta
+  os textos dos botões.
+- A janela oficial de Skills agora abre no `Diário de Progressão`, com busca,
+  filtros por categoria, foco persistente, seleção de skill, XP atual, benefício,
+  instrução de treino, cadeia de atividade, próximo marco e XP recente da sessão.
+- `ActionBar e Automação` permanece funcional como segunda área da mesma janela;
+  atalhos vindos da ActionBar abrem diretamente essa área, sem criar uma HUD ou
+  estado paralelo.
+- O Diário apenas projeta dados e envia comandos. Guias de treino pertencem ao
+  `DisciplineSystem`; XP continua no `XPSystem`; coleta no `ProfessionSystem`;
+  receitas no `RecipeCatalog`; oficina e especialização usam suas UIs oficiais.
+- O jogador pode, pelo Diário, definir foco, pausar/retomar XP, ativar/desativar
+  coleta, abrir oficina, árvore de especialização ou o mapa de Hunts.
+- `WindowManager.getDefaultWindowPosition()` centraliza pela dimensão real da
+  janela. Isso impede que HUDs ampliadas por passes responsivos ultrapassem a
+  borda direita ou cubram a ActionBar depois de uma mudança de monitor.
 - HUD principal modernizada e responsiva, validada em 640x720, 768x720,
   1024x768, 1280x720 e 1920x1080. Abaixo de 1120 px, Hunt, Central do Herói e
   Hunt Analyzer usam a mesma HUD em uma pilha vertical rolável, com o palco em
@@ -205,7 +241,7 @@ exploração e quests. `js/core/GameLoader.js` já inclui `CraftingSystem` na or
 correta. Mudar a ordem exige rodar a suíte completa.
 
 O save ativo usa `aethra_save_v71_disciplines` e metadata
-`schemaVersion: 77`. A migração v72 → v73 garante `crafting.discovered`
+`schemaVersion: 78`. A migração v72 → v73 garante `crafting.discovered`
 como array; personagens com crafts anteriores recebem as 12 receitas base como
 descobertas. A migração v73 → v74 cria o contrato persistido de missões,
 `rewardClaims` e marca missões já concluídas como recompensadas; em seguida o
@@ -216,13 +252,16 @@ migração v75 → v76 normaliza `hero.professionPerks`, `introPrepared` e
 `introProvisioned`; perks de rotas já concluídas são reconciliados sem duplicar
 efeitos. A migração v76 → v77 cria `GameState.maintenance`, política automática
 desligada por padrão e `durability: 100/100` nas instâncias equipáveis legadas.
+A migração v77 → v78 atualiza para `quests.contractVersion: 4` e normaliza a
+garantia de treino com quantidade restante, decisão manual, sucesso garantido e
+rendimento mínimo, preservando contratos em andamento.
 A migração de profissões usa `hero.professionMigrationVersion: 2`.
 Personagens existentes recebem Ilyra e retomam a ponte de tutorial quando
 necessário, sem repetir uma rota já concluída; personagens novos ou resetados
 seguem o fluxo completo.
 
 As escolhas de especialização usam IDs `specialization_*` dentro de
-`hero.professionPerks`; permanecem na mesma estrutura no schema 77 e não criam uma segunda
+`hero.professionPerks`; permanecem na mesma estrutura no schema 78 e não criam uma segunda
 estrutura persistida. O contrato detalhado está em
 `docs/PROFESSION_SPECIALIZATIONS.md`.
 
@@ -257,10 +296,17 @@ node scripts/run-integration.mjs --timeout 90 --viewport 1920x1080
 
 Resultado do checkpoint atual antes do commit:
 
-- quality gate: 640/640 verificações;
-- integração headless: 161/161 verificações em 640x720, 768x720, 1024x768,
-  1280x720 e 1920x1080;
-- a suíte prova migração v77, criação em 100/100, desgaste 100→90,
+- quality gate: 658/658 verificações;
+- integração no navegador: 171/171 verificações em 640x720, 768x720,
+  1024x768, 1280x720 e 1920x1080;
+- Diário validado em 360x740, 640x800, 768x900, 1024x768, 1280x800 e
+  1920x1080: janela dentro do viewport, sem overflow horizontal e sem sobrepor
+  a ActionBar;
+- cliques reais validados: filtro de Coleta retorna 3 skills, Esfolamento exibe
+  `Caçar criatura → Esfolar → Curtir e costurar`, busca por Forjaria retorna uma
+  skill e a troca Diário/ActionBar mantém apenas um painel visível;
+- a suíte prova migração v78, contrato de quests v4, criação em 100/100,
+  desgaste 100→90,
   penalidade em baixa condição, item quebrado inativo, reparo transacional,
   consumo de Gold/material, XP de ofício e rejeição de comando repetido;
 - as quatro rotas introdutórias foram simuladas até a conclusão; a suíte também
@@ -275,6 +321,11 @@ Resultado do checkpoint atual antes do commit:
   1920x1080, sem overflow horizontal e sem erros de console. Em 640/1024, o
   palco aparece antes dos painéis auxiliares e a ActionBar permanece fixa sem
   cortar os atalhos.
+- contrato de Mineração validado no navegador real: saves que já possuíam o
+  foco retomam `Ciclo do Prospector`, o Diário mostra os quatro passos e o CTA
+  abre `Galerias do Aprendiz` já destacada; iniciar a Hunt fecha o Atlas sem
+  erros. Em 1280x720 e 1920x1080, as três colunas e a ActionBar ficam dentro do
+  viewport e sem rolagem horizontal.
 - cliques reais em `Combate`, `Herói` e `Análise` alinham o painel ao topo; a
   rolagem manual atualiza `aria-pressed` e o destaque da navegação compacta.
 - Central verificada no navegador em 1280x720: painel ativo começa dentro da
@@ -304,11 +355,18 @@ save migrado. Atualize estes números se a suíte crescer.
    janelas abaixo de 1120 px, com regressão em 640/768/1024.~~ ✅ **Concluído**
 10. ~~Adicionar navegação fixa entre Combate, Herói e Análise na pilha compacta,
     com destaque sincronizado pela rolagem.~~ ✅ **Concluído**
+11. ~~Criar um Diário de Progressão que explique como treinar, mostre o próximo
+    marco e concentre os comandos oficiais de foco/coleta/oficina.~~ ✅ **Concluído**
+12. ~~Transformar o foco do Diário em direção ativa: recomendação oficial,
+    projeção na Central/Tracker e abertura direta da Hunt ou oficina.~~ ✅ **Concluído**
+13. ~~Fechar o primeiro ciclo vertical de foco com decisão manual, coleta,
+    processamento e escolha de equipamento.~~ ✅ **Concluído para Mineração**
 
-Limitações deliberadas: o conteúdo de fabricação cobre Forjaria e Couraria até
-o primeiro Tier 3; profissões de mundo e utilidade
-ainda não possuem árvores próprias; troca de especialização não foi liberada;
-o cliente local ainda não é autoridade segura para economia competitiva.
+Limitações deliberadas: o contrato vertical completo existe apenas para
+Mineração; o conteúdo de fabricação cobre Forjaria e Couraria até o primeiro
+Tier 3; profissões de mundo e utilidade ainda não possuem árvores próprias;
+troca de especialização não foi liberada; o cliente local ainda não é autoridade
+segura para economia competitiva.
 
 O contrato completo da manutenção está em `docs/EQUIPMENT_MAINTENANCE.md`.
 

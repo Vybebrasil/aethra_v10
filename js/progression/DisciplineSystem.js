@@ -13,6 +13,7 @@
     };
     const integer = (value, fallback = 0) => Math.max(0, Math.floor(number(value, fallback)));
     const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+    const FOCUS_SETTING_KEY = "progressionJournalFocus";
 
     const DEFINITIONS = Object.freeze({
         sword: {
@@ -129,6 +130,177 @@
         }
     });
 
+    const TRAINING_GUIDES = Object.freeze({
+        shield: {
+            where: "Em Hunts com um escudo equipado.",
+            action: "Use Postura de Guarda e bloqueie ataques inimigos.",
+            chain: ["Equipar escudo", "Entrar em uma Hunt", "Bloquear e usar Guarda"],
+            destination: "hunt"
+        },
+        cloth_armor: {
+            where: "Em combate usando um peitoral de tecido.",
+            action: "Receba ataques com esse tipo de armadura equipado.",
+            chain: ["Equipar tecido", "Entrar em uma Hunt", "Resistir a ataques"],
+            destination: "hunt"
+        },
+        leather_armor: {
+            where: "Em combate usando um peitoral de couro.",
+            action: "Receba ataques e sobreviva com esse tipo de armadura equipado.",
+            chain: ["Equipar couro", "Entrar em uma Hunt", "Resistir a ataques"],
+            destination: "hunt"
+        },
+        plate_armor: {
+            where: "Em combate usando um peitoral de placa.",
+            action: "Receba ataques e bloqueie impactos com esse tipo de armadura.",
+            chain: ["Equipar placa", "Entrar em uma Hunt", "Absorver impactos"],
+            destination: "hunt"
+        },
+        mining: {
+            where: "Em Hunts que tenham veios de minério.",
+            action: "Ative a coleta, extraia os veios e leve o minério para a forja.",
+            chain: ["Encontrar um veio", "Minerar", "Fundir e forjar"],
+            destination: "hunt",
+            policy: true,
+            workshopProfessionId: "blacksmithing"
+        },
+        skinning: {
+            where: "Em Hunts com criaturas que possam ser esfoladas.",
+            action: "Ative a coleta, derrote a criatura e extraia sua pele.",
+            chain: ["Caçar criatura", "Esfolar", "Curtir e costurar"],
+            destination: "hunt",
+            policy: true,
+            workshopProfessionId: "leatherworking"
+        },
+        herbalism: {
+            where: "Em Hunts com plantas e eventos de coleta.",
+            action: "Ative a coleta e investigue recursos naturais encontrados no caminho.",
+            chain: ["Explorar", "Colher ervas", "Guardar reagentes"],
+            destination: "hunt",
+            policy: true
+        },
+        exploration: {
+            where: "No mapa das Hunts e durante expedições.",
+            action: "Siga trilhas, investigue eventos e descubra segredos.",
+            chain: ["Escolher região", "Explorar caminhos", "Resolver eventos"],
+            destination: "hunt"
+        },
+        survival: {
+            where: "Em Hunts longas, acampamentos e situações de risco.",
+            action: "Sobreviva, recupere recursos e administre os suprimentos da expedição.",
+            chain: ["Preparar supplies", "Resistir aos riscos", "Recuperar no acampamento"],
+            destination: "hunt"
+        },
+        blacksmithing: {
+            where: "Na Forja da Cidade.",
+            action: "Funda minérios, crie equipamentos de metal e repare peças.",
+            chain: ["Obter minério", "Fundir barras", "Forjar ou reparar"],
+            destination: "workshop",
+            workshopProfessionId: "blacksmithing"
+        },
+        leatherworking: {
+            where: "No Curtume da Cidade.",
+            action: "Curta peles, produza couro e confeccione equipamentos leves.",
+            chain: ["Obter peles", "Curtir couro", "Costurar ou reparar"],
+            destination: "workshop",
+            workshopProfessionId: "leatherworking"
+        },
+        thievery: {
+            where: "Em eventos com fechaduras, armadilhas e passagens secretas.",
+            action: "Explore Hunts e tente superar mecanismos encontrados.",
+            chain: ["Encontrar mecanismo", "Desarmar ou abrir", "Recolher recompensa"],
+            destination: "hunt"
+        }
+    });
+
+    function trainingGuide(id) {
+        const definition = DEFINITIONS[id];
+        if (!definition) return null;
+        if (TRAINING_GUIDES[id]) return clone(TRAINING_GUIDES[id]);
+        if (definition.group === "weapons") {
+            return {
+                where: `Em Hunts usando ${definition.name.toLowerCase()} como estilo de ataque.`,
+                action: "Ataque com a arma correspondente e use suas técnicas na ActionBar.",
+                chain: ["Equipar arma", "Entrar em uma Hunt", "Atacar e usar técnicas"],
+                destination: "hunt"
+            };
+        }
+        if (definition.group === "arcana") {
+            return {
+                where: `Em Hunts conjurando habilidades de ${definition.name}.`,
+                action: "Equipe a técnica correspondente na ActionBar e use-a em combate.",
+                chain: ["Equipar técnica", "Entrar em uma Hunt", "Conjurar em combate"],
+                destination: "hunt"
+            };
+        }
+        return {
+            where: "Durante atividades relacionadas a esta habilidade.",
+            action: definition.description,
+            chain: ["Preparar", "Praticar", "Evoluir"],
+            destination: "hunt"
+        };
+    }
+
+    const TRAINING_EVENT_KEYS = Object.freeze({
+        mining: ["mining"],
+        herbalism: ["herb"],
+        thievery: ["locked_chest", "secret_door", "trap"],
+        exploration: ["trail", "shrine"],
+        survival: ["camp"],
+        blacksmithing: ["forge"]
+    });
+
+    function huntRecommendationScore(definition, disciplineId) {
+        const discipline = DEFINITIONS[disciplineId];
+        if (!definition || !discipline) return 0;
+        const modifiers = definition.modifiers || {};
+        const professionMultiplier = Math.max(0, number(modifiers.professionXp?.[disciplineId], 0));
+        const exactFocus = definition.focus?.skill === disciplineId || definition.focus?.id === disciplineId;
+        const eventScore = (TRAINING_EVENT_KEYS[disciplineId] || []).reduce((total, eventId) => {
+            return total + Math.max(0, number(modifiers.eventWeights?.[eventId], 0));
+        }, 0);
+        const combatDiscipline = ["weapons", "arcana", "defense"].includes(discipline.group);
+        return (exactFocus ? 120 : 0)
+            + (professionMultiplier * 24)
+            + (eventScore * 8)
+            + (combatDiscipline ? Math.max(0, number(modifiers.combatXp, 1)) * 12 : 0);
+    }
+
+    function activityRecommendations(disciplineId, limit = 3) {
+        if (!DEFINITIONS[disciplineId]) return [];
+        const heroLevel = Math.max(1, integer(Aethra.GameState.hero?.level, 1) || 1);
+        const definitions = Object.values(Aethra.HuntCatalog?.getDefinitions?.() || Aethra.HuntSystem?.hunts || {});
+        const ranked = definitions
+            .filter((definition) => definition?.id && !String(definition.id).startsWith("targeted__"))
+            .map((definition) => {
+                const score = huntRecommendationScore(definition, disciplineId);
+                const minLevel = Math.max(1, integer(definition.minLevel, 1) || 1);
+                const unlocked = heroLevel >= minLevel;
+                return {
+                    id: definition.id,
+                    name: definition.name,
+                    icon: definition.icon || definition.focus?.icon || "⌖",
+                    region: definition.region || definition.biome || "Aethra",
+                    biome: definition.biome || "Região de Hunt",
+                    description: definition.description || "Atividade recomendada para esta skill.",
+                    minLevel,
+                    maxLevel: Math.max(minLevel, integer(definition.maxLevel, minLevel)),
+                    unlocked,
+                    mode: definition.mode === "specialized" ? "hunts" : "expeditions",
+                    score: Number(score.toFixed(2)),
+                    xpMultiplier: Math.max(0, number(definition.modifiers?.professionXp?.[disciplineId], 0)),
+                    eventMultiplier: Math.max(...(TRAINING_EVENT_KEYS[disciplineId] || []).map((eventId) => number(definition.modifiers?.eventWeights?.[eventId], 0)), 0),
+                    exactFocus: definition.focus?.skill === disciplineId || definition.focus?.id === disciplineId
+                };
+            })
+            .filter((entry) => entry.score > 0);
+        const unlocked = ranked.filter((entry) => entry.unlocked);
+        const pool = unlocked.length > 0 ? unlocked : ranked;
+        return pool
+            .sort((a, b) => b.score - a.score || a.minLevel - b.minLevel || a.name.localeCompare(b.name, "pt-BR"))
+            .slice(0, Math.max(1, integer(limit, 3) || 3))
+            .map(clone);
+    }
+
     function xpRequired(level) {
         return Aethra.XPSystem?.getSkillXPRequired?.(level)
             || Math.max(45, Math.round(45 + (20 * (Math.max(1, integer(level, 1)) ** 1.72))));
@@ -210,6 +382,17 @@
             });
             Aethra.EventBus.on("game:reset", () => this.ensureState(true));
             Aethra.EventBus.on("save:loaded", () => this.ensureState());
+            Aethra.EventBus.on("quest:ready", () => {
+                const focusId = this.getFocusId();
+                if (!focusId) return;
+                const trainingState = Aethra.ProfessionSystem?.getFocusTrainingState?.(focusId);
+                if (trainingState?.active || trainingState?.completed) return;
+                const recommendation = activityRecommendations(focusId, 1)[0] || null;
+                Aethra.ProfessionSystem?.activateFocusTraining?.(focusId, {
+                    huntId: recommendation?.id || null,
+                    source: "discipline-focus-resume"
+                });
+            });
         },
 
         resolveArmorType(item = null) {
@@ -263,6 +446,90 @@
         getSnapshot() {
             this.ensureState();
             return Object.fromEntries(Object.keys(DEFINITIONS).map((id) => [id, this.getState(id)]));
+        },
+
+        getTrainingGuide(id) {
+            return trainingGuide(id);
+        },
+
+        getFocusId() {
+            const focusId = String(Aethra.SettingsManager?.get?.(FOCUS_SETTING_KEY, "") || "");
+            return DEFINITIONS[focusId] ? focusId : null;
+        },
+
+        setFocus(id, source = "discipline-ui") {
+            if (!DEFINITIONS[id]) return false;
+            const previousId = this.getFocusId();
+            Aethra.SettingsManager?.set?.(FOCUS_SETTING_KEY, id, { source });
+            if (previousId && previousId !== id) {
+                Aethra.ProfessionSystem?.pauseFocusTraining?.(previousId, "discipline-focus-changed");
+            }
+            const recommendation = activityRecommendations(id, 1)[0] || null;
+            const focusTraining = Aethra.ProfessionSystem?.activateFocusTraining?.(id, {
+                huntId: recommendation?.id || null,
+                source
+            }) || null;
+            const payload = {
+                id,
+                disciplineId: id,
+                previousId,
+                changed: previousId !== id,
+                source,
+                state: this.getState(id),
+                focusTraining,
+                guidance: this.getFocusedGuidance(id)
+            };
+            Aethra.EventBus.emit("discipline:focus-changed", clone(payload));
+            return clone(payload);
+        },
+
+        getActivityRecommendations(id, options = {}) {
+            return activityRecommendations(id, options.limit || 3);
+        },
+
+        getFocusedGuidance(requestedId = null) {
+            const id = DEFINITIONS[requestedId] ? requestedId : this.getFocusId();
+            const skill = id ? this.getState(id) : null;
+            if (!skill) return null;
+            const guide = trainingGuide(id);
+            const recommendation = activityRecommendations(id, 1)[0] || null;
+            const focusTraining = Aethra.ProfessionSystem?.getFocusTrainingState?.(id) || null;
+            const contractGuidance = focusTraining?.active ? focusTraining.guidance : null;
+            const isWorkshop = contractGuidance
+                ? contractGuidance.action === "open-workshop"
+                : guide?.destination === "workshop";
+            const contractHuntId = contractGuidance?.huntId || null;
+            const contractHunt = contractHuntId
+                ? (Aethra.HuntCatalog?.get?.(contractHuntId) || Aethra.HuntSystem?.hunts?.[contractHuntId])
+                : null;
+            const percent = clamp(number(skill.progressPercent), 0, 100);
+            return {
+                disciplineId: id,
+                name: skill.name,
+                icon: skill.icon || "✦",
+                level: skill.level,
+                xpCurrent: skill.xpCurrent,
+                xpNext: skill.xpNext,
+                percent,
+                title: contractGuidance ? focusTraining.title : `Treinar ${skill.name}`,
+                detail: contractGuidance?.detail || guide?.action || skill.description,
+                chain: clone(guide?.chain || []),
+                action: isWorkshop ? "open-workshop" : "open-skill-hunt",
+                actionLabel: contractGuidance?.actionLabel || (isWorkshop
+                    ? `Abrir ${id === "leatherworking" ? "Curtume" : "Forja"}`
+                    : recommendation
+                        ? `Ir para ${recommendation.name}`
+                        : "Encontrar Hunt"),
+                professionId: isWorkshop
+                    ? (contractGuidance?.professionId || guide.workshopProfessionId || id)
+                    : null,
+                huntId: contractHuntId || recommendation?.id || null,
+                mapMode: contractHunt
+                    ? (contractHunt.mode === "specialized" ? "hunts" : "expeditions")
+                    : recommendation?.mode || "expeditions",
+                recommendation,
+                contract: focusTraining ? clone(focusTraining) : null
+            };
         },
 
         getPowerMultiplier(id) {

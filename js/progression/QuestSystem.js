@@ -6,7 +6,7 @@
         throw new Error("QuestSystem.js requer game-core.js e GameData.js.");
     }
 
-    const CONTRACT_VERSION = 3;
+    const CONTRACT_VERSION = 4;
     const clone = (value) => JSON.parse(JSON.stringify(value));
     const number = (value, fallback = 0) => Number.isFinite(Number(value))
         ? Number(value)
@@ -57,6 +57,9 @@
             type,
             target,
             label: String(objective.label || objective.text || target || type),
+            dependsOn: Array.isArray(objective.dependsOn)
+                ? [...new Set(objective.dependsOn.map(String).filter(Boolean))]
+                : [],
             required,
             progress: completed ? required : progress,
             completed
@@ -178,6 +181,13 @@
                     activeIntroQuest.id.replace("intro_profession_", "")
                 );
             }
+            const activeFocusTraining = state.active.find((quest) => String(quest.id || "").startsWith("focus_training_"));
+            if (activeFocusTraining) {
+                Aethra.ProfessionSystem?.activateFocusTraining?.(
+                    activeFocusTraining.id.replace("focus_training_", ""),
+                    { accept: false, source: "quest-resume" }
+                );
+            }
 
             if (
                 state.active.length === 0 &&
@@ -222,6 +232,15 @@
             });
             Aethra.EventBus.on("crafting:completed", (data = {}) => {
                 if (data.recipeId) this.updateProgress("CraftRecipe", data.recipeId, Math.max(1, number(data.batches, 1)), data);
+                const outputs = Array.isArray(data.outputs) ? data.outputs : [];
+                const craftedEquipment = outputs.some((item) => {
+                    const template = Aethra.GameData.items?.[item?.templateId || item?.id] || {};
+                    return Boolean(item?.slot || template.slot || item?.allowedSlots?.length || template.allowedSlots?.length);
+                });
+                const professionId = data.recipe?.professionId || Aethra.RecipeCatalog?.get?.(data.recipeId)?.professionId;
+                if (craftedEquipment && professionId) {
+                    this.updateProgress("CraftEquipment", professionId, Math.max(1, number(data.batches, 1)), data);
+                }
                 this.handleItemsAcquired(data.outputs || [], "crafting:completed");
             });
             Aethra.EventBus.on("NPCInteracted", (data = {}) => {
@@ -247,6 +266,10 @@
             if (!definition && String(questId).startsWith("intro_profession_")) {
                 const professionId = String(questId).replace("intro_profession_", "");
                 definition = Aethra.ProfessionSystem?.getIntroQuestDefinition?.(professionId) || null;
+            }
+            if (!definition && String(questId).startsWith("focus_training_")) {
+                const professionId = String(questId).replace("focus_training_", "");
+                definition = Aethra.ProfessionSystem?.getFocusTrainingQuestDefinition?.(professionId) || null;
             }
             return definition ? normalizeDefinition(questId, definition) : null;
         },
@@ -425,6 +448,16 @@
                 let changed = false;
                 quest.objectives.forEach((objective) => {
                     if (objective.type !== type || !targetsMatch(type, objective.target, targetId) || objective.completed) return;
+                    if (
+                        objective.type === "CraftEquipment"
+                        && Array.isArray(objective.allowedRecipeIds)
+                        && objective.allowedRecipeIds.length > 0
+                        && !objective.allowedRecipeIds.includes(context.recipeId)
+                    ) return;
+                    const dependenciesComplete = (objective.dependsOn || []).every((dependencyId) => {
+                        return quest.objectives.find((entry) => entry.id === dependencyId)?.completed === true;
+                    });
+                    if (!dependenciesComplete) return;
                     const previous = objective.progress;
                     objective.progress = Math.min(objective.required, objective.progress + increment);
                     objective.completed = objective.progress >= objective.required;
@@ -633,6 +666,10 @@
                 detail = recipe
                     ? `Produza ${recipe.name} na oficina usando os materiais indicados.`
                     : "Abra a oficina e conclua a receita indicada.";
+            } else if (objective.type === "CraftEquipment") {
+                action = "open-workshop";
+                actionLabel = "Forjar equipamento";
+                detail = "Escolha uma das receitas de equipamento disponíveis e produza sua primeira peça de ferro.";
             }
 
             return {
@@ -664,6 +701,10 @@
                 ...Object.keys(Aethra.ProfessionSystem?.introPaths || {}).map((professionId) => {
                     const id = `intro_profession_${professionId}`;
                     return normalizeDefinition(id, Aethra.ProfessionSystem.getIntroQuestDefinition(professionId));
+                }),
+                ...Object.keys(Aethra.ProfessionSystem?.focusTrainingPaths || {}).map((professionId) => {
+                    const id = `focus_training_${professionId}`;
+                    return normalizeDefinition(id, Aethra.ProfessionSystem.getFocusTrainingQuestDefinition(professionId));
                 })
             ].filter(Boolean);
             const hunts = Aethra.HuntCatalog?.getDefinitions?.() || Aethra.HuntSystem?.hunts || {};
@@ -698,6 +739,15 @@
                         issues.push({ questId: quest.id, objectiveId: objective.id, reason: "missing-skill", target: objective.target });
                     } else if (objective.type === "CraftRecipe" && !Aethra.RecipeCatalog?.get?.(objective.target)) {
                         issues.push({ questId: quest.id, objectiveId: objective.id, reason: "missing-recipe", target: objective.target });
+                    } else if (objective.type === "CraftEquipment" && !Aethra.ProfessionSystem?.professions?.[objective.target]) {
+                        issues.push({ questId: quest.id, objectiveId: objective.id, reason: "missing-crafting-profession", target: objective.target });
+                    } else if (objective.type === "CraftEquipment") {
+                        (objective.allowedRecipeIds || []).forEach((recipeId) => {
+                            const recipe = Aethra.RecipeCatalog?.get?.(recipeId);
+                            if (!recipe || recipe.professionId !== objective.target) {
+                                issues.push({ questId: quest.id, objectiveId: objective.id, reason: "missing-equipment-recipe", target: recipeId });
+                            }
+                        });
                     } else if (objective.type === "TalkToNPC" && !Aethra.EntityManager?.getEntity?.(objective.target)) {
                         issues.push({ questId: quest.id, objectiveId: objective.id, reason: "missing-npc", target: objective.target });
                     } else if (objective.type === "ItemAcquired") {
@@ -714,6 +764,11 @@
                             });
                         }
                     }
+                    (objective.dependsOn || []).forEach((dependencyId) => {
+                        if (!quest.objectives.some((entry) => entry.id === dependencyId)) {
+                            issues.push({ questId: quest.id, objectiveId: objective.id, reason: "missing-objective-dependency", target: dependencyId });
+                        }
+                    });
                 });
                 if (quest.nextQuestId && !Aethra.GameData.quests?.[quest.nextQuestId] && !String(quest.nextQuestId).startsWith("intro_profession_")) {
                     issues.push({ questId: quest.id, reason: "missing-next-quest", target: quest.nextQuestId });

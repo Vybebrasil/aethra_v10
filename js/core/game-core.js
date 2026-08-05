@@ -53,7 +53,7 @@ window.Aethra = window.Aethra || {};
         return {
             meta: {
                 version: SAVE_VERSION,
-                schemaVersion: 77,
+                schemaVersion: 78,
                 lastSavedAt: null
             },
 

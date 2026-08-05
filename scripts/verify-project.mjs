@@ -114,14 +114,23 @@ check(
 );
 
 const questSystemSource = read("js/progression/QuestSystem.js");
+const gameCoreSource = read("js/core/game-core.js");
 const characterCreationSource = read("js/ui/CharacterCreationUI.js");
 const characterBuildSource = read("js/progression/CharacterBuildSystem.js");
 const professionSource = read("js/progression/ProfessionSystem.js");
+const recipeCatalogSource = read("js/data/recipes/RecipeCatalog.js");
 const professionSpecializationUiSource = read("js/ui/ProfessionSpecializationUI.js");
+const professionWorkshopUiSource = read("js/ui/ProfessionWorkshopUI.js");
+const progressionJournalUiSource = read("js/ui/ProgressionJournalUI.js");
+const disciplineSource = read("js/progression/DisciplineSystem.js");
+const huntCatalogSource = read("js/data/hunts/HuntCatalog.js");
+const worldMapSource = read("js/ui/HudWorldMapAndDrops.js");
+const playerHudSource = read("js/ui/PlayerHudWorkspace.js");
 const saveManagerSource = read("js/infrastructure/SaveManager.js");
 const maintenanceSource = read("js/items/EquipmentMaintenanceSystem.js");
 const responsiveHudSource = read("css/hud-modernization.css");
 const renderEngineSource = read("js/ui/RenderEngine.js");
+const explorationSource = read("js/world/ExplorationSystem.js");
 const devServerSource = read("scripts/dev-server.ps1");
 const gameLauncherSource = read("INICIAR_JOGO.cmd");
 check(
@@ -153,20 +162,81 @@ check(
     "Árvore de profissão deve estar indexada e enviar comandos sem mutar perks na UI"
 );
 check(
-    /CONTRACT_VERSION\s*=\s*3/.test(questSystemSource)
+    indexSource.includes("css/progression-journal.css")
+        && indexSource.includes("js/ui/ProgressionJournalUI.js")
+        && /getTrainingGuide\(/.test(disciplineSource)
+        && /getDisciplineMilestones/.test(renderEngineSource)
+        && /DisciplineSystem\.setTrainingMode\?\.\(/.test(progressionJournalUiSource)
+        && /ProfessionSystem\?\.setCollectionPolicy\?\.\(/.test(progressionJournalUiSource),
+    "Diário de Progressão deve consumir guias e marcos oficiais e enviar comandos aos sistemas donos"
+);
+check(
+    !/grantSkillXP|addUseXP|xpCurrent\s*(?:\+?=|-?=)/.test(progressionJournalUiSource),
+    "Diário de Progressão não pode conceder ou alterar XP diretamente"
+);
+check(
+    /DisciplineSystem\.setFocus\?\.\(/.test(progressionJournalUiSource)
+        && !/SettingsManager\?\.set\?\.\([^\n]*progressionJournalFocus/.test(progressionJournalUiSource)
+        && /discipline:focus-changed/.test(disciplineSource)
+        && /getFocusedGuidance\(/.test(disciplineSource),
+    "Foco de skill deve ser comandado pelo DisciplineSystem e publicado como evento oficial"
+);
+check(
+    /apprentice_mines_focus:\s*\{/.test(huntCatalogSource)
+        && /id:\s*["']apprentice_mines_focus["'][\s\S]{0,500}minLevel:\s*1/.test(huntCatalogSource)
+        && /focusSkillId/.test(worldMapSource)
+        && /data-hunt-atlas-view=["']focus["']/.test(worldMapSource),
+    "Mineração deve ter rota inicial acessível e o mapa deve abrir a recomendação da skill"
+);
+check(
+    /data-focus-discipline/.test(playerHudSource)
+        && /discipline:focus-changed/.test(playerHudSource)
+        && /data-focus-skill-next-action/.test(renderEngineSource)
+        && /handleDisciplineGuidance/.test(renderEngineSource),
+    "Central do Herói e Próximo passo devem refletir e executar o foco oficial"
+);
+check(
+    /CONTRACT_VERSION\s*=\s*4/.test(questSystemSource)
         && /grantRewards\(quest\)/.test(questSystemSource)
         && /MonsterCatalog\?\.resolveId/.test(questSystemSource)
         && /["']hunt:started["']/.test(questSystemSource)
         && /auditReachability\(\)/.test(questSystemSource)
-        && /DefeatInHunt/.test(questSystemSource),
-    "QuestSystem deve migrar estado, normalizar alvos e conceder recompensas"
+        && /CraftEquipment/.test(questSystemSource)
+        && /dependsOn/.test(questSystemSource),
+    "QuestSystem v4 deve preservar dependências, equipamentos e recompensas"
 );
 check(
-    /CURRENT_SCHEMA_VERSION\s*=\s*77/.test(saveManagerSource)
-        && /quests\.contractVersion\s*=\s*3/.test(saveManagerSource)
+    /CURRENT_SCHEMA_VERSION\s*=\s*78/.test(saveManagerSource)
+        && /schemaVersion:\s*78/.test(gameCoreSource)
+        && /quests\.contractVersion\s*=\s*4/.test(saveManagerSource)
         && /hero\.professionPerks/.test(saveManagerSource)
-        && /item\.durability/.test(saveManagerSource),
-    "Save v77 deve migrar missões, perks e durabilidade de equipamentos"
+        && /item\.durability/.test(saveManagerSource)
+        && /tutorialGuarantee/.test(saveManagerSource),
+    "Save v78 deve migrar missões, perks, durabilidade e garantias de treino"
+);
+check(
+    /getFocusTrainingQuestDefinition/.test(professionSource)
+        && /practice_focus_mining/.test(professionSource)
+        && /smelt_focus_ingots/.test(professionSource)
+        && /forge_focus_equipment/.test(professionSource)
+        && /queueTrainingGuarantee/.test(professionSource),
+    "ProfessionSystem deve definir o contrato vertical oficial de Mineração"
+);
+check(
+    /data-skip-exploration/.test(renderEngineSource)
+        && /skip:\s*true/.test(renderEngineSource)
+        && /remaining/.test(explorationSource)
+        && /guaranteedSuccess/.test(explorationSource)
+        && /minimumQuantity/.test(explorationSource),
+    "Exploração guiada deve permitir Minerar/Ignorar sem consumir a garantia ao ignorar"
+);
+check(
+    /CraftEquipment/.test(professionWorkshopUiSource)
+        && /isEquipmentRecipe/.test(professionWorkshopUiSource)
+        && /Escolha seu primeiro equipamento/.test(professionWorkshopUiSource)
+        && !/BagSystem\?\.(?:addItem|consumeItem)/.test(professionWorkshopUiSource)
+        && /id:\s*["']forge_iron_sword["'][\s\S]{0,250}requiredLevel:\s*1/.test(recipeCatalogSource),
+    "Oficina deve projetar a escolha de equipamento sem mutar a economia na UI"
 );
 check(
     /battle:damage-dealt/.test(maintenanceSource)

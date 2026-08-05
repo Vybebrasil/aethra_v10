@@ -1064,6 +1064,72 @@ summary:focus-visible,
     box-shadow: 0 0 7px rgba(98, 229, 164, 0.5);
 }
 
+.quest-tracker__header--skill span,
+.quest-tracker__header--skill b {
+    color: #7ae9bb;
+}
+
+.quest-tracker__progress--skill i {
+    background: linear-gradient(90deg, #5b9ee1, #67deb0);
+}
+
+.quest-tracker .quest-tracker__skill-focus {
+    display: grid;
+    grid-template-columns: 25px minmax(0, 1fr) minmax(70px, 112px);
+    align-items: center;
+    gap: 6px;
+    margin-top: 5px;
+    padding: 5px 6px;
+    border: 1px solid rgba(103, 222, 176, 0.2);
+    border-radius: 7px;
+    background: rgba(27, 91, 67, 0.12);
+}
+
+.quest-tracker__skill-focus > span {
+    display: grid;
+    width: 24px;
+    height: 24px;
+    place-items: center;
+    border-radius: 6px;
+    color: #7ae9bb;
+    background: rgba(103, 222, 176, 0.1);
+}
+
+.quest-tracker__skill-focus > div {
+    display: grid;
+    min-width: 0;
+}
+
+.quest-tracker__skill-focus small {
+    color: #679281;
+    font-size: 6px;
+    font-weight: 900;
+    letter-spacing: .08em;
+}
+
+.quest-tracker__skill-focus strong {
+    overflow: hidden;
+    color: #dff8ee;
+    font-size: 8px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.quest-tracker__skill-focus button {
+    min-width: 0;
+    padding: 4px 6px;
+    overflow: hidden;
+    border: 1px solid rgba(103, 222, 176, 0.36);
+    border-radius: 5px;
+    background: rgba(31, 104, 76, 0.5);
+    color: #dff8ee;
+    font-size: 7px;
+    font-weight: 850;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
 .quest-tracker footer button {
     flex: 1 1 auto;
     min-height: 27px !important;

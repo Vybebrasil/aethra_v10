@@ -1,0 +1,895 @@
+#skills-view .skills-workspace-tabs {
+    display: flex;
+    gap: 6px;
+    padding: 8px 12px 0;
+    border-bottom: 1px solid rgba(104, 145, 160, 0.16);
+    background: rgba(8, 17, 22, 0.96);
+}
+
+#skills-view.game-window[data-aethra-window] > .skills-workspace-tabs {
+    flex: 0 0 auto !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+}
+
+#skills-view .skills-workspace-tabs button {
+    min-height: 34px;
+    padding: 0 14px;
+    border: 1px solid transparent;
+    border-bottom: 0;
+    border-radius: 8px 8px 0 0;
+    color: #79919b;
+    background: transparent;
+    font: 750 10px/1 "Outfit", sans-serif;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+}
+
+#skills-view .skills-workspace-tabs button:hover,
+#skills-view .skills-workspace-tabs button.is-active {
+    border-color: rgba(89, 210, 145, 0.28);
+    color: #6fe2a5;
+    background: linear-gradient(180deg, rgba(31, 82, 57, 0.42), rgba(9, 27, 24, 0.78));
+}
+
+#skills-view .skills-workspace-panel {
+    min-width: 0;
+    min-height: 0;
+}
+
+#skills-view.game-window .skills-workspace-panel[hidden] {
+    display: none !important;
+}
+
+#skills-view.game-window .skills-workspace-panel[data-skills-workspace-panel="actionbar"]:not([hidden]) {
+    display: grid !important;
+    grid-template-rows: auto minmax(0, 1fr);
+    overflow: hidden;
+}
+
+#skills-view.skills-view--modern {
+    grid-template-rows: auto auto minmax(0, 1fr) !important;
+}
+
+#skills-view.skills-view--modern [data-skills-workspace-panel="actionbar"] .skills-priority-status {
+    min-height: 0;
+}
+
+#skills-view.skills-view--modern [data-skills-workspace-panel="actionbar"] .skills-config-list {
+    height: 100%;
+}
+
+#progression-journal-root {
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    gap: 8px;
+    height: 100%;
+    min-height: 0;
+    padding: 10px 12px 12px;
+    color: #c8d7dc;
+    font-family: "Outfit", sans-serif;
+}
+
+.progression-summary {
+    display: grid;
+    grid-template-columns: minmax(250px, 1fr) auto;
+    gap: 8px;
+}
+
+.progression-summary__focus,
+.progression-summary__metrics {
+    min-width: 0;
+    border: 1px solid rgba(93, 166, 124, 0.2);
+    border-radius: 10px;
+    background: linear-gradient(115deg, rgba(16, 53, 38, 0.5), rgba(7, 18, 22, 0.9));
+}
+
+.progression-summary__focus {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+}
+
+.progression-summary__focus > span {
+    display: grid;
+    width: 38px;
+    height: 38px;
+    place-items: center;
+    flex: 0 0 auto;
+    border: 1px solid rgba(96, 221, 154, 0.35);
+    border-radius: 9px;
+    color: #7be9ae;
+    background: rgba(25, 77, 54, 0.42);
+    font-size: 20px;
+}
+
+.progression-summary small,
+.progression-detail small,
+.progression-filters small {
+    color: #6e8791;
+    font: 800 8px/1.1 "Outfit", sans-serif;
+    letter-spacing: 0.1em;
+}
+
+.progression-summary__focus strong {
+    display: block;
+    margin-top: 3px;
+    color: #e4d49e;
+    font: 750 14px/1.1 "Outfit", sans-serif;
+}
+
+.progression-summary__focus p {
+    margin: 3px 0 0;
+    color: #8aa0a8;
+    font-size: 9px;
+}
+
+.progression-summary__metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(76px, 1fr));
+    padding: 6px;
+}
+
+.progression-summary__metrics span {
+    display: grid;
+    place-content: center;
+    min-height: 45px;
+    padding: 4px 10px;
+    text-align: center;
+}
+
+.progression-summary__metrics span + span {
+    border-left: 1px solid rgba(105, 144, 158, 0.16);
+}
+
+.progression-summary__metrics strong {
+    margin-top: 3px;
+    color: #60d99a;
+    font-size: 15px;
+}
+
+.progression-filters {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.progression-filters > label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    width: min(260px, 33%);
+    min-width: 170px;
+    min-height: 34px;
+    padding: 0 10px;
+    border: 1px solid rgba(92, 130, 145, 0.22);
+    border-radius: 8px;
+    color: #66cfa0;
+    background: rgba(5, 14, 18, 0.92);
+}
+
+.progression-filters input {
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    color: #d2dfe3;
+    background: transparent;
+    font: 600 10px/1 "Outfit", sans-serif;
+}
+
+.progression-filter-chips {
+    display: flex;
+    gap: 5px;
+    min-width: 0;
+    padding-bottom: 1px;
+    overflow-x: auto;
+    scrollbar-width: thin;
+}
+
+.progression-filter-chips button {
+    min-height: 29px;
+    padding: 0 10px;
+    flex: 0 0 auto;
+    border: 1px solid rgba(92, 130, 145, 0.2);
+    border-radius: 999px;
+    color: #7d939c;
+    background: rgba(8, 18, 23, 0.84);
+    font: 700 9px/1 "Outfit", sans-serif;
+    cursor: pointer;
+}
+
+.progression-filter-chips button.is-active {
+    border-color: rgba(87, 218, 148, 0.36);
+    color: #67e3a2;
+    background: rgba(22, 70, 49, 0.48);
+}
+
+.progression-workspace {
+    display: grid;
+    grid-template-columns: minmax(300px, 0.82fr) minmax(390px, 1.18fr);
+    gap: 9px;
+    min-width: 0;
+    min-height: 0;
+}
+
+.progression-skill-list,
+.progression-detail {
+    min-width: 0;
+    min-height: 0;
+    border: 1px solid rgba(91, 131, 147, 0.2);
+    border-radius: 11px;
+    background: rgba(6, 14, 18, 0.86);
+}
+
+.progression-skill-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 7px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+.progression-skill-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: 35px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 61px;
+    padding: 7px 9px;
+    border: 1px solid rgba(89, 126, 140, 0.18);
+    border-radius: 9px;
+    color: #aebfc5;
+    background: linear-gradient(110deg, rgba(11, 23, 28, 0.94), rgba(6, 14, 18, 0.9));
+    text-align: left;
+    cursor: pointer;
+}
+
+.progression-skill-card:hover,
+.progression-skill-card.is-selected {
+    border-color: rgba(89, 213, 147, 0.36);
+    background: linear-gradient(110deg, rgba(15, 52, 38, 0.72), rgba(7, 20, 23, 0.94));
+}
+
+.progression-skill-card.is-focused::before {
+    position: absolute;
+    inset: 6px auto 6px 0;
+    width: 2px;
+    border-radius: 2px;
+    background: #e6bf55;
+    box-shadow: 0 0 7px rgba(230, 191, 85, 0.65);
+    content: "";
+}
+
+.progression-skill-card.is-paused {
+    opacity: 0.62;
+}
+
+.progression-skill-card__icon {
+    display: grid;
+    width: 35px;
+    height: 35px;
+    place-items: center;
+    border: 1px solid rgba(92, 188, 137, 0.22);
+    border-radius: 8px;
+    color: #82dfaa;
+    background: rgba(20, 56, 42, 0.34);
+    font-size: 17px;
+}
+
+.progression-skill-card__body {
+    display: grid;
+    min-width: 0;
+}
+
+.progression-skill-card__body small {
+    overflow: hidden;
+    color: #657f89;
+    font: 700 7px/1 "Outfit", sans-serif;
+    letter-spacing: 0.06em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.progression-skill-card__body strong {
+    display: flex;
+    justify-content: space-between;
+    gap: 6px;
+    margin-top: 4px;
+    color: #d1dce0;
+    font: 720 11px/1 "Outfit", sans-serif;
+}
+
+.progression-skill-card__body strong b {
+    color: #d9bd67;
+    font-size: 9px;
+}
+
+.progression-skill-card__body i {
+    height: 3px;
+    margin-top: 6px;
+    overflow: hidden;
+    border-radius: 4px;
+    background: #15282f;
+}
+
+.progression-skill-card__body i u {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #3ebc78, #76e1a7);
+}
+
+.progression-skill-card__body em {
+    margin-top: 3px;
+    color: #657e88;
+    font: 600 7px/1 "Outfit", sans-serif;
+    text-align: right;
+}
+
+.progression-skill-card__state {
+    align-self: start;
+    padding: 4px 5px;
+    border-radius: 5px;
+    color: #65d99b;
+    background: rgba(23, 75, 51, 0.42);
+    font: 800 7px/1 "Outfit", sans-serif;
+    white-space: nowrap;
+}
+
+.progression-skill-card.is-paused .progression-skill-card__state {
+    color: #dbbd70;
+    background: rgba(88, 67, 24, 0.38);
+}
+
+.progression-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 11px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+.progression-detail > header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.progression-detail > header > span {
+    display: grid;
+    width: 46px;
+    height: 46px;
+    place-items: center;
+    flex: 0 0 auto;
+    border: 1px solid rgba(97, 220, 155, 0.3);
+    border-radius: 11px;
+    color: #73e1a4;
+    background: linear-gradient(145deg, rgba(29, 86, 59, 0.5), rgba(9, 25, 26, 0.8));
+    font-size: 23px;
+}
+
+.progression-detail h3 {
+    margin: 3px 0 2px;
+    color: #ead79e;
+    font: 700 20px/1 "Cinzel", serif;
+}
+
+.progression-detail > header p,
+.progression-detail section p {
+    margin: 0;
+    color: #8399a2;
+    font-size: 9px;
+    line-height: 1.35;
+}
+
+.progression-detail > header p strong {
+    color: #62d798;
+}
+
+.progression-detail__benefit,
+.progression-detail__training,
+.progression-contract,
+.progression-next-unlock,
+.progression-specialization,
+.progression-recent {
+    border: 1px solid rgba(91, 131, 146, 0.18);
+    border-radius: 9px;
+    background: rgba(8, 19, 23, 0.72);
+}
+
+.progression-detail__benefit,
+.progression-detail__training {
+    padding: 9px 10px;
+}
+
+.progression-detail__benefit strong,
+.progression-detail__training > strong {
+    display: block;
+    margin: 4px 0 3px;
+    color: #cbd9dd;
+    font-size: 11px;
+}
+
+.progression-detail__training ol {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.progression-detail__training li {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+    padding: 6px;
+    border-radius: 7px;
+    color: #91a5ad;
+    background: rgba(13, 33, 37, 0.72);
+    font-size: 8px;
+}
+
+.progression-detail__training li b {
+    display: grid;
+    width: 18px;
+    height: 18px;
+    place-items: center;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    color: #63dfa0;
+    background: rgba(29, 91, 59, 0.5);
+}
+
+.progression-contract {
+    display: grid;
+    gap: 7px;
+    padding: 9px 10px;
+    border-color: rgba(103, 222, 176, 0.28);
+    background: linear-gradient(110deg, rgba(21, 67, 50, 0.46), rgba(7, 19, 23, 0.86));
+}
+
+.progression-contract > header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.progression-contract > header span {
+    min-width: 0;
+}
+
+.progression-contract > header strong {
+    display: block;
+    margin: 3px 0;
+    color: #dff8ee;
+    font-size: 11px;
+}
+
+.progression-contract > header > b {
+    padding: 5px 7px;
+    border-radius: 6px;
+    color: #76e1ad;
+    background: rgba(31, 104, 76, 0.36);
+    font-size: 9px;
+}
+
+.progression-contract > i {
+    display: block;
+    height: 4px;
+    overflow: hidden;
+    border-radius: 99px;
+    background: rgba(1, 9, 11, 0.72);
+}
+
+.progression-contract > i u {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #4a9ede, #67deb0);
+}
+
+.progression-contract ol {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.progression-contract li {
+    display: grid;
+    grid-template-columns: 21px minmax(0, 1fr);
+    align-items: center;
+    gap: 7px;
+    padding: 6px 7px;
+    border: 1px solid rgba(91, 131, 146, 0.14);
+    border-radius: 7px;
+    opacity: 0.54;
+}
+
+.progression-contract li > b {
+    display: grid;
+    width: 20px;
+    height: 20px;
+    place-items: center;
+    border-radius: 50%;
+    color: #78919b;
+    background: rgba(72, 100, 111, 0.18);
+    font-size: 8px;
+}
+
+.progression-contract li span {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 7px;
+    min-width: 0;
+}
+
+.progression-contract li span strong {
+    overflow: hidden;
+    color: #9eb0b7;
+    font-size: 8px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.progression-contract li span small {
+    color: #718891;
+    font-size: 7px;
+    white-space: nowrap;
+}
+
+.progression-contract li.is-current,
+.progression-contract li.is-complete {
+    opacity: 1;
+}
+
+.progression-contract li.is-current {
+    border-color: rgba(103, 222, 176, 0.35);
+    background: rgba(25, 81, 59, 0.22);
+}
+
+.progression-contract li.is-current > b,
+.progression-contract li.is-complete > b {
+    color: #7ae9bb;
+    background: rgba(31, 104, 76, 0.42);
+}
+
+.progression-contract li.is-complete span strong {
+    color: #718c82;
+    text-decoration: line-through;
+}
+
+.progression-contract .progression-contract__current {
+    padding-top: 2px;
+    color: #9bb9ad;
+}
+
+.progression-contract__current strong {
+    color: #72e0ac;
+}
+
+.progression-next-unlock,
+.progression-specialization {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 9px 10px;
+}
+
+.progression-next-unlock {
+    border-color: rgba(196, 157, 67, 0.24);
+    background: linear-gradient(100deg, rgba(57, 43, 14, 0.5), rgba(10, 20, 22, 0.8));
+}
+
+.progression-next-unlock span,
+.progression-specialization span {
+    min-width: 0;
+}
+
+.progression-next-unlock strong,
+.progression-specialization strong {
+    display: block;
+    margin: 3px 0;
+    color: #e0c579;
+    font-size: 11px;
+}
+
+.progression-next-unlock > b {
+    padding: 5px 7px;
+    border-radius: 5px;
+    color: #d9bd69;
+    background: rgba(110, 79, 20, 0.34);
+    font-size: 8px;
+    text-transform: uppercase;
+}
+
+.progression-specialization button,
+.progression-detail__actions button {
+    min-height: 30px;
+    padding: 0 10px;
+    border: 1px solid rgba(101, 151, 165, 0.28);
+    border-radius: 7px;
+    color: #9eb0b7;
+    background: rgba(10, 25, 30, 0.9);
+    font: 750 8px/1 "Outfit", sans-serif;
+    cursor: pointer;
+}
+
+.progression-specialization button:hover,
+.progression-detail__actions button:hover,
+.progression-detail__actions button.is-primary {
+    border-color: rgba(84, 220, 145, 0.4);
+    color: #6ce0a1;
+    background: rgba(21, 70, 48, 0.58);
+}
+
+.progression-detail__actions button:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.progression-recent {
+    padding: 8px 10px;
+}
+
+.progression-recent > header {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.progression-recent > header span {
+    color: #657e87;
+    font-size: 8px;
+}
+
+.progression-recent-empty {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding-top: 7px;
+    color: #5f7982;
+}
+
+.progression-recent-empty p {
+    font-size: 8px !important;
+}
+
+.progression-recent-list {
+    display: grid;
+    gap: 4px;
+    margin: 7px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.progression-recent-list li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 8px;
+    color: #78909a;
+    font-size: 8px;
+}
+
+.progression-recent-list li span {
+    color: #61d99a;
+    font-weight: 800;
+}
+
+.progression-recent-list li strong {
+    color: #a6b7bd;
+}
+
+.progression-recent-list li time {
+    color: #586f78;
+}
+
+.progression-detail__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: auto;
+}
+
+.progression-empty {
+    display: grid;
+    min-height: 90px;
+    place-items: center;
+    padding: 15px;
+    color: #6f8790;
+    font-size: 10px;
+    text-align: center;
+}
+
+/* O foco escolhido é o mesmo objeto em todas as HUDs. */
+.player-skill-card-slim.is-focused {
+    border-color: rgba(240, 201, 98, 0.72) !important;
+    background: linear-gradient(135deg, rgba(45, 36, 15, 0.94), rgba(6, 14, 17, 0.98)) !important;
+    box-shadow: inset 3px 0 0 #f0c962, 0 0 16px rgba(240, 201, 98, 0.1) !important;
+}
+
+.player-skill-card-slim.is-focused .player-skill-card-slim__icon {
+    border-color: rgba(240, 201, 98, 0.55);
+    color: #f6d77c;
+    background: rgba(240, 201, 98, 0.12);
+}
+
+.player-skill-card__btn.btn--focus,
+.player-skill-card__btn.btn--focused {
+    border-color: rgba(240, 201, 98, 0.38) !important;
+    color: #f3d374 !important;
+}
+
+.player-skill-card__btn.btn--focused:disabled {
+    opacity: 1;
+    background: rgba(132, 96, 24, 0.28) !important;
+}
+
+.hunt-focus-card.is-skill-recommended,
+.world-map-node.is-skill-recommended {
+    border-color: #67deb0 !important;
+    box-shadow: 0 0 0 2px rgba(103, 222, 176, 0.14), 0 0 24px rgba(103, 222, 176, 0.18) !important;
+}
+
+.hunt-focus-card aside mark {
+    padding: 2px 5px;
+    border-radius: 999px;
+    color: #062016;
+    background: #67deb0;
+    font-size: 7px;
+    font-weight: 950;
+    letter-spacing: .06em;
+}
+
+.world-map-node__quest.world-map-node__skill {
+    color: #062016;
+    background: #67deb0;
+}
+
+.hunt-focus-recommendation {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr);
+    align-items: center;
+    gap: 9px;
+    padding: 9px 10px;
+    border: 1px solid rgba(103, 222, 176, 0.38);
+    border-radius: 10px;
+    background: linear-gradient(90deg, rgba(35, 108, 79, 0.2), rgba(5, 17, 20, 0.72));
+}
+
+.hunt-focus-recommendation > span {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    border-radius: 9px;
+    color: #7ae9bb;
+    background: rgba(103, 222, 176, 0.1);
+    font-size: 17px;
+}
+
+.hunt-focus-recommendation div {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
+.hunt-focus-recommendation small {
+    color: #67deb0;
+    font-size: 7px;
+    font-weight: 900;
+    letter-spacing: .08em;
+}
+
+.hunt-focus-recommendation strong {
+    color: #eefbf6;
+    font-size: 11px;
+}
+
+.hunt-focus-recommendation p {
+    margin: 0;
+    color: #91afa4;
+    font-size: 9px;
+    line-height: 1.35;
+}
+
+@media (max-width: 900px) {
+    #modal-layer #skills-view.game-window.skills-view--modern.is-open {
+        top: 6px !important;
+        left: 6px !important;
+        right: auto !important;
+        width: calc(100vw - 12px) !important;
+        height: calc(100dvh - 12px) !important;
+        min-width: 0 !important;
+        min-height: 0 !important;
+        max-width: calc(100vw - 12px) !important;
+        max-height: calc(100dvh - 12px) !important;
+        transform: none !important;
+    }
+
+    #progression-journal-root {
+        display: block;
+        overflow-y: auto;
+    }
+
+    .progression-summary,
+    .progression-workspace {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .progression-summary__metrics {
+        margin-top: 7px;
+    }
+
+    .progression-filters {
+        align-items: stretch;
+        flex-direction: column;
+        margin: 7px 0;
+    }
+
+    .progression-filters > label {
+        width: auto;
+    }
+
+    .progression-skill-list {
+        max-height: 280px;
+        margin-bottom: 8px;
+    }
+
+    .progression-detail {
+        overflow: visible;
+    }
+}
+
+@media (max-width: 480px) {
+    #skills-view .skills-workspace-tabs {
+        padding-inline: 6px;
+    }
+
+    #skills-view .skills-workspace-tabs button {
+        min-width: 0;
+        padding-inline: 8px;
+        flex: 1;
+        font-size: 8px;
+    }
+
+    #progression-journal-root {
+        padding: 7px;
+    }
+
+    .progression-summary__focus {
+        padding: 7px;
+    }
+
+    .progression-detail__training ol {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .progression-skill-card {
+        grid-template-columns: 31px minmax(0, 1fr);
+    }
+
+    .progression-skill-card__icon {
+        width: 31px;
+        height: 31px;
+    }
+
+    .progression-skill-card__state {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+    }
+}

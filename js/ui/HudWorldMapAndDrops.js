@@ -333,11 +333,16 @@
     }
 
     function getHuntAtlasView() {
-        return "creatures";
+        return Aethra.GameState.ui?.huntAtlasView === "focus" ? "focus" : "creatures";
     }
 
-    function renderHuntAtlasToggle() {
-        return "";
+    function renderHuntAtlasToggle(activeView = "creatures") {
+        const focused = Aethra.DisciplineSystem?.getFocusId?.();
+        const focusedSkill = focused ? Aethra.DisciplineSystem?.getState?.(focused) : null;
+        return `<nav class="hunt-atlas-submode" aria-label="Tipo de Hunt">
+            <button type="button" data-hunt-atlas-view="creatures" class="${activeView === "creatures" ? "is-active" : ""}" aria-selected="${activeView === "creatures"}">Criaturas</button>
+            <button type="button" data-hunt-atlas-view="focus" class="${activeView === "focus" ? "is-active" : ""}" aria-selected="${activeView === "focus"}">Focos de skill${focusedSkill ? ` · ${escapeHTML(focusedSkill.name)}` : ""}</button>
+        </nav>`;
     }
 
     function formatFocusMultiplier(value, suffix = "x") {
@@ -360,7 +365,9 @@
 
     function renderSpecializedHunts(root, selectedId, heroLevel, activeId) {
         const definitions = getSpecializedHunts();
-        const selected = definitions.find((entry) => entry.id === (selectedId || Aethra.GameState.ui?.selectedFocusHunt)) || definitions[0] || null;
+        const focusGuidance = Aethra.DisciplineSystem?.getFocusedGuidance?.() || null;
+        const recommendedHuntId = focusGuidance?.mapMode === "hunts" ? focusGuidance.huntId : null;
+        const selected = definitions.find((entry) => entry.id === (selectedId || recommendedHuntId || Aethra.GameState.ui?.selectedFocusHunt)) || definitions[0] || null;
         if (selected) Aethra.GameState.ui.selectedFocusHunt = selected.id;
         const locked = selected ? heroLevel < Number(selected.minLevel || 1) : false;
         const focusSkill = selected?.focus?.skill ? Aethra.ProfessionSystem?.getState?.(selected.focus.skill) : null;
@@ -384,16 +391,17 @@
                     ${definitions.map((definition) => {
                         const isLocked = heroLevel < Number(definition.minLevel || 1);
                         const isSelected = definition.id === selected?.id;
+                        const isSkillRecommended = definition.id === recommendedHuntId;
                         const primarySkill = definition.focus?.skill ? Aethra.ProfessionSystem?.getState?.(definition.focus.skill) : null;
                         return `
-                            <button type="button" class="hunt-focus-card ${isLocked ? "is-locked" : "is-unlocked"} ${isSelected ? "is-selected" : ""}" data-focus-hunt-select="${escapeHTML(definition.id)}">
+                            <button type="button" class="hunt-focus-card ${isLocked ? "is-locked" : "is-unlocked"} ${isSelected ? "is-selected" : ""} ${isSkillRecommended ? "is-skill-recommended" : ""}" data-focus-hunt-select="${escapeHTML(definition.id)}">
                                 <span class="hunt-focus-card__icon">${escapeHTML(definition.focus?.icon || definition.icon || "⌖")}</span>
                                 <div>
                                     <small>${escapeHTML(definition.biome || "Bioma")}</small>
                                     <strong>${escapeHTML(definition.name)}</strong>
                                     <p>${escapeHTML(definition.focus?.name || "Progressão especializada")}</p>
                                 </div>
-                                <aside><b>NV. ${Number(definition.minLevel || 1)}</b>${primarySkill ? `<small>Skill ${Number(primarySkill.level || 1)}</small>` : ""}</aside>
+                                <aside>${isSkillRecommended ? `<mark>SEU FOCO</mark>` : ""}<b>NV. ${Number(definition.minLevel || 1)}</b>${primarySkill ? `<small>Skill ${Number(primarySkill.level || 1)}</small>` : ""}</aside>
                             </button>
                         `;
                     }).join("")}
@@ -405,6 +413,7 @@
                             <div><small>FOCO PRINCIPAL</small><h3>${escapeHTML(selected.name)}</h3><p>${escapeHTML(selected.focus?.name || selected.biome || "Hunt especializada")}</p></div>
                             <b>NV. ${Number(selected.minLevel || 1)}</b>
                         </header>
+                        ${selected.id === recommendedHuntId ? `<div class="hunt-focus-recommendation"><span>${escapeHTML(focusGuidance.icon || "✦")}</span><div><small>ROTA DA SKILL FOCADA</small><strong>${escapeHTML(focusGuidance.title)}</strong><p>${escapeHTML(focusGuidance.detail)}</p></div></div>` : ""}
                         <p class="hunt-focus-detail__description">${escapeHTML(selected.description || "Hunt especializada.")}</p>
                         <div class="hunt-focus-modifiers">
                             <article class="${Number(modifiers.combatXp ?? 1) >= 1 ? "is-positive" : "is-negative"}"><small>XP do herói</small><strong>${formatFocusMultiplier(modifiers.combatXp ?? 1)}</strong><span>somente por abates</span></article>
@@ -632,7 +641,10 @@
         }
 
         const questGuidance = Aethra.QuestSystem?.getGuidance?.() || null;
-        const recommendedHuntId = questGuidance?.huntId || null;
+        const skillGuidance = Aethra.DisciplineSystem?.getFocusedGuidance?.() || null;
+        const questRecommendedHuntId = questGuidance?.huntId || null;
+        const skillRecommendedHuntId = skillGuidance?.mapMode === "expeditions" ? skillGuidance.huntId : null;
+        const recommendedHuntId = questRecommendedHuntId || skillRecommendedHuntId;
         const selected = getHuntDefinition(
             selectedId ||
             recommendedHuntId ||
@@ -647,12 +659,13 @@
             const locked = heroLevel < Number(definition.minLevel || 1);
             const active = activeId === definition.id;
             const selectedNode = selected.id === definition.id;
-            const questRecommended = recommendedHuntId === definition.id;
+            const questRecommended = questRecommendedHuntId === definition.id;
+            const skillRecommended = skillRecommendedHuntId === definition.id;
             const expeditionTags = getExpeditionTags(definition);
             return `
                 <button
                     type="button"
-                    class="world-map-node ${locked ? "is-locked" : "is-unlocked"} ${active ? "is-active" : ""} ${selectedNode ? "is-selected" : ""} ${questRecommended ? "is-quest-recommended" : ""}"
+                    class="world-map-node ${locked ? "is-locked" : "is-unlocked"} ${active ? "is-active" : ""} ${selectedNode ? "is-selected" : ""} ${questRecommended ? "is-quest-recommended" : ""} ${skillRecommended ? "is-skill-recommended" : ""}"
                     style="--node-x:${Number(definition.position?.x || 50)}%;--node-y:${Number(definition.position?.y || 50)}%;"
                     data-world-hunt-select="${escapeHTML(definition.id)}"
                     aria-label="${escapeHTML(definition.name)}${locked ? `, bloqueada até o nível ${definition.minLevel}` : ", disponível"}"
@@ -663,7 +676,7 @@
                         <small>NV. ${Number(definition.minLevel || 1)}${active ? " · ATIVA" : ""}</small>
                         <em>${escapeHTML(expeditionTags.slice(-1)[0] || 'SOLO')}</em>
                     </span>
-                    ${questRecommended ? '<mark class="world-map-node__quest">MISSÃO</mark>' : ''}
+                    ${questRecommended ? '<mark class="world-map-node__quest">MISSÃO</mark>' : skillRecommended ? '<mark class="world-map-node__quest world-map-node__skill">FOCO</mark>' : ''}
                 </button>
             `;
         }).join("");
@@ -706,7 +719,7 @@
                     </header>
                     ${selected.id === recommendedHuntId ? `
                         <div class="hunt-world-map-detail__quest">
-                            <span>✦</span><div><small>DESTINO DA JORNADA</small><strong>Sua próxima atividade acontece nesta expedição.</strong></div>
+                            <span>✦</span><div><small>${selected.id === questRecommendedHuntId ? "DESTINO DA JORNADA" : "ROTA DA SKILL FOCADA"}</small><strong>${selected.id === questRecommendedHuntId ? "Sua próxima atividade acontece nesta expedição." : escapeHTML(skillGuidance?.title || "Treino recomendado")}</strong></div>
                         </div>
                     ` : ''}
                     <div class="hunt-world-map-detail__danger"><span>Perigo</span><div>${dangers}</div></div>
@@ -769,7 +782,18 @@
 
     function openWorldMap(options = {}) {
         ensureWorldMapWindow();
-        renderWorldMap(options.huntId || options.creatureId || null, options.mode || null);
+        const requestedFocusId = options.focusSkillId || null;
+        const focusGuidance = requestedFocusId
+            ? Aethra.DisciplineSystem?.getFocusedGuidance?.(requestedFocusId)
+            : null;
+        if (focusGuidance?.mapMode === "hunts") {
+            Aethra.GameState.ui = Aethra.GameState.ui || {};
+            Aethra.GameState.ui.huntAtlasView = "focus";
+        }
+        renderWorldMap(
+            options.huntId || options.creatureId || focusGuidance?.huntId || null,
+            options.mode || focusGuidance?.mapMode || null
+        );
         const width = Math.min(1040, Math.max(760, window.innerWidth - 120));
         const height = Math.min(720, Math.max(560, window.innerHeight - 120));
         return WorldWindows?.openWindow?.("hunt-world-map-view", {

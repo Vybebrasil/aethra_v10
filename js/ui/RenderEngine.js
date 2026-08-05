@@ -338,6 +338,9 @@
                     this.schedule("cityGuidance", () => this.renderCityGuidance());
                 });
             });
+            bind("discipline:focus-changed", () => {
+                this.schedule("questTracker", () => this.renderQuestTracker());
+            });
 
             // Cidade.
             bind("playerMoved", (payload) => {
@@ -868,7 +871,7 @@
                                             <small>Maestria</small>
                                             <strong>Skills e progressão</strong>
                                         </div>
-                                        <button type="button" data-open-window="skills-view">Prioridades</button>
+                                        <button type="button" data-open-window="skills-view" data-skills-tab="actionbar">ActionBar</button>
                                     </div>
                                     <div id="hero-skill-progression" class="hero-skill-progression"></div>
                                 </section>
@@ -1095,6 +1098,7 @@
                                     <button
                                         type="button"
                                         data-open-window="skills-view"
+                                        data-skills-tab="actionbar"
                                     >
                                         Configurar Skills
                                     </button>
@@ -1879,12 +1883,16 @@
                             </div>
                             <div class="combatant-card__event-actions">
                                 <button type="button" class="combatant-card__event-button" data-resolve-exploration="${escapeHTML(pendingEvent.eventId)}">${escapeHTML(pendingEvent.actionLabel || 'Interagir')}</button>
+                                <button type="button" class="combatant-card__event-button is-secondary" data-skip-exploration="${escapeHTML(pendingEvent.eventId)}">Ignorar</button>
                             </div>
                         </div>
                     </div>
                 `;
                 enemyCard.querySelector('[data-resolve-exploration]')?.addEventListener('click', (event) => {
                     Aethra.ExplorationSystem?.resolveEvent?.(event.currentTarget.dataset.resolveExploration, { manual: true });
+                });
+                enemyCard.querySelector('[data-skip-exploration]')?.addEventListener('click', (event) => {
+                    Aethra.ExplorationSystem?.resolveEvent?.(event.currentTarget.dataset.skipExploration, { manual: true, skip: true });
                 });
             } else {
                 enemyCard.innerHTML = '';
@@ -2249,6 +2257,7 @@
                             class="battle-action-slot__skill"
                             data-slot-index="${slotIndex}"
                             data-open-window="skills-view"
+                            data-skills-tab="actionbar"
                             aria-label="Configurar slot ${slotIndex + 1}"
                             title="Slot vazio · clique para configurar"
                         >
@@ -3927,50 +3936,108 @@
             return Aethra.WindowManager?.openWindow?.("quests-view", { source: "quest-tracker" }) ?? false;
         },
 
+        handleDisciplineGuidance(guidance) {
+            if (!guidance) return false;
+            if (guidance.action === "open-workshop") {
+                Aethra.UIManager?.setPrimaryView?.("city", { source: "skill-focus-tracker" });
+                return Aethra.ProfessionWorkshopUI?.open?.(
+                    guidance.professionId || guidance.disciplineId
+                ) ?? false;
+            }
+            Aethra.UIManager?.setPrimaryView?.("hunt", { source: "skill-focus-tracker" });
+            return Aethra.openHuntWorldMap?.({
+                source: "skill-focus-tracker",
+                focusSkillId: guidance.disciplineId,
+                huntId: guidance.huntId || null,
+                mode: guidance.mapMode || null
+            }) ?? false;
+        },
+
         renderQuestTracker() {
             const slots = [...document.querySelectorAll("[data-quest-tracker-slot]")];
             if (slots.length === 0) return false;
             const quest = Aethra.QuestSystem?.getTrackedQuest?.() || null;
             const guidance = quest ? Aethra.QuestSystem?.getGuidance?.(quest) : null;
+            const focusGuidance = Aethra.DisciplineSystem?.getFocusedGuidance?.() || null;
             const progress = quest
                 ? Aethra.QuestSystem?.getProgress?.(quest) || { progress: 0, required: 1, percent: 0 }
                 : { progress: 0, required: 1, percent: 0 };
+            const focusContract = focusGuidance?.contract?.active ? focusGuidance.contract : null;
+            const focusContractProgress = focusContract?.progress || null;
+            const focusObjective = focusContract?.guidance?.objective || null;
+            const focusDisplayPercent = focusContractProgress?.percent ?? focusGuidance?.percent ?? 0;
 
             slots.forEach((slot) => {
-                if (!quest || !guidance) {
+                if ((!quest || !guidance) && !focusGuidance) {
                     slot.hidden = true;
                     slot.replaceChildren();
                     return;
                 }
                 slot.hidden = false;
-                const objective = guidance.objective;
-                slot.innerHTML = `
-                    <header class="quest-tracker__header">
-                        <span><i aria-hidden="true">✦</i> Próximo passo</span>
-                        <b>${progress.percent}%</b>
-                    </header>
-                    <div class="quest-tracker__body">
-                        <strong>${escapeHTML(quest.title)}</strong>
-                        <p>${escapeHTML(objective.label)} <b>${formatNumber(objective.progress)}/${formatNumber(objective.required)}</b></p>
-                        <small>${escapeHTML(guidance.detail)}</small>
-                    </div>
-                    <div class="quest-tracker__progress" aria-label="Progresso ${progress.percent}%"><i style="width:${progress.percent}%"></i></div>
-                    <footer>
-                        <button type="button" data-quest-next-action>${escapeHTML(guidance.actionLabel)}</button>
-                        <button type="button" class="is-secondary" data-open-tracked-quest>Detalhes</button>
-                    </footer>
-                `;
+                if (quest && guidance) {
+                    const objective = guidance.objective;
+                    slot.innerHTML = `
+                        <header class="quest-tracker__header">
+                            <span><i aria-hidden="true">✦</i> Próximo passo</span>
+                            <b>${progress.percent}%</b>
+                        </header>
+                        <div class="quest-tracker__body">
+                            <strong>${escapeHTML(quest.title)}</strong>
+                            <p>${escapeHTML(objective.label)} <b>${formatNumber(objective.progress)}/${formatNumber(objective.required)}</b></p>
+                            <small>${escapeHTML(guidance.detail)}</small>
+                            ${focusGuidance ? `
+                                <section class="quest-tracker__skill-focus">
+                                    <span>${escapeHTML(focusGuidance.icon || "✦")}</span>
+                                    <div><small>${focusContract ? "CONTRATO DE FOCO" : "SKILL FOCADA"}</small><strong>${escapeHTML(focusContract?.title || focusGuidance.name)}${focusContract ? ` · ${formatNumber(focusDisplayPercent)}%` : ` · Nv. ${formatNumber(focusGuidance.level)}`}</strong></div>
+                                    <button type="button" data-focus-skill-next-action title="${escapeHTML(focusGuidance.actionLabel)}">${escapeHTML(focusGuidance.actionLabel)}</button>
+                                </section>
+                            ` : ""}
+                        </div>
+                        <div class="quest-tracker__progress" aria-label="Progresso ${progress.percent}%"><i style="width:${progress.percent}%"></i></div>
+                        <footer>
+                            <button type="button" data-quest-next-action>${escapeHTML(guidance.actionLabel)}</button>
+                            <button type="button" class="is-secondary" data-open-tracked-quest>Detalhes</button>
+                        </footer>
+                    `;
+                } else {
+                    slot.innerHTML = `
+                        <header class="quest-tracker__header quest-tracker__header--skill">
+                            <span><i aria-hidden="true">${escapeHTML(focusGuidance.icon || "✦")}</i> ${focusContract ? "Contrato de foco" : "Foco de progressão"}</span>
+                            <b>${focusContract ? `${formatNumber(focusDisplayPercent)}%` : `Nv. ${formatNumber(focusGuidance.level)}`}</b>
+                        </header>
+                        <div class="quest-tracker__body">
+                            <strong>${escapeHTML(focusGuidance.title)}</strong>
+                            <p>${focusObjective
+                                ? `${escapeHTML(focusObjective.label)} <b>${formatNumber(focusObjective.progress)}/${formatNumber(focusObjective.required)}</b>`
+                                : `${formatNumber(focusGuidance.xpCurrent)} / ${formatNumber(focusGuidance.xpNext)} XP <b>${focusGuidance.percent}%</b>`}</p>
+                            <small>${escapeHTML(focusGuidance.detail)}</small>
+                        </div>
+                        <div class="quest-tracker__progress quest-tracker__progress--skill" aria-label="Progresso ${focusDisplayPercent}%"><i style="width:${focusDisplayPercent}%"></i></div>
+                        <footer>
+                            <button type="button" data-focus-skill-next-action>${escapeHTML(focusGuidance.actionLabel)}</button>
+                            <button type="button" class="is-secondary" data-open-focused-skill>Diário</button>
+                        </footer>
+                    `;
+                }
                 slot.querySelector("[data-quest-next-action]")?.addEventListener("click", () => {
                     this.handleQuestGuidance(guidance);
                 });
+                slot.querySelector("[data-focus-skill-next-action]")?.addEventListener("click", () => {
+                    this.handleDisciplineGuidance(focusGuidance);
+                });
                 slot.querySelector("[data-open-tracked-quest]")?.addEventListener("click", () => {
                     Aethra.WindowManager?.openWindow?.("quests-view", { source: "quest-tracker-details" });
+                });
+                slot.querySelector("[data-open-focused-skill]")?.addEventListener("click", () => {
+                    Aethra.ProgressionJournalUI?.open?.("journal");
+                    Aethra.ProgressionJournalUI?.selectSkill?.(focusGuidance?.disciplineId);
                 });
             });
             Aethra.EventBus.emit("render:quest-tracker", {
                 questId: quest?.id || null,
                 objectiveId: guidance?.objectiveId || null,
-                progress: progress.percent
+                progress: progress.percent,
+                focusDisciplineId: focusGuidance?.disciplineId || null
             });
             return true;
         },
@@ -5235,6 +5302,10 @@
         ]
     };
 
+    Render.getDisciplineMilestones = function (disciplineId) {
+        return JSON.parse(JSON.stringify(DISCIPLINE_UNLOCKS[disciplineId] || []));
+    };
+
     Render.renderDisciplineGuide = function (disciplineId) {
         const container = document.getElementById("discipline-guide-content");
         const titleEl = document.getElementById("discipline-guide-title");
@@ -5245,7 +5316,7 @@
 
         if (titleEl) titleEl.textContent = `Livro de Habilidade: ${state.name}`;
 
-        const unlocks = DISCIPLINE_UNLOCKS[disciplineId] || [];
+        const unlocks = Render.getDisciplineMilestones(disciplineId);
         const currentLevel = Number(state.level || 1);
         const currentXP = Number(state.xpCurrent || 0);
         const nextXP = Number(state.xpNext || 1);
@@ -5306,7 +5377,10 @@
                 <article class="exploration-active-event is-${esc(pending.category)}${pending.tutorialGuaranteed ? ' is-tutorial-guided' : ''}">
                     <span class="exploration-active-event__icon">${esc(pending.icon)}</span>
                     <div><small>${esc(pending.tutorialLabel || 'Evento encontrado')}</small><strong>${esc(pending.title)}</strong><p>${esc(pending.description)}</p></div>
-                    <button type="button" data-resolve-exploration="${esc(pending.eventId)}">${esc(pending.actionLabel)}</button>
+                    <div class="exploration-active-event__actions">
+                        <button type="button" data-resolve-exploration="${esc(pending.eventId)}">${esc(pending.actionLabel)}</button>
+                        <button type="button" class="is-secondary" data-skip-exploration="${esc(pending.eventId)}">Ignorar</button>
+                    </div>
                 </article>
             ` : `
                 <div class="exploration-searching"><span>⌖</span><div><strong>${hunt.isActive ? "Vasculhando a região..." : "Inicie uma hunt para explorar"}</strong><small>Combates e eventos aparecem continuamente enquanto a Hunt estiver ativa.</small></div></div>
@@ -5324,6 +5398,9 @@
 
         container.querySelector("[data-resolve-exploration]")?.addEventListener("click", (event) => {
             Aethra.ExplorationSystem?.resolveEvent?.(event.currentTarget.dataset.resolveExploration, { manual: true });
+        });
+        container.querySelector("[data-skip-exploration]")?.addEventListener("click", (event) => {
+            Aethra.ExplorationSystem?.resolveEvent?.(event.currentTarget.dataset.skipExploration, { manual: true, skip: true });
         });
         return true;
     };

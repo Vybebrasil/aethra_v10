@@ -57,6 +57,7 @@
         "EncounterCombatHUD",
         "PlayerHudWorkspace",
         "ProfessionSpecializationUI",
+        "ProgressionJournalUI",
         "CharacterCreationUI",
         "GameLoader"
     ];
@@ -198,6 +199,29 @@
                 );
             });
 
+            const progressionJournalModel = Aethra.ProgressionJournalUI?.getViewModel?.();
+            const progressionJournalSelected = progressionJournalModel?.selected;
+            checks.push(
+                createCheck(
+                    "Diário reúne todas as skills e orienta o próximo treino",
+                    progressionJournalModel?.entries?.length === Object.keys(Aethra.DisciplineSystem?.definitions || {}).length
+                        && progressionJournalSelected?.guide?.chain?.length === 3
+                        && Boolean(progressionJournalSelected?.nextUnlock?.title),
+                    progressionJournalModel
+                        ? `${progressionJournalModel.entries.length} skills · foco em ${progressionJournalSelected?.name || "nenhuma"}`
+                        : "ViewModel indisponível"
+                )
+            );
+            checks.push(
+                createCheck(
+                    "Diário e ActionBar compartilham a janela oficial de Skills",
+                    Boolean(document.querySelector("#progression-journal-root .progression-workspace"))
+                        && Boolean(document.querySelector('[data-skills-workspace-panel="actionbar"] #skills-config-list'))
+                        && typeof Aethra.RenderEngine?.getDisciplineMilestones === "function",
+                    "Progressão, marcos e automação acessíveis sem duplicar janela"
+                )
+            );
+
             const questDefinitions = Object.entries(Aethra.GameData?.quests || {});
             const validQuestDefinitions = questDefinitions.filter(([questId, definition]) => {
                 return Aethra.QuestSystem?.validateDefinition?.(definition, questId);
@@ -260,13 +284,17 @@
                 },
                 maintenance: {
                     policy: { enabled: true, thresholdPercent: 30, reserveGold: 50, maxGoldPerCycle: 80 }
+                },
+                exploration: {
+                    tutorialGuarantee: { professionId: "mining", eventId: "mining", huntId: "apprentice_mines_focus" }
                 }
             });
             checks.push(
                 createCheck(
-                    "Save v77 migra durabilidade e preserva políticas atuais",
-                    legacyProfessionSave?.toVersion === 77
-                        && legacyProfessionSave?.state?.meta?.schemaVersion === 77
+                    "Save v78 migra contratos e preserva políticas atuais",
+                    legacyProfessionSave?.toVersion === 78
+                        && legacyProfessionSave?.state?.meta?.schemaVersion === 78
+                        && legacyProfessionSave?.state?.quests?.contractVersion === 4
                         && typeof legacyProfessionSave?.state?.hero?.professionPerks === "object"
                         && typeof legacyProfessionSave?.state?.hero?.introPrepared === "object"
                         && legacyProfessionSave?.state?.playerEquipment?.weapon?.durability?.current === 100
@@ -274,7 +302,10 @@
                         && currentProfessionSave?.state?.hero?.professionPerks?.mining?.[0] === "keen_vein"
                         && currentProfessionSave?.state?.hero?.professionPerks?.mining?.[1] === "specialization_extractor"
                         && currentProfessionSave?.state?.maintenance?.policy?.enabled === true
-                        && currentProfessionSave?.state?.maintenance?.policy?.thresholdPercent === 30,
+                        && currentProfessionSave?.state?.maintenance?.policy?.thresholdPercent === 30
+                        && currentProfessionSave?.state?.quests?.contractVersion === 4
+                        && currentProfessionSave?.state?.exploration?.tutorialGuarantee?.remaining === 1
+                        && currentProfessionSave?.state?.exploration?.tutorialGuarantee?.minimumQuantity === 1,
                     `legado v${legacyProfessionSave?.fromVersion || "?"}→v${legacyProfessionSave?.toVersion || "?"} · ${currentProfessionSave?.state?.hero?.professionPerks?.mining?.length || 0} perks preservados`
                 )
             );
@@ -1733,6 +1764,146 @@
                     )
                 );
 
+                const miningFocus = Aethra.DisciplineSystem?.setFocus?.("mining", "integration-test");
+                const miningGuidance = Aethra.DisciplineSystem?.getFocusedGuidance?.();
+                const miningRecommendations = Aethra.DisciplineSystem?.getActivityRecommendations?.("mining") || [];
+                checks.push(
+                    createCheck(
+                        "Foco de skill possui rota oficial e acessível",
+                        miningFocus?.disciplineId === "mining"
+                            && miningGuidance?.huntId === "apprentice_mines_focus"
+                            && miningGuidance?.mapMode === "hunts"
+                            && miningGuidance?.recommendation?.unlocked === true
+                            && miningRecommendations[0]?.id === "apprentice_mines_focus",
+                        `${miningGuidance?.name || "sem skill"} → ${miningGuidance?.recommendation?.name || "sem rota"}`
+                    )
+                );
+
+                const miningContractStart = Aethra.ProfessionSystem?.getFocusTrainingState?.("mining");
+                const miningGuaranteeStart = Aethra.ExplorationSystem?.getSnapshot?.().tutorialGuarantee;
+                checks.push(
+                    createCheck(
+                        "Foco de Mineração ativa contrato vertical persistente",
+                        miningContractStart?.active === true
+                            && miningContractStart?.quest?.objectives?.length === 4
+                            && miningContractStart?.guidance?.objective?.id === "practice_focus_mining"
+                            && miningGuaranteeStart?.huntId === "apprentice_mines_focus"
+                            && miningGuaranteeStart?.source === "focus-training"
+                            && miningGuaranteeStart?.remaining === 3
+                            && miningGuaranteeStart?.manual === true
+                            && miningGuaranteeStart?.minimumQuantity === 2,
+                        `${miningContractStart?.progress?.percent || 0}% · ${miningGuaranteeStart?.remaining || 0} veios garantidos`
+                    )
+                );
+
+                Aethra.GameState.hunt = {
+                    ...(Aethra.GameState.hunt || {}),
+                    isActive: true,
+                    huntId: "apprentice_mines_focus",
+                    currentRoom: 1
+                };
+                Aethra.ExplorationSystem?.setRandomSource?.(() => 0.99);
+                Aethra.ExplorationSystem?.tryTriggerStairsEvent?.({ room: 1 });
+                const skippedMiningEvent = Aethra.ExplorationSystem?.getSnapshot?.().pendingEvent;
+                const skippedResult = skippedMiningEvent
+                    ? Aethra.ExplorationSystem?.resolveEvent?.(skippedMiningEvent.eventId, { manual: true, skip: true })
+                    : null;
+                const guaranteeAfterSkip = Aethra.ExplorationSystem?.getSnapshot?.().tutorialGuarantee;
+                checks.push(
+                    createCheck(
+                        "Veio guiado oferece escolha e Ignorar não consome o contrato",
+                        skippedMiningEvent?.requiresManual === true
+                            && skippedMiningEvent?.tutorialLabel === "CONTRATO DE FOCO"
+                            && skippedResult?.status === "skipped"
+                            && guaranteeAfterSkip?.remaining === 3
+                            && Aethra.ExplorationSystem?.getSnapshot?.().pendingEvent === null,
+                        skippedResult ? `ignorado · ${guaranteeAfterSkip?.remaining || 0} veios restantes` : "evento manual ausente"
+                    )
+                );
+
+                const oreBeforeFocusLoop = Aethra.BagSystem?.countItem?.("iron_ore") || 0;
+                const minedFocusEvents = [];
+                for (let index = 0; index < 3; index += 1) {
+                    Aethra.ExplorationSystem?.tryTriggerStairsEvent?.({ room: index + 2 });
+                    const event = Aethra.ExplorationSystem?.getSnapshot?.().pendingEvent;
+                    if (!event) break;
+                    minedFocusEvents.push(Aethra.ExplorationSystem.resolveEvent(event.eventId, { manual: true }));
+                }
+                Aethra.ExplorationSystem?.setRandomSource?.(Math.random);
+                const miningContractAfterOre = Aethra.ProfessionSystem?.getFocusTrainingState?.("mining");
+                const oreAfterFocusLoop = Aethra.BagSystem?.countItem?.("iron_ore") || 0;
+                checks.push(
+                    createCheck(
+                        "Mineração manual entrega XP, seis minérios e avança até a fundição",
+                        minedFocusEvents.length === 3
+                            && minedFocusEvents.every((event) => event?.status === "resolved" && event?.manual === true)
+                            && oreAfterFocusLoop - oreBeforeFocusLoop === 6
+                            && miningContractAfterOre?.guidance?.objective?.id === "smelt_focus_ingots"
+                            && miningContractAfterOre?.guidance?.action === "open-workshop"
+                            && Aethra.ExplorationSystem?.getSnapshot?.().tutorialGuarantee === null,
+                        `${minedFocusEvents.length}/3 veios · +${oreAfterFocusLoop - oreBeforeFocusLoop} minérios · ${miningContractAfterOre?.guidance?.actionLabel || "sem próximo passo"}`
+                    )
+                );
+
+                Aethra.GameState.hunt.isActive = false;
+                Aethra.UIManager?.setPrimaryView?.("city", { emit: false, source: "integration-mining-contract" });
+                Aethra.ProfessionWorkshopUI?.open?.("blacksmithing", "forge", { source: "integration-mining-contract" });
+                const guidedSmeltingVisible = Boolean(
+                    document.querySelector('.workshop-recipe.is-guided [data-craft-recipe="smelt_iron"]')
+                    && /Produza Fundir Ferro/.test(document.querySelector(".profession-workshop__guidance")?.textContent || "")
+                );
+                const smeltingResult = Aethra.CraftingSystem?.craft?.("smelt_iron", {
+                    stationId: "forge",
+                    techniqueId: "balanced",
+                    quantity: 3,
+                    commandId: "integration-focus-smelt"
+                });
+                const miningContractAfterSmelt = Aethra.ProfessionSystem?.getFocusTrainingState?.("mining");
+                Aethra.ProfessionWorkshopUI?.open?.("blacksmithing", "forge", { source: "integration-mining-contract-equipment" });
+                const guidedEquipmentCards = [...document.querySelectorAll(".workshop-recipe.is-guided [data-craft-recipe]")];
+                const equipmentChoiceVisible = guidedEquipmentCards.length === 3
+                    && /Escolha seu primeiro equipamento/.test(document.querySelector(".profession-workshop__guidance")?.textContent || "");
+                checks.push(
+                    createCheck(
+                        "Oficina conduz da fundição para três escolhas de equipamento",
+                        guidedSmeltingVisible
+                            && smeltingResult?.accepted === true
+                            && miningContractAfterSmelt?.guidance?.objective?.id === "forge_focus_equipment"
+                            && equipmentChoiceVisible,
+                        `fundição ${guidedSmeltingVisible ? "guiada" : "ausente"} · ${guidedEquipmentCards.length}/3 equipamentos destacados`
+                    )
+                );
+
+                const forgedEquipment = Aethra.CraftingSystem?.craft?.("forge_iron_sword", {
+                    stationId: "forge",
+                    techniqueId: "balanced",
+                    quantity: 1,
+                    commandId: "integration-focus-equipment"
+                });
+                const completedMiningContract = Aethra.ProfessionSystem?.getFocusTrainingState?.("mining");
+                checks.push(
+                    createCheck(
+                        "Equipamento escolhido conclui o Ciclo do Prospector",
+                        forgedEquipment?.accepted === true
+                            && completedMiningContract?.completed === true
+                            && Aethra.QuestSystem?.getQuest?.("focus_training_mining")?.status === "completed"
+                            && Boolean(forgedEquipment?.outputs?.some((item) => item?.slot === "weapon")),
+                        `${forgedEquipment?.recipe?.name || "sem equipamento"} · contrato ${completedMiningContract?.status || "ausente"}`
+                    )
+                );
+                Aethra.WindowManager?.closeWindow?.("profession-workshop-view", { source: "integration-mining-contract" });
+
+                Aethra.PlayerHudWorkspace?.renderSkills?.();
+                const focusedMiningCard = document.querySelector('[data-skill-id="mining"].is-focused');
+                checks.push(
+                    createCheck(
+                        "Central do Herói reflete a skill focada",
+                        Boolean(focusedMiningCard)
+                            && Boolean(focusedMiningCard?.querySelector('[data-focus-discipline="mining"][disabled]')),
+                        focusedMiningCard ? "Mineração destacada na Central" : "Card focado ausente"
+                    )
+                );
+
                 Aethra.RenderEngine?.renderQuestTracker?.();
                 const trackedIntroQuest = Aethra.QuestSystem?.getTrackedQuest?.();
                 const trackedGuidance = Aethra.QuestSystem?.getGuidance?.(trackedIntroQuest);
@@ -1746,9 +1917,10 @@
                             && questTrackerSlots.every((slot) => {
                                 return slot.hidden === false
                                     && Boolean(slot.querySelector("[data-quest-next-action]"))
+                                    && Boolean(slot.querySelector("[data-focus-skill-next-action]"))
                                     && /Primeiros Passos/.test(slot.textContent || "");
                             }),
-                        `${questTrackerSlots.length}/2 pontos da HUD · ação ${trackedGuidance?.actionLabel || "ausente"}`
+                        `${questTrackerSlots.length}/2 pontos da HUD · missão ${trackedGuidance?.actionLabel || "ausente"} · foco ${miningGuidance?.actionLabel || "ausente"}`
                     )
                 );
 
