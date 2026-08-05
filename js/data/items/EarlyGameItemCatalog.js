@@ -843,6 +843,16 @@
     });
 
     // ── Ferramentas de profissão (exigidas por ProfessionSystem) ──
+    item("silver_necklace", {
+        name: "Colar de Prata do Alfa", icon: "◇", image: "assets/organized/items/loot/all/loot_052.png",
+        type: "accessory", itemType: "AMULET", slot: "neck", levelReq: 10, tier: 5,
+        equipmentClass: "accessory", rarity: "Raro", price: 950, value: 950,
+        stackable: false, maxStack: 1,
+        baseStats: { hpMax: 28, precision: 2, defense: 2 },
+        stats: { hpMax: 28, precision: 2, defense: 2 },
+        description: "Troféu do Lobo Alfa. A prata fria reforça vida, precisão e defesa."
+    });
+
     item("apprentice_pickaxe", {
         name: "Picareta de Aprendiz", icon: "⛏", image: "assets/organized/items/materials/all/materials_001.png", price: 25, value: 25,
         rarity: "Comum", type: "tool", itemType: "TOOL", toolType: "mining", levelReq: 1, tier: 1,

@@ -62,6 +62,9 @@ Antes de modificar HUD, automação, skills, profissões, coleta, crafting ou sa
 leia `docs/DEVELOPER_HANDOFF.md`. Ele registra o estado atual, o proprietário de
 cada domínio, contratos que não podem ser duplicados, testes e próximos passos.
 
+O primeiro capítulo jogável, do personagem novo ao Lobo Alfa no nível 10, está
+documentado em `docs/LEVEL_1_10_PLAYABLE_CONTRACT.md`.
+
 ## World Loop e progressão
 
 A versão atual inclui paperdoll, backpack em slots, skills de combate/coleta/mundo, eventos de exploração e Hunt Analyzer em tempo real. Consulte `WORLD_LOOP_PROGRESSION.md` para detalhes.

@@ -1326,6 +1326,8 @@
             const defeatedPayload = {
                 id: creature.id,
                 enemyId: creature.id,
+                bossId: creature.bossId || (creature.isBoss ? creature.id : null),
+                isBoss: creature.isBoss === true,
                 name: creature.name,
                 xp: rewards.xp,
                 gold: rewards.gold,

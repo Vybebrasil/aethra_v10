@@ -536,6 +536,139 @@
                     introRouteResults.map((route) => `${route.professionId}:${JSON.stringify(route.perkModifiers)}`).join(" · ")
                 )
             );
+            const chapterOneBackup = {
+                hero: JSON.parse(JSON.stringify(Aethra.GameState.hero || {})),
+                hunt: JSON.parse(JSON.stringify(Aethra.GameState.hunt || {})),
+                quests: JSON.parse(JSON.stringify(Aethra.GameState.quests || {})),
+                ui: JSON.parse(JSON.stringify(Aethra.GameState.ui || {})),
+                bosses: JSON.parse(JSON.stringify(Aethra.GameState.bosses || {})),
+                battle: JSON.parse(JSON.stringify(Aethra.GameState.battle || {})),
+                combat: JSON.parse(JSON.stringify(Aethra.GameState.combat || {})),
+                battleIsFighting: Boolean(Aethra.BattleSystem?.isFighting)
+            };
+            Aethra.GameState.hero.characterCreated = true;
+            Aethra.GameState.hero.level = 1;
+            Aethra.GameState.hero.xpCurrent = 0;
+            Aethra.GameState.hero.xpTotal = 0;
+            Aethra.GameState.hero.xpNext = Aethra.XPSystem.getXPRequired(1);
+            Aethra.GameState.hero.gold = 0;
+            Aethra.GameState.hero.bag = [];
+            Aethra.GameState.quests = {
+                contractVersion: Aethra.QuestSystem.CONTRACT_VERSION,
+                active: [],
+                completed: [{ id: "intro_profession_mining", status: "completed" }],
+                available: [],
+                rewardClaims: ["intro_profession_mining"]
+            };
+            Aethra.GameState.ui.trackedQuestId = null;
+            Aethra.GameState.bosses = {
+                activeBossId: null,
+                cooldowns: {},
+                history: {},
+                weekly: { weekKey: "integration", defeatedBosses: [], progress: 0, required: 1, claimed: false }
+            };
+
+            const reconciledChapter = Aethra.QuestSystem.reconcileChapterOne();
+            const forestChapter = Aethra.QuestSystem.getQuest("chapter_one_forest_guard");
+            const forestGuidance = Aethra.QuestSystem.getGuidance(forestChapter);
+            Aethra.QuestSystem.updateProgress("DefeatInHunt", "whispering_forest", 12, {
+                source: "integration-chapter-one"
+            });
+            Aethra.GameState.hero.level = 5;
+            Aethra.GameState.hero.xpCurrent = 0;
+            Aethra.GameState.hero.xpNext = Aethra.XPSystem.getXPRequired(5);
+            Aethra.EventBus.emit("levelUp", { level: 5, source: "integration-chapter-one" });
+
+            const goblinChapter = Aethra.QuestSystem.getQuest("chapter_one_goblin_frontier");
+            Aethra.EventBus.emit("hunt:started", {
+                huntId: "goblin_frontier",
+                source: "integration-chapter-one"
+            });
+            Aethra.QuestSystem.updateProgress("DefeatInHunt", "goblin_frontier", 20, {
+                source: "integration-chapter-one"
+            });
+            Aethra.GameState.hero.level = 10;
+            Aethra.GameState.hero.xpCurrent = 0;
+            Aethra.GameState.hero.xpNext = Aethra.XPSystem.getXPRequired(10);
+            Aethra.EventBus.emit("levelUp", { level: 10, source: "integration-chapter-one" });
+
+            const alphaChapter = Aethra.QuestSystem.getQuest("chapter_one_alpha_wolf");
+            const alphaGuidance = Aethra.QuestSystem.getGuidance(alphaChapter);
+            const bossGuidanceOpened = Aethra.RenderEngine?.handleQuestGuidance?.(alphaGuidance);
+            Aethra.RenderEngine?.renderBosses?.();
+            const bossWindowProbe = {
+                action: alphaGuidance?.action || null,
+                opened: Boolean(bossGuidanceOpened),
+                isOpen: Boolean(Aethra.WindowManager?.isOpen?.("bosses-view")),
+                hasElement: Boolean(document.getElementById("bosses-view")),
+                registered: Boolean(Aethra.WindowManager?.registeredWindows?.has?.("bosses-view")),
+                listCount: document.querySelectorAll("#boss-list").length,
+                alphaEnabled: Boolean(document.querySelector('#bosses-view [data-render-challenge-boss="alpha_wolf"]:not(:disabled)'))
+            };
+            const bossWindowFunctional = Boolean(
+                bossWindowProbe.opened
+                && bossWindowProbe.isOpen
+                && bossWindowProbe.listCount === 1
+                && bossWindowProbe.alphaEnabled
+            );
+            const necklaceBeforeChapter = Aethra.BagSystem?.countItem?.("silver_necklace") || 0;
+            const bossChallengeStarted = Aethra.BossSystem?.challenge?.("alpha_wolf") === true;
+            const bossVictory = bossChallengeStarted
+                ? Aethra.BattleSystem?.victory?.(Aethra.GameState.battle?.creature)
+                : null;
+            const completedAlphaChapter = Aethra.QuestSystem.getQuest("chapter_one_alpha_wolf");
+            const necklaceAfterChapter = Aethra.BagSystem?.countItem?.("silver_necklace") || 0;
+            Aethra.WindowManager?.closeWindow?.("bosses-view", { source: "integration-chapter-one" });
+
+            checks.push(
+                createCheck(
+                    "Save pós-ofício retoma automaticamente o primeiro capítulo",
+                    reconciledChapter?.id === "chapter_one_forest_guard"
+                        && forestGuidance?.huntId === "whispering_forest",
+                    `${reconciledChapter?.title || "capítulo ausente"} · destino ${forestGuidance?.huntId || "indefinido"}`
+                )
+            );
+            checks.push(
+                createCheck(
+                    "Jornada oficial conecta Bosque, Fronteira Goblin e Lobo Alfa",
+                    forestChapter?.status === "completed"
+                        && goblinChapter?.status === "completed"
+                        && alphaChapter?.status === "completed"
+                        && completedAlphaChapter?.status === "completed"
+                        && alphaGuidance?.action === "open-bosses",
+                    `Bosque ${forestChapter?.status || "ausente"} · Fronteira ${goblinChapter?.status || "ausente"} · Alfa ${completedAlphaChapter?.status || "ausente"}`
+                )
+            );
+            checks.push(
+                createCheck(
+                    "Mural de Chefes é acessível e conclui o nível 10 com recompensa",
+                    bossWindowFunctional
+                        && bossChallengeStarted
+                        && Boolean(bossVictory)
+                        && necklaceAfterChapter - necklaceBeforeChapter === 1,
+                    `${JSON.stringify(bossWindowProbe)} · combate ${bossChallengeStarted ? "iniciado" : "negado"} · ${necklaceAfterChapter - necklaceBeforeChapter} Colar de Prata`
+                )
+            );
+            checks.push(
+                createCheck(
+                    "Equipamentos do primeiro capítulo nunca são consolidados em pilhas",
+                    Aethra.BagSystem?.isStackable?.({ templateId: "silver_necklace" }) === false
+                        && Aethra.BagSystem?.isStackable?.({ templateId: "eg_head_l10" }) === false
+                        && Aethra.BagSystem?.isStackable?.({ templateId: "eg_ring_l10" }) === false,
+                    "amuleto, elmo e anel preservam instâncias individuais"
+                )
+            );
+
+            Aethra.BattleSystem?.cancelTimer?.();
+            Aethra.GameState.hero = chapterOneBackup.hero;
+            Aethra.GameState.hunt = chapterOneBackup.hunt;
+            Aethra.GameState.quests = chapterOneBackup.quests;
+            Aethra.GameState.ui = chapterOneBackup.ui;
+            Aethra.GameState.bosses = chapterOneBackup.bosses;
+            Aethra.GameState.battle = chapterOneBackup.battle;
+            Aethra.GameState.combat = chapterOneBackup.combat;
+            Aethra.BattleSystem.isFighting = chapterOneBackup.battleIsFighting;
+
             const liveMentor = Aethra.EntityManager?.getEntity?.("profession_mentor");
             const entityStateBackup = JSON.parse(JSON.stringify(Aethra.GameState.entities || { list: [] }));
             Aethra.GameState.entities.list = Aethra.GameState.entities.list

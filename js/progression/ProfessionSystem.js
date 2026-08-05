@@ -788,7 +788,8 @@
                 description: path.summary,
                 levelReq: 1,
                 objectives: clone(objectivesByProfession[professionId] || []),
-                reward: { gold: 40, xp: 75, items: [] }
+                reward: { gold: 40, xp: 75, items: [] },
+                nextQuestId: "chapter_one_forest_guard"
             };
         },
 

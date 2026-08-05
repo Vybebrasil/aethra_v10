@@ -1134,14 +1134,22 @@
                                     <button type="button" data-open-profession-workshop="alchemy">Abrir Laboratório</button>
                                 </div>
                             </article>
+
+                            <article class="city-service-card city-service-card--bosses">
+                                <div class="city-service-card__icon" aria-hidden="true">♞</div>
+                                <div class="city-service-card__content">
+                                    <small>Desafio do capítulo · nível 10</small>
+                                    <h3>Mural de Chefes</h3>
+                                    <p>Consulte os grandes alvos, requisitos, recompensas e desafie o Lobo Alfa.</p>
+                                    <button type="button" data-open-window="bosses-view">Abrir Mural</button>
+                                </div>
+                            </article>
                         </div>
                     </section>
 
                     <div class="battle-compatibility-nodes" hidden>
                         <div id="city-grid"></div>
                         <div id="hero-sprite"></div>
-                        <div id="boss-weekly-reward"></div>
-                        <div id="boss-list"></div>
                     </div>
                 </div>
             `;
@@ -1219,6 +1227,47 @@
             }
             if (button) button.textContent = isMentorObjective ? "Falar com Mestra Ilyra" : "Conversar sobre ofícios";
             return true;
+        },
+
+        openBossesHall(options = {}) {
+            const windowId = "bosses-view";
+            let element = document.getElementById(windowId);
+            if (!element) {
+                const existingWeekly = document.getElementById("boss-weekly-reward");
+                const existingList = document.getElementById("boss-list");
+                element = document.createElement("section");
+                element.id = windowId;
+                element.className = "game-window hidden";
+                element.dataset.aethraWindow = windowId;
+                element.dataset.windowSize = "large";
+                element.setAttribute("aria-hidden", "true");
+                element.innerHTML = `
+                    <header class="window-header">
+                        <div><small>Grandes alvos e recompensas</small><h2>Mural de Chefes</h2></div>
+                        <button type="button" class="window-close" data-close-window="${windowId}" aria-label="Fechar Mural de Chefes">×</button>
+                    </header>
+                    <div class="boss-hall__body">
+                        <div class="boss-hall__intro">
+                            <strong>Primeiro desafio: Lobo Alfa</strong>
+                            <span>Alcance o nível 10, prepare seus supplies e conclua o primeiro capítulo.</span>
+                        </div>
+                    </div>
+                `;
+                const weekly = existingWeekly || document.createElement("div");
+                const list = existingList || document.createElement("div");
+                weekly.id = "boss-weekly-reward";
+                list.id = "boss-list";
+                element.querySelector(".boss-hall__body")?.append(weekly, list);
+                (document.getElementById("modal-layer") || document.body).appendChild(element);
+            }
+
+            Aethra.WindowManager?.registerWindow?.(windowId, element);
+            Aethra.BossSystem?.renderWeeklyReward?.();
+            this.renderBosses();
+            return Aethra.WindowManager?.openWindow?.(windowId, {
+                source: options.source || "boss-hall",
+                exclusive: options.exclusive !== false
+            }) ?? false;
         },
 
         openProfessionMentor() {
@@ -3942,6 +3991,10 @@
                         source: "quest-tracker"
                     }
                 ) ?? false;
+            }
+            if (guidance.action === "open-bosses") {
+                Aethra.UIManager?.setPrimaryView?.("city", { source: "quest-tracker" });
+                return this.openBossesHall({ source: "quest-tracker" });
             }
             return Aethra.WindowManager?.openWindow?.("quests-view", { source: "quest-tracker" }) ?? false;
         },

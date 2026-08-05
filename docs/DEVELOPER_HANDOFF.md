@@ -323,8 +323,8 @@ node scripts/run-integration.mjs --timeout 90 --viewport 1920x1080
 
 Resultado do checkpoint atual antes do commit:
 
-- quality gate: 666/666 verificações;
-- integração no navegador: 181/181 verificações em 640x720, 768x720,
+- quality gate: 667/667 verificações;
+- integração no navegador: 185/185 verificações em 640x720, 768x720,
   1024x768, 1280x720 e 1920x1080;
 - Diário validado em 360x740, 640x800, 768x900, 1024x768, 1280x800 e
   1920x1080: janela dentro do viewport, sem overflow horizontal e sem sobrepor
@@ -372,6 +372,30 @@ Resultado do checkpoint atual antes do commit:
 
 Ao continuar, confirme também console sem erros, rede sem 404, personagem novo e
 save migrado. Atualize estes números se a suíte crescer.
+
+### Checkpoint: primeiro capítulo jogável até o nível 10
+
+- A jornada oficial agora continua após qualquer uma das quatro rotas de ofício:
+  `Chamado da Fronteira` → `A Linha Goblin` → `O Alfa dos Sussurros`.
+- `QuestSystem` passou a reconhecer `ReachLevel` com progresso absoluto e
+  `DefeatBoss` pelo evento oficial `boss:defeated`. Saves que já terminaram o
+  ofício retomam o capítulo sem repetir recompensas.
+- O Hub possui um Mural de Chefes funcional. O tracker final abre a mesma janela,
+  o Lobo Alfa habilita no nível 10 e a vitória percorre
+  `BattleSystem → BossSystem → QuestSystem`.
+- `BattleSystem` agora propaga `bossId` e `isBoss` em `EnemyDefeated`; sem isso o
+  chefe era vencido em combate, mas cooldown, histórico e missão não avançavam.
+- `silver_necklace` é o troféu raro garantido do capítulo. `BagSystem` também foi
+  corrigido para nunca consolidar equipamentos de `head`, `hands`, `feet`,
+  `neck`, `ring1` e `ring2` como pilhas.
+- Ritmo auditado: 921 XP acumulados até o nível 10; Bosque rende cerca de 224 XP
+  por volta e Fronteira Goblin cerca de 423 XP. O caminho guiado chega ao nível
+  5 no Bosque e ao 10 com aproximadamente 30 abates na Fronteira.
+- Contrato detalhado: `docs/LEVEL_1_10_PLAYABLE_CONTRACT.md`.
+- Quality gate: 667/667 verificações.
+- Integração: 185/185 em 640x720, 768x720, 1024x768, 1280x720 e 1920x1080.
+- Navegador real: Mural validado em 1280x720 e 1920x1080, três cards por linha,
+  rolagem vertical interna, zero overflow horizontal e console sem erros.
 
 ## 8. Próximos passos recomendados
 

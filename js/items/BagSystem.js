@@ -161,9 +161,13 @@
             if (!item || typeof item !== "object") return false;
             const templateId = item.templateId || item.id || "";
             const template = Aethra.GameData?.items?.[templateId] || {};
-            
+
+            if (item.stackable === false || template.stackable === false) return false;
             const slot = item.slot || template.slot || item.category || template.category || "";
-            const isEquip = ["weapon", "offhand", "shield", "helmet", "chest", "legs", "boots", "amulet", "ring", "relic"].includes(slot);
+            const isEquip = [
+                "weapon", "offhand", "shield", "head", "helmet", "chest", "hands",
+                "legs", "feet", "boots", "neck", "amulet", "ring", "ring1", "ring2", "relic"
+            ].includes(slot);
             if (isEquip) return false;
 
             return true;

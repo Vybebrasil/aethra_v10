@@ -7,6 +7,11 @@
     }
 
     const CONTRACT_VERSION = 4;
+    const CHAPTER_ONE_QUEST_IDS = Object.freeze([
+        "chapter_one_forest_guard",
+        "chapter_one_goblin_frontier",
+        "chapter_one_alpha_wolf"
+    ]);
     const clone = (value) => JSON.parse(JSON.stringify(value));
     const number = (value, fallback = 0) => Number.isFinite(Number(value))
         ? Number(value)
@@ -201,6 +206,8 @@
             }
 
             Aethra.ProfessionSystem?.reconcileIntroPerks?.();
+            this.reconcileChapterOne();
+            this.synchronizeWorldProgress({ source: "quest-init" });
 
             this.initialized = true;
             this.repairState({ emit: true, save: true });
@@ -221,6 +228,14 @@
             Aethra.EventBus.on("hunt:started", (data = {}) => {
                 const huntId = data.huntId || data.state?.huntId || data.id;
                 if (huntId) this.updateProgress("StartHunt", huntId, 1, data);
+            });
+            Aethra.EventBus.on("levelUp", (data = {}) => {
+                const level = Math.max(1, Math.floor(number(data.level, Aethra.GameState.hero?.level || 1)));
+                this.updateProgress("ReachLevel", "hero", level, { ...data, absolute: true });
+            });
+            Aethra.EventBus.on("boss:defeated", (data = {}) => {
+                const bossId = data.bossId || data.id || data.boss?.id;
+                if (bossId) this.updateProgress("DefeatBoss", bossId, 1, data);
             });
             Aethra.EventBus.on("ItemAcquired", (data) => this.handleItemsAcquired(data, "ItemAcquired"));
             Aethra.EventBus.on("itemObtained", (data) => this.handleItemsAcquired(data, "itemObtained"));
@@ -256,7 +271,57 @@
             });
             Aethra.EventBus.on("state:replaced", () => {
                 this.repairState({ emit: true, save: false });
+                this.reconcileChapterOne();
+                this.synchronizeWorldProgress({ source: "state-replaced" });
             });
+        },
+
+        reconcileChapterOne() {
+            const state = ensureQuestState();
+            if (!Aethra.GameState.hero?.characterCreated) return null;
+
+            const finishedProfessionIntro = state.completed.some((quest) => {
+                return String(quest?.id || "").startsWith("intro_profession_");
+            });
+            const chapterStarted = CHAPTER_ONE_QUEST_IDS.some((questId) => {
+                return state.active.some((quest) => quest.id === questId)
+                    || state.completed.some((quest) => quest.id === questId);
+            });
+            const onboardingStillActive = state.active.some((quest) => {
+                return [
+                    "tutorial_first_steps",
+                    "tutorial_first_hunt",
+                    "tutorial_profession_mentor"
+                ].includes(quest.id) || String(quest.id || "").startsWith("intro_profession_");
+            });
+
+            if (!finishedProfessionIntro || chapterStarted || onboardingStillActive) return null;
+            const accepted = this.acceptQuest(CHAPTER_ONE_QUEST_IDS[0]);
+            if (accepted) this.trackQuest(CHAPTER_ONE_QUEST_IDS[0], { save: false });
+            return accepted;
+        },
+
+        synchronizeWorldProgress(context = {}) {
+            const state = ensureQuestState();
+            if (state.active.length === 0) return [];
+
+            const updated = [];
+            const heroLevel = Math.max(1, Math.floor(number(Aethra.GameState.hero?.level, 1)));
+            updated.push(...this.updateProgress("ReachLevel", "hero", heroLevel, {
+                ...context,
+                absolute: true
+            }));
+
+            Object.entries(Aethra.GameState.bosses?.history || {}).forEach(([bossId, history]) => {
+                if (number(history?.defeats, 0) <= 0) return;
+                updated.push(...this.updateProgress("DefeatBoss", bossId, 1, {
+                    ...context,
+                    absolute: true,
+                    historical: true
+                }));
+            });
+
+            return updated;
         },
 
         getDefinition(questId) {
@@ -408,8 +473,9 @@
 
             Aethra.EventBus.emit("QuestAccepted", clone(quest));
             Aethra.EventBus.emit("quest:accepted", clone(quest));
+            this.synchronizeWorldProgress({ source: "quest-accepted", questId });
             this.save("quest-accepted");
-            return quest;
+            return this.getQuest(questId) || quest;
         },
 
         handleItemsAcquired(data, sourceEvent) {
@@ -462,7 +528,9 @@
                     });
                     if (!dependenciesComplete) return;
                     const previous = objective.progress;
-                    objective.progress = Math.min(objective.required, objective.progress + increment);
+                    objective.progress = context.absolute === true
+                        ? Math.min(objective.required, Math.max(objective.progress, increment))
+                        : Math.min(objective.required, objective.progress + increment);
                     objective.completed = objective.progress >= objective.required;
                     if (objective.progress === previous) return;
                     changed = true;
@@ -632,7 +700,19 @@
             let actionLabel = "Ver missão";
             let detail = objective.label;
 
-            if (objective.type === "DefeatInHunt") {
+            if (objective.type === "ReachLevel") {
+                const currentLevel = Math.max(1, Math.floor(number(Aethra.GameState.hero?.level, 1)));
+                action = "open-hunt-map";
+                actionLabel = `Treinar até o nível ${objective.required}`;
+                detail = `Seu herói está no nível ${currentLevel}. Continue nas Hunts recomendadas até alcançar o nível ${objective.required}.`;
+            } else if (objective.type === "DefeatBoss") {
+                const boss = Aethra.BossSystem?.bosses?.[objective.target];
+                action = "open-bosses";
+                actionLabel = boss ? `Desafiar ${boss.name}` : "Abrir Mural de Chefes";
+                detail = boss
+                    ? `Volte à cidade e desafie ${boss.name}. Requisito: nível ${boss.levelReq}.`
+                    : "Abra o Mural de Chefes na cidade e conclua o desafio indicado.";
+            } else if (objective.type === "DefeatInHunt") {
                 action = "focus-hunt";
                 actionLabel = "Continuar expedição";
                 detail = "Continue combatendo nesta expedição; qualquer criatura derrotada conta.";
@@ -752,6 +832,15 @@
                         }
                     } else if (objective.type === "DefeatEnemy" && !hasEnemyAtLevel(objective.target, quest.levelReq)) {
                         issues.push({ questId: quest.id, objectiveId: objective.id, reason: "enemy-unreachable", target: objective.target });
+                    } else if (objective.type === "ReachLevel" && objective.target !== "hero") {
+                        issues.push({ questId: quest.id, objectiveId: objective.id, reason: "invalid-level-target", target: objective.target });
+                    } else if (objective.type === "DefeatBoss") {
+                        const boss = Aethra.BossSystem?.bosses?.[objective.target];
+                        if (!boss) {
+                            issues.push({ questId: quest.id, objectiveId: objective.id, reason: "missing-boss", target: objective.target });
+                        } else if (number(boss.levelReq, 1) > quest.levelReq) {
+                            issues.push({ questId: quest.id, objectiveId: objective.id, reason: "boss-level-gated", target: objective.target });
+                        }
                     } else if (objective.type === "PracticeSkill" && !Aethra.ProfessionSystem?.professions?.[objective.target]) {
                         issues.push({ questId: quest.id, objectiveId: objective.id, reason: "missing-skill", target: objective.target });
                     } else if (objective.type === "CraftRecipe" && !Aethra.RecipeCatalog?.get?.(objective.target)) {

@@ -133,8 +133,39 @@
             <div id="stats-display"></div>
             <div id="hunt-display"></div>
             <div id="combat-display"></div>
-            <div id="boss-weekly-reward"></div>
-            <div id="boss-list"></div>
+        </section>
+
+        <section
+            id="bosses-view"
+            class="game-window hidden"
+            data-aethra-window
+            data-window-size="large"
+            aria-hidden="true"
+        >
+            <header class="window-header">
+                <div>
+                    <small>Grandes alvos e recompensas</small>
+                    <h2>Mural de Chefes</h2>
+                </div>
+
+                <button
+                    type="button"
+                    class="window-close"
+                    data-close-window="bosses-view"
+                    aria-label="Fechar Mural de Chefes"
+                >
+                    ×
+                </button>
+            </header>
+
+            <div class="boss-hall__body">
+                <div class="boss-hall__intro">
+                    <strong>Primeiro desafio: Lobo Alfa</strong>
+                    <span>Alcance o nível 10, prepare seus supplies e conclua o primeiro capítulo.</span>
+                </div>
+                <div id="boss-weekly-reward"></div>
+                <div id="boss-list"></div>
+            </div>
         </section>
 
         <!-- Loja do Mercador NPC -->

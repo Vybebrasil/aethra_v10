@@ -534,6 +534,16 @@
                 }
             });
 
+            this.registerWindowRenderer("bosses-view", {
+                containers: ["boss-weekly-reward", "boss-list"],
+                clearOnClose: false,
+                render: () => {
+                    Aethra.BossSystem?.renderWeeklyReward?.();
+                    Aethra.RenderEngine?.renderBosses?.();
+                    return true;
+                }
+            });
+
             this.registerWindowRenderer("city-view", {
                 containers: [],
                 clearOnClose: false,

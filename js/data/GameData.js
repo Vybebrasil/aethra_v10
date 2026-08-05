@@ -661,6 +661,115 @@
                     ]
                 }
             },
+            chapter_one_forest_guard: {
+                id: "chapter_one_forest_guard",
+                title: "Chamado da Fronteira",
+                description:
+                    "A estrada do norte ainda não é segura. Fortaleça-se no Bosque dos Sussurros antes de enfrentar as patrulhas goblins.",
+                levelReq: 1,
+                objectives: [
+                    {
+                        id: "defeat_forest_patrol",
+                        type: "DefeatInHunt",
+                        target: "whispering_forest",
+                        label: "Derrote 12 criaturas no Bosque dos Sussurros",
+                        required: 12,
+                        progress: 0,
+                        completed: false
+                    },
+                    {
+                        id: "reach_level_five",
+                        type: "ReachLevel",
+                        target: "hero",
+                        huntId: "whispering_forest",
+                        label: "Alcance o nível 5",
+                        required: 5,
+                        progress: 0,
+                        completed: false
+                    }
+                ],
+                reward: {
+                    xp: 75,
+                    gold: 100,
+                    items: [
+                        { templateId: "potion_health", quantity: 3 },
+                        { templateId: "minor_vigor_tonic", quantity: 2 }
+                    ]
+                },
+                nextQuestId: "chapter_one_goblin_frontier"
+            },
+            chapter_one_goblin_frontier: {
+                id: "chapter_one_goblin_frontier",
+                title: "A Linha Goblin",
+                description:
+                    "Leve a batalha até a Fronteira Goblin, rompa a primeira linha inimiga e prepare-se para o predador que domina o bosque.",
+                levelReq: 5,
+                objectives: [
+                    {
+                        id: "start_goblin_frontier",
+                        type: "StartHunt",
+                        target: "goblin_frontier",
+                        label: "Inicie uma expedição na Fronteira Goblin",
+                        required: 1,
+                        progress: 0,
+                        completed: false
+                    },
+                    {
+                        id: "break_goblin_line",
+                        type: "DefeatInHunt",
+                        target: "goblin_frontier",
+                        label: "Derrote 20 inimigos na Fronteira Goblin",
+                        dependsOn: ["start_goblin_frontier"],
+                        required: 20,
+                        progress: 0,
+                        completed: false
+                    },
+                    {
+                        id: "reach_level_ten",
+                        type: "ReachLevel",
+                        target: "hero",
+                        huntId: "goblin_frontier",
+                        label: "Alcance o nível 10",
+                        required: 10,
+                        progress: 0,
+                        completed: false
+                    }
+                ],
+                reward: {
+                    xp: 100,
+                    gold: 150,
+                    items: [
+                        { templateId: "potion_health", quantity: 4 },
+                        { templateId: "potion_mana", quantity: 3 }
+                    ]
+                },
+                nextQuestId: "chapter_one_alpha_wolf"
+            },
+            chapter_one_alpha_wolf: {
+                id: "chapter_one_alpha_wolf",
+                title: "O Alfa dos Sussurros",
+                description:
+                    "Você está pronto para encerrar a ameaça do bosque. Volte à cidade, abra o Mural de Chefes e derrote o Lobo Alfa.",
+                levelReq: 10,
+                objectives: [
+                    {
+                        id: "defeat_alpha_wolf",
+                        type: "DefeatBoss",
+                        target: "alpha_wolf",
+                        label: "Derrote o Lobo Alfa",
+                        required: 1,
+                        progress: 0,
+                        completed: false
+                    }
+                ],
+                reward: {
+                    xp: 250,
+                    gold: 250,
+                    items: [
+                        { templateId: "silver_necklace", quantity: 1 }
+                    ]
+                }
+            },
             area_cleanup: {
                 id: "area_cleanup",
                 title: "Limpeza de Área",
