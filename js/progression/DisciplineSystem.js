@@ -124,6 +124,10 @@
             id: "leatherworking", name: "Couraria", icon: "◈", group: "world", category: "Criação",
             role: "Couros e armaduras leves", description: "Evolui curtindo peles e criando equipamentos de couro.", benefit: "Melhora qualidade, rendimento e técnicas de couro.", professionId: "leatherworking"
         },
+        alchemy: {
+            id: "alchemy", name: "Alquimia", icon: "⚗", group: "world", category: "Criação",
+            role: "Poções e tônicos", description: "Evolui destilando reagentes e preparando supplies.", benefit: "Amplia rendimento e qualidade dos consumíveis.", professionId: "alchemy"
+        },
         thievery: {
             id: "thievery", name: "Ladinagem", icon: "⚿", group: "world", category: "Utilidade",
             role: "Fechaduras e armadilhas", description: "Evolui superando mecanismos, segredos e armadilhas.", benefit: "Aumenta sucesso e loot especial.", professionId: "thievery"
@@ -173,10 +177,11 @@
         },
         herbalism: {
             where: "Em Hunts com plantas e eventos de coleta.",
-            action: "Ative a coleta e investigue recursos naturais encontrados no caminho.",
-            chain: ["Explorar", "Colher ervas", "Guardar reagentes"],
+            action: "Escolha quais ervas colher e transforme os reagentes em supplies no laboratório.",
+            chain: ["Encontrar ervas", "Colher", "Destilar e preparar supplies"],
             destination: "hunt",
-            policy: true
+            policy: true,
+            workshopProfessionId: "alchemy"
         },
         exploration: {
             where: "No mapa das Hunts e durante expedições.",
@@ -203,6 +208,13 @@
             chain: ["Obter peles", "Curtir couro", "Costurar ou reparar"],
             destination: "workshop",
             workshopProfessionId: "leatherworking"
+        },
+        alchemy: {
+            where: "No Laboratório de Alquimia da Cidade.",
+            action: "Destile ervas e escolha qual supply preparar para a próxima expedição.",
+            chain: ["Obter ervas", "Destilar extratos", "Preparar supply"],
+            destination: "workshop",
+            workshopProfessionId: "alchemy"
         },
         thievery: {
             where: "Em eventos com fechaduras, armadilhas e passagens secretas.",
@@ -516,7 +528,7 @@
                 chain: clone(guide?.chain || []),
                 action: isWorkshop ? "open-workshop" : "open-skill-hunt",
                 actionLabel: contractGuidance?.actionLabel || (isWorkshop
-                    ? `Abrir ${id === "leatherworking" ? "Curtume" : "Forja"}`
+                    ? `Abrir ${id === "leatherworking" ? "Curtume" : id === "alchemy" ? "Laboratório" : "Forja"}`
                     : recommendation
                         ? `Ir para ${recommendation.name}`
                         : "Encontrar Hunt"),

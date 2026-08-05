@@ -43,7 +43,7 @@
             icon: "❧",
             title: "Ervas luminosas",
             description: "Plantas úteis cresceram em uma clareira protegida.",
-            actionLabel: "Coletar ervas",
+            actionLabel: "Colher",
             professionId: "herbalism",
             actionType: "gather-herb",
             xp: [7, 13],
@@ -574,7 +574,7 @@
                 forced.tutorialLabel = guarantee.source === "focus-training" ? "CONTRATO DE FOCO" : "OBJETIVO DE OFÍCIO";
                 forced.title = `${forced.title} · Treinamento de ${professionName}`;
                 forced.description = guarantee.manual
-                    ? `${forced.description} Você decide se deseja minerar agora ou ignorar e continuar a Hunt.`
+                    ? `${forced.description} Você decide se deseja ${forced.actionLabel.toLowerCase()} agora ou ignorar e continuar a Hunt.`
                     : `${forced.description} Esta descoberta foi garantida por Mestra Ilyra para sua primeira lição.`;
                 return forced;
             }
@@ -878,9 +878,12 @@
 
             if (event.id === "herb") {
                 const perkChance = Math.max(0, Number(Aethra.ProfessionSystem?.getProfessionModifiers?.("herbalism")?.extraResourceChance || 0));
-                const quantity = scaleQuantity(
-                    1 + (this.randomSource() < 0.3 ? 1 : 0) + (this.randomSource() < perkChance ? 1 : 0),
-                    "herbalism"
+                const quantity = Math.max(
+                    Math.max(1, integer(event.minimumQuantity, 1)),
+                    scaleQuantity(
+                        1 + (this.randomSource() < 0.3 ? 1 : 0) + (this.randomSource() < perkChance ? 1 : 0),
+                        "herbalism"
+                    )
                 );
                 return { items: [createItem(RESOURCE_ITEMS.moonleaf, quantity)].filter(Boolean), gold: 0, summary: `${quantity}x Erva Silvestre` };
             }

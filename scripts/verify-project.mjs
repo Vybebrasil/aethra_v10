@@ -132,6 +132,9 @@ const maintenanceSource = read("js/items/EquipmentMaintenanceSystem.js");
 const responsiveHudSource = read("css/hud-modernization.css");
 const renderEngineSource = read("js/ui/RenderEngine.js");
 const explorationSource = read("js/world/ExplorationSystem.js");
+const lootSystemSource = read("js/items/LootSystem.js");
+const earlyGameItemCatalogSource = read("js/data/items/EarlyGameItemCatalog.js");
+const idleLoopSource = read("js/economy/IdleLoopSystem.js");
 const devServerSource = read("scripts/dev-server.ps1");
 const gameLauncherSource = read("INICIAR_JOGO.cmd");
 check(
@@ -231,6 +234,38 @@ check(
         && /craft_focus_leather_equipment/.test(professionSource)
         && /whispering_woods_focus/.test(professionSource),
     "ProfessionSystem deve definir o contrato vertical oficial de Esfolamento"
+);
+check(
+    /focus_training_herbalism/.test(professionSource)
+        && /practice_focus_herbalism/.test(professionSource)
+        && /collect_focus_herbs/.test(professionSource)
+        && /distill_focus_extracts/.test(professionSource)
+        && /brew_focus_supply/.test(professionSource)
+        && /CraftSupply/.test(professionSource),
+    "ProfessionSystem deve definir o contrato vertical oficial de Herbalismo e Alquimia"
+);
+check(
+    /verdant_grove_focus:\s*\{/.test(huntCatalogSource)
+        && /id:\s*["']verdant_grove_focus["'][\s\S]{0,500}minLevel:\s*1/.test(huntCatalogSource)
+        && /actionLabel:\s*["']Colher["']/.test(explorationSource)
+        && /event\.minimumQuantity/.test(explorationSource),
+    "Herbalismo deve possuir rota inicial e decisÃ£o Colher/Ignorar com rendimento mÃ­nimo"
+);
+check(
+    ["distill_wild_herb", "brew_health_potion", "brew_mana_potion", "brew_vigor_tonic"].every((recipeId) => (
+        new RegExp(`id:\\s*["']${recipeId}["'][\\s\\S]{0,250}professionId:\\s*["']alchemy["']`).test(recipeCatalogSource)
+    ))
+        && /botanical_extract/.test(earlyGameItemCatalogSource)
+        && /minor_vigor_tonic/.test(lootSystemSource),
+    "CatÃ¡logos oficiais devem conter destilaÃ§Ã£o, trÃªs supplies e seus templates"
+);
+check(
+    /CraftSupply/.test(questSystemSource)
+        && /Escolha seu primeiro supply/.test(professionWorkshopUiSource)
+        && /data-open-profession-workshop=["']alchemy["']/.test(renderEngineSource)
+        && /Produz.*vel na Alquimia/.test(idleLoopSource)
+        && !/BagSystem\?\.(?:addItem|consumeItem)/.test(professionWorkshopUiSource),
+    "LaboratÃ³rio deve projetar a escolha de supply e reutilizar o estoque oficial"
 );
 check(
     /data-skip-exploration/.test(renderEngineSource)

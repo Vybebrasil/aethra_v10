@@ -241,6 +241,9 @@
                 if (craftedEquipment && professionId) {
                     this.updateProgress("CraftEquipment", professionId, Math.max(1, number(data.batches, 1)), data);
                 }
+                if (professionId) {
+                    this.updateProgress("CraftSupply", professionId, Math.max(1, number(data.batches, 1)), data);
+                }
                 this.handleItemsAcquired(data.outputs || [], "crafting:completed");
             });
             Aethra.EventBus.on("NPCInteracted", (data = {}) => {
@@ -449,7 +452,7 @@
                 quest.objectives.forEach((objective) => {
                     if (objective.type !== type || !targetsMatch(type, objective.target, targetId) || objective.completed) return;
                     if (
-                        objective.type === "CraftEquipment"
+                        ["CraftEquipment", "CraftSupply"].includes(objective.type)
                         && Array.isArray(objective.allowedRecipeIds)
                         && objective.allowedRecipeIds.length > 0
                         && !objective.allowedRecipeIds.includes(context.recipeId)
@@ -675,6 +678,15 @@
                 detail = allowedNames.length > 0
                     ? `Escolha entre ${allowedNames.join(", ")} e produza a peça que combina com seu estilo.`
                     : "Escolha uma das receitas de equipamento disponíveis e produza sua primeira peça.";
+            } else if (objective.type === "CraftSupply") {
+                const allowedNames = (objective.allowedRecipeIds || [])
+                    .map((recipeId) => Aethra.RecipeCatalog?.get?.(recipeId)?.name)
+                    .filter(Boolean);
+                action = "open-workshop";
+                actionLabel = "Preparar supply";
+                detail = allowedNames.length > 0
+                    ? `Escolha entre ${allowedNames.join(", ")}; o resultado entra no estoque usado pela Hunt.`
+                    : "Escolha qual supply alquímico preparar para sua próxima expedição.";
             }
 
             return {
@@ -751,6 +763,15 @@
                             const recipe = Aethra.RecipeCatalog?.get?.(recipeId);
                             if (!recipe || recipe.professionId !== objective.target) {
                                 issues.push({ questId: quest.id, objectiveId: objective.id, reason: "missing-equipment-recipe", target: recipeId });
+                            }
+                        });
+                    } else if (objective.type === "CraftSupply" && !Aethra.ProfessionSystem?.professions?.[objective.target]) {
+                        issues.push({ questId: quest.id, objectiveId: objective.id, reason: "missing-crafting-profession", target: objective.target });
+                    } else if (objective.type === "CraftSupply") {
+                        (objective.allowedRecipeIds || []).forEach((recipeId) => {
+                            const recipe = Aethra.RecipeCatalog?.get?.(recipeId);
+                            if (!recipe || recipe.professionId !== objective.target) {
+                                issues.push({ questId: quest.id, objectiveId: objective.id, reason: "missing-supply-recipe", target: recipeId });
                             }
                         });
                     } else if (objective.type === "TalkToNPC" && !Aethra.EntityManager?.getEntity?.(objective.target)) {

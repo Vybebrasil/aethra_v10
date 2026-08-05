@@ -60,7 +60,8 @@
         treated_leather: ["Couro Tratado", "▧", 14, "Incomum", "Pele curtida e preparada para costura."],
         reinforced_leather: ["Couro Reforçado", "▧", 27, "Incomum", "Couro rígido reforçado com componentes de fera."],
         aether_alloy: ["Liga Aetheriana", "◈", 48, "Raro", "Liga de aço estabilizada com éter e núcleo de criatura."],
-        shadow_leather: ["Couro Sombrio", "◒", 45, "Raro", "Couro reforçado costurado com fios espectrais."]
+        shadow_leather: ["Couro Sombrio", "◒", 45, "Raro", "Couro reforçado costurado com fios espectrais."],
+        botanical_extract: ["Extrato Botânico", "⚗", 12, "Incomum", "Essência concentrada usada na preparação de supplies alquímicos."]
     };
 
     Object.entries({ ...EXTRA_MATERIALS, ...CRAFT_MATERIALS }).forEach(([id, definition]) => {

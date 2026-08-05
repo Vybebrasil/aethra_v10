@@ -1124,6 +1124,16 @@
                                     <button type="button" data-open-profession-workshop="leatherworking">Abrir Curtume</button>
                                 </div>
                             </article>
+
+                            <article class="city-service-card">
+                                <div class="city-service-card__icon" aria-hidden="true">⚗</div>
+                                <div class="city-service-card__content">
+                                    <small>Produção · supplies</small>
+                                    <h3>Laboratório de Alquimia</h3>
+                                    <p>Destile ervas e escolha poções de Vida, Mana ou Vigor.</p>
+                                    <button type="button" data-open-profession-workshop="alchemy">Abrir Laboratório</button>
+                                </div>
+                            </article>
                         </div>
                     </section>
 

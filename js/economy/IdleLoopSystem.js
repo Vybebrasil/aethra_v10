@@ -5,9 +5,9 @@
     if (!Aethra?.EventBus) return;
 
     const SUPPLIES = Object.freeze([
-        Object.freeze({ id: "potion_health", label: "Poção de Vida", shortLabel: "Vida", icon: "✚", effect: "+20 HP", role: "Sobrevivência", tone: "health", enabled: true, reorderAt: 5, target: 5, policyItemKey: "healthItemId", policyThresholdKey: "healthThreshold" }),
-        Object.freeze({ id: "potion_mana", label: "Poção de Mana", shortLabel: "Mana", icon: "◆", effect: "+25 Mana", role: "Recurso arcano", tone: "mana", enabled: true, reorderAt: 5, target: 5, policyItemKey: "manaItemId", policyThresholdKey: "manaThreshold" }),
-        Object.freeze({ id: "minor_vigor_tonic", label: "Tônico de Vigor", shortLabel: "Vigor", icon: "ϟ", effect: "+18 Vigor", role: "Recurso físico", tone: "vigor", enabled: false, reorderAt: 2, target: 3, policyItemKey: "energyItemId", policyThresholdKey: "energyThreshold" }),
+        Object.freeze({ id: "potion_health", label: "Poção de Vida", shortLabel: "Vida", icon: "✚", effect: "+20 HP", role: "Sobrevivência", craftRecipeId: "brew_health_potion", tone: "health", enabled: true, reorderAt: 5, target: 5, policyItemKey: "healthItemId", policyThresholdKey: "healthThreshold" }),
+        Object.freeze({ id: "potion_mana", label: "Poção de Mana", shortLabel: "Mana", icon: "◆", effect: "+20 Mana", role: "Recurso arcano", craftRecipeId: "brew_mana_potion", tone: "mana", enabled: true, reorderAt: 5, target: 5, policyItemKey: "manaItemId", policyThresholdKey: "manaThreshold" }),
+        Object.freeze({ id: "minor_vigor_tonic", label: "Tônico de Vigor", shortLabel: "Vigor", icon: "ϟ", effect: "+18 Vigor", role: "Recurso físico", craftRecipeId: "brew_vigor_tonic", tone: "vigor", enabled: false, reorderAt: 2, target: 3, policyItemKey: "energyItemId", policyThresholdKey: "energyThreshold" }),
         Object.freeze({ id: "field_antidote", label: "Antídoto de Campanha", shortLabel: "Antídoto", icon: "☤", effect: "Remove veneno", role: "Cura de condição", tone: "antidote", enabled: false, reorderAt: 1, target: 2 })
     ]);
     const DEFAULTS = Object.freeze({
@@ -344,7 +344,7 @@
             <article class="idle-supply-card idle-tone-${definition.tone} ${rule.enabled ? "is-enabled" : ""}">
                 <header class="idle-supply-card-head">
                     <span class="idle-supply-icon" aria-hidden="true">${definition.icon}</span>
-                    <span class="idle-supply-identity"><strong>${esc(definition.label)}</strong><small>${esc(definition.role)} · ${esc(definition.effect)}</small></span>
+                    <span class="idle-supply-identity"><strong>${esc(definition.label)}</strong><small>${esc(definition.role)} · ${esc(definition.effect)}${definition.craftRecipeId ? " · Produzível na Alquimia" : ""}</small></span>
                     <span class="idle-stock-count"><b>${fmt(current)}</b><small>/ ${fmt(rule.target)}</small></span>
                 </header>
                 <div class="idle-stock-track"><i style="width:${stockRatio}%"></i></div>

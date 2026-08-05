@@ -1,4 +1,4 @@
-// ProfessionWorkshopUI.js — oficina funcional de Forjaria e Couraria.
+// ProfessionWorkshopUI.js — oficina funcional de Forjaria, Couraria e Alquimia.
 // Exibe receitas descobertas, tier por tier, com seção "A Descobrir" para as bloqueadas.
 (function initProfessionWorkshopUI(Aethra) {
     "use strict";
@@ -22,7 +22,8 @@
 
     const professionMeta = {
         blacksmithing: { name: "Forjaria",  icon: "⚒", stationId: "forge",   station: "Forja da Cidade",   color: "#e5b65f" },
-        leatherworking: { name: "Couraria", icon: "◈", stationId: "tannery", station: "Curtume da Cidade", color: "#b68a62" }
+        leatherworking: { name: "Couraria", icon: "◈", stationId: "tannery", station: "Curtume da Cidade", color: "#b68a62" },
+        alchemy: { name: "Alquimia", icon: "⚗", stationId: "laboratory", station: "Laboratório de Alquimia", color: "#72d6a5" }
     };
 
     const TIER_LABELS = { 1: "Iniciante", 2: "Oficial", 3: "Mestre" };
@@ -97,6 +98,10 @@
     function isGuidedRecipe(recipe, guidance = resolveWorkshopGuidance()) {
         if (!guidance || guidance.professionId !== recipe.professionId) return false;
         if (guidance.objective?.type === "CraftRecipe") return guidance.target === recipe.id;
+        if (guidance.objective?.type === "CraftSupply") {
+            const allowedRecipeIds = guidance.objective.allowedRecipeIds || [];
+            return allowedRecipeIds.length === 0 || allowedRecipeIds.includes(recipe.id);
+        }
         if (guidance.objective?.type !== "CraftEquipment" || !isEquipmentRecipe(recipe)) return false;
         const allowedRecipeIds = guidance.objective.allowedRecipeIds || [];
         return allowedRecipeIds.length === 0 || allowedRecipeIds.includes(recipe.id);
@@ -105,11 +110,14 @@
     function workshopGuidanceHTML(guidance) {
         if (!guidance) return "";
         const choosingEquipment = guidance.objective?.type === "CraftEquipment";
+        const choosingSupply = guidance.objective?.type === "CraftSupply";
         const recipe = guidance.objective?.type === "CraftRecipe"
             ? Aethra.CraftingSystem?.getRecipe?.(guidance.target)
             : null;
         const title = choosingEquipment
             ? "Escolha seu primeiro equipamento"
+            : choosingSupply
+                ? "Escolha seu primeiro supply"
             : recipe
                 ? `Produza ${recipe.name}`
                 : guidance.objective?.label;
@@ -117,6 +125,8 @@
             ? guidance.professionId === "leatherworking"
                 ? "Botas, Chapéu e Calças de Couro concluem o contrato. Compare as opções destacadas e escolha a que combina com seu estilo."
                 : "Espada, Machado e Maça de Ferro concluem o contrato. Compare as opções destacadas e escolha a que combina com seu estilo."
+            : choosingSupply
+                ? "Poção de Vida, Poção de Mana ou Tônico de Vigor concluem o contrato. A escolha produz 3 unidades e entra no estoque da Hunt."
             : "A receita necessária foi trazida para o topo. Confira os materiais e conclua esta etapa do contrato.";
         return `<section class="profession-workshop__guidance" role="status">
             <span>✦</span>
@@ -160,7 +170,7 @@
                 <div>
                     <small>RESULTADO</small>
                     <strong>${esc(output)}</strong>
-                    <span>Qualidade estimada ${qualityEstimate(recipe, technique)}</span>
+                    <span>${recipe.professionId === "alchemy" ? "Rendimento fixo por lote" : `Qualidade estimada ${qualityEstimate(recipe, technique)}`}</span>
                 </div>
             </div>
             ${sourceGuidance(recipe)}
@@ -302,6 +312,10 @@
         const meta       = professionMeta[ui.professionId] || professionMeta.blacksmithing;
         const skill      = Aethra.ProfessionSystem?.getState?.(ui.professionId) || { level: 1, xpCurrent: 0, xpNext: 1 };
         const cs         = Aethra.CraftingSystem;
+        if (ui.professionId === "alchemy") ui.techniqueId = "balanced";
+        const hasMaintenance = ["blacksmithing", "leatherworking"].includes(ui.professionId);
+        const hasSpecialization = Boolean(Aethra.ProfessionSystem?.getSpecializationTree?.(ui.professionId));
+        if (!hasMaintenance && ui.tab === "maintenance") ui.tab = "known";
         element.style.setProperty("--workshop-accent", meta.color);
         const workshopGuidance = resolveWorkshopGuidance();
         ui.guidedRecipeId = resolveGuidedRecipeId(workshopGuidance);
@@ -344,9 +358,9 @@
                 <span><small>MODO DE XP</small><strong>${skill.trainingMode === "locked" ? "Travado" : "Treinando"}</strong></span>
             </section>
 
-            <button type="button" class="profession-workshop__specialization" data-open-profession-specialization="${esc(ui.professionId)}">
+            ${hasSpecialization ? `<button type="button" class="profession-workshop__specialization" data-open-profession-specialization="${esc(ui.professionId)}">
                 ✦ Ver especialização e maestria infinita
-            </button>
+            </button>` : ""}
 
             <nav class="profession-workshop__tabs">
                 ${Object.entries(professionMeta).map(([id, entry]) =>
@@ -355,21 +369,21 @@
             </nav>
 
             <nav class="profession-workshop__subtabs">
-                <button type="button" data-workshop-tab="known"        class="${ui.tab === "known"        ? "is-active" : ""}">Conhecidas</button>
-                <button type="button" data-workshop-tab="undiscovered" class="${ui.tab === "undiscovered" ? "is-active" : ""}">A Descobrir${undiscovered.length > 0 ? ` <span class="badge-count">${undiscovered.length}</span>` : ""}${badgeCount > 0 ? ` <span class="badge-new-pill">${badgeCount} novo${badgeCount > 1 ? "s" : ""}</span>` : ""}</button>
-                <button type="button" data-workshop-tab="maintenance" class="${ui.tab === "maintenance" ? "is-active" : ""}">Manutenção${Aethra.EquipmentMaintenanceSystem?.getSnapshot?.(ui.professionId)?.critical > 0 ? ` <span class="badge-count is-alert">${Aethra.EquipmentMaintenanceSystem.getSnapshot(ui.professionId).critical}</span>` : ""}</button>
+                <button type="button" data-workshop-tab="known"        class="${ui.tab === "known"        ? "is-active" : ""}">Conhecidas${badgeCount > 0 ? ` <span class="badge-new-pill">${badgeCount} novo${badgeCount > 1 ? "s" : ""}</span>` : ""}</button>
+                <button type="button" data-workshop-tab="undiscovered" class="${ui.tab === "undiscovered" ? "is-active" : ""}">A Descobrir${undiscovered.length > 0 ? ` <span class="badge-count">${undiscovered.length}</span>` : ""}</button>
+                ${hasMaintenance ? `<button type="button" data-workshop-tab="maintenance" class="${ui.tab === "maintenance" ? "is-active" : ""}">Manutenção${Aethra.EquipmentMaintenanceSystem?.getSnapshot?.(ui.professionId)?.critical > 0 ? ` <span class="badge-count is-alert">${Aethra.EquipmentMaintenanceSystem.getSnapshot(ui.professionId).critical}</span>` : ""}</button>` : ""}
             </nav>
 
             ${ui.tab !== "maintenance" ? workshopGuidanceHTML(workshopGuidance) : ""}
 
             ${ui.tab !== "maintenance" ? `<section class="profession-workshop__controls">
-                <label>Técnica
+                ${ui.professionId !== "alchemy" ? `<label>Técnica
                     <select data-workshop-technique>
                         ${Object.values(cs?.techniques || {}).map((t) =>
                             `<option value="${t.id}" ${t.id === ui.techniqueId ? "selected" : ""}>${esc(t.name)} — ${esc(t.description)}</option>`
                         ).join("")}
                     </select>
-                </label>
+                </label>` : ""}
                 <label>Quantidade
                     <input type="number" min="1" max="20" value="${ui.quantity}" data-workshop-quantity>
                 </label>
@@ -392,14 +406,14 @@
         ui.stationId  = stationId || (inCity ? professionMeta[ui.professionId].stationId : null);
         ui.notice     = null;
         ui.guidedRecipeId = options.recipeId || resolveGuidedRecipeId();
-        ui.tab        = options.tab === "maintenance" ? "maintenance" : "known";
+        ui.tab        = options.tab === "maintenance" && ["blacksmithing", "leatherworking"].includes(ui.professionId) ? "maintenance" : "known";
 
         // Seeding: se não há receitas descobertas, descobre os starters agora
         const cs = Aethra.CraftingSystem;
         if (cs && typeof cs.discoverStarters === "function") {
             const discovered = Aethra.GameState.crafting?.discovered || [];
             if (discovered.length === 0) {
-                ["blacksmithing", "leatherworking"].forEach((id) => cs.discoverStarters(id));
+                ["blacksmithing", "leatherworking", "alchemy"].forEach((id) => cs.discoverStarters(id));
             }
         }
 

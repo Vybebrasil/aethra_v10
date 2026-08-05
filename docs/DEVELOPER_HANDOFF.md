@@ -3,7 +3,7 @@
 Atualizado em: 2026-08-05
 Branch de continuidade: `main`  
 Baseline recebida antes deste ciclo: `25f328f`
-Checkpoint imediatamente anterior: `f1b4d8a`
+Checkpoint imediatamente anterior: `a3cb0d8`
 
 Este documento é o ponto de entrada para continuar a versão atual. Leia-o antes
 de alterar HUD, automação de hunt, progressão, profissões, coleta, crafting ou
@@ -30,6 +30,21 @@ paralelos que leem e escrevem o mesmo estado.
   entregam 6 peles, o Curtume produz 3 couros tratados e o jogador escolhe entre
   Botas, Chapéu ou Calças. O contrato está em
   `docs/SKINNING_FOCUS_CONTRACT.md`.
+- Herbalismo fecha o terceiro contrato vertical: a `Clareira Verdejante`
+  oferece `Colher | Ignorar`, três colheitas entregam pelo menos 6 Ervas
+  Silvestres e o Laboratório destila 3 Extratos Botânicos. O jogador escolhe
+  produzir 3 Poções de Vida, 3 Poções de Mana ou 3 Tônicos de Vigor; a escolha
+  conclui o `Ciclo do Alquimista` e entra no mesmo estoque consultado pelo
+  gerenciador de supplies. O contrato está em
+  `docs/HERBALISM_ALCHEMY_FOCUS_CONTRACT.md`.
+- Alquimia está disponível desde o nível 1, sem conceder XP gratuito: a primeira
+  destilação descobre e treina a skill pelo `XPSystem`. Receitas pertencem ao
+  `RecipeCatalog`, a transação ao `CraftingSystem` e a oficina apenas projeta e
+  envia comandos.
+- O gerenciador de supplies informa quais consumíveis podem ser produzidos em
+  Alquimia. Produção não é automática; estoque fabricado reduz naturalmente a
+  falta que seria comprada pelo loop. A descrição de Mana foi alinhada ao efeito
+  oficial de +20.
 - A primeira ação de uma skill recém-descoberta reaponta para o estado canônico
   antes de conceder XP; isso impede a descoberta de apagar o primeiro ganho.
 - A decisão pós-abate pertence ao `ExplorationSystem`; pausa/retomada pertencem
@@ -183,7 +198,8 @@ de skill deve passar por `XPSystem.grantSkillXP(...)`.
   seus recursos/itens continuam válidos.
 - A primeira ação válida descobre a skill; a escolha de ofício na criação do
   personagem não pula esse processo.
-- Alquimia está deliberadamente bloqueada neste checkpoint.
+- Alquimia está disponível e cresce sem limite de nível; o conteúdo atual cobre
+  destilação de Ervas Silvestres e os três supplies iniciais.
 
 Políticas de coleta são opt-in/opt-out. Hunt e exploração consultam o
 `ProfessionSystem`; não devem decidir por conta própria se mineração, esfola ou
@@ -197,7 +213,8 @@ materiais, criação de resultados, qualidade e XP de fabricação.
 
 - Técnicas atuais: `balanced`, `economical` e `masterwork`.
 - Quantidade aceita: 1 a 20 lotes por comando.
-- Estações atuais: forja e curtume na cidade; não estão disponíveis durante hunt.
+- Estações atuais: forja, curtume e laboratório de alquimia na cidade; não estão
+  disponíveis durante hunt.
 - Comandos usam `commandId` para rejeitar repetição acidental.
 - `ItemSystem.generateItem(...)` cria a instância e `BagSystem.addItem(...)` a
   insere. Materiais são removidos somente por `BagSystem.consumeItem(...)`.
@@ -306,8 +323,8 @@ node scripts/run-integration.mjs --timeout 90 --viewport 1920x1080
 
 Resultado do checkpoint atual antes do commit:
 
-- quality gate: 662/662 verificações;
-- integração no navegador: 176/176 verificações em 640x720, 768x720,
+- quality gate: 666/666 verificações;
+- integração no navegador: 181/181 verificações em 640x720, 768x720,
   1024x768, 1280x720 e 1920x1080;
 - Diário validado em 360x740, 640x800, 768x900, 1024x768, 1280x800 e
   1920x1080: janela dentro do viewport, sem overflow horizontal e sem sobrepor
@@ -340,6 +357,13 @@ Resultado do checkpoint atual antes do commit:
   `Esfolar | Ignorar`, seis peles, três curtimentos, três equipamentos elegíveis
   e conclusão por escolha do jogador. O contrato reutiliza o schema 78 porque
   não introduz estado persistido novo.
+- contrato de Herbalismo validado ponta a ponta: foco e rota, `Colher | Ignorar`,
+  seis ervas, três extratos, três escolhas de supply e conclusão pelo item
+  escolhido. Os itens produzidos são lidos diretamente pelo estoque oficial.
+- navegador real: Laboratório aberto a partir da Central, 23 skills e 3 skills
+  de Criação visíveis, quatro receitas de Alquimia, nomenclatura consistente e
+  nenhuma técnica/qualidade sem efeito prometida. A janela ficou em 960×514 em
+  1280×720 e 960×640 em 1920×1080, sem overflow horizontal nem erro de console.
 - cliques reais em `Combate`, `Herói` e `Análise` alinham o painel ao topo; a
   rolagem manual atualiza `aria-pressed` e o destaque da navegação compacta.
 - Central verificada no navegador em 1280x720: painel ativo começa dentro da
@@ -373,13 +397,14 @@ save migrado. Atualize estes números se a suíte crescer.
     marco e concentre os comandos oficiais de foco/coleta/oficina.~~ ✅ **Concluído**
 12. ~~Transformar o foco do Diário em direção ativa: recomendação oficial,
     projeção na Central/Tracker e abertura direta da Hunt ou oficina.~~ ✅ **Concluído**
-13. ~~Fechar ciclos verticais de foco com decisão manual, coleta,
-    processamento e escolha de equipamento.~~ ✅ **Concluído para Mineração e
-    Esfolamento**
+13. ~~Fechar ciclos verticais de foco com decisão manual, coleta, processamento
+    e escolha de resultado.~~ ✅ **Concluído para Mineração, Esfolamento e
+    Herbalismo**
 
-Limitações deliberadas: contratos verticais completos existem para Mineração e
-Esfolamento; Herbalismo ainda não possui a etapa de Alquimia. O conteúdo de fabricação cobre Forjaria e Couraria até o primeiro
-Tier 3; profissões de mundo e utilidade ainda não possuem árvores próprias;
+Limitações deliberadas: contratos verticais completos existem para Mineração,
+Esfolamento e Herbalismo. Alquimia possui somente o Tier 1 inicial e ainda não
+tem árvore de especialização própria. O conteúdo de fabricação cobre Forjaria e
+Couraria até o primeiro Tier 3; profissões de mundo e utilidade ainda não possuem árvores próprias;
 troca de especialização não foi liberada; o cliente local ainda não é autoridade
 segura para economia competitiva.
 

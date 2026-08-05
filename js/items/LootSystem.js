@@ -87,6 +87,20 @@ window.Aethra = window.Aethra || {};
             maxStack: 99,
             description: "Recupera 20 pontos de Mana."
         },
+        minor_vigor_tonic: {
+            id: "minor_vigor_tonic",
+            name: "Tônico de Vigor",
+            icon: "ϟ",
+            rarity: "Comum",
+            type: "consumable",
+            itemType: "CONSUMABLE",
+            effect: 18,
+            energyAmount: 18,
+            price: 12,
+            stackable: true,
+            maxStack: 99,
+            description: "Recupera 18 pontos de Vigor."
+        },
         monster_core: {
             id: "monster_core",
             name: "Núcleo de Criatura",

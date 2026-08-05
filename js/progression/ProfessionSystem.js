@@ -52,8 +52,8 @@
             actionTypes: ["tan", "craft-leather", "repair-leather"]
         },
         alchemy: {
-            id: "alchemy", name: "Alquimia", icon: "⚗", category: "crafting", status: "locked",
-            description: "Produz poções, óleos e consumíveis especiais.", benefit: "Será liberada por conteúdo futuro.",
+            id: "alchemy", name: "Alquimia", icon: "⚗", category: "crafting", status: "available",
+            description: "Destila reagentes e produz poções, tônicos e consumíveis.", benefit: "Transforma coleta em supplies escolhidos pelo jogador.",
             actionTypes: ["brew", "distill", "mix-potion"]
         },
         thievery: {
@@ -108,6 +108,15 @@
             title: "Ciclo do Curtidor",
             summary: "Escolha quais criaturas esfolar, curta as peles e produza seu primeiro equipamento de couro.",
             huntId: "whispering_woods_focus",
+            guaranteedEvents: 3,
+            minimumQuantity: 2
+        },
+        herbalism: {
+            id: "herbalism",
+            questId: "focus_training_herbalism",
+            title: "Ciclo do Alquimista",
+            summary: "Escolha quais ervas colher, destile extratos e prepare o supply que combina com sua jornada.",
+            huntId: "verdant_grove_focus",
             guaranteedEvents: 3,
             minimumQuantity: 2
         }
@@ -875,6 +884,53 @@
                             required: 1,
                             dependsOn: ["tan_focus_leather"],
                             label: "Escolha e produza seu primeiro equipamento de couro"
+                        }
+                    ],
+                    reward: { gold: 0, xp: 0, items: [] }
+                };
+            }
+            if (professionId === "herbalism") {
+                return {
+                    id: path.questId,
+                    title: path.title,
+                    description: path.summary,
+                    levelReq: 1,
+                    objectives: [
+                        {
+                            id: "practice_focus_herbalism",
+                            type: "PracticeSkill",
+                            target: "herbalism",
+                            huntId: path.huntId,
+                            required: 1,
+                            label: "Colha manualmente uma erva na Clareira Verdejante"
+                        },
+                        {
+                            id: "collect_focus_herbs",
+                            type: "ItemAcquired",
+                            target: "wild_herb",
+                            huntId: path.huntId,
+                            required: 6,
+                            dependsOn: ["practice_focus_herbalism"],
+                            label: "Reúna 6 Ervas Silvestres"
+                        },
+                        {
+                            id: "distill_focus_extracts",
+                            type: "CraftRecipe",
+                            target: "distill_wild_herb",
+                            professionId: "alchemy",
+                            required: 3,
+                            dependsOn: ["collect_focus_herbs"],
+                            label: "Destile 3 Extratos Botânicos no Laboratório"
+                        },
+                        {
+                            id: "brew_focus_supply",
+                            type: "CraftSupply",
+                            target: "alchemy",
+                            professionId: "alchemy",
+                            allowedRecipeIds: ["brew_health_potion", "brew_mana_potion", "brew_vigor_tonic"],
+                            required: 1,
+                            dependsOn: ["distill_focus_extracts"],
+                            label: "Escolha e prepare seu primeiro supply alquímico"
                         }
                     ],
                     reward: { gold: 0, xp: 0, items: [] }

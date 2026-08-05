@@ -478,6 +478,70 @@
             outputs: [{ itemId: "crafted_shadow_head_l10", quantity: 1 }],
             sourceHint: "Produza Couro Sombrio no Curtume antes de costurar esta peça.",
             description: "Capuz raro que protege sem sacrificar precisão e evasão."
+        },
+
+        // ── Alquimia T1 (Iniciante) ───────────────────────────────────────────
+        {
+            id: "distill_wild_herb",
+            name: "Destilar Ervas",
+            icon: "⚗",
+            professionId: "alchemy",
+            action: "distill",
+            stationId: "laboratory",
+            tier: 1,
+            unlockLevel: 1,
+            requiredLevel: 1,
+            xp: 8,
+            inputs: [{ itemId: "wild_herb", quantity: 2 }],
+            outputs: [{ itemId: "botanical_extract", quantity: 1 }],
+            sourceHuntId: "verdant_grove_focus",
+            sourceHint: "Colha Ervas Silvestres na Clareira Verdejante.",
+            description: "Concentra duas ervas em um extrato usado para preparar supplies."
+        },
+        {
+            id: "brew_health_potion",
+            name: "Poção de Vida",
+            icon: "♥",
+            professionId: "alchemy",
+            action: "brew",
+            stationId: "laboratory",
+            tier: 1,
+            unlockLevel: 1,
+            requiredLevel: 1,
+            xp: 18,
+            inputs: [{ itemId: "botanical_extract", quantity: 3 }],
+            outputs: [{ itemId: "potion_health", quantity: 3 }],
+            description: "Prepara três poções para recuperação automática ou manual de Vida."
+        },
+        {
+            id: "brew_mana_potion",
+            name: "Poção de Mana",
+            icon: "◆",
+            professionId: "alchemy",
+            action: "brew",
+            stationId: "laboratory",
+            tier: 1,
+            unlockLevel: 1,
+            requiredLevel: 1,
+            xp: 18,
+            inputs: [{ itemId: "botanical_extract", quantity: 3 }],
+            outputs: [{ itemId: "potion_mana", quantity: 3 }],
+            description: "Prepara três poções para recuperação automática ou manual de Mana."
+        },
+        {
+            id: "brew_vigor_tonic",
+            name: "Tônico de Vigor",
+            icon: "ϟ",
+            professionId: "alchemy",
+            action: "brew",
+            stationId: "laboratory",
+            tier: 1,
+            unlockLevel: 1,
+            requiredLevel: 1,
+            xp: 18,
+            inputs: [{ itemId: "botanical_extract", quantity: 3 }],
+            outputs: [{ itemId: "minor_vigor_tonic", quantity: 3 }],
+            description: "Prepara três tônicos para sustentar a exploração e os ataques físicos."
         }
     ]);
 
@@ -487,7 +551,8 @@
     // ── Receitas base de cada profissão ao nível 1 (já descobertas ao criar personagem) ──
     const STARTER_RECIPES = Object.freeze({
         blacksmithing: ["smelt_iron", "forge_iron_sword", "forge_iron_axe", "forge_iron_mace", "forge_iron_helm", "forge_iron_legs", "forge_plate_chest"],
-        leatherworking: ["tan_beast_hide", "craft_leather_boots", "craft_leather_helm", "craft_leather_legs", "craft_leather_chest"]
+        leatherworking: ["tan_beast_hide", "craft_leather_boots", "craft_leather_helm", "craft_leather_legs", "craft_leather_chest"],
+        alchemy: ["distill_wild_herb", "brew_health_potion", "brew_mana_potion", "brew_vigor_tonic"]
     });
 
     // ── API pública ───────────────────────────────────────────────────────────

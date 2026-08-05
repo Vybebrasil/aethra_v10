@@ -2060,6 +2060,137 @@
                 );
                 Aethra.WindowManager?.closeWindow?.("profession-workshop-view", { source: "integration-skinning-contract" });
 
+                const herbalismFocus = Aethra.DisciplineSystem?.setFocus?.("herbalism", "integration-test");
+                const herbalismGuidance = Aethra.DisciplineSystem?.getFocusedGuidance?.();
+                const herbalismContractStart = Aethra.ProfessionSystem?.getFocusTrainingState?.("herbalism");
+                const herbalismGuaranteeStart = Aethra.ExplorationSystem?.getSnapshot?.().tutorialGuarantee;
+                checks.push(
+                    createCheck(
+                        "Foco de Herbalismo ativa rota e contrato atÃ© Alquimia",
+                        herbalismFocus?.disciplineId === "herbalism"
+                            && herbalismGuidance?.huntId === "verdant_grove_focus"
+                            && herbalismGuidance?.mapMode === "hunts"
+                            && herbalismContractStart?.active === true
+                            && herbalismContractStart?.quest?.objectives?.length === 4
+                            && herbalismContractStart?.guidance?.objective?.id === "practice_focus_herbalism"
+                            && herbalismGuaranteeStart?.professionId === "herbalism"
+                            && herbalismGuaranteeStart?.remaining === 3
+                            && herbalismGuaranteeStart?.manual === true
+                            && herbalismGuaranteeStart?.minimumQuantity === 2,
+                        `${herbalismGuidance?.name || "sem skill"} â†’ ${herbalismGuidance?.recommendation?.name || "sem rota"} Â· ${herbalismGuaranteeStart?.remaining || 0} colheitas`
+                    )
+                );
+
+                Aethra.GameState.hunt = {
+                    ...(Aethra.GameState.hunt || {}),
+                    isActive: true,
+                    huntId: "verdant_grove_focus",
+                    currentRoom: 1
+                };
+                Aethra.ExplorationSystem?.setRandomSource?.(() => 0.99);
+                Aethra.ExplorationSystem?.tryTriggerStairsEvent?.({ room: 1 });
+                const skippedHerbalismEvent = Aethra.ExplorationSystem?.getSnapshot?.().pendingEvent;
+                const skippedHerbalismResult = skippedHerbalismEvent
+                    ? Aethra.ExplorationSystem?.resolveEvent?.(skippedHerbalismEvent.eventId, { manual: true, skip: true })
+                    : null;
+                const herbalismGuaranteeAfterSkip = Aethra.ExplorationSystem?.getSnapshot?.().tutorialGuarantee;
+                checks.push(
+                    createCheck(
+                        "Erva guiada oferece Colher/Ignorar sem consumir ao ignorar",
+                        skippedHerbalismEvent?.id === "herb"
+                            && skippedHerbalismEvent?.actionLabel === "Colher"
+                            && skippedHerbalismEvent?.requiresManual === true
+                            && skippedHerbalismEvent?.tutorialLabel === "CONTRATO DE FOCO"
+                            && /colher agora ou ignorar/.test(skippedHerbalismEvent?.description || "")
+                            && skippedHerbalismResult?.status === "skipped"
+                            && herbalismGuaranteeAfterSkip?.remaining === 3,
+                        skippedHerbalismResult ? `ignorada Â· ${herbalismGuaranteeAfterSkip?.remaining || 0} colheitas restantes` : "decisÃ£o manual ausente"
+                    )
+                );
+
+                const herbsBeforeFocusLoop = Aethra.BagSystem?.countItem?.("wild_herb") || 0;
+                const herbalismXPBeforeFocusLoop = Aethra.ProfessionSystem?.getState?.("herbalism")?.xpTotal || 0;
+                const gatheredFocusEvents = [];
+                for (let index = 0; index < 3; index += 1) {
+                    Aethra.ExplorationSystem?.tryTriggerStairsEvent?.({ room: index + 2 });
+                    const event = Aethra.ExplorationSystem?.getSnapshot?.().pendingEvent;
+                    if (!event) break;
+                    gatheredFocusEvents.push(Aethra.ExplorationSystem.resolveEvent(event.eventId, { manual: true }));
+                }
+                Aethra.ExplorationSystem?.setRandomSource?.(Math.random);
+                const herbalismContractAfterHerbs = Aethra.ProfessionSystem?.getFocusTrainingState?.("herbalism");
+                const herbsAfterFocusLoop = Aethra.BagSystem?.countItem?.("wild_herb") || 0;
+                const herbalismXPAfterFocusLoop = Aethra.ProfessionSystem?.getState?.("herbalism")?.xpTotal || 0;
+                const herbalismXPFromEvents = gatheredFocusEvents.reduce((sum, event) => sum + Number(event?.xpGain || 0), 0);
+                checks.push(
+                    createCheck(
+                        "Herbalismo manual entrega XP, seis ervas e avanÃ§a ao LaboratÃ³rio",
+                        gatheredFocusEvents.length === 3
+                            && gatheredFocusEvents.every((event) => event?.status === "resolved" && event?.manual === true)
+                            && herbsAfterFocusLoop - herbsBeforeFocusLoop === 6
+                            && herbalismXPAfterFocusLoop - herbalismXPBeforeFocusLoop === herbalismXPFromEvents
+                            && herbalismContractAfterHerbs?.guidance?.objective?.id === "distill_focus_extracts"
+                            && herbalismContractAfterHerbs?.guidance?.professionId === "alchemy"
+                            && Aethra.ExplorationSystem?.getSnapshot?.().tutorialGuarantee === null,
+                        `${gatheredFocusEvents.length}/3 canteiros Â· +${herbsAfterFocusLoop - herbsBeforeFocusLoop} ervas Â· +${herbalismXPAfterFocusLoop - herbalismXPBeforeFocusLoop} XP`
+                    )
+                );
+
+                Aethra.GameState.hunt.isActive = false;
+                Aethra.UIManager?.setPrimaryView?.("city", { emit: false, source: "integration-herbalism-contract" });
+                Aethra.ProfessionWorkshopUI?.open?.("alchemy", "laboratory", { source: "integration-herbalism-contract" });
+                const guidedDistillationVisible = Boolean(
+                    document.querySelector('.workshop-recipe.is-guided [data-craft-recipe="distill_wild_herb"]')
+                    && /Produza Destilar Ervas/.test(document.querySelector(".profession-workshop__guidance")?.textContent || "")
+                );
+                const distillationResult = Aethra.CraftingSystem?.craft?.("distill_wild_herb", {
+                    stationId: "laboratory",
+                    techniqueId: "balanced",
+                    quantity: 3,
+                    commandId: "integration-focus-distillation"
+                });
+                const herbalismContractAfterDistill = Aethra.ProfessionSystem?.getFocusTrainingState?.("herbalism");
+                Aethra.ProfessionWorkshopUI?.open?.("alchemy", "laboratory", { source: "integration-herbalism-contract-supply" });
+                const guidedSupplyCards = [...document.querySelectorAll(".workshop-recipe.is-guided [data-craft-recipe]")];
+                const guidedSupplyIds = guidedSupplyCards.map((card) => card.dataset.craftRecipe).sort();
+                const supplyChoiceVisible = guidedSupplyCards.length === 3
+                    && ["brew_health_potion", "brew_mana_potion", "brew_vigor_tonic"].every((recipeId) => guidedSupplyIds.includes(recipeId))
+                    && /Escolha seu primeiro supply/.test(document.querySelector(".profession-workshop__guidance")?.textContent || "")
+                    && !document.querySelector('[data-workshop-tab="maintenance"]');
+                checks.push(
+                    createCheck(
+                        "LaboratÃ³rio conduz da destilaÃ§Ã£o para trÃªs escolhas de supply",
+                        guidedDistillationVisible
+                            && distillationResult?.accepted === true
+                            && herbalismContractAfterDistill?.guidance?.objective?.id === "brew_focus_supply"
+                            && supplyChoiceVisible,
+                        `destilaÃ§Ã£o ${guidedDistillationVisible ? "guiada" : "ausente"} Â· ${guidedSupplyCards.length}/3 supplies destacados`
+                    )
+                );
+
+                const vigorBeforeAlchemy = Aethra.IdleLoopSystem?.inventoryQuantity?.("minor_vigor_tonic") || 0;
+                const craftedSupply = Aethra.CraftingSystem?.craft?.("brew_vigor_tonic", {
+                    stationId: "laboratory",
+                    techniqueId: "balanced",
+                    quantity: 1,
+                    commandId: "integration-focus-supply"
+                });
+                const vigorAfterAlchemy = Aethra.IdleLoopSystem?.inventoryQuantity?.("minor_vigor_tonic") || 0;
+                const completedHerbalismContract = Aethra.ProfessionSystem?.getFocusTrainingState?.("herbalism");
+                const vigorTemplate = Aethra.GameData?.items?.minor_vigor_tonic || Aethra.ItemSystem?.templates?.minor_vigor_tonic;
+                checks.push(
+                    createCheck(
+                        "Supply escolhido conclui o ciclo e entra no estoque oficial",
+                        craftedSupply?.accepted === true
+                            && completedHerbalismContract?.completed === true
+                            && Aethra.QuestSystem?.getQuest?.("focus_training_herbalism")?.status === "completed"
+                            && vigorAfterAlchemy - vigorBeforeAlchemy === 3
+                            && Number(vigorTemplate?.energyAmount) === 18,
+                        `${craftedSupply?.recipe?.name || "sem supply"} Â· +${vigorAfterAlchemy - vigorBeforeAlchemy} no estoque Â· contrato ${completedHerbalismContract?.status || "ausente"}`
+                    )
+                );
+                Aethra.WindowManager?.closeWindow?.("profession-workshop-view", { source: "integration-herbalism-contract" });
+
                 const starterSkillRequirement = Aethra.SkillSystem
                     ?.getSkillRequirement?.("precise_strike");
                 checks.push(

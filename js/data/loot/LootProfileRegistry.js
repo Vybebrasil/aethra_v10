@@ -13,7 +13,7 @@
         ectoplasm: { name: "Ectoplasma", icon: "◌", price: 18, rarity: "Incomum" },
         iron_ore: { name: "Minério de Ferro", icon: "⬢", price: 9 },
         arcane_core: { name: "Núcleo Arcano", icon: "◈", price: 28, rarity: "Raro" },
-        wild_herb: { name: "Erva Selvagem", icon: "♧", price: 6 },
+        wild_herb: { name: "Erva Silvestre", icon: "♧", price: 6 },
         ancient_resin: { name: "Resina Antiga", icon: "●", price: 15, rarity: "Incomum" },
         dragon_scale: { name: "Escama Dracônica", icon: "◩", price: 55, rarity: "Raro" },
         draconic_essence: { name: "Essência Dracônica", icon: "✹", price: 160, rarity: "Épico" },

@@ -502,6 +502,35 @@
                 { id: "wolf-xmm-2024", weight: 30 }
             ]
         },
+        verdant_grove_focus: {
+            id: "verdant_grove_focus",
+            mode: "specialized",
+            name: "Clareira Verdejante",
+            region: "Fronteira Verde",
+            biome: "Jardim silvestre",
+            description: "Rota inicial de Herbalismo com canteiros frequentes e escolhas manuais de colheita.",
+            focus: { id: "herbalism", name: "Herbalismo", skill: "herbalism", icon: "❧" },
+            minLevel: 1,
+            maxLevel: 30,
+            danger: 1,
+            icon: "❧",
+            rewards: ["Ervas Silvestres", "Reagentes alquímicos"],
+            maxRooms: 10,
+            baseMobsPerRoom: [1, 2, 2, 2, 3, 3, 3, 4, 4, 1],
+            modifiers: {
+                combatXp: 0.55,
+                gold: 0.45,
+                materialChance: 1.8,
+                resourceQuantity: 1.4,
+                eventChance: 2.2,
+                professionXp: { herbalism: 2.5, exploration: 0.5 },
+                eventWeights: { herb: 5.0 }
+            },
+            enemies: [
+                { id: "giant-rat-xmm-2024", weight: 36 },
+                { id: "goblin-mm", weight: 14 }
+            ]
+        },
         catacombs_focus: {
             id: "catacombs_focus",
             mode: "specialized",
