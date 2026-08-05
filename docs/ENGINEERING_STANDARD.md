@@ -143,7 +143,8 @@ Uma alteração está pronta somente quando:
 - `tests/integration.html` apresenta 100% de aprovação;
 - não há erro no console nem 404 na rede;
 - não há ID duplicado;
-- o layout foi validado em 1280×720 e 1920×1080;
+- o layout foi validado em 640×720, 1024×768, 1280×720 e 1920×1080; mudanças
+  que afetam breakpoints intermediários também devem cobrir 768×720;
 - novo personagem e save existente continuam funcionando;
 - o relatório final descreve riscos que ainda não foram resolvidos.
 

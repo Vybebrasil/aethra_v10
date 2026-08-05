@@ -577,6 +577,98 @@
             }
         },
 
+        bindCompactHuntNavigation() {
+            const nav = document.querySelector("[data-compact-hunt-nav]");
+            const layout = document.querySelector(".battle-hunt-layout");
+            if (!nav || !layout) return false;
+
+            const panelEntries = [
+                ["combat", document.getElementById("hunt-panel-combat")],
+                ["hero", document.getElementById("hunt-panel-hero")],
+                ["analysis", document.getElementById("hunt-panel-analysis")]
+            ].filter(([, panel]) => Boolean(panel));
+            const buttons = [...nav.querySelectorAll("[data-compact-hunt-target]")];
+            if (panelEntries.length !== 3 || buttons.length !== 3) return false;
+
+            const setActivePanel = (panelId) => {
+                const normalizedId = panelEntries.some(([id]) => id === panelId)
+                    ? panelId
+                    : "combat";
+                nav.dataset.activePanel = normalizedId;
+                buttons.forEach((button) => {
+                    const active = button.dataset.compactHuntTarget === normalizedId;
+                    button.classList.toggle("is-active", active);
+                    button.setAttribute("aria-pressed", active ? "true" : "false");
+                });
+                return normalizedId;
+            };
+
+            const syncActivePanel = () => {
+                const layoutRect = layout.getBoundingClientRect();
+                if (layoutRect.height <= 0) return nav.dataset.activePanel || "combat";
+
+                const dominantPanel = panelEntries
+                    .map(([id, panel]) => {
+                        const panelRect = panel.getBoundingClientRect();
+                        const visibleHeight = Math.max(
+                            0,
+                            Math.min(panelRect.bottom, layoutRect.bottom)
+                                - Math.max(panelRect.top, layoutRect.top)
+                        );
+                        return { id, visibleHeight };
+                    })
+                    .sort((left, right) => right.visibleHeight - left.visibleHeight)[0];
+
+                return setActivePanel(dominantPanel?.visibleHeight > 0
+                    ? dominantPanel.id
+                    : "combat");
+            };
+
+            if (nav.dataset.compactHuntBound === "true") {
+                syncActivePanel();
+                return true;
+            }
+
+            nav.dataset.compactHuntBound = "true";
+            let syncFrame = null;
+            const scheduleSync = () => {
+                if (syncFrame !== null) return;
+                const run = () => {
+                    syncFrame = null;
+                    syncActivePanel();
+                };
+                syncFrame = document.hidden
+                    ? window.setTimeout(run, 24)
+                    : window.requestAnimationFrame(run);
+            };
+
+            nav.addEventListener("click", (event) => {
+                const button = event.target.closest("[data-compact-hunt-target]");
+                if (!button || !nav.contains(button)) return;
+
+                const panelId = button.dataset.compactHuntTarget;
+                const panel = panelEntries.find(([id]) => id === panelId)?.[1];
+                if (!panel) return;
+
+                if (panelId === "hero" && layout.classList.contains("is-hero-panel-minimized")) {
+                    panel.querySelector("[data-expand-hero-panel]")?.click();
+                }
+
+                setActivePanel(panelId);
+                layout.scrollTo({
+                    top: Math.max(0, panel.offsetTop - 2),
+                    behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
+                        || document.hidden
+                        ? "auto"
+                        : "smooth"
+                });
+            });
+            layout.addEventListener("scroll", scheduleSync, { passive: true });
+            window.addEventListener("resize", scheduleSync, { passive: true });
+            syncActivePanel();
+            return true;
+        },
+
         syncStageMode(mode = this.battleMode) {
             const selected = mode === "map2d" ? "map2d" : "cards";
             const mapRoot = document.getElementById("tilemap-canvas-root");
@@ -635,6 +727,7 @@
 
             if (cityView.querySelector("[data-battle-mode-layout]")) {
                 this.syncStageMode("cards");
+                this.bindCompactHuntNavigation();
                 return true;
             }
 
@@ -646,8 +739,41 @@
                         data-primary-screen="hunt"
                         aria-label="Painel de caçada"
                     >
+                    <nav class="compact-hunt-nav" data-compact-hunt-nav aria-label="Navegação rápida da caçada">
+                        <button
+                            type="button"
+                            class="is-active"
+                            data-compact-hunt-target="combat"
+                            aria-controls="hunt-panel-combat"
+                            aria-pressed="true"
+                        >
+                            <span aria-hidden="true">⚔</span>
+                            <strong>Combate</strong>
+                            <small>Palco e ações</small>
+                        </button>
+                        <button
+                            type="button"
+                            data-compact-hunt-target="hero"
+                            aria-controls="hunt-panel-hero"
+                            aria-pressed="false"
+                        >
+                            <span aria-hidden="true">✦</span>
+                            <strong>Herói</strong>
+                            <small>Build e skills</small>
+                        </button>
+                        <button
+                            type="button"
+                            data-compact-hunt-target="analysis"
+                            aria-controls="hunt-panel-analysis"
+                            aria-pressed="false"
+                        >
+                            <span aria-hidden="true">▥</span>
+                            <strong>Análise</strong>
+                            <small>Log e métricas</small>
+                        </button>
+                    </nav>
                     <div class="battle-hunt-layout">
-                    <aside class="battle-sidebar battle-sidebar--hero">
+                    <aside id="hunt-panel-hero" class="battle-sidebar battle-sidebar--hero">
                         <section class="battle-panel battle-panel--hero-hub" data-hero-hub>
                             <header class="battle-panel__header hero-hub__header">
                                 <div>
@@ -750,7 +876,7 @@
                         </section>
                     </aside>
 
-                    <main class="battle-main-column">
+                    <main id="hunt-panel-combat" class="battle-main-column">
                         <section class="battle-stage-panel">
                             <nav class="stage-mode-switcher" aria-label="Visual do palco">
                                 <button type="button" class="stage-mode-btn" data-set-stage-mode="map2d" data-set-battle-mode="map2d">▦ Mapa 2D</button>
@@ -828,7 +954,7 @@
                         </section>
                     </main>
 
-                    <aside class="battle-sidebar battle-sidebar--combat">
+                    <aside id="hunt-panel-analysis" class="battle-sidebar battle-sidebar--combat">
                         <section class="battle-panel battle-panel--log">
                             <header class="battle-panel__header">
                                 <div>
@@ -1005,6 +1131,8 @@
                     </div>
                 </div>
             `;
+
+            this.bindCompactHuntNavigation();
 
             this.syncStageMode("cards");
 

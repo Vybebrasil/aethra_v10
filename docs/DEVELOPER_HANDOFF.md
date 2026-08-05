@@ -1,6 +1,6 @@
 # Handoff de desenvolvimento — HUD, automação, skills, crafting e manutenção
 
-Atualizado em: 2026-07-29
+Atualizado em: 2026-08-05
 Branch de continuidade: `main`  
 Baseline recebida antes deste ciclo: `25f328f`
 Checkpoint imediatamente anterior: `25f328f`
@@ -12,7 +12,13 @@ paralelos que leem e escrevem o mesmo estado.
 
 ## 1. Estado entregue neste checkpoint
 
-- HUD principal modernizada e responsiva, validada em 1280x720 e 1920x1080.
+- HUD principal modernizada e responsiva, validada em 640x720, 768x720,
+  1024x768, 1280x720 e 1920x1080. Abaixo de 1120 px, Hunt, Central do Herói e
+  Hunt Analyzer usam a mesma HUD em uma pilha vertical rolável, com o palco em
+  primeiro lugar e a ActionBar fixa e integralmente visível.
+- A pilha compacta possui uma navegação fixa `Combate | Herói | Análise`. Os
+  atalhos rolam o container oficial até o painel escolhido, expandem a Central
+  quando necessário e acompanham o painel dominante sem persistir estado novo.
 - A Central do Herói alterna painéis de verdade: elementos com `hidden` não
   ocupam layout, toda troca volta a área rolável ao topo e, em monitores baixos,
   os 11 equipamentos formam uma faixa compacta sem cortar o último slot.
@@ -225,8 +231,13 @@ estrutura persistida. O contrato detalhado está em
 Na raiz do projeto:
 
 ```powershell
-python -m http.server 8000 --bind 127.0.0.1
+powershell -ExecutionPolicy Bypass -File scripts/dev-server.ps1 start
 ```
+
+No Windows, `INICIAR_JOGO.cmd` executa esse fluxo e abre o navegador. O script
+também aceita `status`, `restart` e `stop`, registra o PID por projeto e não cria
+um segundo servidor quando Aethra já está atendendo na porta 8000. O comando
+manual `python -m http.server 8000 --bind 127.0.0.1` permanece como fallback.
 
 Abra:
 
@@ -237,14 +248,18 @@ Quality gate obrigatório:
 
 ```powershell
 node scripts/verify-project.mjs
+node scripts/run-integration.mjs --timeout 90 --viewport 640x720
+node scripts/run-integration.mjs --timeout 90 --viewport 768x720
+node scripts/run-integration.mjs --timeout 90 --viewport 1024x768
 node scripts/run-integration.mjs --timeout 90 --viewport 1280x720
 node scripts/run-integration.mjs --timeout 90 --viewport 1920x1080
 ```
 
 Resultado do checkpoint atual antes do commit:
 
-- quality gate: 637/637 verificações;
-- integração no navegador: 159/159 verificações em 1280x720 e 1920x1080;
+- quality gate: 640/640 verificações;
+- integração headless: 161/161 verificações em 640x720, 768x720, 1024x768,
+  1280x720 e 1920x1080;
 - a suíte prova migração v77, criação em 100/100, desgaste 100→90,
   penalidade em baixa condição, item quebrado inativo, reparo transacional,
   consumo de Gold/material, XP de ofício e rejeição de comando repetido;
@@ -256,8 +271,12 @@ Resultado do checkpoint atual antes do commit:
   permanece sem erros;
 - clique real validado: `Entrar na expedição` inicia a Hunt, fecha o mapa e não
   abre Skills; console sem erros e nenhuma imagem 404 no fluxo;
-- layout verificado no navegador em 1280x720 e 1920x1080, sem overflow
-  horizontal e sem erros de console.
+- layout verificado no navegador real em 640x720, 1024x768, 1280x720 e
+  1920x1080, sem overflow horizontal e sem erros de console. Em 640/1024, o
+  palco aparece antes dos painéis auxiliares e a ActionBar permanece fixa sem
+  cortar os atalhos.
+- cliques reais em `Combate`, `Herói` e `Análise` alinham o painel ao topo; a
+  rolagem manual atualiza `aria-pressed` e o destaque da navegação compacta.
 - Central verificada no navegador em 1280x720: painel ativo começa dentro da
   área visível, dois painéis inativos têm `display: none`, matriz com 11 slots
   mede 260 px e permanece dentro da coluna; nenhuma imagem quebrada.
@@ -281,6 +300,10 @@ save migrado. Atualize estes números se a suíte crescer.
 8. ~~Criar árvores de especialização de longo prazo para cada profissão usando
    `hero.professionPerks`, sem introduzir limite máximo de nível.~~ ✅ **Concluído
    para Mineração, Esfolamento, Herbalismo, Forjaria e Couraria**
+9. ~~Eliminar a largura mínima global e criar uma composição compacta real para
+   janelas abaixo de 1120 px, com regressão em 640/768/1024.~~ ✅ **Concluído**
+10. ~~Adicionar navegação fixa entre Combate, Herói e Análise na pilha compacta,
+    com destaque sincronizado pela rolagem.~~ ✅ **Concluído**
 
 Limitações deliberadas: o conteúdo de fabricação cobre Forjaria e Couraria até
 o primeiro Tier 3; profissões de mundo e utilidade

@@ -1918,6 +1918,33 @@ body > #aethra-shop-tooltip:not([hidden]) {
     }
 }
 
+/* The 270px medium-width sidebar loses a few inner pixels to its frame. Keep
+   the complete eleven-slot strip inside that real content box. */
+@media (max-width: 1119px) and (max-height: 820px) {
+    .hero-hub--cockpit .player-equipment-matrix,
+    .hero-hub--cockpit .player-equipment-matrix--tibia {
+        grid-template-columns: repeat(11, 20px) !important;
+        grid-template-rows: 20px !important;
+        height: 28px !important;
+        max-height: 28px !important;
+    }
+
+    .hero-hub--cockpit .player-equipment-slot {
+        width: 20px !important;
+        min-width: 20px !important;
+        max-width: 20px !important;
+        height: 20px !important;
+        min-height: 20px !important;
+        max-height: 20px !important;
+    }
+
+    .hero-hub--cockpit .player-equipment-slot .hero-paperdoll__slot-icon,
+    .hero-hub--cockpit .player-equipment-slot img {
+        width: 16px !important;
+        height: 16px !important;
+    }
+}
+
 /* Adjust size scaling of HUD discipline icons to make them visually equal */
 .player-skill-row__icon[data-discipline-id="axe"],
 .player-skill-row__icon[data-discipline-id="unarmed"],

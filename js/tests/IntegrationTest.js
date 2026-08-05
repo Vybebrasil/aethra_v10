@@ -2355,6 +2355,8 @@
                 );
 
                 const responsiveProfiles = [
+                    [640, 720, "narrow"],
+                    [1024, 768, "narrow"],
                     [1280, 720, "compact"],
                     [1366, 768, "compact"],
                     [1600, 900, "standard"],
@@ -2369,12 +2371,114 @@
                 const currentResponsiveProfile = Aethra.HudModernization?.syncResponsiveProfile?.();
                 checks.push(
                     createCheck(
-                        "HUD classifica automaticamente monitores compactos, padrão, amplos e ultrawide",
+                        "HUD classifica automaticamente monitores estreitos, compactos, padrão, amplos e ultrawide",
                         responsiveProfileMatches
                             && document.body.dataset.hudViewport === currentResponsiveProfile?.profile,
                         responsiveProfileMatches
                             ? `perfil atual ${currentResponsiveProfile?.profile || "ausente"}`
                             : "matriz de perfis responsivos inconsistente"
+                    )
+                );
+
+                const responsiveBattleLayout = document.querySelector(".battle-hunt-layout");
+                const responsiveMainColumn = responsiveBattleLayout?.querySelector(".battle-main-column");
+                const responsiveHeroColumn = responsiveBattleLayout?.querySelector(".battle-sidebar--hero");
+                const responsiveCombatColumn = responsiveBattleLayout?.querySelector(".battle-sidebar--combat");
+                const responsiveLayoutStyle = responsiveBattleLayout
+                    ? getComputedStyle(responsiveBattleLayout)
+                    : null;
+                const measuredViewport = window.innerWidth > 0;
+                const narrowViewport = measuredViewport && window.innerWidth <= 1119;
+                const responsiveColumnCount = responsiveLayoutStyle?.gridTemplateColumns
+                    ?.trim()
+                    .split(/\s+/)
+                    .filter(Boolean)
+                    .length || 0;
+                const responsiveLayoutRect = responsiveBattleLayout?.getBoundingClientRect?.();
+                const responsivePanelRects = [
+                    responsiveMainColumn,
+                    responsiveHeroColumn,
+                    responsiveCombatColumn
+                ].map((panel) => panel?.getBoundingClientRect?.());
+                const responsiveLayoutVisible = Number(responsiveLayoutRect?.width || 0) > 0
+                    && Number(responsiveLayoutRect?.height || 0) > 0;
+                const shellFitsViewport = !measuredViewport || (
+                    document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1
+                    && document.body.scrollWidth <= document.body.clientWidth + 1
+                );
+                const narrowPanelsShareColumn = !responsiveLayoutVisible || responsivePanelRects.every((rect) => {
+                    return Number(rect?.width || 0) >= Number(responsiveLayoutRect?.width || 0) - 24;
+                }) && Math.max(...responsivePanelRects.map((rect) => Number(rect?.left || 0)))
+                    - Math.min(...responsivePanelRects.map((rect) => Number(rect?.left || 0))) <= 1;
+                const narrowStackScrollable = !responsiveLayoutVisible
+                    || responsiveBattleLayout.scrollHeight > responsiveBattleLayout.clientHeight;
+                const narrowStackIsOrdered = !narrowViewport || (
+                    narrowPanelsShareColumn
+                    && getComputedStyle(responsiveMainColumn).order === "1"
+                    && getComputedStyle(responsiveHeroColumn).order === "2"
+                    && getComputedStyle(responsiveCombatColumn).order === "3"
+                    && narrowStackScrollable
+                );
+                const compactActionBar = document.getElementById("battle-actionbar-layer");
+                const compactActionBarRect = compactActionBar?.getBoundingClientRect?.();
+                const compactActionContentBottom = Math.max(
+                    0,
+                    document.querySelector("#battle-actionbar-layer .primary-attack-bar")
+                        ?.getBoundingClientRect?.().bottom || 0,
+                    document.querySelector("#battle-actionbar-layer #skill-action-bar")
+                        ?.getBoundingClientRect?.().bottom || 0
+                );
+                const compactActionBarFits = !narrowViewport
+                    || compactActionContentBottom <= Number(compactActionBarRect?.bottom || 0) + 1;
+                checks.push(
+                    createCheck(
+                        "HUD compacta elimina overflow e empilha palco, herói e análise",
+                        Boolean(responsiveBattleLayout)
+                            && shellFitsViewport
+                            && narrowStackIsOrdered
+                            && compactActionBarFits,
+                        narrowViewport
+                            ? `${window.innerWidth}px · pilha ${narrowPanelsShareColumn ? "alinhada" : "desalinhada"} · ordem ${getComputedStyle(responsiveMainColumn).order}/${getComputedStyle(responsiveHeroColumn).order}/${getComputedStyle(responsiveCombatColumn).order} · shell ${document.documentElement.scrollWidth}/${document.documentElement.clientWidth} · ActionBar ${Math.round(compactActionContentBottom)}/${Math.round(Number(compactActionBarRect?.bottom || 0))}`
+                            : `${window.innerWidth || "?"}px · cockpit de ${responsiveColumnCount} colunas sem overflow`
+                    )
+                );
+
+                const compactHuntNav = document.querySelector("[data-compact-hunt-nav]");
+                const compactHuntButtons = compactHuntNav
+                    ? [...compactHuntNav.querySelectorAll("[data-compact-hunt-target]")]
+                    : [];
+                const compactHuntTargets = compactHuntButtons.map((button) => (
+                    button.dataset.compactHuntTarget
+                ));
+                const compactHuntControlsExist = compactHuntButtons.every((button) => (
+                    Boolean(document.getElementById(button.getAttribute("aria-controls")))
+                ));
+                const compactHeroButton = compactHuntButtons.find((button) => (
+                    button.dataset.compactHuntTarget === "hero"
+                ));
+                const compactCombatButton = compactHuntButtons.find((button) => (
+                    button.dataset.compactHuntTarget === "combat"
+                ));
+                compactHeroButton?.click();
+                const compactHeroSelectionWorks = compactHeroButton?.getAttribute("aria-pressed") === "true"
+                    && compactHuntNav?.dataset.activePanel === "hero";
+                compactCombatButton?.click();
+                const compactNavDisplay = compactHuntNav
+                    ? getComputedStyle(compactHuntNav).display
+                    : "none";
+                checks.push(
+                    createCheck(
+                        "Navegação compacta salta entre combate, herói e análise com estado acessível",
+                        Boolean(compactHuntNav)
+                            && compactHuntNav.dataset.compactHuntBound === "true"
+                            && compactHuntTargets.join(",") === "combat,hero,analysis"
+                            && compactHuntControlsExist
+                            && compactHeroSelectionWorks
+                            && compactCombatButton?.getAttribute("aria-pressed") === "true"
+                            && (narrowViewport
+                                ? compactNavDisplay === "grid"
+                                : compactNavDisplay === "none"),
+                        `${compactHuntButtons.length}/3 atalhos · painel ${compactHuntNav?.dataset.activePanel || "ausente"} · display ${compactNavDisplay}`
                     )
                 );
 

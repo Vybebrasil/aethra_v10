@@ -120,6 +120,10 @@ const professionSource = read("js/progression/ProfessionSystem.js");
 const professionSpecializationUiSource = read("js/ui/ProfessionSpecializationUI.js");
 const saveManagerSource = read("js/infrastructure/SaveManager.js");
 const maintenanceSource = read("js/items/EquipmentMaintenanceSystem.js");
+const responsiveHudSource = read("css/hud-modernization.css");
+const renderEngineSource = read("js/ui/RenderEngine.js");
+const devServerSource = read("scripts/dev-server.ps1");
+const gameLauncherSource = read("INICIAR_JOGO.cmd");
 check(
     !/registerQuest\(["']tutorial_first_steps["']/.test(characterCreationSource)
         && !/acceptQuest\(["']tutorial_first_steps["']/.test(characterCreationSource)
@@ -171,6 +175,33 @@ check(
         && /ProfessionSystem\?\.grantActionXP/.test(maintenanceSource)
         && /maintenance:policy-changed/.test(maintenanceSource),
     "EquipmentMaintenanceSystem deve ser a autoridade de desgaste, reparo e automação"
+);
+check(
+    /@media \(max-width: 1119px\)/.test(responsiveHudSource)
+        && /min-width:\s*0\s*!important/.test(responsiveHudSource)
+        && /grid-template-columns:\s*minmax\(0, 1fr\)\s*!important/.test(responsiveHudSource)
+        && /order:\s*1/.test(responsiveHudSource)
+        && /order:\s*2/.test(responsiveHudSource)
+        && /order:\s*3/.test(responsiveHudSource),
+    "HUD compacta deve remover o piso desktop e reutilizar os três painéis em pilha"
+);
+check(
+    /data-compact-hunt-nav/.test(renderEngineSource)
+        && ["combat", "hero", "analysis"].every((panel) => (
+            renderEngineSource.includes(`data-compact-hunt-target="${panel}"`)
+        ))
+        && /bindCompactHuntNavigation\(\)/.test(renderEngineSource)
+        && /syncActivePanel/.test(renderEngineSource)
+        && /\.compact-hunt-nav\s*\{/.test(responsiveHudSource),
+    "HUD estreita deve oferecer navegação única entre combate, herói e análise"
+);
+check(
+    /Test-AethraServer/.test(devServerSource)
+        && /Start-Process/.test(devServerSource)
+        && /127\.0\.0\.1/.test(devServerSource)
+        && /\.pid/.test(devServerSource)
+        && /scripts\\dev-server\.ps1/.test(gameLauncherSource),
+    "Launcher local deve iniciar um único servidor rastreado e verificar sua saúde"
 );
 
 const authorityGatewaySource = read("js/infrastructure/AuthorityGateway.js");

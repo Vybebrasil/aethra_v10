@@ -1,18 +1,24 @@
 # Crônicas de Aethra — Projeto organizado
 
-Projeto front-end puro. Não usa Node.js nem servidor.
+Projeto front-end puro. Não exige Node.js nem backend para jogar; o servidor
+local abaixo existe apenas para desenvolvimento e testes consistentes.
 
 ## Executar
 
-O projeto continua sendo front-end puro, mas durante o desenvolvimento use um
-servidor local para recarregar e testar todas as mudanças de forma consistente:
+No Windows, dê dois cliques em `INICIAR_JOGO.cmd`. O iniciador sobe o servidor
+na porta 8000 somente se necessário e abre o jogo no navegador. Para controlar
+o processo pelo terminal:
 
 ```powershell
-python -m http.server 8000 --bind 127.0.0.1
+powershell -ExecutionPolicy Bypass -File scripts/dev-server.ps1 start
+powershell -ExecutionPolicy Bypass -File scripts/dev-server.ps1 status
+powershell -ExecutionPolicy Bypass -File scripts/dev-server.ps1 restart
+powershell -ExecutionPolicy Bypass -File scripts/dev-server.ps1 stop
 ```
 
-Abra `http://127.0.0.1:8000/index.html`. O acesso direto ao `index.html` continua
-possível, mas não é o fluxo recomendado para desenvolvimento.
+Abra `http://127.0.0.1:8000/`. O iniciador registra o PID, evita processos
+duplicados e só considera o servidor pronto após validar a página de Aethra.
+Como fallback manual, use `python -m http.server 8000 --bind 127.0.0.1`.
 
 ## Estrutura
 
@@ -42,9 +48,12 @@ node scripts/verify-project.mjs
 Depois abra `tests/integration.html` e confirme 100% das verificações, sem erros
 de console ou assets ausentes.
 
-A mesma suíte pode ser executada sem interface e em dois tamanhos de monitor:
+A mesma suíte pode ser executada sem interface na matriz responsiva suportada:
 
 ```bash
+node scripts/run-integration.mjs --timeout 90 --viewport 640x720
+node scripts/run-integration.mjs --timeout 90 --viewport 768x720
+node scripts/run-integration.mjs --timeout 90 --viewport 1024x768
 node scripts/run-integration.mjs --timeout 90 --viewport 1280x720
 node scripts/run-integration.mjs --timeout 90 --viewport 1920x1080
 ```
