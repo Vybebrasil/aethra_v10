@@ -2552,7 +2552,24 @@
                 Aethra.CombatProjection?.reset?.("integration-supply-restored");
                 Aethra.SkillController?.bindPlayer?.(Aethra.GameState.hero);
 
-                const protectedSellables = Aethra.NpcShopUI?.getSellableItems?.() || [];
+                /*
+                 * O contrato é proteger o kit inicial, não exigir mochila sem
+                 * vendáveis: loot legítimo deixado por etapas anteriores (alguns
+                 * drops dependem de RNG) tornava a checagem intermitente.
+                 * Uma peça do kit só viola o contrato se puder virar ouro por
+                 * inteiro — como loot, ou como devolução sem o teto de
+                 * sellBackQuantity, que limita o reembolso às unidades compradas
+                 * quando uma compra é fundida numa pilha inicial.
+                 */
+                const isStarterKitItem = (item = {}) => item.source === "character-created"
+                    || item.origin?.source === "character-created";
+                const protectedSellables = (Aethra.NpcShopUI?.getSellableItems?.() || []).filter((entry) => {
+                    if (!isStarterKitItem(entry.item)) return false;
+                    if (entry.mode !== "sellback") return true;
+                    const refundable = Number(entry.item?.market?.sellBackQuantity);
+                    return !Number.isFinite(refundable)
+                        || refundable >= Math.max(1, Number(entry.item?.quantity) || 1);
+                });
                 const shopGoldBefore = Number(Aethra.GameState.hero?.gold || 0);
                 // Isola o cenário: sem pilha pré-existente, a compra cria uma
                 // pilha nova e a devolução localiza a mesma instância comprada.
@@ -2573,7 +2590,9 @@
                             && potionPurchase?.totalPrice === 30
                             && potionSellback?.salePrice === 15
                             && Number(Aethra.GameState.hero?.gold || 0) === shopGoldBefore - 15,
-                        `${protectedSellables.length} item(ns) iniciais vendáveis · compra ${potionPurchase?.totalPrice || 0} G · devolução ${potionSellback?.salePrice || 0} G`
+                        `${protectedSellables.length} item(ns) iniciais vendáveis${protectedSellables.length
+                            ? ` [${protectedSellables.map((entry) => `${entry.item?.templateId || entry.item?.id}:${entry.mode}:${entry.item?.market?.purchaseOrigin || entry.item?.origin?.source || entry.item?.source || "?"}×${entry.item?.quantity || 1}`).join(", ")}]`
+                            : ""} · compra ${potionPurchase?.totalPrice || 0} G · devolução ${potionSellback?.salePrice || 0} G`
                     )
                 );
 
