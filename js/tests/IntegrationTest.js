@@ -4083,6 +4083,74 @@
                     )
                 );
 
+                /*
+                 * UI 3.0 — fundação. A galeria é renderizada dentro desta página,
+                 * com todo o CSS clássico carregado: se os tokens vencem aqui sem
+                 * !important, o isolamento em #ui3-root está funcionando.
+                 */
+                const ui3Kit = Aethra.Ui3Kit;
+                const escapedSlot = ui3Kit?.slot?.({ label: "<img src=x onerror=alert(1)>", glyph: "<b>" }) || "";
+                checks.push(
+                    createCheck(
+                        "UI 3.0 escapa todo texto recebido pelos componentes",
+                        Boolean(ui3Kit)
+                            && !escapedSlot.includes("<img src=x")
+                            && escapedSlot.includes("&lt;img src=x")
+                            && !escapedSlot.includes("<b>"),
+                        ui3Kit ? "rótulos e glifos escapados" : "Ui3Kit ausente"
+                    )
+                );
+
+                const settings = Aethra.SettingsManager;
+                const interfaceBefore = settings?.getInterfaceVersion?.();
+                const interfaceEvents = [];
+                const stopInterfaceListener = Aethra.EventBus.on("settings:interface-changed", (payload) => interfaceEvents.push(payload?.interfaceVersion));
+                const invalidInterface = settings?.setInterfaceVersion?.("v99", { source: "integration" });
+                const toV3 = settings?.setInterfaceVersion?.("v3", { source: "integration" });
+                const bodyMarkedV3 = document.body.classList.contains("ui3-active");
+                settings?.setInterfaceVersion?.(interfaceBefore || "classic", { source: "integration-restore" });
+                if (typeof stopInterfaceListener === "function") stopInterfaceListener();
+                checks.push(
+                    createCheck(
+                        "Preferência de interface valida versões e avisa a UI 3.0",
+                        interfaceBefore === "classic"
+                            && invalidInterface === false
+                            && toV3 === "v3"
+                            && bodyMarkedV3
+                            && interfaceEvents.includes("v3")
+                            && settings.getInterfaceVersion() === "classic"
+                            && !document.body.classList.contains("ui3-active"),
+                        `padrão ${interfaceBefore} · inválida ${invalidInterface === false ? "recusada" : "aceita"} · v3 ${bodyMarkedV3 ? "aplicada" : "ignorada"}`
+                    )
+                );
+
+                const galleryShown = Aethra.Ui3Shell?.showGallery?.();
+                const ui3Root = document.getElementById("ui3-root");
+                const gallery = ui3Root?.querySelector("[data-ui3-gallery]");
+                const galleryTexts = gallery
+                    ? [...gallery.querySelectorAll("*")].filter((element) => [...element.childNodes].some((node) => node.nodeType === 3 && node.textContent.trim()))
+                    : [];
+                const smallestGalleryFont = galleryTexts.length
+                    ? Math.min(...galleryTexts.map((element) => parseFloat(getComputedStyle(element).fontSize)))
+                    : 0;
+                const primaryButton = gallery?.querySelector(".ui3-btn--primary");
+                const primaryBackground = primaryButton ? getComputedStyle(primaryButton).backgroundColor : "";
+                const rootDisplay = ui3Root ? getComputedStyle(ui3Root).display : "none";
+                Aethra.Ui3Shell?.hideGallery?.();
+                checks.push(
+                    createCheck(
+                        "UI 3.0 renderiza isolada do CSS clássico, sem texto abaixo de 11px",
+                        galleryShown === true
+                            && rootDisplay !== "none"
+                            && galleryTexts.length >= 20
+                            && smallestGalleryFont >= 11
+                            && primaryBackground === "rgb(216, 178, 92)"
+                            && ui3Root.hidden === true
+                            && !ui3Root.querySelector("[data-ui3-gallery]"),
+                        `${galleryTexts.length} textos · menor ${smallestGalleryFont}px · botão ${primaryBackground || "ausente"}`
+                    )
+                );
+
                 const failedChecks = checks.filter((check) => !check.passed);
                 const completedAt = Date.now();
 

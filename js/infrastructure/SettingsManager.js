@@ -17,9 +17,12 @@
         : "aethra.battleMode";
     const VALID_BATTLE_MODES = Object.freeze(["cards", "map2d"]);
     const VALID_COMBAT_SPEEDS = Object.freeze([1, 2, 4]);
+    // Interface em migração: "classic" (atual) e "v3" (UI 3.0, em construção).
+    const VALID_INTERFACE_VERSIONS = Object.freeze(["classic", "v3"]);
     const DEFAULT_SETTINGS = Object.freeze({
         battleMode: "cards",
-        combatSpeed: 1
+        combatSpeed: 1,
+        interfaceVersion: "classic"
     });
 
     function clone(value) {
@@ -61,6 +64,13 @@
         return VALID_COMBAT_SPEEDS.includes(speed)
             ? speed
             : DEFAULT_SETTINGS.combatSpeed;
+    }
+
+    function normalizeInterfaceVersion(value) {
+        const version = String(value || "").trim().toLowerCase();
+        return VALID_INTERFACE_VERSIONS.includes(version)
+            ? version
+            : DEFAULT_SETTINGS.interfaceVersion;
     }
 
     Aethra.SettingsManager = {
@@ -114,12 +124,14 @@
                 storedSettings.battleMode ?? legacyBattleMode
             );
             const combatSpeed = normalizeCombatSpeed(storedSettings.combatSpeed);
+            const interfaceVersion = normalizeInterfaceVersion(storedSettings.interfaceVersion);
 
             this.settings = {
                 ...DEFAULT_SETTINGS,
                 ...storedSettings,
                 battleMode,
-                combatSpeed
+                combatSpeed,
+                interfaceVersion
             };
 
             this.syncGameState();
@@ -163,6 +175,9 @@
             if (settingKey === "combatSpeed") {
                 return this.setCombatSpeed(value, options);
             }
+            if (settingKey === "interfaceVersion") {
+                return this.setInterfaceVersion(value, options);
+            }
 
             const previousValue = clone(this.settings[settingKey]);
             this.settings[settingKey] = clone(value);
@@ -186,6 +201,46 @@
 
         getCombatSpeed() {
             return normalizeCombatSpeed(this.settings.combatSpeed);
+        },
+
+        getInterfaceVersion() {
+            return normalizeInterfaceVersion(this.settings.interfaceVersion);
+        },
+
+        isValidInterfaceVersion(version) {
+            return VALID_INTERFACE_VERSIONS.includes(
+                String(version || "").trim().toLowerCase()
+            );
+        },
+
+        setInterfaceVersion(version, options = {}) {
+            if (!this.isValidInterfaceVersion(version)) {
+                console.warn(
+                    `SettingsManager: versão de interface inválida: ${String(version)}`
+                );
+                return false;
+            }
+
+            const nextVersion = normalizeInterfaceVersion(version);
+            const previousVersion = this.getInterfaceVersion();
+
+            this.settings.interfaceVersion = nextVersion;
+            this.syncGameState();
+            this.save();
+
+            const payload = {
+                key: "interfaceVersion",
+                value: nextVersion,
+                interfaceVersion: nextVersion,
+                previousValue: previousVersion,
+                changed: previousVersion !== nextVersion,
+                source: options.source || "settings-ui",
+                timestamp: Date.now()
+            };
+
+            Aethra.EventBus.emit("settings:changed", clone(payload));
+            Aethra.EventBus.emit("settings:interface-changed", clone(payload));
+            return nextVersion;
         },
 
         isValidBattleMode(mode) {

@@ -1574,6 +1574,8 @@ body > :not(
 ):not(
     #aethra-save-status
 ):not(
+    #ui3-root
+):not(
     #aethra-shared-save-banner
 ):not(
     script

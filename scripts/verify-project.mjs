@@ -421,6 +421,66 @@ for (const asset of assetReferences) {
     check(existsSync(join(root, asset)), `Asset local ausente: ${asset}`);
 }
 
+/*
+ * UI 3.0 ("Ferro e Ouro"). A folha nova só funciona sem disputar com o CSS
+ * clássico se ficar isolada em #ui3-root; estas regras impedem que ela
+ * volte a acumular !important, fontes minúsculas e seletores globais.
+ */
+const ui3CssPath = "css/aethra-ui3.css";
+check(existsSync(join(root, ui3CssPath)), `${ui3CssPath} ausente`);
+if (existsSync(join(root, ui3CssPath))) {
+    const ui3Css = read(ui3CssPath).replace(/\/\*[\s\S]*?\*\//g, "");
+
+    check(!/!important/i.test(ui3Css), `${ui3CssPath}: !important é proibido na UI 3.0`);
+
+    for (const match of ui3Css.matchAll(/--ui3-fs-[a-z0-9]+\s*:\s*([^;]+);/gi)) {
+        const minimum = Number((match[1].match(/(\d+(?:\.\d+)?)px/) || [])[1]);
+        check(
+            match[1].trim().startsWith("clamp(") && minimum >= 11,
+            `${ui3CssPath}: token de fonte precisa de clamp() com mínimo ≥ 11px (${match[0].trim()})`
+        );
+    }
+
+    for (const match of ui3Css.matchAll(/(?<!-)font-size\s*:\s*([^;}]+)/gi)) {
+        const value = match[1].trim();
+        const fixedPx = value.match(/^(\d+(?:\.\d+)?)px$/);
+        check(
+            value.startsWith("var(--ui3-fs-") || (fixedPx && Number(fixedPx[1]) >= 11),
+            `${ui3CssPath}: font-size deve usar um token --ui3-fs-* ou px ≥ 11 (${value})`
+        );
+    }
+
+    let buffer = "";
+    for (const char of ui3Css) {
+        if (char === "{") {
+            const header = buffer.trim();
+            buffer = "";
+            if (!header || header.startsWith("@")) continue;
+            for (const selector of header.split(",").map((part) => part.trim())) {
+                check(
+                    selector.startsWith("#ui3-root") || selector.startsWith(".ui3"),
+                    `${ui3CssPath}: seletor fora do escopo #ui3-root/.ui3: ${selector}`
+                );
+            }
+        } else if (char === "}") {
+            buffer = "";
+        } else {
+            buffer += char;
+        }
+    }
+}
+
+check(/<div id="ui3-root"/.test(indexSource), "index.html: #ui3-root ausente");
+check(/#ui3-root/.test(read("css/style.css")), "css/style.css: #ui3-root fora da allowlist de camadas do body");
+
+for (const file of walk(join(root, "js", "ui3"), (entry) => extname(entry) === ".js")) {
+    const source = readFileSync(file, "utf8");
+    check(
+        !/GameState(?:\.[A-Za-z_$][\w$]*)+\s*=(?!=)/.test(source),
+        `${projectPath(file)}: a UI 3.0 não escreve no GameState (regra 1 do AGENTS.md)`
+    );
+}
+
 if (failures.length > 0) {
     console.error(`Quality gate falhou: ${failures.length}/${checks} verificação(ões).`);
     for (const failure of failures) console.error(`- ${failure}`);

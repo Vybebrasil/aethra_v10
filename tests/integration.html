@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base href="../">
     <title>Aethra — Integration Test</title>
-    <link rel="stylesheet" href="css/style.css?v=21">
+    <link rel="stylesheet" href="css/style.css?v=22">
     <link rel="stylesheet" href="css/profession-workshop.css?v=20">
     <link rel="stylesheet" href="css/profession-specialization.css?v=1">
     <link rel="stylesheet" href="css/progression-journal.css?v=8">
@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="css/aethra-ui-v2.css?v=46">
     <link rel="stylesheet" href="css/aethra-hud-v5.css?v=9">
     <link rel="stylesheet" href="css/aethra-hud-v6.css?v=7">
+    <link rel="stylesheet" href="css/aethra-ui3.css?v=1">
     <style>
         .integration-test-report {
             position: fixed;
@@ -190,6 +191,7 @@
         <section id="npc-shop-view" class="game-window hidden" data-aethra-window aria-hidden="true"></section>
         <div id="stats-display"></div><div id="hunt-display"></div><div id="combat-display"></div><div id="boss-list"></div><div id="boss-weekly-reward"></div><div id="professions-grid"></div><div id="dungeon-list"></div><div id="hero-sprite" hidden></div>
     </main>
+    <div id="ui3-root" class="ui3" hidden></div>
     <script src="js/core/game-core.js?v=5" defer></script>
     <script src="js/data/GameData.js?v=11" defer></script>
     <script src="js/data/monsters/CreatureBalanceConfig.js" defer></script>
@@ -202,7 +204,7 @@
     <script src="js/world/EntityManager.js?v=3" defer></script>
     <script src="js/world/SpriteLoader.js?v=17" defer></script>
     <script src="js/infrastructure/SaveManager.js?v=14" defer></script>
-    <script src="js/infrastructure/SettingsManager.js?v=3" defer></script>
+    <script src="js/infrastructure/SettingsManager.js?v=4" defer></script>
     <script src="js/infrastructure/AuthorityGateway.js?v=1" defer></script>
     <script src="js/economy/EconomyRNGManager.js" defer></script>
     <script src="js/ui/WindowManager.js?v=9" defer></script>
@@ -258,7 +260,9 @@
     <script src="js/world/TileMapCanvas.js?v=18" defer></script>
     <script src="js/economy/IdleLoopSystem.js?v=9" defer></script>
     <script src="js/ui/HudModernization.js?v=4" defer></script>
-    <script src="js/tests/IntegrationTest.js?v=75" defer></script>
+    <script src="js/ui3/Ui3Kit.js?v=1" defer></script>
+    <script src="js/ui3/Ui3Shell.js?v=1" defer></script>
+    <script src="js/tests/IntegrationTest.js?v=76" defer></script>
     <script src="js/core/GameLoader.js?v=17" defer></script>
 </body>
 </html>

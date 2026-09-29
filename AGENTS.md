@@ -23,6 +23,7 @@ segunda versão de um sistema sem primeiro identificar o módulo proprietário.
 | Autoridade competitiva | `js/infrastructure/AuthorityGateway.js` e backend |
 | RNG econômico | `js/economy/EconomyRNGManager.js` |
 | Interface | `js/ui/*` — somente apresentação e comandos do jogador |
+| Interface nova (UI 3.0, em migração) | `js/ui3/*` + `css/aethra-ui3.css` — leia `docs/UI_V3.md` antes; telas novas nascem só aqui |
 
 ## Regras inegociáveis
 

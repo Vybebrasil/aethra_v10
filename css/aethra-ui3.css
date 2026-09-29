@@ -1,0 +1,524 @@
+/*
+ * aethra-ui3.css — UI 3.0 "Ferro e Ouro"
+ *
+ * Contrato (verificado pelo quality gate em scripts/verify-project.mjs):
+ * - Todo seletor começa em #ui3-root ou .ui3: a folha nunca toca na UI clássica.
+ * - Nenhum !important. A UI nova vive numa raiz própria, fora das camadas
+ *   legadas, então não precisa vencer a disputa de especificidade.
+ * - Nenhuma fonte abaixo de 11px. Use os tokens --ui3-fs-*, que crescem
+ *   com a largura da tela (valores exatos em 1280px).
+ *
+ * Referência visual: canvas "Aethra UI 3.0" (pranchas Hunt, Mochila, Sistema).
+ */
+
+/* =========================================================
+   1. TOKENS
+   ========================================================= */
+
+#ui3-root {
+    /* Fundos */
+    --ui3-bg-0: #0B1013;
+    --ui3-bg-1: #131B20;
+    --ui3-bg-2: #1B262C;
+    --ui3-bg-3: #24323A;
+    --ui3-surface: rgba(15, 22, 26, 0.9);
+    --ui3-line: #33444C;
+    --ui3-line-soft: #26343B;
+    --ui3-line-strong: #4A5E66;
+
+    /* Texto */
+    --ui3-text-1: #F1EADB;
+    --ui3-text-2: #BDB6A6;
+    --ui3-text-3: #8C959A;
+    --ui3-text-off: #5E6A70;
+
+    /* Ouro — destaque */
+    --ui3-gold-3: #8A6A2A;
+    --ui3-gold: #D8B25C;
+    --ui3-gold-1: #F2D385;
+    --ui3-on-gold: #1A1408;
+
+    /* Recursos */
+    --ui3-hp: #D8453B;
+    --ui3-hp-track: #2A1614;
+    --ui3-mana: #3C86DB;
+    --ui3-mana-track: #13202E;
+    --ui3-vigor: #C98A22;
+    --ui3-vigor-track: #2B2111;
+    --ui3-xp: #8B6BE0;
+    --ui3-xp-track: #242032;
+
+    /* Estado */
+    --ui3-ok: #57C788;
+    --ui3-warn: #E7A73C;
+    --ui3-danger: #E2574C;
+    --ui3-danger-soft: #FF9A8F;
+    --ui3-danger-line: #5A2A26;
+
+    /* Raridade */
+    --ui3-rarity-common: #8A9296;
+    --ui3-rarity-uncommon: #57C788;
+    --ui3-rarity-rare: #4F9DF5;
+    --ui3-rarity-epic: #B278F2;
+    --ui3-rarity-legendary: #F2A93B;
+
+    /* Tipografia: valores exatos em 1280px, crescem até 1920px */
+    --ui3-font-ui: Barlow, "Segoe UI", system-ui, sans-serif;
+    --ui3-font-display: Cinzel, Georgia, serif;
+    --ui3-fs-xs: clamp(11px, 0.25vw + 7.8px, 12px);
+    --ui3-fs-sm: clamp(12px, 0.25vw + 8.8px, 13px);
+    --ui3-fs-md: clamp(13px, 0.3vw + 9.16px, 15px);
+    --ui3-fs-lg: clamp(14px, 0.35vw + 9.52px, 16px);
+    --ui3-fs-xl: clamp(16px, 0.4vw + 10.88px, 19px);
+    --ui3-fs-2xl: clamp(20px, 0.5vw + 13.6px, 24px);
+    --ui3-fs-3xl: clamp(28px, 0.7vw + 19.04px, 34px);
+
+    /* Espaço, raio, elevação */
+    --ui3-space-1: 4px;
+    --ui3-space-2: 8px;
+    --ui3-space-3: 12px;
+    --ui3-space-4: 16px;
+    --ui3-space-5: 24px;
+    --ui3-space-6: 32px;
+    --ui3-radius-sm: 6px;
+    --ui3-radius-md: 8px;
+    --ui3-radius-lg: 10px;
+    --ui3-radius-xl: 12px;
+    --ui3-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+    --ui3-focus: 0 0 0 2px var(--ui3-bg-0), 0 0 0 4px var(--ui3-gold-1);
+
+    /* Dimensões de componentes */
+    --ui3-slot: 52px;
+    --ui3-bar-h: 16px;
+}
+
+/* =========================================================
+   2. RAIZ
+   A raiz cobre a tela, mas só os painéis recebem ponteiro:
+   o mundo embaixo continua clicável.
+   ========================================================= */
+
+#ui3-root {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    pointer-events: none;
+    font-family: var(--ui3-font-ui);
+    font-size: var(--ui3-fs-md);
+    line-height: 1.35;
+    color: var(--ui3-text-1);
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+}
+
+#ui3-root[hidden] {
+    display: none;
+}
+
+#ui3-root .ui3-interactive,
+#ui3-root .ui3-panel,
+#ui3-root .ui3-gallery {
+    pointer-events: auto;
+}
+
+#ui3-root :focus-visible {
+    outline: none;
+    box-shadow: var(--ui3-focus);
+}
+
+#ui3-root img.ui3-pixel {
+    image-rendering: pixelated;
+}
+
+#ui3-root .ui3-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+/* =========================================================
+   3. TIPOGRAFIA
+   ========================================================= */
+
+#ui3-root .ui3-eyebrow {
+    font-size: var(--ui3-fs-xs);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ui3-text-3);
+}
+
+#ui3-root .ui3-display {
+    margin: 0;
+    font-family: var(--ui3-font-display);
+    font-size: var(--ui3-fs-3xl);
+    font-weight: 700;
+    color: var(--ui3-gold-1);
+}
+
+#ui3-root .ui3-window-title {
+    margin: 0;
+    font-family: var(--ui3-font-display);
+    font-size: var(--ui3-fs-2xl);
+    font-weight: 700;
+    color: var(--ui3-gold-1);
+}
+
+#ui3-root .ui3-heading {
+    margin: 0;
+    font-size: var(--ui3-fs-xl);
+    font-weight: 700;
+}
+
+#ui3-root .ui3-caption {
+    font-size: var(--ui3-fs-sm);
+    color: var(--ui3-text-2);
+}
+
+/* =========================================================
+   4. PAINEL
+   ========================================================= */
+
+#ui3-root .ui3-panel {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui3-space-3);
+    padding: var(--ui3-space-3);
+    background: var(--ui3-surface);
+    border: 1px solid var(--ui3-line);
+    border-radius: var(--ui3-radius-lg);
+    color: var(--ui3-text-1);
+}
+
+#ui3-root .ui3-panel__head {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+#ui3-root .ui3-panel__title {
+    margin: 0;
+    font-family: var(--ui3-font-display);
+    font-size: var(--ui3-fs-xl);
+    font-weight: 700;
+    color: var(--ui3-gold-1);
+}
+
+/* =========================================================
+   5. BOTÕES
+   ========================================================= */
+
+#ui3-root .ui3-btn {
+    box-sizing: border-box;
+    min-height: 38px;
+    padding: 0 var(--ui3-space-4);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--ui3-space-2);
+    background: var(--ui3-bg-2);
+    border: 1px solid var(--ui3-line-strong);
+    border-radius: var(--ui3-radius-md);
+    color: var(--ui3-text-1);
+    font-family: var(--ui3-font-ui);
+    font-size: var(--ui3-fs-md);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+#ui3-root .ui3-btn:hover {
+    background: var(--ui3-bg-3);
+}
+
+#ui3-root .ui3-btn--primary {
+    min-height: 42px;
+    background: var(--ui3-gold);
+    border-color: var(--ui3-gold);
+    color: var(--ui3-on-gold);
+    font-size: var(--ui3-fs-lg);
+    font-weight: 700;
+}
+
+#ui3-root .ui3-btn--primary:hover {
+    background: var(--ui3-gold-1);
+}
+
+#ui3-root .ui3-btn--ghost {
+    background: transparent;
+    border-color: transparent;
+    color: var(--ui3-text-2);
+}
+
+#ui3-root .ui3-btn--danger {
+    background: transparent;
+    border-color: var(--ui3-danger-line);
+    color: var(--ui3-danger-soft);
+}
+
+#ui3-root .ui3-btn--icon {
+    width: 36px;
+    min-height: 36px;
+    padding: 0;
+}
+
+#ui3-root .ui3-btn:disabled {
+    background: #151D22;
+    border-color: var(--ui3-line-soft);
+    color: var(--ui3-text-off);
+    cursor: not-allowed;
+}
+
+/* =========================================================
+   6. BARRAS DE RECURSO
+   ========================================================= */
+
+#ui3-root .ui3-bar {
+    position: relative;
+    height: var(--ui3-bar-h);
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--ui3-hp-track);
+}
+
+#ui3-root .ui3-bar__fill {
+    height: 100%;
+    background: var(--ui3-hp);
+    transition: width 240ms ease;
+}
+
+#ui3-root .ui3-bar__text {
+    position: absolute;
+    inset: 0;
+    padding: 0 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: var(--ui3-fs-sm);
+    font-weight: 700;
+    color: var(--ui3-text-1);
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);
+}
+
+#ui3-root .ui3-bar--mana { background: var(--ui3-mana-track); }
+#ui3-root .ui3-bar--mana .ui3-bar__fill { background: var(--ui3-mana); }
+#ui3-root .ui3-bar--vigor { background: var(--ui3-vigor-track); }
+#ui3-root .ui3-bar--vigor .ui3-bar__fill { background: var(--ui3-vigor); }
+#ui3-root .ui3-bar--xp { height: 4px; border-radius: 2px; background: var(--ui3-xp-track); }
+#ui3-root .ui3-bar--xp .ui3-bar__fill { background: var(--ui3-xp); }
+
+/* =========================================================
+   7. SLOTS (itens e habilidades)
+   ========================================================= */
+
+#ui3-root .ui3-slot {
+    position: relative;
+    box-sizing: border-box;
+    width: var(--ui3-slot);
+    height: var(--ui3-slot);
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ui3-bg-2);
+    border: 1px solid var(--ui3-rarity-common);
+    border-radius: var(--ui3-radius-md);
+    color: var(--ui3-text-1);
+    font-family: var(--ui3-font-ui);
+    overflow: hidden;
+    cursor: pointer;
+}
+
+#ui3-root .ui3-slot__icon {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    image-rendering: pixelated;
+}
+
+#ui3-root .ui3-slot__glyph {
+    font-size: var(--ui3-fs-xl);
+    color: var(--ui3-gold-1);
+}
+
+#ui3-root .ui3-slot__key {
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    font-size: var(--ui3-fs-xs);
+    font-weight: 700;
+    color: var(--ui3-text-2);
+}
+
+#ui3-root .ui3-slot__qty {
+    position: absolute;
+    right: 4px;
+    bottom: 2px;
+    font-size: var(--ui3-fs-sm);
+    font-weight: 700;
+    color: var(--ui3-text-1);
+    text-shadow: 0 1px 2px #000;
+}
+
+#ui3-root .ui3-slot__cooldown {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.62);
+    font-size: var(--ui3-fs-xl);
+    font-weight: 700;
+    color: var(--ui3-text-1);
+}
+
+#ui3-root .ui3-slot--empty {
+    background: rgba(27, 38, 44, 0.4);
+    border: 1px dashed var(--ui3-line);
+    cursor: default;
+}
+
+#ui3-root .ui3-slot--empty .ui3-slot__key { color: var(--ui3-text-off); }
+#ui3-root .ui3-slot--uncommon { border-color: var(--ui3-rarity-uncommon); }
+#ui3-root .ui3-slot--rare { border-color: var(--ui3-rarity-rare); }
+#ui3-root .ui3-slot--epic { border-color: var(--ui3-rarity-epic); }
+#ui3-root .ui3-slot--legendary { border-color: var(--ui3-rarity-legendary); }
+
+#ui3-root .ui3-slot.is-selected {
+    border-width: 2px;
+    box-shadow: 0 0 0 3px rgba(79, 157, 245, 0.25);
+}
+
+/* =========================================================
+   8. ABAS, FILTROS E INDICADORES
+   ========================================================= */
+
+#ui3-root .ui3-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--ui3-line);
+}
+
+#ui3-root .ui3-tab {
+    flex: 1 1 0;
+    min-height: 38px;
+    padding: 0 var(--ui3-space-3);
+    background: transparent;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    color: var(--ui3-text-2);
+    font-family: var(--ui3-font-ui);
+    font-size: var(--ui3-fs-md);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+#ui3-root .ui3-tab[aria-selected="true"] {
+    border-bottom-color: var(--ui3-gold);
+    color: var(--ui3-gold-1);
+}
+
+#ui3-root .ui3-chip {
+    min-height: 30px;
+    padding: 0 var(--ui3-space-3);
+    background: var(--ui3-bg-2);
+    border: 1px solid var(--ui3-line);
+    border-radius: 999px;
+    color: var(--ui3-text-2);
+    font-family: var(--ui3-font-ui);
+    font-size: var(--ui3-fs-sm);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+#ui3-root .ui3-chip[aria-pressed="true"] {
+    background: #2A2413;
+    border-color: var(--ui3-gold);
+    color: var(--ui3-gold-1);
+}
+
+#ui3-root .ui3-kpi {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: var(--ui3-bg-2);
+    border-radius: var(--ui3-radius-md);
+}
+
+#ui3-root .ui3-kpi__value {
+    font-size: var(--ui3-fs-2xl);
+    font-weight: 700;
+    color: var(--ui3-text-1);
+}
+
+#ui3-root .ui3-kpi--positive .ui3-kpi__value { color: var(--ui3-ok); }
+#ui3-root .ui3-kpi--negative .ui3-kpi__value { color: var(--ui3-danger-soft); }
+
+/* =========================================================
+   9. GALERIA DE COMPONENTES (ferramenta de desenvolvimento)
+   Aberta com ?ui3=galeria; valida os componentes dentro do jogo real,
+   com todo o CSS legado carregado ao lado.
+   ========================================================= */
+
+#ui3-root .ui3-gallery {
+    position: absolute;
+    inset: var(--ui3-space-5);
+    box-sizing: border-box;
+    padding: var(--ui3-space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui3-space-5);
+    overflow: auto;
+    background: var(--ui3-bg-0);
+    border: 1px solid var(--ui3-line-strong);
+    border-radius: var(--ui3-radius-xl);
+    box-shadow: var(--ui3-shadow);
+}
+
+#ui3-root .ui3-gallery__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ui3-space-4);
+}
+
+#ui3-root .ui3-gallery__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: var(--ui3-space-5);
+    align-items: start;
+}
+
+#ui3-root .ui3-gallery__group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui3-space-2);
+}
+
+#ui3-root .ui3-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ui3-space-2);
+}
+
+#ui3-root .ui3-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui3-space-2);
+}
+
+/* =========================================================
+   10. MOVIMENTO REDUZIDO
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+    #ui3-root .ui3-btn,
+    #ui3-root .ui3-bar__fill {
+        transition: none;
+    }
+}
