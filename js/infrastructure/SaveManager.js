@@ -14,9 +14,41 @@
     const SAVE_KEY = configuredSaveKey || 'aethra_save_v71_disciplines';
     const CURRENT_SCHEMA_VERSION = 78;
     const AUTO_SAVE_DELAY = 120;
+    const SHARED_SAVE_DELAY = 220;
+    const SHARED_API_PATH = '/api/dev-save';
+    // A suíte de integração cria personagens, concede itens e simula mortes.
+    // Ela usa um SAVE_KEY próprio e também precisa ficar totalmente fora do
+    // save compartilhado; caso contrário, uma aba de QA pode publicar o estado
+    // sintético no perfil principal enquanto estiver em foco.
+    const IS_INTEGRATION_TEST = window.AETHRA_INTEGRATION_TEST === true;
+    const sharedProfileCandidate = new URLSearchParams(window.location.search)
+        .get('saveProfile') || 'principal';
+    const SHARED_PROFILE = /^[a-z0-9][a-z0-9_-]{0,31}$/i.test(sharedProfileCandidate)
+        ? sharedProfileCandidate.toLowerCase()
+        : 'principal';
+    const SHARED_CLIENT_ID = typeof window.crypto?.randomUUID === 'function'
+        ? window.crypto.randomUUID()
+        : `client-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
     let initialized = false;
     let autoSaveTimer = null;
+    let sharedSaveTimer = null;
+    let pendingSharedSave = null;
+    let sharedWriteChain = Promise.resolve();
+
+    const sharedStatus = {
+        configured: !IS_INTEGRATION_TEST
+            && ['127.0.0.1', 'localhost'].includes(window.location.hostname),
+        supported: false,
+        ready: false,
+        exists: false,
+        syncing: false,
+        profile: SHARED_PROFILE,
+        revision: 0,
+        updatedAt: null,
+        writerId: null,
+        lastError: null
+    };
 
     function clone(value) {
         return JSON.parse(JSON.stringify(value));
@@ -265,6 +297,254 @@
         };
     }
 
+    function snapshotSharedStatus() {
+        return clone(sharedStatus);
+    }
+
+    function emitSharedStatus(eventName, extra = {}) {
+        const payload = {
+            ...snapshotSharedStatus(),
+            ...extra
+        };
+        Aethra.EventBus.emit(eventName, payload);
+        Aethra.EventBus.emit('save:shared-status', payload);
+        return payload;
+    }
+
+    function sharedSaveUrl() {
+        return `${SHARED_API_PATH}?profile=${encodeURIComponent(SHARED_PROFILE)}`;
+    }
+
+    async function fetchJSON(url, options = {}) {
+        const controller = new AbortController();
+        const timeout = window.setTimeout(() => controller.abort(), 2500);
+        try {
+            const response = await fetch(url, {
+                cache: 'no-store',
+                credentials: 'same-origin',
+                ...options,
+                signal: options.signal || controller.signal
+            });
+            const contentType = response.headers.get('content-type') || '';
+            const payload = contentType.includes('application/json')
+                ? await response.json()
+                : null;
+            return { response, payload };
+        } finally {
+            window.clearTimeout(timeout);
+        }
+    }
+
+    function restoreParsedState(parsedData, source = 'local') {
+        if (!isObject(parsedData)) {
+            throw new Error('O conteúdo do save não representa um GameState válido.');
+        }
+
+        const migration = migrateSave(parsedData);
+        const restoredState = mergeState(defaultState, migration.state);
+        replaceState(Aethra.GameState, restoredState);
+
+        if (migration.fromVersion !== migration.toVersion) {
+            Aethra.EventBus.emit('save:migrated', migration);
+        }
+
+        Aethra.EventBus.emit('save:loaded', {
+            key: SAVE_KEY,
+            source,
+            state: Aethra.GameState
+        });
+        Aethra.EventBus.emit('state:restored', Aethra.GameState);
+        return migration;
+    }
+
+    function applySharedEnvelope(envelope, reason = 'shared-load') {
+        if (!isObject(envelope) || !isObject(envelope.state)) {
+            throw new Error('O servidor retornou um save compartilhado inválido.');
+        }
+
+        sharedStatus.exists = true;
+        sharedStatus.ready = true;
+        sharedStatus.revision = Math.max(0, Math.floor(Number(envelope.revision) || 0));
+        sharedStatus.updatedAt = envelope.updatedAt || null;
+        sharedStatus.writerId = envelope.writerId || null;
+        sharedStatus.lastError = null;
+
+        restoreParsedState(envelope.state, 'shared');
+        localStorage.setItem(
+            SAVE_KEY,
+            JSON.stringify(Aethra.GameState, buildSaveReplacer())
+        );
+        emitSharedStatus('save:shared-loaded', { reason });
+        return true;
+    }
+
+    function clearToDefaultFromSharedReset() {
+        pendingSharedSave = null;
+        window.clearTimeout(sharedSaveTimer);
+        sharedStatus.exists = false;
+        sharedStatus.ready = true;
+        sharedStatus.revision = 0;
+        sharedStatus.updatedAt = null;
+        sharedStatus.writerId = null;
+        replaceState(Aethra.GameState, clone(defaultState));
+        localStorage.removeItem(SAVE_KEY);
+        Aethra.EventBus.emit('save:reset', {
+            key: SAVE_KEY,
+            source: 'shared',
+            state: Aethra.GameState
+        });
+        Aethra.EventBus.emit('state:restored', Aethra.GameState);
+        emitSharedStatus('save:shared-empty', { reset: true });
+    }
+
+    async function pullSharedSave(options = {}) {
+        if (!sharedStatus.configured || !sharedStatus.supported) return false;
+        if (sharedStatus.syncing) return false;
+
+        sharedStatus.syncing = true;
+        emitSharedStatus('save:shared-syncing', { operation: 'pull' });
+        try {
+            const { response, payload } = await fetchJSON(sharedSaveUrl());
+            if (response.status === 404) {
+                if (sharedStatus.exists && options.apply !== false) {
+                    clearToDefaultFromSharedReset();
+                } else {
+                    sharedStatus.exists = false;
+                    sharedStatus.ready = true;
+                    sharedStatus.revision = 0;
+                    emitSharedStatus('save:shared-empty');
+                }
+                return false;
+            }
+            if (!response.ok) {
+                throw new Error(payload?.error || `Falha HTTP ${response.status} ao carregar save compartilhado.`);
+            }
+
+            const remoteRevision = Math.max(0, Math.floor(Number(payload?.revision) || 0));
+            if (options.apply !== false && remoteRevision >= sharedStatus.revision) {
+                applySharedEnvelope(payload, options.reason || 'pull');
+            } else {
+                sharedStatus.exists = true;
+                sharedStatus.ready = true;
+                sharedStatus.revision = remoteRevision;
+                sharedStatus.updatedAt = payload?.updatedAt || null;
+                sharedStatus.writerId = payload?.writerId || null;
+                emitSharedStatus('save:shared-current');
+            }
+            return true;
+        } catch (error) {
+            sharedStatus.lastError = error?.message || String(error);
+            emitSharedStatus('save:shared-error', { operation: 'pull', error });
+            return false;
+        } finally {
+            sharedStatus.syncing = false;
+            emitSharedStatus('save:shared-idle');
+        }
+    }
+
+    async function pushSharedSave(serializedState, reason = 'auto', options = {}) {
+        if (!sharedStatus.supported || !sharedStatus.ready) return false;
+        if (!sharedStatus.exists && options.allowCreate !== true) return false;
+
+        let state;
+        try {
+            state = JSON.parse(serializedState);
+        } catch (error) {
+            emitSharedStatus('save:shared-error', { operation: 'serialize', error });
+            return false;
+        }
+
+        const requestBody = JSON.stringify({
+            profile: SHARED_PROFILE,
+            baseRevision: sharedStatus.revision,
+            writerId: SHARED_CLIENT_ID,
+            reason,
+            state
+        });
+
+        try {
+            const { response, payload } = await fetchJSON(sharedSaveUrl(), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: requestBody,
+                keepalive: options.keepalive === true
+            });
+
+            if (response.status === 409) {
+                if (isObject(payload?.current)) {
+                    applySharedEnvelope(payload.current, 'conflict');
+                }
+                emitSharedStatus('save:shared-conflict', {
+                    reason,
+                    message: payload?.error || 'Outro navegador atualizou o save primeiro.'
+                });
+                return false;
+            }
+            if (!response.ok) {
+                throw new Error(payload?.error || `Falha HTTP ${response.status} ao gravar save compartilhado.`);
+            }
+
+            sharedStatus.exists = true;
+            sharedStatus.ready = true;
+            sharedStatus.revision = Math.max(0, Math.floor(Number(payload?.revision) || 0));
+            sharedStatus.updatedAt = payload?.updatedAt || null;
+            sharedStatus.writerId = SHARED_CLIENT_ID;
+            sharedStatus.lastError = null;
+            emitSharedStatus('save:shared-completed', { reason });
+            return true;
+        } catch (error) {
+            sharedStatus.lastError = error?.message || String(error);
+            emitSharedStatus('save:shared-error', { operation: 'push', reason, error });
+            return false;
+        }
+    }
+
+    function mayWriteSharedSave() {
+        if (document.visibilityState === 'hidden') return false;
+        return typeof document.hasFocus !== 'function' || document.hasFocus();
+    }
+
+    function scheduleSharedSave(serializedState, reason) {
+        if (!sharedStatus.supported || !sharedStatus.ready || !sharedStatus.exists) return;
+        pendingSharedSave = { serializedState, reason };
+        window.clearTimeout(sharedSaveTimer);
+        if (!mayWriteSharedSave()) return;
+
+        sharedSaveTimer = window.setTimeout(() => {
+            const pending = pendingSharedSave;
+            pendingSharedSave = null;
+            if (!pending) return;
+            sharedWriteChain = sharedWriteChain
+                .catch(() => false)
+                .then(() => pushSharedSave(pending.serializedState, pending.reason));
+        }, SHARED_SAVE_DELAY);
+    }
+
+    async function initializeSharedSave() {
+        if (!sharedStatus.configured || typeof fetch !== 'function') {
+            emitSharedStatus('save:shared-unavailable');
+            return false;
+        }
+
+        try {
+            const { response, payload } = await fetchJSON('/api/dev-save/status');
+            if (!response.ok || payload?.service !== 'aethra-shared-dev-save') {
+                throw new Error('O servidor atual não oferece save compartilhado.');
+            }
+            sharedStatus.supported = true;
+            sharedStatus.ready = true;
+            sharedStatus.lastError = null;
+            emitSharedStatus('save:shared-ready');
+            return pullSharedSave({ reason: 'startup' });
+        } catch (error) {
+            sharedStatus.supported = false;
+            sharedStatus.ready = true;
+            sharedStatus.lastError = error?.message || String(error);
+            emitSharedStatus('save:shared-unavailable', { error });
+            return false;
+        }
+    }
+
     Aethra.SaveManager = {
         key: SAVE_KEY,
         initialized: false,
@@ -301,6 +581,7 @@
                 Aethra.GameState.meta.schemaVersion = CURRENT_SCHEMA_VERSION;
                 const data = JSON.stringify(Aethra.GameState, buildSaveReplacer());
                 localStorage.setItem(SAVE_KEY, data);
+                scheduleSharedSave(data, reason);
 
                 Aethra.EventBus.emit('save:completed', {
                     key: SAVE_KEY,
@@ -331,27 +612,7 @@
                     return false;
                 }
 
-                const parsedData = JSON.parse(rawData);
-
-                if (!isObject(parsedData)) {
-                    throw new Error('O conteúdo do save não representa um GameState válido.');
-                }
-
-                const migration = migrateSave(parsedData);
-                const restoredState = mergeState(defaultState, migration.state);
-                replaceState(Aethra.GameState, restoredState);
-
-                if (migration.fromVersion !== migration.toVersion) {
-                    Aethra.EventBus.emit('save:migrated', migration);
-                }
-
-                Aethra.EventBus.emit('save:loaded', {
-                    key: SAVE_KEY,
-                    state: Aethra.GameState
-                });
-
-                // Os HUDs podem ouvir este evento para redesenhar toda a interface.
-                Aethra.EventBus.emit('state:restored', Aethra.GameState);
+                restoreParsedState(JSON.parse(rawData), 'local');
 
                 console.log('[SaveManager] Progresso carregado.');
                 return true;
@@ -388,10 +649,22 @@
                     state: Aethra.GameState
                 });
 
+                if (sharedStatus.supported && sharedStatus.exists) {
+                    fetch(sharedSaveUrl(), {
+                        method: 'DELETE',
+                        cache: 'no-store',
+                        credentials: 'same-origin',
+                        keepalive: true
+                    }).catch(() => false);
+                    sharedStatus.exists = false;
+                    sharedStatus.revision = 0;
+                    emitSharedStatus('save:shared-empty', { reset: true });
+                }
+
                 console.log('[SaveManager] Save e slots de lobby apagados. Estado inicial restaurado.');
 
                 if (reload && typeof location !== 'undefined') {
-                    location.reload();
+                    window.setTimeout(() => location.reload(), 120);
                 }
 
                 return true;
@@ -419,6 +692,25 @@
             return localStorage.getItem(SAVE_KEY) !== null;
         },
 
+        getSharedStatus() {
+            return snapshotSharedStatus();
+        },
+
+        async publishShared(reason = 'publish-local') {
+            if (!sharedStatus.supported || !sharedStatus.ready) return false;
+            Aethra.GameState.meta = Aethra.GameState.meta || {};
+            Aethra.GameState.meta.schemaVersion = CURRENT_SCHEMA_VERSION;
+            const data = JSON.stringify(Aethra.GameState, buildSaveReplacer());
+            return pushSharedSave(data, reason, { allowCreate: true });
+        },
+
+        async pullShared(options = {}) {
+            return pullSharedSave({
+                apply: options.apply !== false,
+                reason: options.reason || 'manual-pull'
+            });
+        },
+
         init() {
             if (this.initialized || initialized) return;
             this.initialized = true;
@@ -426,6 +718,7 @@
 
             // O load precisa acontecer antes dos outros módulos renderizarem seus HUDs.
             this.load();
+            initializeSharedSave();
 
             const criticalEvents = [
                 'itemObtained',
@@ -468,11 +761,34 @@
             // Salvamento extra quando a aba é fechada ou recarregada.
             window.addEventListener('beforeunload', () => {
                 this.save('beforeunload');
+                const pending = pendingSharedSave;
+                pendingSharedSave = null;
+                if (pending && mayWriteSharedSave()) {
+                    pushSharedSave(
+                        pending.serializedState,
+                        pending.reason,
+                        { keepalive: true }
+                    );
+                }
+            });
+
+            const refreshFromSharedSave = () => {
+                if (!sharedStatus.supported || !sharedStatus.exists) return;
+                pendingSharedSave = null;
+                window.clearTimeout(sharedSaveTimer);
+                pullSharedSave({ reason: 'focus' });
+            };
+            window.addEventListener('focus', refreshFromSharedSave);
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    refreshFromSharedSave();
+                }
             });
 
             Aethra.EventBus.emit('save:ready', {
                 key: SAVE_KEY,
-                autoSaveEvents: criticalEvents.slice()
+                autoSaveEvents: criticalEvents.slice(),
+                shared: snapshotSharedStatus()
             });
         }
     };

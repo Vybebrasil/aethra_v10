@@ -1574,6 +1574,8 @@ body > :not(
 ):not(
     #aethra-save-status
 ):not(
+    #aethra-shared-save-banner
+):not(
     script
 ):not(
     style

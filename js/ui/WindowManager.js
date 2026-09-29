@@ -37,8 +37,8 @@
 
         config: {
             exclusive: true,
-            modeless: true,
-            draggable: true,
+            modeless: false,
+            draggable: false,
             hiddenClass: "hidden",
             openClass: "is-open",
             frontClass: "is-front-window",
@@ -777,6 +777,14 @@
                 this.isWorldWindow(windowId) ||
                 this.isOverlayWindow(windowId)
             ) return false;
+
+            if (this.config.modeless === false || this.config.draggable === false) {
+                ["left", "top", "right", "bottom", "transform", "max-height"].forEach((property) => {
+                    element.style.removeProperty(property);
+                });
+                delete element.dataset.floatingPositioned;
+                return false;
+            }
 
             const safeTop = this.getSafeTopOffset();
             const safeBottom = this.getSafeBottomOffset();

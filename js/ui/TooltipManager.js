@@ -297,6 +297,8 @@
                 : 0;
             const settings = Aethra.SkillController?.getSettings?.() || {};
             const autoEnabled = settings[skillId]?.auto === true;
+            const priorityIndex = (Aethra.SkillController?.getOrderedSkills?.() || [])
+                .findIndex((entry) => entry?.skillId === skillId);
             const isCreating = document.body.classList.contains("is-creating-character");
             const priorityTitle = isCreating ? "Técnica da Origem" : "Ordem da ActionBar";
             const priorityLabel = isCreating
@@ -425,12 +427,27 @@
         getItem(itemId) {
             if (!itemId) return null;
             const equipment = Aethra.GameState.hero?.equipment || {};
-            const eqItem = Object.values(equipment).find(it => it && it.id === itemId);
-            if (eqItem) return eqItem;
+            const bag = Aethra.BagSystem?.getItems?.()
+                || Aethra.GameState.hero?.bag
+                || Aethra.GameState.hero?.inventory
+                || [];
+            const matches = (item) => item && [
+                item.instanceId,
+                item.id,
+                item.templateId
+            ].some((candidate) => String(candidate || "") === String(itemId));
+            const found = Object.values(equipment).find(matches)
+                || (Array.isArray(bag) ? bag.find(matches) : null);
 
-            const inventory = Aethra.GameState.hero?.inventory || [];
-            const invItem = inventory.find(it => it && it.id === itemId);
-            if (invItem) return invItem;
+            if (found) {
+                const templateId = found.templateId || found.id;
+                const template = Aethra.GameData?.items?.[templateId] || {};
+                return {
+                    ...template,
+                    ...found,
+                    templateId: found.templateId || template.id || templateId
+                };
+            }
 
             return Aethra.GameData?.items?.[itemId] || null;
         },
@@ -625,6 +642,11 @@
             const tooltipRect = this.tooltip.getBoundingClientRect();
             const kind = this.activeTrigger.dataset.tooltipKind || "text";
             const isActionBarSkill = kind === "skill";
+            const isSidebarHud = ["hud", "resource", "metric"].includes(kind);
+            const ownerSidebar = isSidebarHud
+                ? this.activeTrigger.closest("#hunt-panel-hero, #hunt-panel-analysis")
+                : null;
+            const ownerRect = ownerSidebar?.getBoundingClientRect?.() || null;
             const pointerX = event?.clientX ?? this.lastPointer.x;
             const pointerY = event?.clientY ?? this.lastPointer.y;
             const hasPointer = Number.isFinite(pointerX) && pointerX > 0;
@@ -635,6 +657,12 @@
             if (isActionBarSkill) {
                 x = rect.left + rect.width / 2 - tooltipRect.width / 2;
                 y = rect.top - tooltipRect.height - gap;
+            } else if (ownerRect && window.innerWidth > 1120) {
+                const belongsToRightSidebar = ownerSidebar.id === "hunt-panel-analysis";
+                x = belongsToRightSidebar
+                    ? ownerRect.left - tooltipRect.width - gap
+                    : ownerRect.right + gap;
+                y = rect.top + rect.height / 2 - tooltipRect.height / 2;
             } else {
                 x = hasPointer
                     ? pointerX + gap
@@ -651,10 +679,10 @@
             if (x < margin) x = margin;
 
             if (y < margin) {
-                y = isActionBarSkill
+                y = (isActionBarSkill || ownerRect)
                     ? Math.min(
                         window.innerHeight - tooltipRect.height - margin,
-                        rect.bottom + gap
+                        Math.max(margin, rect.top)
                     )
                     : (hasPointer ? pointerY + gap : rect.bottom + gap);
             }

@@ -5,23 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base href="../">
     <title>Aethra — Integration Test</title>
-    <link rel="stylesheet" href="css/style.css?v=20">
-    <link rel="stylesheet" href="css/style-stability.css">
-    <link rel="stylesheet" href="css/ui-fluidity.css">
-    <link rel="stylesheet" href="css/actionbar-workspace.css">
-    <link rel="stylesheet" href="css/hunt-analyzer-workspace.css">
-    <link rel="stylesheet" href="css/combat-hud-modern.css">
-    <link rel="stylesheet" href="css/encounter-combat-hud.css?v=6">
-    <link rel="stylesheet" href="css/player-hud-workspace.css?v=21">
+    <link rel="stylesheet" href="css/style.css?v=21">
     <link rel="stylesheet" href="css/profession-workshop.css?v=20">
     <link rel="stylesheet" href="css/profession-specialization.css?v=1">
     <link rel="stylesheet" href="css/progression-journal.css?v=8">
     <link rel="stylesheet" href="css/character-creation.css?v=5">
-    <link rel="stylesheet" href="css/tilemap-canvas.css?v=5">
     <link rel="stylesheet" href="css/idle-loop.css?v=1008">
     <link rel="stylesheet" href="css/npc-shop.css?v=3">
-    <link rel="stylesheet" href="css/hud-modernization.css?v=31">
-    <link rel="stylesheet" href="css/aethra-windows.css?v=21">
+    <link rel="stylesheet" href="css/aethra-ui-v2.css?v=46">
+    <link rel="stylesheet" href="css/aethra-hud-v5.css?v=9">
+    <link rel="stylesheet" href="css/aethra-hud-v6.css?v=7">
     <style>
         .integration-test-report {
             position: fixed;
@@ -141,7 +134,7 @@
         }
     </script>
 </head>
-<body>
+<body class="aethra-ui-v2" data-ui-version="2">
     <aside
         id="integration-test-report"
         class="integration-test-report"
@@ -156,7 +149,33 @@
         <ul id="integration-test-checks"></ul>
     </aside>
     <main id="game-container" class="app-shell">
-        <header class="topbar"><div><h1>Integration Test</h1><p>O resultado aparece no painel de diagnóstico.</p></div><strong id="engine-status">Carregando</strong></header>
+        <header class="topbar aethra-navbar">
+            <div class="aethra-brand" aria-label="Crônicas de Aethra">
+                <span class="aethra-brand__mark" aria-hidden="true">A</span>
+                <div><h1>Crônicas de Aethra</h1><p>Battle Dashboard</p></div>
+            </div>
+            <section id="topbar-hero" class="topbar-hero" aria-label="Estado do personagem">
+                <span class="topbar-hero__portrait" aria-hidden="true">A</span>
+                <span class="topbar-hero__identity"><strong data-topbar-hero-name>Aethra</strong><small data-topbar-hero-level>Nível 1</small></span>
+                <span class="topbar-hero__resources">
+                    <span class="topbar-resource topbar-resource--hp"><small>HP</small><i><b data-topbar-hp-bar></b></i><strong data-topbar-hp>0/0</strong></span>
+                    <span class="topbar-resource topbar-resource--mana"><small>MP</small><i><b data-topbar-mana-bar></b></i><strong data-topbar-mana>0/0</strong></span>
+                </span>
+            </section>
+            <nav class="window-tabs hud-icon-menu" aria-label="Menu principal">
+                <button type="button" class="primary-view-button is-active" data-primary-view="hunt"><span class="hud-menu-icon" aria-hidden="true">⚔</span><span>Hunt</span></button>
+                <button type="button" class="primary-view-button" data-primary-view="city"><span class="hud-menu-icon" aria-hidden="true">⌂</span><span>Cidade</span></button>
+                <button type="button" data-open-window="inventory-view"><span class="hud-menu-icon" aria-hidden="true">▦</span><span>Mochila</span></button>
+                <button type="button" data-open-window="npc-shop-view"><span class="hud-menu-icon" aria-hidden="true">◇</span><span>Loja</span></button>
+                <button type="button" data-open-window="skills-view"><span class="hud-menu-icon" aria-hidden="true">✦</span><span>Skills</span></button>
+                <div class="hud-more"><button type="button" class="hud-more__toggle"><span class="hud-menu-icon" aria-hidden="true">•••</span><span>Mais</span></button></div>
+            </nav>
+            <div class="wallet" aria-label="Recursos do jogador">
+                <div class="wallet__resource"><span>Gold</span><strong id="gold-display" data-currency="gold">0</strong></div>
+                <div class="wallet__resource"><span>Diamantes</span><strong id="diamonds-display" data-currency="diamonds">0</strong></div>
+                <div class="wallet__engine"><i aria-hidden="true"></i><strong id="engine-status">Carregando</strong></div>
+            </div>
+        </header>
         <section id="city-view" class="game-window" data-aethra-window><div id="city-grid"></div></section>
         <section id="inventory-view" class="game-window hidden" data-aethra-window><div id="inventory-grid"></div><div id="equipment-grid"></div></section>
         <section id="skills-view" class="game-window hidden" data-aethra-window aria-hidden="true">
@@ -182,13 +201,14 @@
     <script src="js/data/hunts/HuntCatalog.js?v=3" defer></script>
     <script src="js/world/EntityManager.js?v=3" defer></script>
     <script src="js/world/SpriteLoader.js?v=17" defer></script>
-    <script src="js/infrastructure/SaveManager.js?v=12" defer></script>
+    <script src="js/infrastructure/SaveManager.js?v=14" defer></script>
     <script src="js/infrastructure/SettingsManager.js?v=3" defer></script>
     <script src="js/infrastructure/AuthorityGateway.js?v=1" defer></script>
     <script src="js/economy/EconomyRNGManager.js" defer></script>
-    <script src="js/ui/WindowManager.js?v=7" defer></script>
-    <script src="js/ui/TooltipManager.js?v=2" defer></script>
+    <script src="js/ui/WindowManager.js?v=9" defer></script>
+    <script src="js/ui/TooltipManager.js?v=5" defer></script>
     <script src="js/ui/SaveStatusBanner.js?v=1" defer></script>
+    <script src="js/ui/SharedSaveStatus.js?v=1" defer></script>
     <script src="js/items/ItemSystem.js?v=4" defer></script>
     <script src="js/items/BagSystem.js?v=3" defer></script>
     <script src="js/items/EquipSystem.js?v=2" defer></script>
@@ -217,28 +237,28 @@
     <script src="js/progression/QuestSystem.js?v=7" defer></script>
     <script src="js/world/DungeonSystem.js" defer></script>
     <script src="js/market/MarketplaceSystem.js?v=3" defer></script>
-    <script src="js/ui/RenderEngine.js?v=22" defer></script>
+    <script src="js/ui/RenderEngine.js?v=25" defer></script>
     <script src="js/ui/UI_Renderer.js?v=2" defer></script>
     <script src="js/ui/UIManager.js?v=9" defer></script>
     <script src="js/ui/HudExperience.js?v=2" defer></script>
-    <script src="js/ui/HudWorldMapAndDrops.js?v=4" defer></script>
+    <script src="js/ui/HudWorldMapAndDrops.js?v=5" defer></script>
     <script src="js/ui/EncounterInteractionPass.js?v=2" defer></script>
-    <script src="js/ui/UIStabilityPass.js?v=6" defer></script>
+    <script src="js/ui/UIStabilityPass.js?v=7" defer></script>
     <script src="js/ui/UIFluidityPass.js" defer></script>
-    <script src="js/ui/ActionBarWorkspace.js" defer></script>
-    <script src="js/ui/HuntAnalyzerWorkspace.js?v=2" defer></script>
+    <script src="js/ui/ActionBarWorkspace.js?v=3" defer></script>
+    <script src="js/ui/HuntAnalyzerWorkspace.js?v=5" defer></script>
     <script src="js/ui/CombatHudModernizer.js?v=2" defer></script>
     <script src="js/ui/EncounterCombatHUD.js?v=7" defer></script>
-    <script src="js/ui/PlayerHudWorkspace.js?v=18" defer></script>
+    <script src="js/ui/PlayerHudWorkspace.js?v=22" defer></script>
     <script src="js/ui/ProfessionWorkshopUI.js?v=11" defer></script>
     <script src="js/ui/ProfessionSpecializationUI.js?v=1" defer></script>
     <script src="js/ui/ProgressionJournalUI.js?v=3" defer></script>
     <script src="js/ui/CharacterCreationUI.js?v=9" defer></script>
     <script src="js/ui/NpcShopUI.js?v=2" defer></script>
-    <script src="js/world/TileMapCanvas.js?v=6" defer></script>
+    <script src="js/world/TileMapCanvas.js?v=18" defer></script>
     <script src="js/economy/IdleLoopSystem.js?v=9" defer></script>
     <script src="js/ui/HudModernization.js?v=4" defer></script>
-    <script src="js/tests/IntegrationTest.js?v=54" defer></script>
+    <script src="js/tests/IntegrationTest.js?v=75" defer></script>
     <script src="js/core/GameLoader.js?v=17" defer></script>
 </body>
 </html>

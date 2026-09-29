@@ -17,8 +17,16 @@ powershell -ExecutionPolicy Bypass -File scripts/dev-server.ps1 stop
 ```
 
 Abra `http://127.0.0.1:8000/`. O iniciador registra o PID, evita processos
-duplicados e só considera o servidor pronto após validar a página de Aethra.
-Como fallback manual, use `python -m http.server 8000 --bind 127.0.0.1`.
+duplicados e só considera o servidor pronto após validar a página de Aethra e
+o serviço de save compartilhado. Como fallback manual, use
+`python server.py --port 8000 --host 127.0.0.1`.
+
+O servidor de desenvolvimento mantém o perfil canônico em
+`.aethra-dev/saves/` (ignorado pelo Git). Na primeira execução, abra o
+navegador que contém o personagem que você quer preservar e escolha
+**Usar este progresso**. Depois disso, Chrome e navegador do Codex carregam o
+mesmo personagem ao receber foco ou atualizar a página. Sem esse servidor, o
+jogo continua usando o save privado do navegador como fallback.
 
 ## Estrutura
 
@@ -47,6 +55,12 @@ node scripts/verify-project.mjs
 
 Depois abra `tests/integration.html` e confirme 100% das verificações, sem erros
 de console ou assets ausentes.
+
+O protocolo do save compartilhado possui uma regressão própria:
+
+```bash
+node scripts/test-shared-save-api.mjs
+```
 
 A mesma suíte pode ser executada sem interface na matriz responsiva suportada:
 

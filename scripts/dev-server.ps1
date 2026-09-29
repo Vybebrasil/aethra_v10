@@ -24,8 +24,11 @@ $stderrPath = Join-Path $runtimeRoot "$projectKey-$Port.err.log"
 
 function Test-AethraServer {
     try {
-        $response = Invoke-WebRequest -Uri $serverUrl -UseBasicParsing -TimeoutSec 2
-        return $response.StatusCode -eq 200 -and $response.Content -match 'id="game-container"'
+        $page = Invoke-WebRequest -Uri $serverUrl -UseBasicParsing -TimeoutSec 2
+        $status = Invoke-RestMethod -Uri "${serverUrl}api/dev-save/status" -TimeoutSec 2
+        return $page.StatusCode -eq 200 `
+            -and $page.Content -match 'id="game-container"' `
+            -and $status.service -eq 'aethra-shared-dev-save'
     } catch {
         return $false
     }
@@ -73,12 +76,12 @@ function Stop-AethraServer {
 function Resolve-PythonCommand {
     $python = Get-Command 'python' -ErrorAction SilentlyContinue
     if ($python) {
-        return @{ FilePath = $python.Source; Arguments = @('-m', 'http.server') }
+        return @{ FilePath = $python.Source; Arguments = @((Join-Path $projectRoot 'server.py'), '--port') }
     }
 
     $launcher = Get-Command 'py' -ErrorAction SilentlyContinue
     if ($launcher) {
-        return @{ FilePath = $launcher.Source; Arguments = @('-3', '-m', 'http.server') }
+        return @{ FilePath = $launcher.Source; Arguments = @('-3', (Join-Path $projectRoot 'server.py'), '--port') }
     }
 
     throw 'Python 3 nao foi encontrado. Instale o Python ou adicione python/py ao PATH.'
@@ -112,7 +115,7 @@ function Start-AethraServer {
 
     New-Item -ItemType Directory -Path $runtimeRoot -Force | Out-Null
     $python = Resolve-PythonCommand
-    $arguments = @($python.Arguments) + @($Port.ToString(), '--bind', '127.0.0.1')
+    $arguments = @($python.Arguments) + @($Port.ToString(), '--host', '127.0.0.1')
     $startOptions = @{
         FilePath = $python.FilePath
         ArgumentList = $arguments

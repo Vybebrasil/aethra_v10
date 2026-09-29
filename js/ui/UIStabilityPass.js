@@ -211,6 +211,15 @@
             Aethra.WindowManager?.isOverlayWindow?.(windowId)
         ) return false;
 
+        if (Aethra.WindowManager?.config?.modeless === false) {
+            [
+                "width", "height", "max-height", "left", "top",
+                "right", "bottom", "inset", "transform"
+            ].forEach((property) => element.style.removeProperty(property));
+            delete element.dataset.floatingPositioned;
+            return false;
+        }
+
         const viewportPadding = 8;
         const safeTop = Aethra.WindowManager?.getSafeTopOffset?.() || 64;
         const safeBottom = Aethra.WindowManager?.getSafeBottomOffset?.() || viewportPadding;
@@ -253,10 +262,12 @@
 
     function releaseManagedWindowConstraints() {
         const manager = Aethra.WindowManager;
-        const managedWindowIds = [
-            ...(manager?.config?.worldWindowIds || []),
-            ...(manager?.config?.overlayWindowIds || [])
-        ];
+        const managedWindowIds = manager?.config?.modeless === false
+            ? [...(manager?.registeredWindows?.keys?.() || [])]
+            : [
+                ...(manager?.config?.worldWindowIds || []),
+                ...(manager?.config?.overlayWindowIds || [])
+            ];
         [...new Set(managedWindowIds)].forEach((windowId) => {
             const element = document.getElementById(windowId);
             if (!element) return;

@@ -1171,6 +1171,33 @@
         return Aethra.GameState.ui.progressionLog;
     }
 
+    function progressionSourceLabel(source) {
+        const labels = {
+            combat: "Combate",
+            "enemy-defeated": "Combate",
+            hunt: "Expedi\u00e7\u00e3o",
+            exploration: "Explora\u00e7\u00e3o",
+            quest: "Miss\u00e3o"
+        };
+
+        if (source && typeof source === "object") {
+            const nestedSource = source.source || source.kind || source.type || source.reason;
+            if (nestedSource && nestedSource !== source) return progressionSourceLabel(nestedSource);
+            const enemyName = source.enemyName || source.creatureName || source.name;
+            return enemyName ? `Combate contra ${enemyName}` : "Combate";
+        }
+
+        const normalized = String(source || "Expedi\u00e7\u00e3o").trim();
+        return labels[normalized] || normalized.replaceAll("_", " ").replaceAll("-", " ");
+    }
+
+    function safeProgressionDetail(detail) {
+        const normalized = String(detail || "");
+        return normalized.includes("[object Object]")
+            ? normalized.replaceAll("[object Object]", "Combate")
+            : normalized;
+    }
+
     function resetProgressionLog() {
         Aethra.GameState.ui = Aethra.GameState.ui || {};
         Aethra.GameState.ui.progressionLog = [];
@@ -1270,7 +1297,7 @@
                         <span>${escapeHTML(entry.icon || "✦")}</span>
                         <div>
                             <strong>${escapeHTML(entry.title)}</strong>
-                            <small>${escapeHTML(entry.detail || "")}</small>
+                            <small>${escapeHTML(safeProgressionDetail(entry.detail))}</small>
                         </div>
                         <time>${new Date(entry.createdAt).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</time>
                     </article>
@@ -1853,7 +1880,7 @@
             mergeKey: "hero-xp",
             title: `+${formatNumber(amount)} XP do herói`,
             titleBuilder: (total) => `+${formatNumber(total)} XP do herói`,
-            detail: payload.source ? `Fonte: ${String(payload.source).replaceAll("_", " ")}` : "Experiência da expedição"
+            detail: payload.source ? `Fonte: ${progressionSourceLabel(payload.source)}` : "Experiência da expedição"
         });
     });
 

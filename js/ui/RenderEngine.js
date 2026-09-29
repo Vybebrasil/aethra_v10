@@ -170,6 +170,39 @@
         return { resource, amount };
     }
 
+    const SKILL_GLYPHS = Object.freeze({
+        precise_strike: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M11 38 37 12M31 9l8-1-1 8M8 31l9 9M37 38 11 12M17 9l-8-1 1 8M40 31l-9 9"/><path class="skill-glyph__accent" d="m20 20 8 8m-8 0 8-8"/></svg>`,
+        brutal_cleave: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M16 40 30 9M27 11c6-1 10 1 13 5-4 5-9 7-16 5"/><path class="skill-glyph__accent" d="M10 37h13M33 15l5 2"/></svg>`,
+        armor_breaker: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 14h20v11H8zM25 19l14 18M10 10h16v4H10z"/><path class="skill-glyph__accent" d="m33 20-5 7 6 3-5 7"/></svg>`,
+        twin_fang: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="m12 38 8-8M16 34 31 9l4 4-15 25M36 38l-8-8M32 34 17 9l-4 4 15 25"/><path class="skill-glyph__accent" d="M19 28h10"/></svg>`,
+        aimed_shot: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M13 8c17 9 17 23 0 32M13 8c-8 10-8 22 0 32M10 24h31M35 19l6 5-6 5"/><path class="skill-glyph__accent" d="M14 24h16"/></svg>`,
+        heal: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M17 8h14v9h9v14h-9v9H17v-9H8V17h9z"/><path class="skill-glyph__accent" d="M24 13v22M13 24h22"/></svg>`,
+        guard: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 6 39 12v11c0 10-6 16-15 20-9-4-15-10-15-20V12z"/><path class="skill-glyph__accent" d="M24 12v24M14 18h20"/></svg>`,
+        fire_bolt: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M27 5c3 9-4 11 2 18 2-5 6-7 7-12 7 9 7 19 1 26-7 8-20 7-26-1-7-10 1-20 10-27-1 8 4 9 6 13 3-5 4-10 0-17z"/><path class="skill-glyph__accent" d="M24 25c5 5 4 11 0 15-5-2-7-7-4-11z"/></svg>`,
+        ice_shard: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 5v38M7 15l34 18M7 33l34-18M24 5l-4 6m4-6 4 6M24 43l-4-6m4 6 4-6M7 15l7 1m-7-1 3 6M41 33l-7-1m7 1-3-6M7 33l7-1m-7 1 3-6M41 15l-7 1m7-1-3 6"/><circle class="skill-glyph__accent" cx="24" cy="24" r="5"/></svg>`,
+        shadow_bolt: `<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M33 7c-12 2-19 14-15 25 3 8 12 12 20 9-7 5-17 4-23-2C5 29 9 12 22 6c4-2 8-2 11 1z"/><path class="skill-glyph__accent" d="m33 19 2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/></svg>`
+    });
+
+    function getSkillIconHTML(skill) {
+        const id = String(skill?.id || "");
+        const glyph = SKILL_GLYPHS[id];
+        const tone = id === "heal"
+            ? "heal"
+            : id === "guard"
+                ? "guard"
+                : id === "ice_shard"
+                    ? "ice"
+                    : id === "fire_bolt"
+                        ? "fire"
+                        : id === "shadow_bolt"
+                            ? "shadow"
+                            : "physical";
+        if (!glyph) {
+            return `<span class="skill-glyph skill-glyph--generic">${escapeHTML(skill?.icon || "✦")}</span>`;
+        }
+        return `<span class="skill-glyph skill-glyph--${tone}" data-skill-glyph="${escapeHTML(id)}">${glyph}</span>`;
+    }
+
     function getSkillCooldownMs(skill) {
         const raw = Math.max(0, Number(skill?.cooldown || 0));
         return raw <= 60 ? raw * 1000 : raw;
@@ -658,12 +691,14 @@
                 }
 
                 setActivePanel(panelId);
+                const layoutRect = layout.getBoundingClientRect();
+                const panelRect = panel.getBoundingClientRect();
                 layout.scrollTo({
-                    top: Math.max(0, panel.offsetTop - 2),
-                    behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
-                        || document.hidden
-                        ? "auto"
-                        : "smooth"
+                    top: Math.max(
+                        0,
+                        layout.scrollTop + panelRect.top - layoutRect.top - 2
+                    ),
+                    behavior: "auto"
                 });
             });
             layout.addEventListener("scroll", scheduleSync, { passive: true });
@@ -986,7 +1021,7 @@
                             <header class="battle-panel__header">
                                 <div>
                                     <small>Métricas da sessão</small>
-                                    <h2>Hunt Analyzer</h2>
+                                    <h2>Expedição</h2>
                                 </div>
                                 <button
                                     type="button"
@@ -1000,6 +1035,16 @@
                                     data-tooltip-hint="DPS de pico usa uma janela de 5 segundos; recordes de taxa começam após 10 segundos de sessão."
                                 >?</button>
                             </header>
+                            <aside
+                                class="hunt-session-summary expedition-live-stats"
+                                data-expedition-live-stats
+                                aria-label="Resumo atual da expedição"
+                            >
+                                <span><small>Rodada</small><strong data-expedition-stat="round">0</strong></span>
+                                <span><small>Eventos</small><strong data-expedition-stat="events">0</strong></span>
+                                <span><small>Recursos</small><strong data-expedition-stat="resources">0</strong></span>
+                                <span><small>Skill XP</small><strong data-expedition-stat="skillXP">0</strong></span>
+                            </aside>
                             <div id="hunt-display"></div>
                         </section>
                     </aside>
@@ -2372,7 +2417,7 @@
                             </span>
                         </span>
 
-                        <strong class="battle-action-slot__icon" aria-hidden="true">${escapeHTML(skill.icon || "✦")}</strong>
+                        <strong class="battle-action-slot__icon" aria-hidden="true">${getSkillIconHTML(skill)}</strong>
 
                         <span class="battle-action-slot__copy">
                             <b class="battle-action-slot__name">${escapeHTML(skill.name)}</b>
@@ -2914,6 +2959,30 @@
             const hpPercent = clampValue((hpCurrent / hpMax) * 100, 0, 100);
             const manaPercent = clampValue((manaCurrent / manaMax) * 100, 0, 100);
             const energyPercent = clampValue((energyCurrent / energyMax) * 100, 0, 100);
+
+            const topbarHero = document.getElementById("topbar-hero");
+            if (topbarHero) {
+                const writeText = (selector, value) => {
+                    const node = topbarHero.querySelector(selector);
+                    if (node) node.textContent = String(value);
+                };
+                const writePercent = (selector, value) => {
+                    const node = topbarHero.querySelector(selector);
+                    if (node) node.style.width = `${clampValue(value, 0, 100).toFixed(1)}%`;
+                };
+
+                writeText("[data-topbar-hero-name]", hero.name || "Aethra");
+                writeText("[data-topbar-hero-level]", `Nível ${getHeroLevel(hero)}`);
+                writeText("[data-topbar-hp]", `${formatNumber(hpCurrent)}/${formatNumber(hpMax)}`);
+                writeText("[data-topbar-mana]", `${formatNumber(manaCurrent)}/${formatNumber(manaMax)}`);
+                writePercent("[data-topbar-hp-bar]", hpPercent);
+                writePercent("[data-topbar-mana-bar]", manaPercent);
+
+                const portrait = topbarHero.querySelector(".topbar-hero__portrait");
+                if (portrait) {
+                    portrait.textContent = String(hero.name || "A").charAt(0).toUpperCase();
+                }
+            }
 
             const strength = Number(stats.str || 0);
             const magic = Number(stats.mag || 0);

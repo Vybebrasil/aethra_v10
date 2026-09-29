@@ -1,0 +1,1467 @@
+/*
+ * Aethra HUD 6 — RPG client composition.
+ *
+ * Inspired by the information hierarchy of classic MMORPG clients: the world
+ * owns the screen, side docks are dense tools and the action bar is a compact
+ * hotbar. No third-party artwork or game-specific visual assets are used.
+ */
+
+@media (min-width: 1121px) {
+    :root {
+        --ui-topbar-h: 52px;
+        --ui-actionbar-h: 116px;
+        --rpg-frame: #6f5428;
+        --rpg-frame-bright: #a9843e;
+        --rpg-frame-dark: #241a0d;
+        --rpg-panel: rgba(5, 15, 17, .985);
+        --rpg-panel-raised: rgba(10, 24, 25, .98);
+        --rpg-line: rgba(170, 132, 62, .42);
+        --rpg-line-soft: rgba(126, 169, 159, .18);
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt .topbar {
+        grid-template-columns: minmax(230px, 1fr) auto minmax(330px, 1fr) !important;
+        height: var(--ui-topbar-h) !important;
+        gap: 10px !important;
+        padding: 5px 9px !important;
+        border-bottom: 2px solid var(--rpg-frame-dark) !important;
+        box-shadow: inset 0 -1px 0 var(--rpg-frame), 0 3px 12px rgba(0, 0, 0, .42) !important;
+        background:
+            repeating-linear-gradient(90deg, rgba(255,255,255,.012) 0 1px, transparent 1px 38px),
+            #020b0d !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt .aethra-brand h1 {
+        font-size: 17px !important;
+        letter-spacing: .035em;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt .aethra-brand p {
+        font-size: 7px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt .topbar-hero {
+        display: none !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt .aethra-brand {
+        grid-column: 1 !important;
+        justify-self: start !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt .window-tabs {
+        grid-column: 2 !important;
+        justify-self: center !important;
+        gap: 3px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt .wallet {
+        grid-column: 3 !important;
+        justify-self: end !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt .window-tabs > button,
+    body.aethra-ui-v2.aethra-primary-view-hunt .hud-more__toggle {
+        min-width: 54px;
+        height: 34px;
+        min-height: 34px;
+        padding: 0 7px;
+        border-radius: 4px;
+        font-size: 9px;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,.012);
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt .wallet {
+        gap: 4px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt .wallet > * {
+        min-height: 34px !important;
+        border-radius: 4px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt .primary-screen--hunt {
+        padding: 6px !important;
+        background: #010709 !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt .battle-hunt-layout {
+        grid-template-columns: 258px minmax(500px, 1fr) 284px !important;
+        gap: 6px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt :is(.battle-panel, .battle-stage-panel) {
+        border: 1px solid var(--rpg-frame) !important;
+        border-radius: 4px !important;
+        background: var(--rpg-panel) !important;
+        box-shadow:
+            inset 0 0 0 1px rgba(207, 169, 88, .07),
+            0 4px 14px rgba(0, 0, 0, .34) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt .battle-stage-panel {
+        border-color: var(--rpg-frame-bright) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt .battle-panel__header {
+        min-height: 40px;
+        padding: 6px 9px !important;
+        border-bottom: 1px solid var(--rpg-frame-dark) !important;
+        box-shadow: inset 0 -1px 0 rgba(169, 132, 62, .28);
+        background:
+            linear-gradient(180deg, rgba(169,132,62,.09), transparent),
+            rgba(6, 17, 19, .98) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt .battle-panel__header small {
+        font-size: 7px;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt .battle-panel__header h2 {
+        margin-top: 1px;
+        font-size: 14px;
+    }
+
+    /* World viewport -------------------------------------------------- */
+
+    body.aethra-ui-v2.aethra-primary-view-hunt .tilemap-workspace {
+        grid-template-rows: 40px minmax(0, 1fr) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt .tilemap-header {
+        min-height: 40px !important;
+        padding: 4px 8px !important;
+        border-bottom: 1px solid var(--rpg-frame-dark) !important;
+        box-shadow: inset 0 -1px 0 var(--rpg-frame);
+        background: rgba(3, 12, 14, .96) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt .tilemap-header button {
+        min-height: 30px !important;
+        border-radius: 3px !important;
+    }
+
+    /* Character dock ------------------------------------------------- */
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero .hero-hub__summary#stats-display {
+        flex: 0 0 276px !important;
+        height: 276px !important;
+        min-height: 276px !important;
+        max-height: 276px !important;
+        padding: 5px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero .player-hud-summary--rpg {
+        grid-template-rows: 36px 38px minmax(144px, 1fr) 21px !important;
+        gap: 4px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero .player-hud-summary__identity {
+        grid-template-columns: 34px minmax(0, 1fr) auto !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero .player-hud-summary__portrait {
+        width: 34px !important;
+        height: 34px !important;
+        border-radius: 3px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero .player-hud-summary__identity-copy strong {
+        font-size: 12px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero .player-loadout {
+        grid-template-rows: 24px minmax(0, 1fr) !important;
+        border-radius: 3px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero #battle-equipment-summary.player-equipment-matrix {
+        grid-template-columns: repeat(2, 30px) minmax(52px, 1fr) repeat(2, 30px) !important;
+        grid-template-rows: repeat(4, 28px) !important;
+        grid-auto-flow: initial !important;
+        gap: 2px !important;
+        align-content: center !important;
+        justify-content: center !important;
+        padding: 3px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero .player-paperdoll-avatar {
+        grid-column: 3 !important;
+        grid-row: 2 / 5 !important;
+        width: 100% !important;
+        height: 88px !important;
+        place-self: center stretch !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero .player-paperdoll-sprite,
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero .player-paperdoll-sprite img {
+        height: 72px !important;
+        max-height: 72px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero #battle-equipment-summary > .player-equipment-slot {
+        grid-column: auto !important;
+        grid-row: auto !important;
+        width: 28px !important;
+        height: 28px !important;
+        min-width: 28px !important;
+        min-height: 28px !important;
+        border-radius: 3px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero #battle-equipment-summary > .player-equipment-slot--neck { grid-column: 2 !important; grid-row: 1 !important; }
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero #battle-equipment-summary > .player-equipment-slot--head { grid-column: 3 !important; grid-row: 1 !important; }
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero #battle-equipment-summary > .player-equipment-slot--relic { grid-column: 4 !important; grid-row: 1 !important; }
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero #battle-equipment-summary > .player-equipment-slot--weapon { grid-column: 1 !important; grid-row: 2 !important; }
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero #battle-equipment-summary > .player-equipment-slot--chest { grid-column: 4 !important; grid-row: 2 !important; }
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero #battle-equipment-summary > .player-equipment-slot--offhand { grid-column: 5 !important; grid-row: 2 !important; }
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero #battle-equipment-summary > .player-equipment-slot--ring1 { grid-column: 1 !important; grid-row: 3 !important; }
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero #battle-equipment-summary > .player-equipment-slot--ring2 { grid-column: 5 !important; grid-row: 3 !important; }
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero #battle-equipment-summary > .player-equipment-slot--hands { grid-column: 1 !important; grid-row: 4 !important; }
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero #battle-equipment-summary > .player-equipment-slot--legs { grid-column: 2 !important; grid-row: 4 !important; }
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero #battle-equipment-summary > .player-equipment-slot--feet { grid-column: 4 !important; grid-row: 4 !important; }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero .player-hud-nav {
+        padding: 4px !important;
+        border-top: 1px solid var(--rpg-frame-dark) !important;
+        border-bottom: 1px solid var(--rpg-frame-dark) !important;
+        background: rgba(4, 13, 15, .98) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero .player-hud-nav button {
+        min-height: 32px !important;
+        border-radius: 3px !important;
+        font-size: 8px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero .hero-hub__views {
+        padding: 7px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero .hero-attributes-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 4px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero .hero-attribute {
+        grid-template-columns: 24px minmax(0, 1fr) !important;
+        grid-template-rows: minmax(0, 1fr) !important;
+        min-height: 54px !important;
+        padding: 5px 6px !important;
+        border-radius: 3px !important;
+        background: rgba(9, 24, 25, .7) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero .hero-attribute__icon {
+        width: 24px !important;
+        height: 24px !important;
+        border-radius: 3px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero .hero-attribute__copy {
+        grid-template-columns: minmax(0, 1fr) !important;
+        grid-template-rows: auto auto auto !important;
+        gap: 1px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero .hero-attribute__copy small {
+        grid-column: 1 !important;
+        grid-row: 1 !important;
+        font-size: 7px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero .hero-attribute__copy strong {
+        grid-column: 1 !important;
+        grid-row: 2 !important;
+        font-size: 12px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero .hero-attribute__copy em {
+        grid-column: 1 !important;
+        grid-row: 3 !important;
+        overflow: hidden;
+        font-size: 6px !important;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero .hero-attribute__info {
+        display: none !important;
+    }
+
+    /* Adventure dock ------------------------------------------------- */
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-analysis .intelligence-tabs {
+        min-height: 38px !important;
+        padding: 4px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-analysis .intelligence-tabs > button {
+        min-height: 29px !important;
+        border-radius: 3px !important;
+        font-size: 8px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-analysis .analyzer-preparation {
+        gap: 7px !important;
+        padding: 8px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-analysis .analyzer-preparation__hero {
+        grid-template-columns: 38px minmax(0, 1fr) !important;
+        min-height: 62px !important;
+        padding: 8px !important;
+        border-radius: 3px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-analysis .analyzer-preparation__compass {
+        width: 36px !important;
+        height: 36px !important;
+        font-size: 16px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-analysis .analyzer-preparation__hero strong {
+        font-size: 13px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-analysis :is(.analyzer-objective-card, .analyzer-readiness, .analyzer-last-session) {
+        border-radius: 3px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-analysis .analyzer-objective-card {
+        gap: 6px !important;
+        padding: 9px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-analysis .analyzer-objective-card > button {
+        min-height: 34px !important;
+        border-radius: 3px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-analysis .analyzer-readiness {
+        gap: 6px !important;
+        padding-top: 7px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-analysis .analyzer-readiness__grid > span {
+        min-height: 42px !important;
+        padding: 4px 6px !important;
+        border-radius: 3px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-analysis .analyzer-preparation__actions {
+        min-height: 38px !important;
+        padding-top: 0 !important;
+        border-top-color: var(--rpg-frame-dark) !important;
+        background: var(--rpg-panel) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-analysis .analyzer-preparation__actions button {
+        min-height: 34px !important;
+        border-radius: 3px !important;
+    }
+
+    /* Classic compact hotbar ---------------------------------------- */
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer {
+        height: var(--ui-actionbar-h) !important;
+        border-top: 2px solid var(--rpg-frame-dark) !important;
+        box-shadow: inset 0 1px 0 var(--rpg-frame), 0 -5px 15px rgba(0,0,0,.38) !important;
+        background: rgba(1, 7, 9, .9) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer > .battle-panel--actionbar {
+        width: min(1120px, calc(100vw - 12px)) !important;
+        margin: 0 auto !important;
+        border-right: 1px solid var(--rpg-frame) !important;
+        border-left: 1px solid var(--rpg-frame) !important;
+        grid-template-rows: 27px minmax(0, 1fr) !important;
+        background:
+            repeating-linear-gradient(90deg, rgba(169,132,62,.025) 0 1px, transparent 1px 48px),
+            #020a0c !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-panel__header {
+        min-height: 27px !important;
+        padding: 2px max(10px, calc((100vw - 1460px) / 2)) !important;
+        box-shadow: none !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-panel__header h2 {
+        font-size: 11px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .modern-resource b,
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .combat-survival-strip__automation b {
+        font-size: 12px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt .combat-action-deck {
+        grid-template-columns: 132px minmax(0, 1fr) !important;
+        gap: 8px !important;
+        left: auto !important;
+        width: 100% !important;
+        padding: 4px 8px 6px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer #primary-attack-bar.primary-attack-bar {
+        gap: 4px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer #primary-attack-bar > .primary-attack-card {
+        padding: 4px !important;
+        border-radius: 3px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .skill-action-deck--workspace {
+        grid-template-rows: 20px minmax(0, 1fr) !important;
+        gap: 3px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .actionbar-workspace__toolbar {
+        height: 20px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer :is(.actionbar-workspace__arrow, .actionbar-workspace__tool, .actionbar-workspace__bar-tabs button) {
+        width: 19px !important;
+        min-width: 19px !important;
+        height: 19px !important;
+        min-height: 19px !important;
+        border-radius: 3px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer #skill-action-bar {
+        gap: 5px !important;
+        align-items: stretch !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer #skill-action-bar > .battle-action-slot {
+        grid-template-rows: minmax(0, 1fr) 22px !important;
+        width: 124px !important;
+        min-width: 124px !important;
+        max-width: 124px !important;
+        height: 68px !important;
+        min-height: 68px !important;
+        max-height: 68px !important;
+        flex: 0 0 124px !important;
+        border-color: var(--rpg-line) !important;
+        border-radius: 3px !important;
+        background: linear-gradient(145deg, rgba(29, 31, 23, .96), rgba(5, 13, 15, .99)) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer #skill-action-bar > .battle-action-slot.is-empty {
+        grid-template-rows: minmax(0, 1fr) !important;
+        width: 46px !important;
+        min-width: 46px !important;
+        max-width: 46px !important;
+        flex-basis: 46px !important;
+        border-style: solid !important;
+        border-color: rgba(169,132,62,.18) !important;
+        opacity: .4;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer #skill-action-bar > .battle-action-slot:not(.is-empty) > .battle-action-slot__skill {
+        grid-template-columns: 32px minmax(0, 1fr) !important;
+        gap: 5px !important;
+        padding: 2px 5px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer #skill-action-bar > .battle-action-slot:not(.is-empty) .battle-action-slot__icon {
+        width: 32px !important;
+        height: 32px !important;
+        min-height: 32px !important;
+        max-height: 32px !important;
+        border-radius: 3px !important;
+        font-size: 21px !important;
+        line-height: 32px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer #skill-action-bar > .battle-action-slot:not(.is-empty) .battle-action-slot__name {
+        font-size: 10px !important;
+        line-height: 1.05 !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer #skill-action-bar > .battle-action-slot:not(.is-empty) .battle-action-slot__meta-line {
+        gap: 4px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-action-slot__controls {
+        height: 22px !important;
+        min-height: 22px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-action-slot__auto-toggle span {
+        font-size: 6px !important;
+    }
+}
+
+/* HUD 6.4 — command deck: uma faixa de jogo, sem dashboard duplicado. */
+@media (min-width: 1280px) {
+    :root {
+        --ui-actionbar-h: 104px;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #aethra-shared-save-banner {
+        top: calc(var(--ui-topbar-h) + 64px) !important;
+        right: auto !important;
+        bottom: auto !important;
+        left: 50% !important;
+        width: min(360px, calc(100vw - 24px)) !important;
+        height: auto !important;
+        min-height: 44px !important;
+        max-height: 72px !important;
+        transform: translateX(-50%) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer {
+        height: var(--ui-actionbar-h) !important;
+        overflow: visible !important;
+        border-top: 1px solid rgba(196, 151, 65, .72) !important;
+        background:
+            linear-gradient(180deg, rgba(9, 20, 21, .99), rgba(2, 8, 10, .995)) !important;
+        box-shadow: 0 -8px 24px rgba(0, 0, 0, .32) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer > .battle-panel--actionbar {
+        display: grid !important;
+        grid-template-rows: minmax(0, 1fr) !important;
+        overflow: visible !important;
+        background: transparent !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-panel__header {
+        position: absolute !important;
+        z-index: 20 !important;
+        top: 50% !important;
+        left: calc(50% + 475px) !important;
+        right: auto !important;
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        grid-template-rows: 29px 29px !important;
+        gap: 4px !important;
+        width: 152px !important;
+        height: 72px !important;
+        min-height: 72px !important;
+        margin: 0 !important;
+        padding: 4px !important;
+        overflow: hidden !important;
+        border: 1px solid rgba(169, 132, 62, .38) !important;
+        border-radius: 7px !important;
+        background: rgba(4, 13, 15, .97) !important;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .025) !important;
+        transform: translateY(-50%) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-panel__header > div:first-child,
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .actionbar-vital-strip-root {
+        display: none !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-speed-controls {
+        grid-row: 1 !important;
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 4px !important;
+        width: 100% !important;
+        height: 29px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-panel__tools {
+        grid-row: 2 !important;
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) 29px !important;
+        gap: 4px !important;
+        width: 100% !important;
+        height: 29px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-panel__tools button,
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-speed-controls button {
+        width: 100% !important;
+        min-width: 0 !important;
+        height: 29px !important;
+        min-height: 29px !important;
+        padding: 0 7px !important;
+        border: 1px solid rgba(120, 166, 170, .25) !important;
+        border-radius: 4px !important;
+        color: #9db1b3 !important;
+        background: rgba(14, 27, 29, .94) !important;
+        font-size: 9px !important;
+        font-weight: 800 !important;
+        letter-spacing: .02em !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-speed-controls button.is-active {
+        border-color: rgba(222, 182, 93, .74) !important;
+        color: #f4d982 !important;
+        background: linear-gradient(180deg, rgba(86, 67, 28, .8), rgba(33, 28, 17, .95)) !important;
+        box-shadow: inset 0 0 0 1px rgba(255, 225, 143, .1) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-panel__tools .battle-panel__link {
+        width: 100% !important;
+        min-width: 0 !important;
+        color: #cbd8d9 !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt .combat-action-deck {
+        position: relative !important;
+        left: auto !important;
+        display: grid !important;
+        grid-template-columns: 132px 790px !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 12px !important;
+        width: 934px !important;
+        height: 100% !important;
+        margin-inline: auto !important;
+        padding: 8px 0 !important;
+        overflow: visible !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .primary-attack-deck {
+        position: relative !important;
+        display: block !important;
+        width: 132px !important;
+        height: 76px !important;
+        min-height: 76px !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        border: 0 !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .primary-attack-deck::after {
+        position: absolute;
+        top: 7px;
+        right: -7px;
+        bottom: 7px;
+        width: 1px;
+        background: linear-gradient(transparent, rgba(205, 158, 70, .52), transparent);
+        content: "";
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .combat-action-deck__label {
+        display: none !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer #primary-attack-bar.primary-attack-bar {
+        display: grid !important;
+        grid-template-columns: repeat(2, 64px) !important;
+        gap: 4px !important;
+        width: 132px !important;
+        height: 76px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer #primary-attack-bar > .primary-attack-card {
+        position: relative !important;
+        display: grid !important;
+        grid-template-rows: minmax(0, 1fr) !important;
+        width: 64px !important;
+        min-width: 64px !important;
+        max-width: 64px !important;
+        height: 76px !important;
+        min-height: 76px !important;
+        max-height: 76px !important;
+        padding: 3px !important;
+        overflow: hidden !important;
+        border: 1px solid rgba(169, 132, 62, .48) !important;
+        border-radius: 6px !important;
+        background: linear-gradient(145deg, rgba(25, 35, 32, .98), rgba(6, 13, 15, .99)) !important;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .025) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .primary-attack-card__button {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        grid-template-rows: 17px minmax(0, 1fr) !important;
+        place-items: center !important;
+        gap: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        padding: 3px !important;
+        overflow: hidden !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .primary-attack-card__mouse {
+        grid-row: 1 !important;
+        place-self: start !important;
+        display: grid !important;
+        place-items: center !important;
+        width: 24px !important;
+        height: 15px !important;
+        border: 1px solid rgba(104, 181, 190, .34) !important;
+        border-radius: 4px !important;
+        color: #a9c6c9 !important;
+        background: rgba(4, 17, 20, .88) !important;
+        font-size: 7px !important;
+        font-weight: 900 !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .primary-attack-card__icon {
+        grid-row: 2 !important;
+        display: grid !important;
+        place-items: center !important;
+        width: 40px !important;
+        height: 40px !important;
+        color: #efd172 !important;
+        font-size: 30px !important;
+        line-height: 1 !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .primary-attack-card__icon img {
+        width: 38px !important;
+        height: 38px !important;
+        image-rendering: pixelated;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer :is(.primary-attack-card__copy, .primary-attack-card__interval) {
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        overflow: hidden !important;
+        clip-path: inset(50%) !important;
+        white-space: nowrap !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .primary-attack-card__cooldown {
+        display: none !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .primary-attack-card.is-cooldown .primary-attack-card__cooldown {
+        position: absolute !important;
+        z-index: 4 !important;
+        inset: 50% auto auto 50% !important;
+        display: block !important;
+        color: white !important;
+        font-size: 12px !important;
+        font-weight: 900 !important;
+        transform: translate(-50%, -50%) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .primary-attack-card__auto {
+        position: absolute !important;
+        z-index: 5 !important;
+        right: 5px !important;
+        bottom: 4px !important;
+        left: 5px !important;
+        display: block !important;
+        width: auto !important;
+        height: 4px !important;
+        overflow: hidden !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .primary-attack-card__auto input {
+        position: absolute !important;
+        opacity: 0 !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .primary-attack-card__auto span {
+        display: block !important;
+        width: 100% !important;
+        height: 4px !important;
+        border-radius: 2px !important;
+        background: rgba(120, 166, 170, .16) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .primary-attack-card__auto input:checked + span {
+        background: #4fdaa0 !important;
+        box-shadow: 0 0 7px rgba(79, 218, 160, .6) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .primary-attack-card__auto span :is(i, em) {
+        display: none !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .skill-action-deck--workspace {
+        display: grid !important;
+        grid-template-columns: 98px 685px !important;
+        grid-template-rows: 76px !important;
+        align-items: center !important;
+        gap: 7px !important;
+        width: 790px !important;
+        height: 76px !important;
+        overflow: visible !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .actionbar-workspace__toolbar {
+        position: relative !important;
+        display: grid !important;
+        grid-template-columns: 28px minmax(0, 1fr) 28px !important;
+        grid-template-rows: 48px 28px !important;
+        gap: 0 4px !important;
+        width: 98px !important;
+        height: 76px !important;
+        min-height: 76px !important;
+        padding: 0 !important;
+        overflow: visible !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .actionbar-workspace__toolbar::after {
+        grid-column: 2;
+        grid-row: 2;
+        place-self: center;
+        color: #6f8588;
+        font-size: 7px;
+        font-weight: 800;
+        letter-spacing: .05em;
+        text-transform: uppercase;
+        content: "trocar";
+        pointer-events: none;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .actionbar-workspace__identity {
+        grid-column: 1 / -1 !important;
+        grid-row: 1 !important;
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) auto !important;
+        grid-template-rows: 15px 17px !important;
+        align-content: center !important;
+        gap: 1px 5px !important;
+        width: 98px !important;
+        height: 48px !important;
+        padding: 5px 8px !important;
+        overflow: hidden !important;
+        border: 1px solid rgba(169, 132, 62, .45) !important;
+        border-radius: 6px !important;
+        color: #cbd8d9 !important;
+        background: linear-gradient(145deg, rgba(25, 35, 32, .96), rgba(7, 15, 17, .98)) !important;
+        text-align: left !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .actionbar-workspace__identity > span {
+        grid-column: 1;
+        grid-row: 1;
+        overflow: hidden;
+        color: #e7c96d;
+        font-size: 8px;
+        font-weight: 900;
+        letter-spacing: .04em;
+        text-overflow: ellipsis;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .actionbar-workspace__identity strong {
+        grid-column: 1 / -1 !important;
+        grid-row: 2 !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+        color: #eef4f3 !important;
+        font-size: 9px !important;
+        font-weight: 800 !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .actionbar-workspace__identity small {
+        grid-column: 2 !important;
+        grid-row: 1 !important;
+        color: #7f999b !important;
+        font-size: 7px !important;
+        font-weight: 800 !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .actionbar-workspace__identity.is-active {
+        border-color: #4fdaa0 !important;
+        box-shadow: 0 0 0 1px rgba(79, 218, 160, .12) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .actionbar-workspace__arrow {
+        grid-row: 2 !important;
+        display: grid !important;
+        place-items: center !important;
+        width: 28px !important;
+        min-width: 28px !important;
+        height: 26px !important;
+        min-height: 26px !important;
+        padding: 0 !important;
+        border: 1px solid rgba(120, 166, 170, .24) !important;
+        border-radius: 4px !important;
+        color: #b8cbcd !important;
+        background: rgba(13, 25, 27, .96) !important;
+        font-size: 16px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .actionbar-workspace__arrow:first-child {
+        grid-column: 1 !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .actionbar-workspace__arrow:last-child {
+        grid-column: 3 !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer #skill-action-bar {
+        display: grid !important;
+        grid-template-columns: repeat(10, 64px) !important;
+        justify-content: start !important;
+        gap: 5px !important;
+        width: 685px !important;
+        height: 76px !important;
+        overflow: visible !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer #skill-action-bar > .battle-action-slot,
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer #skill-action-bar > .battle-action-slot.is-empty {
+        position: relative !important;
+        display: grid !important;
+        grid-template-rows: minmax(0, 1fr) !important;
+        width: 64px !important;
+        min-width: 64px !important;
+        max-width: 64px !important;
+        height: 76px !important;
+        min-height: 76px !important;
+        max-height: 76px !important;
+        flex: none !important;
+        opacity: 1 !important;
+        overflow: hidden !important;
+        border: 1px solid rgba(169, 132, 62, .46) !important;
+        border-radius: 6px !important;
+        background: linear-gradient(145deg, rgba(25, 35, 32, .98), rgba(5, 12, 14, .995)) !important;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .025) !important;
+        transition: border-color .14s ease, transform .14s ease, box-shadow .14s ease !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer #skill-action-bar > .battle-action-slot:hover {
+        z-index: 3;
+        border-color: rgba(238, 202, 111, .82) !important;
+        box-shadow: 0 0 0 1px rgba(238, 202, 111, .12), 0 6px 14px rgba(0, 0, 0, .3) !important;
+        transform: translateY(-2px) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer #skill-action-bar > .battle-action-slot.is-empty {
+        opacity: .34 !important;
+        border-color: rgba(120, 166, 170, .22) !important;
+        background: rgba(10, 20, 22, .88) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer #skill-action-bar > .battle-action-slot > .battle-action-slot__skill {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        grid-template-rows: 18px minmax(0, 1fr) !important;
+        place-items: center !important;
+        gap: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        padding: 4px !important;
+        overflow: hidden !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-action-slot__topline {
+        grid-row: 1 !important;
+        display: flex !important;
+        width: 100% !important;
+        height: 18px !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-action-slot__key {
+        display: grid !important;
+        place-items: center !important;
+        width: 19px !important;
+        height: 16px !important;
+        border: 1px solid rgba(99, 172, 181, .32) !important;
+        border-radius: 4px !important;
+        color: #b6d0d2 !important;
+        background: rgba(3, 15, 18, .84) !important;
+        font-size: 8px !important;
+        font-weight: 900 !important;
+        line-height: 1 !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-action-slot__priority {
+        display: grid !important;
+        place-items: center !important;
+        min-width: 23px !important;
+        height: 14px !important;
+        padding: 0 3px !important;
+        border-radius: 7px !important;
+        color: #d8b954 !important;
+        background: rgba(111, 83, 24, .26) !important;
+        font-size: 7px !important;
+        font-weight: 900 !important;
+        line-height: 1 !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-action-slot__icon,
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-action-slot__empty {
+        grid-row: 2 !important;
+        display: grid !important;
+        place-items: center !important;
+        width: 44px !important;
+        height: 44px !important;
+        min-height: 44px !important;
+        max-height: 44px !important;
+        color: #ebcf78 !important;
+        font-size: 28px !important;
+        line-height: 44px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .skill-glyph {
+        --skill-glyph-accent: #57d7a1;
+        display: grid;
+        place-items: center;
+        width: 42px;
+        height: 42px;
+        color: #e8cd77;
+        filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .45));
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .skill-glyph svg {
+        width: 40px;
+        height: 40px;
+        overflow: visible;
+        fill: none;
+        stroke: currentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 2.4;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .skill-glyph__accent {
+        stroke: var(--skill-glyph-accent);
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .skill-glyph--heal {
+        --skill-glyph-accent: #b8ffe0;
+        color: #52dda4;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .skill-glyph--guard {
+        --skill-glyph-accent: #c8eff8;
+        color: #75bdca;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .skill-glyph--fire {
+        --skill-glyph-accent: #ffd47a;
+        color: #ef714e;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .skill-glyph--ice {
+        --skill-glyph-accent: #e4fbff;
+        color: #79cde2;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .skill-glyph--shadow {
+        --skill-glyph-accent: #e5d4ff;
+        color: #a98ad8;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-action-slot__copy {
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        overflow: hidden !important;
+        clip-path: inset(50%) !important;
+        white-space: nowrap !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-action-slot__controls {
+        position: absolute !important;
+        z-index: 5 !important;
+        right: 5px !important;
+        bottom: 4px !important;
+        left: 5px !important;
+        display: block !important;
+        width: auto !important;
+        height: 4px !important;
+        min-height: 4px !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        border: 0 !important;
+        background: transparent !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-action-slot__priority-control,
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-action-slot__drag-handle {
+        display: none !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-action-slot__auto-toggle,
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-action-slot__auto-toggle span {
+        display: block !important;
+        width: 100% !important;
+        height: 4px !important;
+        min-height: 4px !important;
+        overflow: hidden !important;
+        border: 0 !important;
+        border-radius: 2px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-action-slot__auto-toggle span {
+        background: rgba(120, 166, 170, .16) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-action-slot__auto-toggle input:checked + span {
+        background: #4fdaa0 !important;
+        box-shadow: 0 0 7px rgba(79, 218, 160, .6) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-action-slot__auto-toggle span :is(i, em) {
+        display: none !important;
+    }
+}
+
+@media (min-width: 1600px) {
+    body.aethra-ui-v2.aethra-primary-view-hunt .battle-hunt-layout {
+        grid-template-columns: 282px minmax(760px, 1fr) 312px !important;
+        gap: 7px !important;
+    }
+}
+
+@media (min-width: 1600px) {
+    body.aethra-ui-v2.aethra-primary-view-hunt .topbar {
+        grid-template-columns: minmax(250px, 1fr) auto minmax(390px, 1fr) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt .aethra-brand {
+        width: 100% !important;
+        min-width: 230px !important;
+        max-width: none !important;
+    }
+}
+
+@media (min-width: 1121px) and (max-height: 820px) {
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-hero .hero-hub__summary#stats-display {
+        flex-basis: 272px !important;
+        height: 272px !important;
+        min-height: 272px !important;
+        max-height: 272px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #hunt-panel-analysis .analyzer-preparation__hero {
+        min-height: 56px !important;
+    }
+}
+
+/* HUD 6.3 — fallback da hotbar para desktops estreitos. */
+@media (min-width: 1121px) and (max-width: 1279px) {
+    :root {
+        --ui-actionbar-h: 116px;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #aethra-shared-save-banner {
+        top: auto !important;
+        bottom: calc(var(--ui-actionbar-h) + 8px) !important;
+        width: min(340px, calc(100vw - 24px)) !important;
+        min-height: 40px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer {
+        height: var(--ui-actionbar-h) !important;
+        border-top-color: var(--rpg-frame) !important;
+        background: rgba(1, 7, 9, .97) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer > .battle-panel--actionbar {
+        position: absolute !important;
+        inset: 0 !important;
+        grid-template-rows: 26px minmax(0, 1fr) !important;
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        border: 0 !important;
+        background: linear-gradient(180deg, rgba(10, 22, 23, .99), rgba(2, 9, 11, .995)) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-panel__header {
+        display: grid !important;
+        grid-template-columns: 126px minmax(0, 1fr) auto auto !important;
+        gap: 8px !important;
+        width: min(920px, calc(100vw - 16px)) !important;
+        height: 30px !important;
+        min-height: 30px !important;
+        margin-inline: auto !important;
+        padding: 2px 6px !important;
+        overflow: hidden !important;
+        border-bottom: 1px solid rgba(169, 132, 62, .2) !important;
+        box-shadow: none !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-panel__header > div:first-child {
+        min-width: 0;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-panel__header > div:first-child small {
+        display: none !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-panel__header h2 {
+        overflow: hidden;
+        font-size: 10px !important;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .actionbar-vital-strip-root {
+        display: flex !important;
+        min-width: 0 !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex-wrap: nowrap !important;
+        gap: 8px !important;
+        overflow: hidden !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .modern-resource {
+        min-width: 64px !important;
+        max-width: 92px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .modern-resource small,
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .modern-status-empty small,
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .combat-survival-strip__automation small {
+        font-size: 6px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .modern-resource b,
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .combat-survival-strip__automation b {
+        font-size: 10px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-panel__tools,
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-speed-controls {
+        display: flex !important;
+        align-items: center !important;
+        flex-wrap: nowrap !important;
+        gap: 3px !important;
+        white-space: nowrap;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-panel__tools button,
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-speed-controls button {
+        width: 28px !important;
+        min-width: 28px !important;
+        height: 21px !important;
+        min-height: 21px !important;
+        padding: 0 !important;
+        border-radius: 3px !important;
+        font-size: 7px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-panel__tools .battle-panel__link {
+        width: 50px !important;
+        min-width: 50px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt .combat-action-deck {
+        position: relative !important;
+        left: auto !important;
+        display: grid !important;
+        grid-template-columns: 116px 616px !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        width: min(760px, calc(100vw - 16px)) !important;
+        height: 100% !important;
+        margin-inline: auto !important;
+        padding: 3px 6px 5px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .primary-attack-deck {
+        display: block !important;
+        height: 58px !important;
+        align-self: end !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        border: 0 !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .combat-action-deck__label {
+        display: none !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer #primary-attack-bar.primary-attack-bar {
+        display: grid !important;
+        grid-template-columns: repeat(2, 56px) !important;
+        gap: 4px !important;
+        width: 116px !important;
+        height: 58px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer #primary-attack-bar > .primary-attack-card {
+        grid-template-rows: minmax(0, 1fr) !important;
+        width: 56px !important;
+        min-width: 56px !important;
+        max-width: 56px !important;
+        height: 58px !important;
+        min-height: 58px !important;
+        max-height: 58px !important;
+        padding: 2px !important;
+        border-radius: 4px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .primary-attack-card__button {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        grid-template-rows: 12px minmax(0, 1fr) !important;
+        place-items: center !important;
+        gap: 0 !important;
+        padding: 2px !important;
+        text-align: center !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .primary-attack-card__mouse {
+        grid-row: 1 !important;
+        place-self: start !important;
+        font-size: 6px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .primary-attack-card__icon {
+        grid-row: 2 !important;
+        font-size: 24px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer :is(.primary-attack-card__copy, .primary-attack-card__interval, .primary-attack-card__cooldown, .primary-attack-card__auto) {
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        overflow: hidden !important;
+        clip-path: inset(50%) !important;
+        white-space: nowrap !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .skill-action-deck--workspace {
+        grid-template-rows: 18px 58px !important;
+        gap: 3px !important;
+        width: 616px !important;
+        height: 79px !important;
+        overflow: visible !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .actionbar-workspace__toolbar {
+        height: 18px !important;
+        padding: 0 !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .actionbar-workspace__identity strong {
+        max-width: 110px !important;
+        font-size: 8px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer :is(.actionbar-workspace__arrow, .actionbar-workspace__tool, .actionbar-workspace__bar-tabs button) {
+        width: 18px !important;
+        min-width: 18px !important;
+        height: 18px !important;
+        min-height: 18px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer #skill-action-bar {
+        display: grid !important;
+        grid-template-columns: repeat(10, 58px) !important;
+        justify-content: start !important;
+        gap: 4px !important;
+        width: 616px !important;
+        height: 58px !important;
+        overflow: visible !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer #skill-action-bar > .battle-action-slot,
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer #skill-action-bar > .battle-action-slot.is-empty {
+        position: relative !important;
+        grid-template-rows: minmax(0, 1fr) !important;
+        width: 58px !important;
+        min-width: 58px !important;
+        max-width: 58px !important;
+        height: 58px !important;
+        min-height: 58px !important;
+        max-height: 58px !important;
+        flex: none !important;
+        opacity: 1 !important;
+        border: 1px solid rgba(169, 132, 62, .32) !important;
+        border-radius: 4px !important;
+        background: linear-gradient(145deg, rgba(21, 31, 28, .99), rgba(5, 12, 14, .99)) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer #skill-action-bar > .battle-action-slot.is-empty {
+        opacity: .38 !important;
+        border-color: rgba(169, 132, 62, .18) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer #skill-action-bar > .battle-action-slot > .battle-action-slot__skill {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        grid-template-rows: 12px minmax(0, 1fr) !important;
+        place-items: center !important;
+        gap: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        padding: 2px !important;
+        overflow: hidden !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-action-slot__topline {
+        grid-row: 1 !important;
+        width: 100% !important;
+        height: 12px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-action-slot__key,
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-action-slot__priority {
+        height: 11px !important;
+        line-height: 11px !important;
+        font-size: 6px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-action-slot__icon,
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-action-slot__empty {
+        grid-row: 2 !important;
+        width: 34px !important;
+        height: 34px !important;
+        min-height: 34px !important;
+        max-height: 34px !important;
+        font-size: 24px !important;
+        line-height: 34px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-action-slot__copy {
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        overflow: hidden !important;
+        clip-path: inset(50%) !important;
+        white-space: nowrap !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-action-slot__controls {
+        position: absolute !important;
+        z-index: 5 !important;
+        right: 3px !important;
+        bottom: 3px !important;
+        left: 3px !important;
+        display: flex !important;
+        width: auto !important;
+        height: 7px !important;
+        min-height: 7px !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        border: 0 !important;
+        background: transparent !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-action-slot__priority-control,
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-action-slot__drag-handle {
+        display: none !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-action-slot__auto-toggle {
+        width: 100% !important;
+        height: 7px !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-action-slot__auto-toggle span {
+        width: 100% !important;
+        height: 3px !important;
+        min-height: 3px !important;
+        border: 0 !important;
+        background: rgba(120, 166, 170, .18) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-action-slot__auto-toggle input:checked + span {
+        background: var(--ui-green) !important;
+        box-shadow: 0 0 5px rgba(82, 216, 155, .55) !important;
+    }
+
+    body.aethra-ui-v2.aethra-primary-view-hunt #battle-actionbar-layer .battle-action-slot__auto-toggle span :is(i, em) {
+        display: none !important;
+    }
+}

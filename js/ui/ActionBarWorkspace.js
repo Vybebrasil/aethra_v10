@@ -113,23 +113,21 @@
         const bar = bars[current] || { name: "Barra 1", slots: [] };
         const filled = (bar.slots || []).filter(Boolean).length;
         return `
-            <div class="actionbar-workspace__identity">
-                <span class="actionbar-workspace__eyebrow">LOADOUT ATIVO</span>
+            <button type="button" class="actionbar-workspace__arrow" data-actionbar-cycle="-1" aria-label="ActionBar anterior" title="Barra anterior">‹</button>
+            <button
+                type="button"
+                class="actionbar-workspace__identity ${isStackOpen() ? "is-active" : ""}"
+                data-actionbar-stack
+                data-actionbar-wheel-zone
+                aria-expanded="${isStackOpen()}"
+                aria-label="${escapeHTML(bar.name || `Barra ${current + 1}`)}: ${filled} de ${bar.slots?.length || 0} slots. Abrir todas as barras."
+                title="Abrir e trocar ActionBar"
+            >
+                <span>Barra ${current + 1}</span>
                 <strong>${escapeHTML(bar.name || `Barra ${current + 1}`)}</strong>
                 <small>${filled}/${bar.slots?.length || 0}</small>
-            </div>
-            <button type="button" class="actionbar-workspace__arrow" data-actionbar-cycle="-1" aria-label="ActionBar anterior" title="Barra anterior">‹</button>
-            <div class="actionbar-workspace__bar-tabs" role="tablist" aria-label="ActionBars" data-actionbar-wheel-zone>
-                ${bars.map((item, index) => `
-                    <button type="button" role="tab" data-actionbar-index="${index}" aria-selected="${index === current}" class="${index === current ? "is-active" : ""}" title="${escapeHTML(item.name || `Barra ${index + 1}`)}">
-                        ${index + 1}
-                    </button>
-                `).join("")}
-            </div>
+            </button>
             <button type="button" class="actionbar-workspace__arrow" data-actionbar-cycle="1" aria-label="Próxima ActionBar" title="Próxima barra">›</button>
-            <button type="button" class="actionbar-workspace__tool" data-actionbar-add aria-label="Criar ActionBar" title="Criar nova ActionBar" ${bars.length >= MAX_BARS ? "disabled" : ""}>＋</button>
-            <button type="button" class="actionbar-workspace__tool ${isStackOpen() ? "is-active" : ""}" data-actionbar-stack aria-expanded="${isStackOpen()}" aria-label="Exibir todas as ActionBars" title="Exibir barras empilhadas">▦</button>
-            <span class="actionbar-workspace__hint"><kbd>1–0</kbd> usar <i></i> role sobre os números para trocar</span>
         `;
     }
 
@@ -154,6 +152,12 @@
         toolbar.innerHTML = toolbarHTML(bars, current);
         bar.style.setProperty("--actionbar-slot-count", String(Math.max(1, bars[current]?.slots?.length || 10)));
         bar.dataset.activeBarIndex = String(current);
+        bar.dataset.hotbarLayout = "command-deck";
+        const configureButton = document.getElementById("open-skill-settings");
+        if (configureButton) {
+            configureButton.textContent = "Editar barra";
+            configureButton.setAttribute("aria-label", "Editar habilidades e automação da ActionBar");
+        }
         normalizeActiveSlots();
         renderStackDrawer();
         if (!Aethra.CombatHudModernizer) ensureLoadoutEditor();

@@ -2,3 +2,6 @@
 .gemini/
 *.log
 _local_qa/
+.aethra-dev/
+__pycache__/
+*.pyc

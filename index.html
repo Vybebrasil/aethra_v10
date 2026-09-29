@@ -14,14 +14,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="css/style.css?v=20">
-    <link rel="stylesheet" href="css/style-stability.css?v=16">
-    <link rel="stylesheet" href="css/ui-fluidity.css?v=16">
-    <link rel="stylesheet" href="css/actionbar-workspace.css?v=16">
-    <link rel="stylesheet" href="css/hunt-analyzer-workspace.css?v=16">
-    <link rel="stylesheet" href="css/combat-hud-modern.css?v=16">
-    <link rel="stylesheet" href="css/encounter-combat-hud.css?v=16">
-    <link rel="stylesheet" href="css/player-hud-workspace.css?v=21">
+    <link rel="stylesheet" href="css/style.css?v=21">
     <link rel="stylesheet" href="css/profession-workshop.css?v=20">
     <link rel="stylesheet" href="css/profession-specialization.css?v=1">
     <link rel="stylesheet" href="css/progression-journal.css?v=8">
@@ -30,13 +23,13 @@
     <link rel="stylesheet" href="css/npc-shop.css?v=16">
     <link rel="stylesheet" href="css/lobby.css?v=16">
     <link rel="stylesheet" href="css/death-modal.css?v=16">
-    <link rel="stylesheet" href="css/tilemap-canvas.css?v=16">
     <link rel="stylesheet" href="css/idle-loop.css?v=16">
-    <link rel="stylesheet" href="css/hud-modernization.css?v=31">
-    <link rel="stylesheet" href="css/aethra-windows.css?v=21">
+    <link rel="stylesheet" href="css/aethra-ui-v2.css?v=46">
+    <link rel="stylesheet" href="css/aethra-hud-v5.css?v=9">
+    <link rel="stylesheet" href="css/aethra-hud-v6.css?v=7">
 </head>
 
-<body>
+<body class="aethra-ui-v2" data-ui-version="2">
     <main id="game-container" class="app-shell">
         <header class="topbar aethra-navbar">
             <div class="aethra-brand" aria-label="Crônicas de Aethra">
@@ -46,6 +39,22 @@
                     <p>Battle Dashboard</p>
                 </div>
             </div>
+
+            <section id="topbar-hero" class="topbar-hero" aria-label="Estado do personagem">
+                <span class="topbar-hero__portrait" aria-hidden="true">A</span>
+                <span class="topbar-hero__identity">
+                    <strong data-topbar-hero-name>Aethra</strong>
+                    <small data-topbar-hero-level>Nível 1</small>
+                </span>
+                <span class="topbar-hero__resources">
+                    <span class="topbar-resource topbar-resource--hp">
+                        <small>HP</small><i><b data-topbar-hp-bar></b></i><strong data-topbar-hp>0/0</strong>
+                    </span>
+                    <span class="topbar-resource topbar-resource--mana">
+                        <small>MP</small><i><b data-topbar-mana-bar></b></i><strong data-topbar-mana>0/0</strong>
+                    </span>
+                </span>
+            </section>
 
             <nav
                 class="window-tabs hud-icon-menu"
@@ -687,14 +696,14 @@
     <script src="js/data/hunts/HuntCatalog.js?v=3" defer></script>
     <script src="js/world/EntityManager.js?v=3" defer></script>
     <script src="js/world/SpriteLoader.js?v=17" defer></script>
-    <script src="js/infrastructure/SaveManager.js?v=12" defer></script>
+    <script src="js/infrastructure/SaveManager.js?v=14" defer></script>
     <script src="js/infrastructure/SettingsManager.js?v=3" defer></script>
     <script src="js/infrastructure/AuthorityGateway.js?v=1" defer></script>
     <script src="js/economy/EconomyRNGManager.js" defer></script>
 
     <!-- UI base -->
-    <script src="js/ui/WindowManager.js?v=7" defer></script>
-    <script src="js/ui/TooltipManager.js?v=2" defer></script>
+    <script src="js/ui/WindowManager.js?v=9" defer></script>
+    <script src="js/ui/TooltipManager.js?v=5" defer></script>
 
     <!-- Itens e progressão -->
     <script src="js/items/ItemSystem.js?v=4" defer></script>
@@ -729,19 +738,19 @@
 
     <!-- Mercado e renderização -->
     <script src="js/market/MarketplaceSystem.js?v=3" defer></script>
-    <script src="js/ui/RenderEngine.js?v=22" defer></script>
+    <script src="js/ui/RenderEngine.js?v=25" defer></script>
     <script src="js/ui/UI_Renderer.js?v=2" defer></script>
     <script src="js/ui/UIManager.js?v=9" defer></script>
     <script src="js/ui/HudExperience.js?v=3" defer></script>
-    <script src="js/ui/HudWorldMapAndDrops.js?v=4" defer></script>
+    <script src="js/ui/HudWorldMapAndDrops.js?v=5" defer></script>
     <script src="js/ui/EncounterInteractionPass.js?v=2" defer></script>
-    <script src="js/ui/UIStabilityPass.js?v=6" defer></script>
+    <script src="js/ui/UIStabilityPass.js?v=7" defer></script>
     <script src="js/ui/UIFluidityPass.js" defer></script>
-    <script src="js/ui/ActionBarWorkspace.js" defer></script>
-    <script src="js/ui/HuntAnalyzerWorkspace.js?v=2" defer></script>
+    <script src="js/ui/ActionBarWorkspace.js?v=3" defer></script>
+    <script src="js/ui/HuntAnalyzerWorkspace.js?v=5" defer></script>
     <script src="js/ui/CombatHudModernizer.js?v=2" defer></script>
     <script src="js/ui/EncounterCombatHUD.js?v=7" defer></script>
-    <script src="js/ui/PlayerHudWorkspace.js?v=18" defer></script>
+    <script src="js/ui/PlayerHudWorkspace.js?v=22" defer></script>
     <script src="js/ui/ProfessionWorkshopUI.js?v=11" defer></script>
     <script src="js/ui/ProfessionSpecializationUI.js?v=1" defer></script>
     <script src="js/ui/ProgressionJournalUI.js?v=3" defer></script>
@@ -751,7 +760,8 @@
     <script src="js/ui/NpcShopUI.js?v=2" defer></script>
     <script src="js/ui/DeathModalUI.js?v=2" defer></script>
     <script src="js/ui/SaveStatusBanner.js?v=1" defer></script>
-    <script src="js/world/TileMapCanvas.js?v=16" defer></script>
+    <script src="js/ui/SharedSaveStatus.js?v=1" defer></script>
+    <script src="js/world/TileMapCanvas.js?v=18" defer></script>
     <script src="js/economy/IdleLoopSystem.js?v=17" defer></script>
     <script src="js/ui/HudModernization.js?v=16" defer></script>
 

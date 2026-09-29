@@ -212,6 +212,86 @@
         return `<article class="analyzer-ledger-card ${tone ? `is-${tone}` : ""}" ${attribute} ${tooltip(tooltipData)}><small>${escapeHTML(label)}</small><strong>${escapeHTML(value)}</strong><span>${escapeHTML(detail)}</span></article>`;
     }
 
+    function renderPreparation(root, current) {
+        const hero = Aethra.GameState.hero || {};
+        const questState = Aethra.QuestSystem?.getState?.() || {};
+        const quest = Aethra.QuestSystem?.getTrackedQuest?.() || questState.active?.[0] || null;
+        const guidance = quest ? Aethra.QuestSystem?.getGuidance?.(quest) : null;
+        const progress = quest
+            ? Aethra.QuestSystem?.getProgress?.(quest) || { progress: 0, required: 1, percent: 0 }
+            : { progress: 0, required: 1, percent: 0 };
+        const equipment = Aethra.GameState.playerEquipment || hero.equipment || {};
+        const equippedCount = Object.values(equipment).filter(Boolean).length;
+        const bag = Array.isArray(hero.bag) ? hero.bag : [];
+        const supplyCount = bag
+            .filter((item) => String(item?.itemType || item?.type || "").toLowerCase() === "consumable")
+            .reduce((sum, item) => sum + Math.max(1, integer(item?.quantity || 1)), 0);
+        const hp = number(hero.hp ?? hero.stats?.hp ?? hero.stats?.health, 0);
+        const hpMax = Math.max(1, number(hero.maxHp ?? hero.stats?.maxHp ?? hero.stats?.maxHealth, hp || 1));
+        const hpPercent = Math.round((hp / hpMax) * 100);
+        const recommendedHuntId = guidance?.huntId || current.hunt.huntId || "whispering_forest";
+        const recommendedHunt = Aethra.HuntSystem?.hunts?.[recommendedHuntId] || null;
+        const hasPreviousSession = current.elapsedMs > 0 || current.xp > 0 || current.gained > 0 || current.kills > 0;
+
+        root.innerHTML = `
+            <section class="hunt-analyzer analyzer-preparation" data-hud-generation="4" aria-label="Preparação da próxima expedição">
+                <header class="analyzer-preparation__hero">
+                    <span class="analyzer-preparation__compass" aria-hidden="true"><i></i>✦</span>
+                    <div><small>PRÓXIMA ROTA</small><strong>${escapeHTML(recommendedHunt?.name || "Escolha seu destino")}</strong><p>${recommendedHunt ? `Recomendado a partir do nível ${format(recommendedHunt.minLevel || 1)}` : "Defina uma rota para começar a jornada."}</p></div>
+                </header>
+
+                <section class="analyzer-objective-card ${quest ? "has-quest" : "is-empty"}">
+                    <header><span>OBJETIVO ACOMPANHADO</span><b>${format(progress.percent)}%</b></header>
+                    <div>
+                        <small>${escapeHTML(quest?.title || "Nenhuma missão acompanhada")}</small>
+                        <strong>${escapeHTML(guidance?.objective?.label || "Explore o mapa e escolha sua próxima expedição")}</strong>
+                        <p>${escapeHTML(guidance?.detail || "O mapa mostra rotas, criaturas, recursos e nível recomendado.")}</p>
+                    </div>
+                    <i aria-label="Progresso ${format(progress.percent)}%"><b style="width:${Math.min(100, Math.max(0, progress.percent))}%"></b></i>
+                    <button type="button" data-analyzer-primary-action>${escapeHTML(guidance?.actionLabel || "Escolher expedição")}</button>
+                </section>
+
+                <section class="analyzer-readiness" aria-label="Prontidão do herói">
+                    <header><strong>Antes de partir</strong><small>checagem rápida</small></header>
+                    <div class="analyzer-readiness__grid">
+                        <span class="${hpPercent >= 70 ? "is-ready" : "is-warning"}"><i>♥</i><small>Vida</small><strong>${format(hpPercent)}%</strong></span>
+                        <span class="${equippedCount >= 3 ? "is-ready" : "is-warning"}"><i>♟</i><small>Equipado</small><strong>${format(equippedCount)}/11</strong></span>
+                        <span class="${supplyCount > 0 ? "is-ready" : "is-warning"}"><i>✚</i><small>Supplies</small><strong>${format(supplyCount)}</strong></span>
+                        <span class="${recommendedHunt ? "is-ready" : "is-warning"}"><i>⌖</i><small>Rota</small><strong>${recommendedHunt ? `Nv. ${format(recommendedHunt.minLevel || 1)}+` : "Livre"}</strong></span>
+                    </div>
+                </section>
+
+                ${hasPreviousSession ? `
+                    <section class="analyzer-last-session">
+                        <header><strong>Última expedição</strong><small>${formatDuration(current.seconds)}</small></header>
+                        <div class="analyzer-last-session__strip">
+                            <span><small>XP</small><strong>${format(current.xp)}</strong></span>
+                            <span><small>Saldo</small><strong class="${current.profit < 0 ? "is-loss" : "is-profit"}">${current.profit > 0 ? "+" : ""}${format(current.profit)} G</strong></span>
+                            <span><small>Abates</small><strong>${format(current.kills)}</strong></span>
+                        </div>
+                    </section>
+                ` : ""}
+
+                <footer class="analyzer-preparation__actions">
+                    <button type="button" data-analyzer-open-map>Abrir mapa de expedições</button>
+                    <button type="button" class="is-secondary" data-analyzer-open-quests>Ver missões</button>
+                </footer>
+            </section>`;
+
+        root.querySelector("[data-analyzer-primary-action]")?.addEventListener("click", () => {
+            if (guidance) Render.handleQuestGuidance?.(guidance);
+            else Aethra.openHuntWorldMap?.({ source: "analyzer-preparation" });
+        });
+        root.querySelector("[data-analyzer-open-map]")?.addEventListener("click", () => {
+            Aethra.openHuntWorldMap?.({ source: "analyzer-preparation", huntId: recommendedHuntId });
+        });
+        root.querySelector("[data-analyzer-open-quests]")?.addEventListener("click", () => {
+            Aethra.WindowManager?.openWindow?.("quests-view", { source: "analyzer-preparation" });
+        });
+        Aethra.TooltipManager?.refresh?.();
+        return true;
+    }
+
     function renderHuntAnalyzer() {
         const root = document.getElementById("hunt-display");
         if (!root) return false;
@@ -224,9 +304,14 @@
         const overall = recordsState().overall;
         const supplies = supplyRows(current);
         const attacks = integer(current.combat.attacks);
+        const panel = root.closest("#hunt-panel-analysis");
+        panel?.classList.toggle("is-preparing", !current.hunt.isActive);
+        if (!current.hunt.isActive) return renderPreparation(root, current);
+        // O resumo de seis indicadores Ã© a leitura padrÃ£o. Fora de uma Hunt a
+        // lateral sempre volta ao modo compacto; durante a sessÃ£o, a escolha do
+        // jogador de abrir a anÃ¡lise completa continua sendo respeitada.
         const expanded = current.hunt.isActive
-            ? Boolean(Aethra.GameState.ui?.huntAnalyzerExpanded)
-            : true;
+            && Boolean(Aethra.GameState.ui?.huntAnalyzerExpanded);
         const supplyHTML = supplies.length
             ? supplies.map((entry) => {
                 const itemDef = Aethra.GameData?.items?.[entry.id] || Aethra.LootSystem?.catalog?.[entry.id] || {};
@@ -270,7 +355,7 @@
                     <span><i class="is-cost">−</i><b>Supplies consumidos</b><strong>${format(current.spent)} G</strong></span>
                 </div>
 
-                <details class="analyzer-disclosure" open>
+                <details class="analyzer-disclosure">
                     <summary><span><strong>Detalhe de supplies</strong><small>${supplies.length ? `${format(supplies.length)} tipo(s) consumido(s)` : "sem consumo nesta sessão"}</small></span><b>${format(current.spent)} G</b></summary>
                     <div class="analyzer-supply-list">${supplyHTML}</div>
                 </details>

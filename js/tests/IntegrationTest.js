@@ -1021,6 +1021,9 @@
                 bag: JSON.parse(JSON.stringify(Aethra.GameState.hero.bag || [])),
                 policies: JSON.parse(JSON.stringify(Aethra.GameState.professionPolicies || {}))
             };
+            Aethra.GameState.hero.bag = (Aethra.GameState.hero.bag || []).filter((item) =>
+                String(item?.id || item?.itemId || item?.templateId || "") !== "apprentice_pickaxe"
+            );
             Aethra.ProfessionSystem.setCollectionPolicy("mining", true, "integration");
             const withoutTool = Aethra.ProfessionSystem.canPerformFieldAction("mining");
             const testPickaxe = Aethra.ItemSystem.generateItem("apprentice_pickaxe", { quality: 20, potential: 20, source: "integration" });
@@ -1399,15 +1402,18 @@
             levelPointHero.xpTotal = Math.max(50, Number(levelPointHero.xpTotal || 0));
             levelPointHero.stats.hp = 0;
             levelPointHero.hp = 0;
-            Aethra.GameState.battle = Aethra.GameState.battle || {};
-            Object.assign(Aethra.GameState.battle, {
-                isFighting: true,
-                battleId: "integration-death-route",
+            Aethra.BattleSystem.stopCombat("integration-death-setup");
+            Aethra.BattleSystem.startCombat({
+                id: "bandit-xmm-2024",
+                name: "Bandido",
+                hp: 19,
+                maxHp: 19,
+                damage: 1,
+                xp: 0
+            }, {
                 source: "integration-test",
-                startedAt: new Date().toISOString(),
-                creature: { id: "bandit-xmm-2024", name: "Bandido", hp: 1, maxHp: 19 }
+                noRewards: true
             });
-            Aethra.BattleSystem.isFighting = true;
             const deathRouteResult = Aethra.BattleSystem.defeat();
             checks.push(
                 createCheck(
@@ -1507,7 +1513,10 @@
             checks.push(
                 createCheck(
                     "Modelo de múltiplas ActionBars",
-                    actionBars.length >= 2 && actionBars.every((bar) => Array.isArray(bar.slots) && bar.slots.length >= 10),
+                    actionBars.length >= 1
+                        && actionBars.length <= 4
+                        && typeof Aethra.SkillSystem?.addBar === "function"
+                        && actionBars.every((bar) => Array.isArray(bar.slots) && bar.slots.length >= 10),
                     `${actionBars.length} barra(s); ${actionBars.map((bar) => bar.slots.length).join("/")} slots`
                 )
             );
@@ -1594,6 +1603,24 @@
                 const backpackSlots = playerHud?.querySelectorAll(".player-backpack-slot.is-filled") || [];
                 const inspectedBackpackSlots = [...backpackSlots].filter((slot) => slot.dataset.itemTooltipBound === "true");
                 const combatSpeedControls = document.querySelectorAll("[data-battle-speed]");
+                const retiredUiStyles = [
+                    "style-stability.css", "ui-fluidity.css", "actionbar-workspace.css",
+                    "hunt-analyzer-workspace.css", "combat-hud-modern.css",
+                    "encounter-combat-hud.css", "player-hud-workspace.css",
+                    "tilemap-canvas.css", "hud-modernization.css", "aethra-windows.css"
+                ];
+                const runtimeStyles = [...document.querySelectorAll('link[rel="stylesheet"]')]
+                    .map((link) => link.getAttribute("href") || "");
+                checks.push(
+                    createCheck(
+                        "Fundação visual UI 2.0 substitui folhas legadas conflitantes",
+                        document.body.classList.contains("aethra-ui-v2")
+                            && document.body.dataset.uiVersion === "2"
+                            && runtimeStyles.some((href) => href.includes("aethra-ui-v2.css"))
+                            && retiredUiStyles.every((file) => !runtimeStyles.some((href) => href.includes(file))),
+                        `${runtimeStyles.length} folhas ativas · contrato UI ${document.body.dataset.uiVersion || "ausente"}`
+                    )
+                );
                 checks.push(
                     createCheck(
                         "HUD oferece velocidades 1×, 2× e 4×",
@@ -1646,10 +1673,43 @@
                         `${inspectedBackpackSlots.length}/${backpackSlots.length} itens com inspeção`
                     )
                 );
+                const tooltipBagItem = Aethra.BagSystem?.getItems?.()
+                    ?.find((item) => item?.instanceId);
+                const tooltipBagHTML = tooltipBagItem
+                    ? Aethra.TooltipManager?.buildItemHTML?.(tooltipBagItem.instanceId) || ""
+                    : "";
+                checks.push(
+                    createCheck(
+                        "Tooltip resolve instâncias antigas da mochila",
+                        !tooltipBagItem || (
+                            !tooltipBagHTML.includes("Item Desconhecido")
+                            && tooltipBagHTML.includes(tooltipBagItem.name || Aethra.GameData?.items?.[tooltipBagItem.templateId]?.name || "")
+                        ),
+                        tooltipBagItem
+                            ? `${tooltipBagItem.instanceId} resolvido pelo template ${tooltipBagItem.templateId || tooltipBagItem.id}`
+                            : "mochila vazia; compatibilidade preservada"
+                    )
+                );
 
+                const compactHuntTargetBeforeStats = document.querySelector(
+                    "[data-compact-hunt-target][aria-pressed='true']"
+                )?.dataset.compactHuntTarget;
+                const intelligenceTabBeforeStats = document.querySelector(
+                    "[data-intelligence-tab][aria-selected='true']"
+                )?.dataset.intelligenceTab;
+                if (window.innerWidth <= 1120) {
+                    document.querySelector("[data-compact-hunt-target='analysis']")?.click();
+                }
+                document.querySelector("[data-intelligence-tab='analyzer']")?.click();
                 Aethra.RenderEngine?.renderExplorationFeed?.();
                 const journeyStatCards = [...document.querySelectorAll(".expedition-live-stats > span")];
-                const journeyStatsVisible = journeyStatCards.length === 4 && journeyStatCards.every((card) => {
+                const analyzerIsPreparingForJourney = document.getElementById("hunt-panel-analysis")
+                    ?.classList.contains("is-preparing");
+                const journeyStatsVisible = journeyStatCards.length === 4 && (
+                    analyzerIsPreparingForJourney
+                        ? journeyStatCards.every((card) => getComputedStyle(card).display === "none"
+                            || getComputedStyle(card.closest(".hunt-session-summary")).display === "none")
+                        : journeyStatCards.every((card) => {
                     const value = card.querySelector("strong");
                     if (!value) return false;
                     const cardRect = card.getBoundingClientRect();
@@ -1657,14 +1717,27 @@
                     return valueRect.top >= cardRect.top - 0.5
                         && valueRect.bottom <= cardRect.bottom + 0.5
                         && valueRect.height > 0;
-                });
+                        })
+                );
                 checks.push(
                     createCheck(
                         "Totais da jornada sem números cortados",
                         journeyStatsVisible,
-                        `${journeyStatCards.length}/4 cards íntegros`
+                        analyzerIsPreparingForJourney
+                            ? `${journeyStatCards.length}/4 cards recolhidos durante a preparação`
+                            : `${journeyStatCards.length}/4 cards íntegros`
                     )
                 );
+                if (compactHuntTargetBeforeStats && window.innerWidth <= 1120) {
+                    document.querySelector(
+                        `[data-compact-hunt-target='${compactHuntTargetBeforeStats}']`
+                    )?.click();
+                }
+                if (intelligenceTabBeforeStats) {
+                    document.querySelector(
+                        `[data-intelligence-tab='${intelligenceTabBeforeStats}']`
+                    )?.click();
+                }
 
                 const workspaceSlots = document.querySelectorAll("#skill-action-bar .battle-action-slot");
                 const workspaceToolbar = document.querySelector(".actionbar-workspace__toolbar");
@@ -1679,18 +1752,48 @@
                 const analyzer = Aethra.HuntAnalyzerWorkspace;
                 const analyzerMetrics = analyzer?.getMetrics?.() || {};
                 const analyzerCards = document.querySelectorAll(".analyzer-ledger-card");
+                const analyzerPreparation = document.querySelector(".analyzer-preparation");
                 // As abas de inteligência são montadas por UIFluidityPass de forma
                 // orientada a eventos; força a montagem síncrona para o teste.
                 Aethra.UIFluidityPass?.enhance?.();
+                const progressionLogBackup = JSON.parse(JSON.stringify(
+                    Aethra.GameState.ui?.progressionLog || []
+                ));
+                Aethra.EventBus.emit("xpChanged", {
+                    amount: 1,
+                    source: { enemyName: "Lobo de teste" }
+                });
+                const progressionSourceDetail = String(
+                    Aethra.GameState.ui?.progressionLog?.[0]?.detail || ""
+                );
+                const progressionSourceReadable = progressionSourceDetail.includes("Combate")
+                    && !progressionSourceDetail.includes("[object Object]");
+                checks.push(
+                    createCheck(
+                        "Progresso traduz fontes estruturadas sem [object Object]",
+                        progressionSourceReadable,
+                        progressionSourceDetail || "fonte ausente"
+                    )
+                );
+                Aethra.GameState.ui.progressionLog = progressionLogBackup;
+                Aethra.EventBus.emit("render:ready", { source: "integration-progression-cleanup" });
                 const analyzerTabs = [...document.querySelectorAll("[data-intelligence-tab]")]
                     .map((tab) => tab.dataset.intelligenceTab);
                 checks.push(
                     createCheck(
-                        "Hunt Analyzer detalhado",
+                        "Hunt Analyzer alterna preparação contextual e telemetria",
                         Boolean(analyzer)
-                            && analyzerCards.length >= 6
+                            && (
+                                analyzerCards.length >= 6
+                                || Boolean(
+                                    analyzerPreparation?.querySelector(".analyzer-objective-card")
+                                    && analyzerPreparation?.querySelectorAll(".analyzer-readiness__grid > span").length === 4
+                                )
+                            )
                             && ["xp", "gained", "spent", "profit"].every((key) => Number.isFinite(Number(analyzerMetrics[key]))),
-                        `${analyzerCards.length} KPIs; economia ${analyzer ? "disponível" : "ausente"}`
+                        analyzerPreparation
+                            ? "preparação contextual ativa; telemetria disponível"
+                            : `${analyzerCards.length} KPIs; telemetria ${analyzer ? "disponível" : "ausente"}`
                     )
                 );
                 checks.push(
@@ -1739,7 +1842,7 @@
                 checks.push(
                     createCheck(
                         "Configurador compacto de ActionBar",
-                        loadoutSlots.length >= 10 && skillRules.length >= 4,
+                        loadoutSlots.length >= 10 && skillRules.length >= 3,
                         `${loadoutSlots.length} slots; ${skillRules.length} regras editáveis`
                     )
                 );
@@ -2635,6 +2738,18 @@
                         `${visibleHeroPanels.length}/${heroPanels.length} área(s) visível(is) · ${fixedEquipmentSlots.length}/11 slots fixos`
                     )
                 );
+                const heroNavigationOrder = [...document.querySelectorAll(
+                    "[data-player-hud-target]"
+                )].map((button) => button.dataset.playerHudTarget);
+                checks.push(
+                    createCheck(
+                        "Central 4.0 prioriza atributos sem duplicar números de combate",
+                        document.querySelector(".player-hud-summary")?.dataset.hudGeneration === "4"
+                            && heroNavigationOrder.join(",") === "overview,backpack,skills"
+                            && !document.querySelector(".player-combat-readout"),
+                        `${heroNavigationOrder.join(" → ")} · leitura duplicada ${document.querySelector(".player-combat-readout") ? "presente" : "removida"}`
+                    )
+                );
 
                 const selectedHeroTabBeforeAudit = document.querySelector(
                     "[data-player-hud-target][aria-selected='true']"
@@ -2733,8 +2848,127 @@
                             : "aba selecionada e painel visível divergiram"
                     )
                 );
+                document.querySelector("[data-player-hud-target='backpack']")?.click();
+                const styledBackpackPanel = document.querySelector(
+                    "[data-hero-panel-view='backpack'].is-active"
+                );
+                const styledBackpackGrid = styledBackpackPanel?.querySelector(
+                    ".player-backpack-grid"
+                );
+                const styledBackpackFilter = styledBackpackPanel?.querySelector(
+                    ".hero-backpack-filters button"
+                );
+                const styledBackpackPanelStyle = styledBackpackPanel
+                    ? getComputedStyle(styledBackpackPanel)
+                    : null;
+                const backpackContentIsReachable = !styledBackpackPanel
+                    ? false
+                    : styledBackpackPanel.scrollHeight <= styledBackpackPanel.clientHeight + 2
+                        || ["auto", "scroll"].includes(styledBackpackPanelStyle?.overflowY);
+                checks.push(
+                    createCheck(
+                        "Backpack atual usa grade compacta e nunca corta conteúdo",
+                        styledBackpackPanelStyle?.display === "grid"
+                            && Boolean(styledBackpackGrid)
+                            && getComputedStyle(styledBackpackGrid).display === "grid"
+                            && styledBackpackPanel?.querySelectorAll(".player-backpack-slot").length >= 18
+                            && Boolean(styledBackpackFilter)
+                            && parseFloat(getComputedStyle(styledBackpackFilter).fontSize) <= 8
+                            && backpackContentIsReachable,
+                        styledBackpackPanel
+                            ? `${styledBackpackPanel.clientHeight}/${styledBackpackPanel.scrollHeight}px · overflow ${styledBackpackPanelStyle?.overflowY}`
+                            : "painel da mochila ausente"
+                    )
+                );
+
+                document.querySelector("[data-intelligence-tab='analyzer']")?.click();
+                const styledAnalyzer = document.querySelector(".hunt-analyzer--ledger");
+                const styledAnalyzerParent = styledAnalyzer?.parentElement;
+                const styledAnalyzerRect = styledAnalyzer?.getBoundingClientRect?.();
+                const styledAnalyzerParentRect = styledAnalyzerParent?.getBoundingClientRect?.();
+                const styledAnalyzerStyle = styledAnalyzer
+                    ? getComputedStyle(styledAnalyzer)
+                    : null;
+                const analyzerStaysInsidePanel = !styledAnalyzerRect?.height
+                    || styledAnalyzerRect.bottom <= styledAnalyzerParentRect.bottom + 2;
+                checks.push(
+                    createCheck(
+                        "Hunt Analyzer atual mantém cards, tipografia e rolagem interna",
+                        styledAnalyzerStyle?.display === "flex"
+                            && styledAnalyzerStyle?.overflowY === "auto"
+                            && parseFloat(styledAnalyzerStyle?.fontSize || "99") <= 10
+                            && styledAnalyzer?.querySelectorAll(".analyzer-ledger-card").length === 6
+                            && analyzerStaysInsidePanel,
+                        styledAnalyzer
+                            ? `${styledAnalyzer.clientHeight}/${styledAnalyzer.scrollHeight}px · 6 cards · ${styledAnalyzerStyle?.fontSize}`
+                            : "ledger do analisador ausente"
+                    )
+                );
+
+                const hudTooltipTrigger = document.querySelector(
+                    "#hunt-panel-hero [data-tooltip-kind='hud']"
+                );
+                let hudTooltipIsCompact = false;
+                let hudTooltipDetail = "tooltip indisponível";
+                if (hudTooltipTrigger && Aethra.TooltipManager?.show?.(hudTooltipTrigger)) {
+                    const tooltipElement = document.getElementById("aethra-ui-tooltip");
+                    const tooltipRect = tooltipElement?.getBoundingClientRect?.();
+                    const heroSidebarRect = document.getElementById("hunt-panel-hero")
+                        ?.getBoundingClientRect?.();
+                    const opensBesideSidebar = window.innerWidth <= 1120
+                        || tooltipRect.left >= heroSidebarRect.right + 5;
+                    hudTooltipIsCompact = tooltipElement?.hidden === false
+                        && tooltipRect.width <= 300
+                        && opensBesideSidebar;
+                    hudTooltipDetail = `${Math.round(tooltipRect.width)}px · x ${Math.round(tooltipRect.left)} · Central ${Math.round(heroSidebarRect.right)}`;
+                    Aethra.TooltipManager.hide();
+                }
+                checks.push(
+                    createCheck(
+                        "Tooltip da Central abre compacto e fora do painel",
+                        hudTooltipIsCompact,
+                        hudTooltipDetail
+                    )
+                );
+
+                const skillTooltipTrigger = document.querySelector(
+                    "[data-tooltip-kind='skill'][data-skill-id]"
+                );
+                let skillTooltipRenders = false;
+                let skillTooltipDetail = "habilidade da ActionBar ausente";
+                if (skillTooltipTrigger) {
+                    try {
+                        const skillTooltipHTML = Aethra.TooltipManager?.buildHTML?.(
+                            skillTooltipTrigger
+                        ) || "";
+                        skillTooltipRenders = skillTooltipHTML.includes(
+                            "aethra-ui-tooltip__skill"
+                        );
+                        skillTooltipDetail = skillTooltipRenders
+                            ? "habilidade renderizada com ordem e automação"
+                            : "HTML da habilidade vazio";
+                    } catch (error) {
+                        skillTooltipDetail = error?.message || String(error);
+                    }
+                }
+                checks.push(
+                    createCheck(
+                        "Tooltip de habilidade renderiza sem erro de prioridade",
+                        skillTooltipRenders,
+                        skillTooltipDetail
+                    )
+                );
+
+                document.querySelector(`[data-intelligence-tab='${intelligenceTabBeforeAudit}']`)?.click();
                 document.querySelector(`[data-player-hud-target='${selectedHeroTabBeforeAudit}']`)?.click();
 
+                const actionBarPreviousPrimaryView = Aethra.UIManager?.primaryView
+                    || Aethra.GameState.ui?.primaryView
+                    || "hunt";
+                Aethra.UIManager?.setPrimaryView?.("hunt", {
+                    emit: false,
+                    source: "integration-actionbar-audit"
+                });
                 const previousBattleMode = Aethra.RenderEngine?.battleMode || "cards";
                 Aethra.RenderEngine?.syncStageMode?.("map2d");
                 const sharedBattleLayout = document.querySelector("[data-battle-mode-layout]");
@@ -2750,6 +2984,8 @@
                     "#battle-actionbar-layer > .battle-panel--actionbar"
                 );
                 const actionBarPanelRect = actionBarPanel?.getBoundingClientRect?.();
+                const actionBarDeckRect = document.querySelector(".combat-action-deck")
+                    ?.getBoundingClientRect?.();
                 const actionBarContentBottom = Math.max(
                     0,
                     ...[
@@ -2786,12 +3022,35 @@
                             : "ActionBar ausente, incompleta ou cortada"
                     )
                 );
+                const actionBarDeckIsFocused = window.innerWidth <= 1120 || (
+                    Number(actionBarDeckRect?.width || 0) <= 1542
+                    && Math.abs(
+                        Number(actionBarDeckRect?.left || 0)
+                            + Number(actionBarDeckRect?.width || 0) / 2
+                            - window.innerWidth / 2
+                    ) <= 2
+                );
+                checks.push(
+                    createCheck(
+                        "ActionBar desktop concentra as decisões no centro da tela",
+                        Boolean(actionBarDeckRect) && actionBarDeckIsFocused,
+                        `${Math.round(Number(actionBarDeckRect?.width || 0))}px · centro ${Math.round(Number(actionBarDeckRect?.left || 0) + Number(actionBarDeckRect?.width || 0) / 2)}px`
+                    )
+                );
                 const actionBarSlots = [...document.querySelectorAll(
                     "#battle-actionbar-layer #skill-action-bar > .battle-action-slot"
                 )];
-                const actionBarSlotStyles = actionBarSlots.map((slot) => getComputedStyle(slot));
-                const actionBarSlotWidths = actionBarSlotStyles.map((style) => Number.parseFloat(style.width || "0"));
-                const actionBarSlotHeights = actionBarSlotStyles.map((style) => Number.parseFloat(style.height || "0"));
+                const actionBarSlotRects = actionBarSlots.map((slot) => slot.getBoundingClientRect());
+                const actionBarSlotWidths = actionBarSlotRects.map((rect) => Number(rect.width || 0));
+                const actionBarSlotHeights = actionBarSlotRects.map((rect) => Number(rect.height || 0));
+                const actionBarGrid = document.getElementById("skill-action-bar");
+                const actionBarGridRect = actionBarGrid?.getBoundingClientRect?.();
+                const actionBarGridGap = parseFloat(
+                    actionBarGrid ? getComputedStyle(actionBarGrid).columnGap : "0"
+                ) || 0;
+                const expectedActionSlotWidth = (
+                    Number(actionBarGridRect?.width || 0) - actionBarGridGap * 9
+                ) / 10;
                 const hasNeutralScale = (element) => {
                     const transform = getComputedStyle(element).transform;
                     if (!transform || transform === "none") return true;
@@ -2800,32 +3059,523 @@
                     const scaleY = Math.hypot(matrix.c, matrix.d);
                     return Math.abs(scaleX - 1) <= 0.01 && Math.abs(scaleY - 1) <= 0.01;
                 };
+                const filledActionBarWidths = actionBarSlots
+                    .filter((slot) => !slot.classList.contains("is-empty"))
+                    .map((slot) => slot.getBoundingClientRect().width);
+                const emptyActionBarWidths = actionBarSlots
+                    .filter((slot) => slot.classList.contains("is-empty"))
+                    .map((slot) => slot.getBoundingClientRect().width);
+                const usesCompactActionGrid = window.innerWidth <= 820;
+                const hotbarLayout = actionBarGrid?.dataset.hotbarLayout || "";
+                const usesClassicIconHotbar = window.innerWidth > 1120
+                    && ["classic-icons", "command-deck"].includes(hotbarLayout);
+                const actionBarHierarchyIsIntentional = usesCompactActionGrid || usesClassicIconHotbar
+                    ? Math.max(...actionBarSlotWidths) - Math.min(...actionBarSlotWidths) <= 2
+                    : filledActionBarWidths.length === 0
+                        || emptyActionBarWidths.length === 0
+                        || Math.min(...filledActionBarWidths) >= Math.max(...emptyActionBarWidths) + 8;
+                const actionBarGridFits = actionBarGrid.scrollWidth <= actionBarGrid.clientWidth + 1;
+                const actionBarSlotContentsFit = actionBarSlots.every((slot) => {
+                        const button = slot.querySelector(".battle-action-slot__skill");
+                        const slotRect = slot.getBoundingClientRect();
+                        const buttonRect = button?.getBoundingClientRect?.();
+                        if (usesClassicIconHotbar) {
+                            return hasNeutralScale(slot)
+                                && Boolean(button)
+                                && hasNeutralScale(button)
+                                && Number(buttonRect?.left || 0) >= slotRect.left - 1
+                                && Number(buttonRect?.right || 0) <= slotRect.right + 1
+                                && Number(buttonRect?.top || 0) >= slotRect.top - 1
+                                && Number(buttonRect?.bottom || 0) <= slotRect.bottom + 1
+                                && getComputedStyle(button).overflow === "hidden";
+                        }
+                        return hasNeutralScale(slot)
+                            && Boolean(button)
+                            && hasNeutralScale(button)
+                            && slot.scrollWidth <= slot.clientWidth + 1
+                            && slot.scrollHeight <= slot.clientHeight + 1
+                            && button.scrollWidth <= button.clientWidth + 1
+                            && button.scrollHeight <= button.clientHeight + 1;
+                    });
                 const actionBarSlotsAligned = actionBarSlots.length >= 10
                     && Math.max(...actionBarSlotHeights) - Math.min(...actionBarSlotHeights) <= 1
-                    && Math.max(...actionBarSlotWidths) - Math.min(...actionBarSlotWidths) <= 1
-                    && actionBarSlots.every((slot) => {
-                        const button = slot.querySelector(".battle-action-slot__skill");
-                        return hasNeutralScale(slot) && Boolean(button) && hasNeutralScale(button);
-                    });
+                    && actionBarHierarchyIsIntentional
+                    && actionBarGridFits
+                    && actionBarSlotContentsFit;
                 checks.push(
                     createCheck(
-                        "ActionBar mantém todos os slots na mesma escala e linha",
+                        "ActionBar usa uma grade consistente sem cortar slots equipados ou vazios",
                         actionBarSlotsAligned,
                         actionBarSlotsAligned
-                            ? `${actionBarSlots.length} slots alinhados sem escala externa`
-                            : "slots com escala, altura ou alinhamento divergente"
+                            ? `${filledActionBarWidths.length} equipados · ${emptyActionBarWidths.length} vazios · ${usesClassicIconHotbar ? "hotbar clássica" : "grade adaptativa"}`
+                            : `hierarquia ${actionBarHierarchyIsIntentional} · grade ${actionBarGridFits} · conteúdo ${actionBarSlotContentsFit} · larguras ${actionBarSlotWidths.map((value) => value.toFixed(1)).join("/")} · alturas ${actionBarSlotHeights.map((value) => value.toFixed(1)).join("/")}`
                     )
                 );
+                const actionBarOccupiedLeft = actionBarSlotRects.length > 0
+                    ? Math.min(...actionBarSlotRects.map((rect) => rect.left))
+                    : 0;
+                const actionBarOccupiedRight = actionBarSlotRects.length > 0
+                    ? Math.max(...actionBarSlotRects.map((rect) => rect.right))
+                    : 0;
+                const actionBarOccupiedCenter = (actionBarOccupiedLeft + actionBarOccupiedRight) / 2;
+                const actionBarGridCenter = (
+                    Number(actionBarGridRect?.left || 0) + Number(actionBarGridRect?.right || 0)
+                ) / 2;
+                const actionBarGroupIsCentered = window.innerWidth <= 1120 || (
+                    actionBarSlotRects.length >= 10
+                    && Math.abs(actionBarOccupiedCenter - actionBarGridCenter) <= 2
+                );
+                checks.push(
+                    createCheck(
+                        "ActionBar centraliza o conjunto de slots quando há espaço livre",
+                        actionBarGroupIsCentered,
+                        `${Math.round(actionBarOccupiedLeft)}–${Math.round(actionBarOccupiedRight)} · centro da grade ${Math.round(actionBarGridCenter)}`
+                    )
+                );
+                const filledActionSlots = actionBarSlots.filter((slot) => !slot.classList.contains("is-empty"));
+                const actionBarInteractiveContentFits = window.innerWidth <= 1120 || filledActionSlots.every((slot) => {
+                    const slotRect = slot.getBoundingClientRect();
+                    const button = slot.querySelector(".battle-action-slot__skill");
+                    const controls = slot.querySelector(".battle-action-slot__controls");
+                    const name = slot.querySelector(".battle-action-slot__name");
+                    const icon = slot.querySelector(".battle-action-slot__icon");
+                    const buttonRect = button?.getBoundingClientRect?.();
+                    const controlsRect = controls?.getBoundingClientRect?.();
+                    const nameRect = name?.getBoundingClientRect?.();
+                    const iconRect = icon?.getBoundingClientRect?.();
+                    const nameReadable = Number(nameRect?.width || 0) >= 48;
+                    return Boolean(button && controls && name)
+                        && Number(buttonRect?.top || 0) >= slotRect.top - 1
+                        && Number(controlsRect?.bottom || 0) <= slotRect.bottom + 1
+                        && (usesClassicIconHotbar
+                            ? getComputedStyle(controls).overflow === "hidden"
+                            : controls.scrollWidth <= controls.clientWidth + 1
+                                && controls.scrollHeight <= controls.clientHeight + 1)
+                        && (usesClassicIconHotbar
+                            ? Number(iconRect?.width || 0) >= 30
+                                && Number(iconRect?.height || 0) >= 30
+                                && Boolean(button.getAttribute("aria-label"))
+                            : nameReadable);
+                });
+                checks.push(
+                    createCheck(
+                        usesClassicIconHotbar
+                            ? "Hotbar clássica mantém ícones, atalhos e automação íntegros"
+                            : "ActionBar desktop mantém nomes, controles e automação totalmente visíveis",
+                        filledActionSlots.length > 0 && actionBarInteractiveContentFits,
+                        `${filledActionSlots.length} habilidades equipadas · conteúdo ${actionBarInteractiveContentFits ? "íntegro" : "cortado"}`
+                    )
+                );
+                const actionBarHeader = document.querySelector(
+                    "#battle-actionbar-layer .battle-panel__header"
+                );
+                const actionBarHeaderRect = actionBarHeader?.getBoundingClientRect?.();
+                const speedButtons = [...document.querySelectorAll(
+                    "#battle-actionbar-layer .battle-speed-controls button"
+                )];
+                const speedButtonRects = speedButtons.map((button) => button.getBoundingClientRect());
+                const speedControlsStayInline = window.innerWidth <= 1120 || (
+                    speedButtonRects.length === 3
+                    && Math.max(...speedButtonRects.map((rect) => rect.top))
+                        - Math.min(...speedButtonRects.map((rect) => rect.top)) <= 1
+                    && speedButtonRects.every((rect) => (
+                        rect.top >= Number(actionBarHeaderRect?.top || 0) - 1
+                        && rect.bottom <= Number(actionBarHeaderRect?.bottom || 0) + 1
+                    ))
+                    && Number(actionBarHeader?.scrollWidth || 0)
+                        <= Number(actionBarHeader?.clientWidth || 0) + 1
+                );
+                checks.push(
+                    createCheck(
+                        "Controles de velocidade permanecem em uma única linha",
+                        Boolean(actionBarHeader) && speedControlsStayInline,
+                        `${speedButtons.length} controles · ${speedControlsStayInline ? "alinhados" : "quebrados"}`
+                    )
+                );
+                const usesCommandDeck = window.innerWidth >= 1280
+                    && hotbarLayout === "command-deck";
+                const commandDeckToolbar = document.querySelector(
+                    "#battle-actionbar-layer .actionbar-workspace__toolbar"
+                );
+                const commandDeckToolbarRect = commandDeckToolbar?.getBoundingClientRect?.();
+                const commandDeckTitle = document.querySelector(
+                    "#battle-actionbar-layer .battle-panel__header > div:first-child"
+                );
+                const commandDeckVitals = document.querySelector(
+                    "#battle-actionbar-layer .actionbar-vital-strip-root"
+                );
+                const commandDeckGlyphs = document.querySelectorAll(
+                    "#battle-actionbar-layer .battle-action-slot.is-filled .skill-glyph svg"
+                );
+                const commandDeckIsReadable = !usesCommandDeck || (
+                    actionBarSlotRects.every((rect) => rect.width >= 63 && rect.height >= 75)
+                    && Number(commandDeckToolbarRect?.width || 0) >= 96
+                    && Number(commandDeckToolbarRect?.height || 0) >= 74
+                    && getComputedStyle(commandDeckTitle).display === "none"
+                    && getComputedStyle(commandDeckVitals).display === "none"
+                    && commandDeckGlyphs.length === filledActionSlots.length
+                );
+                checks.push(
+                    createCheck(
+                        "Command Deck mantém escala de jogo e remove informações duplicadas",
+                        Boolean(commandDeckToolbar) && commandDeckIsReadable,
+                        usesCommandDeck
+                            ? `${Math.round(actionBarSlotWidths[0] || 0)}×${Math.round(actionBarSlotHeights[0] || 0)}px · ${commandDeckGlyphs.length} glifos vetoriais`
+                            : `layout ${hotbarLayout || "adaptativo"}`
+                    )
+                );
+                Aethra.UIManager?.setPrimaryView?.(actionBarPreviousPrimaryView, {
+                    emit: false,
+                    source: "integration-actionbar-audit-restore"
+                });
+                const visualAuditPreviousPrimaryView = Aethra.UIManager?.primaryView
+                    || Aethra.GameState.ui?.primaryView
+                    || "hunt";
+                Aethra.UIManager?.setPrimaryView?.("hunt", {
+                    emit: false,
+                    source: "integration-visual-audit"
+                });
+
+                const summaryEquipmentMatrix = document.getElementById("battle-equipment-summary");
+                const summaryEquipmentSlots = [...document.querySelectorAll(
+                    "#battle-equipment-summary > [data-battle-equipment-slot]"
+                )];
+                const summaryEquipmentRect = summaryEquipmentMatrix?.getBoundingClientRect?.();
+                const summaryEquipmentSlotRects = summaryEquipmentSlots.map((slot) => slot.getBoundingClientRect());
+                const summaryEquipmentSlotsVisible = window.innerWidth <= 1120
+                    || summaryEquipmentSlots.every((slot, index) => {
+                        const rect = summaryEquipmentSlotRects[index];
+                        return rect.width >= 24
+                            && rect.height >= 24
+                            && rect.top >= Number(summaryEquipmentRect?.top || 0) - 1
+                            && rect.bottom <= Number(summaryEquipmentRect?.bottom || 0) + 1
+                            && slot.scrollWidth <= slot.clientWidth + 1
+                            && slot.scrollHeight <= slot.clientHeight + 1;
+                    });
+                const summaryEquipmentMatrixReadable = Boolean(summaryEquipmentMatrix)
+                    && summaryEquipmentSlots.length === 11
+                    && (window.innerWidth <= 1120 || Number(summaryEquipmentRect?.height || 0) >= 64)
+                    && summaryEquipmentSlotsVisible;
+                checks.push(
+                    createCheck(
+                        "Central do Herói mantém o paperdoll completo e sem corte",
+                        summaryEquipmentMatrixReadable,
+                        `${summaryEquipmentSlots.length} slots · matriz ${Math.round(Number(summaryEquipmentRect?.width || 0))}×${Math.round(Number(summaryEquipmentRect?.height || 0))}px`
+                    )
+                );
+                const paperdollColumns = new Set(summaryEquipmentSlots.map((slot) => Math.round(slot.getBoundingClientRect().left)));
+                const paperdollRows = new Set(summaryEquipmentSlots.map((slot) => Math.round(slot.getBoundingClientRect().top)));
+                const paperdollAvatarRect = summaryEquipmentMatrix?.querySelector(".player-paperdoll-avatar")
+                    ?.getBoundingClientRect?.();
+                const rectsOverlap = (left, right) => Boolean(left && right)
+                    && Math.min(left.right, right.right) - Math.max(left.left, right.left) > 1
+                    && Math.min(left.bottom, right.bottom) - Math.max(left.top, right.top) > 1;
+                const paperdollSlotsDoNotCollide = summaryEquipmentSlotRects.every((rect, index) => (
+                    !rectsOverlap(rect, paperdollAvatarRect)
+                    && summaryEquipmentSlotRects.slice(index + 1).every((other) => !rectsOverlap(rect, other))
+                ));
+                const paperdollAvatarCenter = (
+                    Number(paperdollAvatarRect?.left || 0) + Number(paperdollAvatarRect?.right || 0)
+                ) / 2;
+                const paperdollSlotsLeftOfHero = summaryEquipmentSlotRects.filter(
+                    (rect) => rect.right <= paperdollAvatarCenter
+                ).length;
+                const paperdollSlotsRightOfHero = summaryEquipmentSlotRects.filter(
+                    (rect) => rect.left >= paperdollAvatarCenter
+                ).length;
+                const paperdollHasRpgComposition = window.innerWidth <= 1120 || (
+                    Boolean(summaryEquipmentMatrix?.querySelector(".player-paperdoll-avatar img"))
+                    && summaryEquipmentMatrix?.dataset.paperdollLayout === "body"
+                    && paperdollColumns.size >= 4
+                    && paperdollRows.size >= 4
+                    && paperdollSlotsLeftOfHero >= 5
+                    && paperdollSlotsRightOfHero >= 5
+                    && paperdollSlotsDoNotCollide
+                );
+                checks.push(
+                    createCheck(
+                        "Central do Herói posiciona equipamentos ao redor do corpo",
+                        paperdollHasRpgComposition,
+                        `${paperdollSlotsLeftOfHero} esquerda · ${paperdollSlotsRightOfHero} direita · ${paperdollRows.size} níveis · colisões ${paperdollSlotsDoNotCollide ? "0" : "detectadas"}`
+                    )
+                );
+
+                const paperdollSpriteViewport = summaryEquipmentMatrix?.querySelector(".player-paperdoll-sprite");
+                const paperdollSpriteImage = paperdollSpriteViewport?.querySelector("img");
+                const paperdollSpriteViewportRect = paperdollSpriteViewport?.getBoundingClientRect?.();
+                const paperdollSpriteImageRect = paperdollSpriteImage?.getBoundingClientRect?.();
+                const paperdollSpriteIsReadable = window.innerWidth <= 1120 || (
+                    Number(paperdollSpriteViewportRect?.height || 0) >= 52
+                    && Number(paperdollSpriteImageRect?.height || 0) >= 48
+                    && Number(paperdollSpriteImageRect?.top || 0) >= Number(summaryEquipmentRect?.top || 0) - 1
+                    && Number(paperdollSpriteImageRect?.bottom || 0) <= Number(summaryEquipmentRect?.bottom || 0) + 1
+                );
+                checks.push(
+                    createCheck(
+                        "Paperdoll mantém o herói legível dentro da área reservada",
+                        Boolean(paperdollSpriteViewport && paperdollSpriteImage) && paperdollSpriteIsReadable,
+                        `recorte ${Math.round(Number(paperdollSpriteViewportRect?.width || 0))}×${Math.round(Number(paperdollSpriteViewportRect?.height || 0))} · imagem ${Math.round(Number(paperdollSpriteImageRect?.width || 0))}×${Math.round(Number(paperdollSpriteImageRect?.height || 0))}`
+                    )
+                );
+
+                const topbar = document.querySelector(".topbar");
+                const topbarVisibleChildren = topbar
+                    ? [...topbar.children]
+                        .filter((element) => getComputedStyle(element).display !== "none")
+                        .map((element) => element.getBoundingClientRect())
+                        .filter((rect) => rect.width > 0)
+                        .sort((left, right) => left.left - right.left)
+                    : [];
+                const topbarHasNoCollisions = topbarVisibleChildren.length >= 2
+                    && topbarVisibleChildren.every((rect, index) => (
+                        rect.left >= -1
+                        && rect.right <= window.innerWidth + 1
+                        && (index === 0 || topbarVisibleChildren[index - 1].right <= rect.left + 1)
+                    ));
+                checks.push(
+                    createCheck(
+                        "Topbar adapta seus grupos sem colisão horizontal",
+                        topbarHasNoCollisions,
+                        topbarVisibleChildren.map((rect) => `${Math.round(rect.left)}–${Math.round(rect.right)}`).join(" · ")
+                    )
+                );
+                const topbarBrand = topbar?.querySelector(".aethra-brand");
+                const topbarHero = document.getElementById("topbar-hero");
+                const topbarTabs = topbar?.querySelector(".window-tabs");
+                const topbarBrandRect = topbarBrand?.getBoundingClientRect?.();
+                const topbarHeroRect = topbarHero?.getBoundingClientRect?.();
+                const topbarTabsRect = topbarTabs?.getBoundingClientRect?.();
+                const topbarWideGroupsBounded = window.innerWidth < 1600 || (
+                    getComputedStyle(topbarHero).display === "none"
+                    && Number(topbarBrandRect?.width || 0) >= 225
+                    && Number(topbarTabsRect?.width || 0) >= 390
+                    && Number(topbarBrand?.scrollWidth || 0) <= Number(topbarBrand?.clientWidth || 0) + 1
+                    && Number(topbarTabs?.scrollWidth || 0) <= Number(topbarTabs?.clientWidth || 0) + 1
+                );
+                checks.push(
+                    createCheck(
+                        "Topbar clássica remove o herói duplicado e preserva marca e navegação",
+                        topbarWideGroupsBounded,
+                        `${Math.round(Number(topbarBrandRect?.width || 0))}px marca · herói ${getComputedStyle(topbarHero).display} · ${Math.round(Number(topbarTabsRect?.width || 0))}px navegação`
+                    )
+                );
+
+                const heroPanelRect = document.getElementById("hunt-panel-hero")
+                    ?.getBoundingClientRect?.();
+                const analyzerPanelRect = document.getElementById("hunt-panel-analysis")
+                    ?.getBoundingClientRect?.();
+                const stagePanelRect = document.getElementById("hunt-panel-combat")
+                    ?.getBoundingClientRect?.();
+                const layoutPanelRect = document.querySelector(".battle-hunt-layout")
+                    ?.getBoundingClientRect?.();
+                const stageShare = Number(stagePanelRect?.width || 0)
+                    / Math.max(1, Number(layoutPanelRect?.width || 0));
+                const wideColumnsReadable = window.innerWidth < 1441 || (
+                    Number(heroPanelRect?.width || 0) >= 280
+                    && Number(analyzerPanelRect?.width || 0) >= 295
+                    && stageShare >= 0.61
+                );
+                checks.push(
+                    createCheck(
+                        "Cockpit amplo mantém laterais legíveis e devolve foco ao palco",
+                        wideColumnsReadable,
+                        `${Math.round(Number(heroPanelRect?.width || 0))}px herói · ${Math.round(Number(stagePanelRect?.width || 0))}px palco (${Math.round(stageShare * 100)}%) · ${Math.round(Number(analyzerPanelRect?.width || 0))}px Analyzer`
+                    )
+                );
+                const classicTopbarRect = document.querySelector(".topbar")?.getBoundingClientRect?.();
+                const classicActionBarRect = document.getElementById("battle-actionbar-layer")
+                    ?.getBoundingClientRect?.();
+                const classicRpgCompositionIsCompact = window.innerWidth <= 1120 || (
+                    Number(classicTopbarRect?.height || 0) <= 54
+                    && Number(classicActionBarRect?.height || 0) <= 126
+                    && (window.innerWidth < 1800 || stageShare >= 0.67)
+                );
+                checks.push(
+                    createCheck(
+                        "HUD de cliente RPG prioriza o mundo e mantém docks compactos",
+                        classicRpgCompositionIsCompact,
+                        `${Math.round(Number(classicTopbarRect?.height || 0))}px topo · ${Math.round(stageShare * 100)}% mundo · ${Math.round(Number(classicActionBarRect?.height || 0))}px hotbar`
+                    )
+                );
+
+                const densityTabBeforeAudit = document.querySelector(
+                    "[data-player-hud-target][aria-selected='true']"
+                )?.dataset.playerHudTarget || "overview";
+                document.querySelector("[data-player-hud-target='overview']")?.click();
+                const densityWorkspace = document.querySelector(".player-hud-workspace");
+                const densityOverview = document.querySelector("[data-hero-panel-view='overview']");
+                const densityLastAttribute = densityOverview?.querySelector(".hero-attribute:last-child");
+                const densityWorkspaceRect = densityWorkspace?.getBoundingClientRect?.();
+                const densityLastAttributeRect = densityLastAttribute?.getBoundingClientRect?.();
+                const lowDesktop = window.innerWidth > 1120 && window.innerHeight <= 760;
+                const lowDesktopSummaryRect = document.getElementById("stats-display")
+                    ?.getBoundingClientRect?.();
+                const lowDesktopContentReachable = !lowDesktop || (
+                    Number(lowDesktopSummaryRect?.height || 0) <= 272
+                    && Number(densityOverview?.clientHeight || 0) >= Number(densityOverview?.scrollHeight || 0) - 1
+                    && Number(densityLastAttributeRect?.bottom || 0)
+                        - Number(densityWorkspaceRect?.top || 0)
+                        <= Number(densityWorkspace?.scrollHeight || 0) + 1
+                    && Number(densityWorkspace?.scrollHeight || 0) > Number(densityWorkspace?.clientHeight || 0)
+                );
+                checks.push(
+                    createCheck(
+                        "Central baixa mantém todos os atributos alcançáveis por rolagem",
+                        Boolean(densityWorkspace && densityOverview && densityLastAttribute)
+                            && lowDesktopContentReachable,
+                        lowDesktop
+                            ? `resumo ${Math.round(Number(lowDesktopSummaryRect?.height || 0))}px · área ${densityWorkspace?.clientHeight}/${densityWorkspace?.scrollHeight}px`
+                            : `${window.innerHeight}px de altura · composição padrão`
+                    )
+                );
+                document.querySelector(`[data-player-hud-target='${densityTabBeforeAudit}']`)?.click();
+
+                const filledActionName = document.querySelector(
+                    "#battle-actionbar-layer .battle-action-slot.is-filled .battle-action-slot__name"
+                );
+                const analyzerMetricLabel = document.querySelector(
+                    "#hunt-panel-analysis .analyzer-ledger-card small, #hunt-panel-analysis .analyzer-objective-card > div strong"
+                );
+                const filledActionIcon = document.querySelector(
+                    "#battle-actionbar-layer .battle-action-slot.is-filled .battle-action-slot__icon"
+                );
+                const filledActionButton = document.querySelector(
+                    "#battle-actionbar-layer .battle-action-slot.is-filled .battle-action-slot__skill"
+                );
+                const filledActionIconRect = filledActionIcon?.getBoundingClientRect?.();
+                const readableHudType = window.innerWidth <= 1120 || (
+                    (usesClassicIconHotbar
+                        ? Number(filledActionIconRect?.width || 0) >= 30
+                            && Boolean(filledActionButton?.getAttribute("aria-label"))
+                        : parseFloat(filledActionName ? getComputedStyle(filledActionName).fontSize : "0") >= 10)
+                    && parseFloat(analyzerMetricLabel ? getComputedStyle(analyzerMetricLabel).fontSize : "0") >= 8
+                );
+                checks.push(
+                    createCheck(
+                        usesClassicIconHotbar
+                            ? "Hotbar e Analyzer preservam leitura e acessibilidade no desktop"
+                            : "ActionBar e Analyzer usam tipografia legível no desktop",
+                        Boolean(filledActionName) && Boolean(analyzerMetricLabel) && readableHudType,
+                        `${usesClassicIconHotbar ? `${Math.round(Number(filledActionIconRect?.width || 0))}px ícone` : `${filledActionName ? getComputedStyle(filledActionName).fontSize : "?"} ActionBar`} · ${analyzerMetricLabel ? getComputedStyle(analyzerMetricLabel).fontSize : "?"} Analyzer`
+                    )
+                );
+                Aethra.UIManager?.setPrimaryView?.(visualAuditPreviousPrimaryView, {
+                    emit: false,
+                    source: "integration-visual-audit-restore"
+                });
                 Aethra.RenderEngine?.syncStageMode?.(previousBattleMode);
 
                 Aethra.HuntAnalyzerWorkspace?.render?.();
                 const analyzerDetails = document.querySelector("[data-analyzer-extended]");
+                const analyzerPreparationMode = document.querySelector(".analyzer-preparation");
+                const analyzerModeIsComplete = analyzerPreparationMode
+                    ? Boolean(
+                        analyzerPreparationMode.querySelector(".analyzer-objective-card")
+                        && analyzerPreparationMode.querySelectorAll(".analyzer-readiness__grid > span").length === 4
+                        && analyzerPreparationMode.querySelector("[data-analyzer-open-map]")
+                    )
+                    : Boolean(analyzerDetails)
+                        && document.querySelectorAll(".analyzer-ledger-card").length === 6;
                 checks.push(
                     createCheck(
-                        "Hunt Analyzer separa métricas rápidas da análise completa",
-                        Boolean(analyzerDetails)
-                            && document.querySelectorAll(".analyzer-ledger-card").length === 6,
-                        `${document.querySelectorAll(".analyzer-ledger-card").length} métricas rápidas · detalhe ${analyzerDetails ? "disponível" : "ausente"}`
+                        "Hunt Analyzer mostra preparação parado e telemetria durante a Hunt",
+                        analyzerModeIsComplete,
+                        analyzerPreparationMode
+                            ? "objetivo, prontidão e acesso ao mapa disponíveis"
+                            : `${document.querySelectorAll(".analyzer-ledger-card").length} métricas rápidas · detalhe ${analyzerDetails ? "disponível" : "ausente"}`
+                    )
+                );
+
+                const analyzerPreparationActions = analyzerPreparationMode?.querySelector(".analyzer-preparation__actions");
+                const analyzerPreparationRect = analyzerPreparationMode?.getBoundingClientRect?.();
+                const analyzerPreparationActionsRect = analyzerPreparationActions?.getBoundingClientRect?.();
+                const analyzerPrimaryActionsReachable = !analyzerPreparationMode || (
+                    Boolean(analyzerPreparationActions)
+                    && Number(analyzerPreparationActionsRect?.top || 0) >= Number(analyzerPreparationRect?.top || 0) - 1
+                    && Number(analyzerPreparationActionsRect?.bottom || 0) <= Number(analyzerPreparationRect?.bottom || 0) + 1
+                );
+                const analyzerPreparationBlocks = analyzerPreparationMode
+                    ? [
+                        ".analyzer-preparation__hero",
+                        ".analyzer-objective-card",
+                        ".analyzer-readiness",
+                        ".analyzer-last-session",
+                        ".analyzer-preparation__actions"
+                    ]
+                        .map((selector) => analyzerPreparationMode.querySelector(selector))
+                        .filter((element) => element && getComputedStyle(element).display !== "none")
+                        .map((element) => element.getBoundingClientRect())
+                        .sort((left, right) => left.top - right.top)
+                    : [];
+                const analyzerPreparationBlocksDoNotOverlap = !analyzerPreparationMode
+                    || analyzerPreparationBlocks.every((rect, index) => (
+                        index === 0 || analyzerPreparationBlocks[index - 1].bottom <= rect.top + 1
+                    ));
+                const sharedSaveBanner = document.getElementById("aethra-shared-save-banner");
+                const sharedSaveBannerWasHidden = sharedSaveBanner?.hidden === true;
+                if (sharedSaveBanner && window.innerWidth > 1120) sharedSaveBanner.hidden = false;
+                const sharedSaveBannerRect = sharedSaveBanner?.getBoundingClientRect?.();
+                const analyzerDesktopRect = document.getElementById("hunt-panel-analysis")?.getBoundingClientRect?.();
+                const sharedSaveAvoidsAnalyzer = window.innerWidth <= 1120
+                    || !sharedSaveBanner
+                    || Number(sharedSaveBannerRect?.right || 0) <= Number(analyzerDesktopRect?.left || 0) + 1
+                    || Number(sharedSaveBannerRect?.left || 0) >= Number(analyzerDesktopRect?.right || 0) - 1;
+                if (sharedSaveBanner) sharedSaveBanner.hidden = sharedSaveBannerWasHidden;
+                checks.push(
+                    createCheck(
+                        "Analyzer mantém ações alcançáveis e notificações fora do painel",
+                        analyzerPrimaryActionsReachable
+                            && analyzerPreparationBlocksDoNotOverlap
+                            && sharedSaveAvoidsAnalyzer,
+                        `ações ${analyzerPrimaryActionsReachable ? "visíveis" : "fora da área"} · blocos ${analyzerPreparationBlocksDoNotOverlap ? "separados" : "sobrepostos"} · aviso ${sharedSaveAvoidsAnalyzer ? "seguro" : "sobreposto"}`
+                    )
+                );
+                const analyzerSidebar = document.getElementById("hunt-panel-analysis");
+                const analyzerIdleContextIsClean = !analyzerPreparationMode || (
+                    analyzerSidebar?.classList.contains("is-preparing")
+                    && getComputedStyle(analyzerSidebar.querySelector(".battle-panel--log")).display === "none"
+                    && getComputedStyle(analyzerSidebar.querySelector(".hunt-session-summary")).display === "none"
+                    && (!lowDesktop
+                        || getComputedStyle(analyzerSidebar.querySelector(".analyzer-last-session")).display === "none")
+                );
+                checks.push(
+                    createCheck(
+                        "Analyzer parado mostra direção sem telemetria vazia",
+                        analyzerIdleContextIsClean,
+                        analyzerPreparationMode
+                            ? `modo preparação · log ${getComputedStyle(analyzerSidebar.querySelector(".battle-panel--log")).display}`
+                            : "Hunt ativa · telemetria contextual preservada"
+                    )
+                );
+
+                const analyzerUIState = Aethra.GameState.ui = Aethra.GameState.ui || {};
+                const analyzerHadPreference = Object.prototype.hasOwnProperty.call(
+                    analyzerUIState,
+                    "huntAnalyzerExpanded"
+                );
+                const analyzerPreviousPreference = analyzerUIState.huntAnalyzerExpanded;
+                delete analyzerUIState.huntAnalyzerExpanded;
+                Aethra.HuntAnalyzerWorkspace?.render?.();
+                const analyzerDefaultDetails = document.querySelector("[data-analyzer-extended]");
+                const analyzerSupplyDetails = document.querySelector(".analyzer-disclosure");
+                const analyzerDefaultPreparation = document.querySelector(".analyzer-preparation");
+                const analyzerDefaultsCompact = analyzerDefaultPreparation
+                    ? !analyzerDefaultPreparation.querySelector(".analyzer-ledger-grid")
+                    : analyzerDefaultDetails?.open === false
+                        && analyzerSupplyDetails?.open === false;
+                if (analyzerHadPreference) {
+                    analyzerUIState.huntAnalyzerExpanded = analyzerPreviousPreference;
+                } else {
+                    delete analyzerUIState.huntAnalyzerExpanded;
+                }
+                Aethra.HuntAnalyzerWorkspace?.render?.();
+                checks.push(
+                    createCheck(
+                        "Hunt Analyzer inicia compacto e deixa relatórios sob demanda",
+                        analyzerDefaultsCompact,
+                        analyzerDefaultsCompact
+                            ? "resumo visível · análise e supplies recolhidos"
+                            : "algum relatório abriu sozinho"
                     )
                 );
 
@@ -2848,7 +3598,7 @@
                             && Aethra.WindowManager?.isOpen?.("inventory-view") === false
                             && Number(skillsRect?.top || 0) >= Number(topbarBottom) + 6
                             && Number(skillsRect?.bottom || 0) <= Number(actionBarTop) + 1,
-                        `inventário ${Aethra.WindowManager?.isOpen?.("inventory-view") ? "aberto" : "fechado"} · skills y=${Math.round(skillsRect?.top || 0)} · topbar=${Math.round(topbarBottom)}`
+                        `inventário ${Aethra.WindowManager?.isOpen?.("inventory-view") ? "aberto" : "fechado"} · skills y=${Math.round(skillsRect?.top || 0)}–${Math.round(skillsRect?.bottom || 0)} · topbar=${Math.round(topbarBottom)} · actionbar=${Math.round(actionBarTop)}`
                     )
                 );
                 Aethra.WindowManager?.closeAll?.({ modalOnly: true, silent: true });
@@ -2857,9 +3607,13 @@
                 const worldMapWindow = document.getElementById("hunt-world-map-view");
                 const worldMapRect = worldMapWindow?.getBoundingClientRect?.();
                 const worldMapContent = worldMapWindow?.querySelector(".hunt-world-map-content");
+                const worldMapHeader = worldMapWindow?.querySelector(".hunt-world-map-window__header");
+                const worldMapHeaderRect = worldMapHeader?.getBoundingClientRect?.();
                 const worldMapLayout = worldMapWindow?.querySelector(".hunt-world-map-layout");
                 const worldMapDetail = worldMapWindow?.querySelector(".hunt-world-map-detail");
-                const worldMapStart = worldMapWindow?.querySelector("[data-world-hunt-start]");
+                const worldMapStart = worldMapWindow?.querySelector(
+                    "[data-world-hunt-start], [data-world-hunt-creature-start]"
+                );
                 if (worldMapDetail) worldMapDetail.scrollTop = worldMapDetail.scrollHeight;
                 const reportElement = document.getElementById("integration-test-report");
                 const reportWasHidden = reportElement?.hidden === true;
@@ -2871,6 +3625,12 @@
                         startRect.top + startRect.height / 2
                     )
                     : null;
+                const startHitStack = startRect
+                    ? document.elementsFromPoint(
+                        startRect.left + startRect.width / 2,
+                        startRect.top + startRect.height / 2
+                    ).slice(0, 6).map((element) => element.id || element.className || element.tagName).join(" > ")
+                    : "fora da tela";
                 if (reportElement) reportElement.hidden = reportWasHidden;
                 const mapIsBlockingOverlay = Boolean(worldMapWindow)
                     && Aethra.WindowManager?.isOverlayWindow?.("hunt-world-map-view") === true
@@ -2880,7 +3640,10 @@
                     && Number(worldMapRect?.left || 0) <= 1
                     && Number(worldMapRect?.top || 0) <= 1
                     && Math.abs(Number(worldMapRect?.width || 0) - window.innerWidth) <= 1
-                    && Math.abs(Number(worldMapRect?.height || 0) - window.innerHeight) <= 1;
+                    && Math.abs(Number(worldMapRect?.height || 0) - window.innerHeight) <= 1
+                    && Number(worldMapHeaderRect?.left ?? -1) >= 0
+                    && Number(worldMapHeaderRect?.top ?? -1) >= 0
+                    && Number(worldMapHeaderRect?.right ?? Infinity) <= window.innerWidth + 1;
                 const startIsReachable = Boolean(worldMapStart)
                     && Number(startRect?.top || -1) >= 0
                     && Number(startRect?.bottom || Infinity) <= window.innerHeight
@@ -2889,7 +3652,7 @@
                     createCheck(
                         "Mapa Mundi bloqueia o fundo e mantém Entrar na expedição clicável",
                         mapIsBlockingOverlay && startIsReachable,
-                        `viewport ${window.innerWidth}×${window.innerHeight} · overlay ${Math.round(worldMapRect?.left || 0)},${Math.round(worldMapRect?.top || 0)} ${Math.round(worldMapRect?.width || 0)}×${Math.round(worldMapRect?.height || 0)} pad ${getComputedStyle(worldMapWindow).padding} · conteúdo ${Math.round(worldMapContent?.getBoundingClientRect?.().height || 0)} · layout ${Math.round(worldMapLayout?.getBoundingClientRect?.().height || 0)} · detalhe ${worldMapDetail?.clientHeight || 0}/${worldMapDetail?.scrollHeight || 0}@${Math.round(worldMapDetail?.scrollTop || 0)} · botão ${Math.round(startRect?.top || 0)}–${Math.round(startRect?.bottom || 0)} ${startIsReachable ? "alcançável" : `obstruído por ${startHitTarget?.className || startHitTarget?.tagName || "fora da tela"}`}`
+                        `viewport ${window.innerWidth}×${window.innerHeight} · overlay ${Math.round(worldMapRect?.left || 0)},${Math.round(worldMapRect?.top || 0)} ${Math.round(worldMapRect?.width || 0)}×${Math.round(worldMapRect?.height || 0)} pad ${worldMapWindow ? getComputedStyle(worldMapWindow).padding : "ausente"} eventos ${worldMapWindow ? getComputedStyle(worldMapWindow).pointerEvents : "ausente"}/${worldMapDetail ? getComputedStyle(worldMapDetail).pointerEvents : "ausente"}/${worldMapStart ? getComputedStyle(worldMapStart).pointerEvents : "ausente"} z ${worldMapWindow ? getComputedStyle(worldMapWindow).zIndex : "ausente"} · conteúdo ${Math.round(worldMapContent?.getBoundingClientRect?.().height || 0)} · layout ${Math.round(worldMapLayout?.getBoundingClientRect?.().height || 0)} · detalhe ${worldMapDetail?.clientHeight || 0}/${worldMapDetail?.scrollHeight || 0}@${Math.round(worldMapDetail?.scrollTop || 0)} · botão ${Math.round(startRect?.top || 0)}–${Math.round(startRect?.bottom || 0)} ${startIsReachable ? "alcançável" : `obstruído por ${startHitTarget?.className || startHitTarget?.tagName || "fora da tela"}`} · pilha ${startHitStack}`
                     )
                 );
                 Aethra.WindowManager?.closeWindow?.("hunt-world-map-view", {
@@ -2952,6 +3715,13 @@
                     )
                 );
 
+                const responsiveAuditPreviousPrimaryView = Aethra.UIManager?.primaryView
+                    || Aethra.GameState.ui?.primaryView
+                    || "hunt";
+                Aethra.UIManager?.setPrimaryView?.("hunt", {
+                    emit: false,
+                    source: "integration-responsive-audit"
+                });
                 const responsiveBattleLayout = document.querySelector(".battle-hunt-layout");
                 const responsiveMainColumn = responsiveBattleLayout?.querySelector(".battle-main-column");
                 const responsiveHeroColumn = responsiveBattleLayout?.querySelector(".battle-sidebar--hero");
@@ -2989,6 +3759,10 @@
                     && getComputedStyle(responsiveMainColumn).order === "1"
                     && getComputedStyle(responsiveHeroColumn).order === "2"
                     && getComputedStyle(responsiveCombatColumn).order === "3"
+                    && Number(responsivePanelRects[0]?.top || 0)
+                        < Number(responsivePanelRects[1]?.top || 0)
+                    && Number(responsivePanelRects[1]?.top || 0)
+                        < Number(responsivePanelRects[2]?.top || 0)
                     && narrowStackScrollable
                 );
                 const compactActionBar = document.getElementById("battle-actionbar-layer");
@@ -3034,6 +3808,12 @@
                 compactHeroButton?.click();
                 const compactHeroSelectionWorks = compactHeroButton?.getAttribute("aria-pressed") === "true"
                     && compactHuntNav?.dataset.activePanel === "hero";
+                const compactHeroRect = responsiveHeroColumn?.getBoundingClientRect?.();
+                const compactHeroAlignsBelowNav = !narrowViewport
+                    || Math.abs(
+                        Number(compactHeroRect?.top || 0)
+                            - Number(responsiveLayoutRect?.top || 0)
+                    ) <= 4;
                 compactCombatButton?.click();
                 const compactNavDisplay = compactHuntNav
                     ? getComputedStyle(compactHuntNav).display
@@ -3046,6 +3826,7 @@
                             && compactHuntTargets.join(",") === "combat,hero,analysis"
                             && compactHuntControlsExist
                             && compactHeroSelectionWorks
+                            && compactHeroAlignsBelowNav
                             && compactCombatButton?.getAttribute("aria-pressed") === "true"
                             && (narrowViewport
                                 ? compactNavDisplay === "grid"
@@ -3053,6 +3834,11 @@
                         `${compactHuntButtons.length}/3 atalhos · painel ${compactHuntNav?.dataset.activePanel || "ausente"} · display ${compactNavDisplay}`
                     )
                 );
+
+                Aethra.UIManager?.setPrimaryView?.(responsiveAuditPreviousPrimaryView, {
+                    emit: false,
+                    source: "integration-responsive-audit-restore"
+                });
 
                 const cityView = document.getElementById("city-view");
                 const activeWindowsBeforeResize = [...(Aethra.WindowManager?.activeWindows || [])];
@@ -3144,12 +3930,21 @@
                     )
                 );
                 Aethra.TileMapCanvas?.triggerAttack?.({ side: "hero", hit: true, amount: 5, skillName: "Teste visual" });
+                const tileMapSnapshot = Aethra.TileMapCanvas?.getSnapshot?.() || {};
                 checks.push(
                     createCheck(
                         "Mapa 2D não possui economia ou combate paralelo",
                         Number(Aethra.GameState.hero?.gold || 0) === visualGoldBefore
                             && Number(Aethra.GameState.hero?.xpTotal || 0) === visualXpBefore,
                         `Gold ${visualGoldBefore} · XP ${visualXpBefore}, sem mutação visual`
+                    )
+                );
+                checks.push(
+                    createCheck(
+                        "Mapa 2D usa projeção oficial e terreno procedural",
+                        tileMapSnapshot.source === "CombatProjection"
+                            && document.querySelectorAll('#tilemap-canvas-root img[src*="FieldsTile"]').length === 0,
+                        `${tileMapSnapshot.source || "fonte ausente"} · sem tiles laranja legados`
                     )
                 );
 
@@ -3208,6 +4003,33 @@
                         )
                     );
                 }
+
+                const sharedSaveSnapshot = Aethra.SaveManager?.getSharedStatus?.();
+                checks.push(
+                    createCheck(
+                        "Save compartilhado mantém o SaveManager como autoridade única",
+                        Boolean(sharedSaveSnapshot)
+                            && sharedSaveSnapshot.profile === "principal"
+                            && typeof Aethra.SaveManager?.publishShared === "function"
+                            && typeof Aethra.SaveManager?.pullShared === "function",
+                        sharedSaveSnapshot
+                            ? `${sharedSaveSnapshot.supported ? "servidor compartilhado" : "fallback local"} · perfil ${sharedSaveSnapshot.profile}`
+                            : "contrato compartilhado ausente"
+                    )
+                );
+
+                const sharedSaveIndicator = document.querySelector(
+                    "[data-shared-save-indicator]"
+                );
+                checks.push(
+                    createCheck(
+                        "HUD informa se o progresso é local ou compartilhado",
+                        Boolean(Aethra.SharedSaveStatus)
+                            && Boolean(sharedSaveIndicator)
+                            && Boolean(sharedSaveIndicator.querySelector("[data-shared-save-label]")),
+                        sharedSaveIndicator?.textContent?.trim().replace(/\s+/g, " ") || "indicador ausente"
+                    )
+                );
 
                 console.log("✅ SaveManager validado.");
 

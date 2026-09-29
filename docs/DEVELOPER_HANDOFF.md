@@ -1,6 +1,6 @@
 # Handoff de desenvolvimento — HUD, automação, skills, crafting e manutenção
 
-Atualizado em: 2026-08-05
+Atualizado em: 2026-08-11
 Branch de continuidade: `main`  
 Baseline recebida antes deste ciclo: `25f328f`
 Checkpoint imediatamente anterior: `a3cb0d8`
@@ -180,7 +180,7 @@ paralelos que leem e escrevem o mesmo estado.
 | Requisitos de técnicas | `js/combat/SkillSystem.js` | catálogo e validação da técnica | ActionBar e combate | Consultar equipamento por API inventada ou duplicar família da arma na UI |
 | Oficina visual | `js/ui/ProfessionWorkshopUI.js` | somente estado efêmero de seleção | `CraftingSystem` | Alterar XP, materiais ou inventário durante `render()` |
 | Modernização visual | `js/ui/HudModernization.js` + CSS | somente apresentação | HUD existente | Introduzir regra de gameplay ou novo estado de domínio |
-| Persistência e migração | `js/infrastructure/SaveManager.js` | save atual | todos os sistemas | Trocar chave/schema sem migração explícita |
+| Persistência, migração e sincronização local | `js/infrastructure/SaveManager.js` | save atual + perfil canônico do servidor de desenvolvimento | todos os sistemas | Trocar chave/schema sem migração explícita, gravar `localStorage` fora do manager ou criar outro cliente de sync |
 
 `GameState.hero.disciplines` é a fonte de verdade. `GameState.professions` existe
 apenas como projeção de compatibilidade para código legado. Toda concessão de XP
@@ -283,6 +283,16 @@ A migração v77 → v78 atualiza para `quests.contractVersion: 4` e normaliza a
 garantia de treino com quantidade restante, decisão manual, sucesso garantido e
 rendimento mínimo, preservando contratos em andamento.
 A migração de profissões usa `hero.professionMigrationVersion: 2`.
+
+Em `127.0.0.1`/`localhost`, o mesmo `SaveManager` tenta usar o serviço de
+desenvolvimento de `server.py`. O perfil canônico fica em
+`.aethra-dev/saves/principal.json`, ignorado pelo Git; `localStorage` permanece
+como fallback privado. Se o perfil ainda não existe, nenhum navegador publica
+automaticamente: `SharedSaveStatus` exige o clique **Usar este progresso** no
+navegador cujo personagem deve ser preservado. Depois disso, somente a aba
+visível/com foco envia autosaves; ao recuperar foco, as demais puxam a revisão
+canônica. O servidor rejeita revisões obsoletas com HTTP 409 e devolve o estado
+atual, impedindo sobrescrita silenciosa. Não duplique esse protocolo em HUDs.
 Personagens existentes recebem Ilyra e retomam a ponte de tutorial quando
 necessário, sem repetir uma rota já concluída; personagens novos ou resetados
 seguem o fluxo completo.
@@ -445,3 +455,171 @@ Antes de criar um arquivo ou estado novo:
 5. considere migração de save e idempotência;
 6. execute o quality gate e a integração;
 7. atualize este handoff quando a autoridade, o contrato ou a dívida mudar.
+
+## 10. Checkpoint UI 2.0 — reconstrução da camada visual
+
+- Contrato novo: `docs/UI_V2_FOUNDATION.md`.
+- `css/aethra-ui-v2.css` passou a ser a autoridade visual carregada por último.
+  Dez folhas legadas conflitantes saíram do runtime; não as recoloque no HTML.
+- `WindowManager` agora usa janelas modais centralizadas, exclusivas e não
+  arrastáveis. `UIStabilityPass` não reaplica largura, altura ou posição inline
+  nesse modo.
+- Cidade foi limitada a quatro colunas em monitores amplos e recebe 3/2/1
+  colunas conforme a largura. O tracker de jornada foi compactado.
+- Central do Herói mantém identidade, HP, Mana, Vigor e os 11 equipamentos
+  visíveis. Atributos abre por padrão; Skills possuem filtro, busca, foco,
+  treino e oficina no espaço compacto.
+- ActionBar mantém dois ataques primários e dez slots uniformes. Cartas e mapa
+  2D são mutuamente exclusivos.
+- `TileMapCanvas` foi refeito como apresentação procedural determinística e lê
+  somente `CombatProjection`; os falsos tiles laranja, hordas, ondas e dano
+  paralelo foram removidos.
+- Inventário usa uma única janela central, uma única rolagem útil e paperdoll
+  3x4 sem slots sobrepostos. `TooltipManager` agora resolve instâncias da
+  mochila por `instanceId`, eliminando `Item Desconhecido` em saves existentes.
+- Mapa Mundi ocupa o viewport inteiro e captura ponteiro/teclado acima da HUD.
+- Auditoria visual de 2026-08-10 eliminou a margem legada negativa dos
+  cabeçalhos de janela. O Atlas agora mantém cabeçalho, modos e botão de fechar
+  dentro do viewport inclusive em 640 px.
+- A ActionBar neutraliza as grades altas ainda herdadas de `style.css`: slots
+  cheios e vazios, conteúdo interno e controles cabem na altura fixa. O teste
+  compara `scrollHeight` e `clientHeight`, portanto alinhamento sem conteúdo
+  visível já não produz falso positivo.
+- Recomposição visual de 2026-08-11 ampliou as laterais em monitores acima de
+  1440 px e elevou a tipografia útil do Analyzer e da ActionBar.
+- HUD 3.0 de 2026-08-11 substituiu a matriz provisória por um paperdoll com o
+  avatar central e 11 posições semânticas. HP, Mana, Vigor e o set permanecem
+  fixos; Itens, Skills e Build continuam como abas de detalhe.
+- Fora de combate, o Analyzer agora vira preparação de jornada com missão
+  acompanhada, progresso, prontidão, última medição e acesso ao mapa. Durante a
+  Hunt, os seis KPIs e a análise completa continuam disponíveis. As ações usam
+  `QuestSystem.getGuidance()` e `RenderEngine.handleQuestGuidance()`.
+- A pilha abaixo de 1120 px agora usa flex vertical real. A ordem física é
+  `Combate -> Herói -> Análise`, e o cálculo de navegação usa a posição do painel
+  relativa ao container rolável; o cabeçalho não fica mais escondido atrás da
+  navegação compacta.
+- Acima de 820 px, a ActionBar dá mais largura a habilidades equipadas e reduz
+  visualmente vazios; em telas compactas usa dez frações iguais. `max-width`
+  legado, gaps implícitos e conteúdo interno foram neutralizados; a regressão
+  cobre overflow horizontal e vertical de slot e botão.
+- O topo compacto preserva Gold em vez de Diamantes. O log de progressão também
+  traduz fontes estruturadas de XP e repara registros antigos que exibiam
+  `Fonte: [object Object]`.
+- `TileMapCanvas` aumentou os atores para 48 px e ganhou árvores internas,
+  arbustos, pedras e vegetação determinística. A cena agora reserva a altura
+  real da ActionBar, eliminando a faixa preta que restava em 640 px.
+- Correção de 2026-08-11 migrou os seletores atuais do Analyzer
+  (`analyzer-ledger-*`) e da mochila da Central (`player-backpack-*`) para a
+  folha UI 2.0. Não volte a depender de `hunt-analyzer-workspace.css` ou
+  `player-hud-workspace.css`. O Analyzer e a mochila possuem rolagem interna
+  quando a altura é curta; tooltips de HUD abrem ao lado da sidebar e o tooltip
+  de skill resolve a prioridade com `SkillController.getOrderedSkills()`.
+- O `min-width: 850px` herdado de `style.css` é neutralizado pela UI 2.0. Em
+  viewports até 1120 px, `.battle-hunt-layout` deve manter `min-width: 0` e
+  largura máxima de 100%; qualquer retorno desse limite volta a cortar a HUD.
+- Save compartilhado de desenvolvimento validado por
+  `scripts/test-shared-save-api.mjs`: criação, leitura, revisão, conflito,
+  atualização e remoção somam 7/7 verificações. `server.py` é a implementação
+  canônica; `server.js` apenas a encaminha e `dev-server.ps1` valida a API antes
+  de declarar o projeto online.
+- Ajuste HUD 3.1 de 2026-08-11 removeu as colisões da topbar em 1280 px,
+  recortou corretamente spritesheets transparentes no paperdoll, tornou os
+  cartões equipados da ActionBar horizontais e eliminou o overflow de 2 px da
+  faixa de automação. Em telas desktop baixas, a mochila rápida prioriza os
+  itens; o Analyzer mantém os comandos visíveis e o aviso de save fica sobre o
+  palco, sem bloquear a lateral.
+- HUD 4.0 de 2026-08-12 alterou a composição, não só a aparência: o mapa ocupa
+  aproximadamente 68% da largura útil em 1920 px; a Central retirou os quatro
+  atributos de combate duplicados e passou a abrir em Atributos; o Analyzer
+  parado recolhe Log e contadores vazios; a ActionBar foi limitada a 1540 px e
+  centralizada, com cinco skills principais e vazios discretos.
+- `PlayerHudWorkspace` grava `playerHudCompositionVersion = 4` para aplicar a
+  nova aba inicial uma única vez. `HuntAnalyzerWorkspace` projeta
+  `#hunt-panel-analysis.is-preparing`; CSS usa esse estado também abaixo de
+  1120 px. Não replique a decisão de atividade no CSS ou em outro estado.
+- HUD 4.2 corrige o desktop de 720 px de altura: o resumo fixo usa 270 px, a
+  workspace passa a rolar o conteúdo real de Atributos e o paperdoll conserva
+  slots mínimos de 24 px e avatar recortado com 70 px. A regressão verifica que
+  o último atributo é alcançável, em vez de aceitar conteúdo desenhado fora do
+  painel.
+- HUD 5 de 2026-08-12 está isolada em `css/aethra-hud-v5.css`. Ela amplia as
+  laterais úteis, troca Atributos por lista de uma coluna, compacta a prontidão
+  da Expedição, expõe a identidade da Action Bar e aumenta os atores do mapa
+  para 64 px. Ajustes futuros dessa composição devem entrar nessa folha.
+- HUD 5.1 de 2026-08-13 substitui a órbita sobreposta do paperdoll por uma
+  coluna exclusiva para o personagem e uma grade 6x2 para os onze slots. A
+  composição passa a usar `playerHudCompositionVersion = 5`; Habilidades têm
+  controles em uma linha, fichas com altura real e comandos explícitos de foco,
+  XP e coleta. A Expedição usa prontidão 2x2 legível, a ActionBar limita fichas
+  preenchidas a 210 px e o topo amplo recupera o resumo do herói. A regressão
+  rejeita colisões entre avatar/slots e qualquer conteúdo interno cortado.
+- A suíte `tests/integration.html` define `AETHRA_INTEGRATION_TEST` antes de
+  carregar o jogo. `SaveManager` deve manter o save compartilhado desativado
+  nesse modo: a suíte cria personagens, itens e progresso sintéticos e jamais
+  pode publicar no perfil `principal`.
+- As regressões agora medem colisão entre grupos da topbar, recorte do avatar,
+  nomes/controles da ActionBar e alcance das ações do Analyzer. Não reduza esses
+  testes a simples existência de elementos.
+- Correção HUD 5.2 de 2026-08-13 limita o resumo do herói da topbar ampla a
+  310 px e fixa marca, resumo, navegação e carteira em quatro colunas explícitas.
+  A ActionBar centraliza o conjunto ocupado mesmo quando há vários slots vazios.
+  A fixture de integração agora replica os quatro grupos reais da topbar; o
+  cabeçalho fictício anterior não detectava a regressão vista em 1920 px. Em
+  desktop baixo, o CTA duplicado do objetivo é ocultado e os blocos do Analyzer
+  usam linhas `max-content`, evitando que botão, prontidão e ações se sobreponham.
+- HUD 6 de 2026-08-13 está em `css/aethra-hud-v6.css` e muda a direção visual
+  para um cliente de RPG clássico inspirado na hierarquia de RuneScape/Tibia,
+  sem copiar assets: mapa dominante, docks laterais estreitos com moldura de
+  bronze, topo de 52 px e hotbar de 124 px. Em 1920 px o palco deve conservar
+  pelo menos 67% da largura; nomes, automação e personagem continuam legíveis.
+- HUD 6.1 remove o resumo duplicado do herói na topbar desktop, usa três grupos
+  estáveis (marca, navegação e carteira), troca Atributos por uma grade 2x3 e
+  contém a ActionBar em um dock central de até 1120 px. A hotbar passa a 116 px;
+  não reintroduza o painel duplicado nem estenda o fundo decorativo dos comandos
+  por toda a largura da tela.
+- HUD 6.2 substitui definitivamente a lista sequencial de equipamento por um
+  paperdoll corporal de quatro níveis: cabeça acima do avatar, arma/peitoral/mão
+  secundária junto ao tronco, anéis nas laterais e luvas/pernas/botas na base.
+  `data-paperdoll-layout="body"` identifica essa composição e a regressão exige
+  cinco slots de cada lado, quatro níveis, zero colisões e o avatar central.
+- HUD 6.3 trata a ActionBar como hotbar clássica de RPG, não como dashboard:
+  dez slots quadrados de 58 px, ícones e atalhos como informação primária,
+  indicador fino de automação e ataques principais separados à esquerda. O
+  conteúdo permanece centralizado em uma base estrutural de largura total; não
+  volte a usar cartões largos, texto truncado ou larguras diferentes entre
+  slots ocupados e vazios. `data-hotbar-layout="classic-icons"` identifica esse
+  contrato em desktop.
+- O cabeçalho da hotbar possui quatro colunas explícitas (título, recursos,
+  ferramentas e velocidade). Os botões `1x`, `2x` e `4x` devem permanecer na
+  mesma linha em qualquer desktop; a regressão mede alinhamento e overflow do
+  cabeçalho. A altura desktop é 116 px, reservada pelo palco, e o aviso de save
+  aparece acima da hotbar sem bloquear o centro do mapa.
+- `PlayerHudWorkspace` usa `playerHudCompositionVersion = 7`: o paperdoll e os
+  recursos vitais continuam fixos, mas a área rolável abre na Mochila. Isso
+  aproxima o fluxo de um cliente RuneScape/Tibia e evita desperdiçar o primeiro
+  estado com uma página de atributos passiva.
+- HUD 6.4 substitui a primeira tentativa da hotbar clássica pelo `command-deck`.
+  A faixa desktop não possui mais título nem HP/MP/Vigor duplicados: ataques
+  LMB/RMB, seletor de barra, dez ações e controles de velocidade formam uma só
+  linha de comando. Cada ação mede 64x76 px e usa glifos SVG internos em vez de
+  emoji. A toolbar informa nome e ocupação da barra; as setas apenas alternam
+  barras e o botão central abre a pilha completa.
+- A composição `command-deck` vale a partir de 1280 px. Entre 1121 e 1279 px a
+  HUD 6.3 permanece como fallback compacto. Não volte a exibir a faixa de
+  recursos dentro da ActionBar: ela já existe na Central do Herói e sua
+  duplicação foi uma das causas da baixa legibilidade.
+- O aviso de save usa apenas a âncora superior no `command-deck`. Nunca deixe
+  `top` e `bottom` ativos simultaneamente: isso estica a notificação por quase
+  todo o palco. A correção mantém altura máxima de 72 px e evita cobrir o log
+  da expedição junto ao rodapé.
+- Execute a matriz de integração sequencialmente. Vários runners simultâneos
+  podem disputar o mesmo save compartilhado e gerar falso negativo em testes de
+  loja, mesmo quando cada viewport passa isoladamente.
+- Quality gate atual: 655/655.
+- Integração atual: 213/213 em 640x720, 768x720, 1024x768, 1280x720,
+  1441x900, 1920x856, 1920x940 e 1920x1080 (atualizar o número se a suíte
+  crescer novamente).
+- Navegador real em 640x720, 1024x768 e 1920x1080: Cidade, Atlas, mapa
+  procedural, ActionBar e Inventário verificados; zero overflow horizontal,
+  zero imagens quebradas, nenhuma folha aposentada carregada e zero erros de
+  console.

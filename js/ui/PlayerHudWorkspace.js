@@ -18,11 +18,12 @@
         { id: "legs", label: "Pernas", icon: "Ⅱ" },
         { id: "feet", label: "Botas", icon: "⌄" }
     ];
-    const SECTION_ORDER = ["backpack", "skills", "overview"];
+    const HUD_COMPOSITION_VERSION = 7;
+    const SECTION_ORDER = ["overview", "backpack", "skills"];
     const SECTION_LABELS = {
         equipment: ["♟", "Set equipado", "0/11 slots ativos", "inventory-view", "Gerenciar"],
         backpack: ["▦", "Backpack", "Loot, supplies e materiais", "inventory-view", "Abrir"],
-        skills: ["↑", "Skills", "Maestrias por categoria", "skills-view", "Prioridades"],
+        skills: ["↑", "Habilidades", "Maestrias por categoria", "skills-view", "Abrir diário"],
         overview: ["✦", "Atributos", "Impacto real da build", null, "6 atributos"]
     };
     const RARITY_ORDER = {
@@ -116,34 +117,28 @@
     function renderSummary() {
         const root = document.getElementById("stats-display");
         if (!root) return false;
-        const { hero, stats, hp, hpMax, mana, manaMax, vigor, vigorMax, xp, xpMax } = getHeroResources();
+        const { hero, hp, hpMax, mana, manaMax, vigor, vigorMax, xp, xpMax } = getHeroResources();
         const name = hero.name || "Aethra";
-        const arena = Aethra.ColiseumSystem?.getSnapshot?.() || null;
-        const rankTag = arena?.player?.rankTag || "#43";
         const bagCount = (hero.bag || []).length;
         const xpPercent = clamp((xp / Math.max(1, xpMax)) * 100).toFixed(0);
-
-        const dmgMin = Math.max(1, Math.floor(Number(stats.damageMin || stats.attack || 1)));
-        const dmgMax = Math.max(dmgMin, Math.floor(Number(stats.damageMax || stats.attack || dmgMin)));
-        const defense = Math.max(0, Math.floor(Number(stats.defense || stats.armor || 0)));
-        const precision = Math.round(clamp(Number(stats.precision || 0.85), 0, 1) * 100);
-        const critical = Math.round(clamp(Number(stats.critical || 0.05), 0, 1) * 100);
         const topDiscipline = getTopDiscipline(hero);
         const heroSprite = Aethra.SpriteLoader?.normalizeHeroSource?.(
             hero.sprite_url || hero.spriteUrl || hero.sprite || hero.image,
             hero
         ) || "assets/entities/player_idle.png";
+        const location = currentLocation();
 
         root.innerHTML = `
-            <section class="player-hud-summary" aria-label="Resumo do personagem">
+            <section class="player-hud-summary player-hud-summary--rpg" data-hud-generation="4" aria-label="Resumo do personagem">
                 <header class="player-hud-summary__identity">
                     <span class="player-hud-summary__portrait">
                         <img src="${esc(heroSprite)}" alt="" draggable="false">
                     </span>
-                    <div>
+                    <div class="player-hud-summary__identity-copy">
                         <strong>${esc(name)}</strong>
-                        <span>NV ${fmt(getHeroLevel(hero))} · ${fmt(hero.gold)} Gold</span>
+                        <span>Nível ${fmt(getHeroLevel(hero))} · ${esc(topDiscipline)}</span>
                     </div>
+                    <span class="player-hud-summary__location is-${esc(location.tone)}"><i></i>${esc(location.state)}</span>
                 </header>
 
                 <div class="player-hud-summary__vitals">
@@ -152,47 +147,19 @@
                     ${resourceRow("vigor", "Vigor", vigor, vigorMax, "⚡")}
                 </div>
 
-                <div class="player-hud-summary__body">
-                    <div class="player-hud-summary__col player-hud-summary__col--left">
-                        <div class="player-stat-badge" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="Poder de Ataque" data-tooltip-body="Dano físico mínimo e máximo por golpe.">
-                            <small>⚔ DANO</small>
-                            <strong>${dmgMin}–${dmgMax}</strong>
-                        </div>
-                        <div class="player-stat-badge" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="Defesa da Armadura" data-tooltip-body="Reduz o dano bruto recebido dos inimigos.">
-                            <small>🛡 DEFESA</small>
-                            <strong>${defense}</strong>
-                        </div>
-                        <div class="player-stat-badge" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="Precisão" data-tooltip-body="Chance de acertar ataques e ignorar esquiva.">
-                            <small>🎯 PRECISÃO</small>
-                            <strong>${precision}%</strong>
-                        </div>
-                        <div class="player-stat-badge" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="Crítico" data-tooltip-body="Chance de desfazer acerto crítico com dano elevado.">
-                            <small>💥 CRÍTICO</small>
-                            <strong>${critical}%</strong>
-                        </div>
-                    </div>
-
+                <section class="player-loadout" aria-label="Set equipado">
+                    <header class="player-loadout__header">
+                        <span><small>SET ATIVO</small><strong>Equipamento</strong></span>
+                        <button type="button" data-open-window="inventory-view"><b data-player-gear-count>0/11</b> Gerenciar</button>
+                    </header>
                     <div id="battle-equipment-summary" class="player-equipment-matrix player-equipment-matrix--tibia"></div>
+                </section>
 
-                    <div class="player-hud-summary__col player-hud-summary__col--right">
-                        <div class="player-stat-badge" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="Mochila sem Limites" data-tooltip-body="Itens acumulados no inventário. O scroll da mochila é infinito.">
-                            <small>🎒 MOCHILA</small>
-                            <strong>${bagCount} itens</strong>
-                        </div>
-                        <div class="player-stat-badge" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="Progresso de XP" data-tooltip-body="Experiência necessária para alcançar o próximo nível do herói.">
-                            <small>⬆ XP NÍVEL</small>
-                            <strong>${xpPercent}%</strong>
-                        </div>
-                        <div class="player-stat-badge" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="Ranking do Coliseu" data-tooltip-body="Sua colocação no Coliseu de Aethra.">
-                            <small>⚜ RANK</small>
-                            <strong>${esc(rankTag)}</strong>
-                        </div>
-                        <div class="player-stat-badge" data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="Foco de Maestria" data-tooltip-body="Sua disciplina principal mais desenvolvida.">
-                            <small>⚔ FOCO</small>
-                            <strong>${esc(topDiscipline)}</strong>
-                        </div>
-                    </div>
-                </div>
+                <footer class="player-adventure-readout">
+                    <span data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="Progresso de nível" data-tooltip-body="Experiência necessária para alcançar o próximo nível."><small>PRÓXIMO NÍVEL</small><strong>${xpPercent}%</strong></span>
+                    <span data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="Mochila" data-tooltip-body="Itens carregados pelo herói."><small>MOCHILA</small><strong>${bagCount} itens</strong></span>
+                    <span data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="Local atual" data-tooltip-body="Onde o herói está agora."><small>LOCAL</small><strong>${esc(location.name)}</strong></span>
+                </footer>
             </section>`;
 
         renderEquipmentMatrix();
@@ -303,8 +270,14 @@
         views.classList.remove("hero-hub__accordion");
         views.removeAttribute("style");
 
+        const state = uiState();
+        if (Number(state.playerHudCompositionVersion || 0) < HUD_COMPOSITION_VERSION) {
+            state.playerHudCompositionVersion = HUD_COMPOSITION_VERSION;
+            state.playerHudTab = "backpack";
+        }
+
         const headerCopy = hub.querySelector(".hero-hub__header > div:first-child");
-        if (headerCopy) headerCopy.innerHTML = `<small>PERSONAGEM E INVENTÁRIO</small><h2>Central do Herói</h2>`;
+        if (headerCopy) headerCopy.innerHTML = `<small>PERSONAGEM · EQUIPAMENTO</small><h2>Herói</h2>`;
         hub.querySelector(".hero-hub__toggle-all")?.remove();
         hub.querySelector(".hero-hub__tabs")?.remove();
 
@@ -319,9 +292,9 @@
             nav.dataset.playerHudNav = "";
             nav.setAttribute("aria-label", "Atalhos do painel do herói");
             nav.innerHTML = `
-                <button type="button" class="is-active" data-player-hud-target="backpack"><span>▦</span><b>Itens</b><em data-player-bag-count>0</em></button>
-                <button type="button" data-player-hud-target="skills"><span>↑</span><b>Skills</b><em data-player-skill-count>0</em></button>
-                <button type="button" data-player-hud-target="overview"><span>✦</span><b>Build</b><em data-player-build-count>0</em></button>`;
+                <button type="button" class="is-active" data-player-hud-target="overview"><span>✦</span><b>Atributos</b><em data-player-build-count>0</em></button>
+                <button type="button" data-player-hud-target="backpack"><span>▦</span><b>Itens</b><em data-player-bag-count>0</em></button>
+                <button type="button" data-player-hud-target="skills"><span>↑</span><b>Habilidades</b><em data-player-skill-count>0</em></button>`;
             views.insertAdjacentElement("beforebegin", nav);
         }
 
@@ -513,8 +486,21 @@
         const equipment = Aethra.GameState.playerEquipment || Aethra.GameState.hero?.equipment || {};
         const equipped = SLOT_DEFINITIONS.filter((slot) => equipment[slot.id]);
 
+        const hero = Aethra.GameState.hero || {};
+        const heroSprite = Aethra.SpriteLoader?.normalizeHeroSource?.(
+            hero.sprite_url || hero.spriteUrl || hero.sprite || hero.image,
+            hero
+        ) || "assets/entities/player_idle.png";
+
         container.className = "hero-paperdoll player-equipment-matrix player-equipment-matrix--persistent";
-        container.innerHTML = SLOT_DEFINITIONS.map((slot) => {
+        container.dataset.paperdollLayout = "body";
+        container.innerHTML = `
+            <div class="player-paperdoll-avatar" aria-hidden="true">
+                <i></i>
+                <span class="player-paperdoll-sprite"><img src="${esc(heroSprite)}" alt="" draggable="false"></span>
+                <span class="player-paperdoll-count"><b>${equipped.length}</b><small>peças</small></span>
+            </div>
+        ` + SLOT_DEFINITIONS.map((slot) => {
             const item = equipment[slot.id] || null;
             const image = item ? Aethra.GameData?.getItemImage?.(item) : "";
             const rarity = item ? Aethra.GameData?.getRarityPresentation?.(item) : null;
@@ -764,24 +750,24 @@
                     <div class="player-skill-card-slim__actions">
                         <button type="button" class="player-skill-card__btn ${isFocused ? "btn--focused" : "btn--focus"}"
                             data-focus-discipline="${esc(entryId)}" ${isFocused ? "disabled" : ""}>
-                            ${isFocused ? "★ Foco" : "☆ Focar"}
+                            ${isFocused ? "★ Foco atual" : "☆ Definir foco"}
                         </button>
                         <button type="button" class="player-skill-card__btn ${trainingLocked ? "btn--locked" : "btn--training"}"
                             data-skill-training-mode="${esc(entryId)}" data-next-mode="${trainingLocked ? "training" : "locked"}">
-                            ${trainingLocked ? "🔒 Travado" : "◆ Treinando"}
+                            ${trainingLocked ? "▶ Liberar XP" : "⏸ Pausar XP"}
                         </button>
                         ${!isMinimized && isGathering ? `
                             <button type="button" class="player-skill-card__btn ${policyEnabled ? "btn--active" : "btn--inactive"}"
                                 data-profession-policy="${esc(entryId)}" data-policy-enabled="${policyEnabled ? "false" : "true"}">
-                                ${policyEnabled ? "✓ Coletar" : "○ Ignorar"}
+                                ${policyEnabled ? "✓ Coleta ativa" : "○ Coleta ignorada"}
                             </button>` : ""}
                         ${!isMinimized && isCrafting ? `
                             <button type="button" class="player-skill-card__btn btn--workshop" data-open-profession-workshop="${esc(entryId)}">
-                                ${entryId === "alchemy" ? "⚗ Laboratório" : "⚒ Oficina"}
+                                ${entryId === "alchemy" ? "⚗ Abrir laboratório" : "⚒ Abrir oficina"}
                             </button>` : ""}
                         ${!isMinimized && isSpecializable ? `
                             <button type="button" class="player-skill-card__btn btn--specialization" data-open-profession-specialization="${esc(entryId)}">
-                                ✦ Árvore
+                                ✦ Especialização
                             </button>` : ""}
                     </div>
                 </article>`;
@@ -801,7 +787,7 @@
 
                 <button type="button" class="player-skill-toggle-all-btn" data-toggle-all-skill-pins
                     data-ui-tooltip data-tooltip-kind="hud" data-tooltip-title="Alternar Visão de Skills" data-tooltip-body="Minimiza todas as skills inativas para focar apenas nas habilidades que está evoluindo.">
-                    📌 Visão Foco
+                    ⌖ Organizar foco
                 </button>
 
                 <label class="player-skill-search">
