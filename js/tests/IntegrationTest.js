@@ -4052,6 +4052,37 @@
 
                 console.log("✅ SaveManager validado.");
 
+                /*
+                 * Regressão: o SaveManager carrega antes de BattleSystem e
+                 * HuntSystem registrarem o listener de save:loaded. Um save
+                 * gravado no meio de uma luta voltava com isFighting=true e sem
+                 * timer — combate congelado para sempre, e o Analyzer dizendo
+                 * "Nenhuma hunt ativa" com a caça marcada como ativa. Ambos os
+                 * sistemas agora encerram sessões interrompidas no init.
+                 * Fica no fim da suíte porque encerra qualquer luta em curso.
+                 */
+                Aethra.GameState.battle.isFighting = true;
+                Aethra.GameState.battle.creature = { id: "giant_rat", name: "Rato Gigante", hp: 3 };
+                Aethra.BattleSystem.isFighting = true;
+                Aethra.GameState.hunt.isActive = true;
+                Aethra.GameState.hunt.currentEnemy = { id: "giant_rat" };
+                const battleAfterReset = Aethra.BattleSystem.resetInterruptedBattle?.();
+                const huntAfterReset = Aethra.HuntSystem.resetInterruptedHunt?.();
+                checks.push(
+                    createCheck(
+                        "Luta e caça salvas no meio da sessão não voltam congeladas",
+                        Boolean(battleAfterReset && huntAfterReset)
+                            && Aethra.BattleSystem.isFighting === false
+                            && Aethra.GameState.battle.isFighting === false
+                            && Aethra.GameState.battle.creature === null
+                            && Aethra.BattleSystem.timerId === null
+                            && Aethra.GameState.hunt.isActive === false
+                            && Aethra.GameState.hunt.currentEnemy === null
+                            && Aethra.HuntSystem.config.isRunning === false,
+                        `luta ${Aethra.BattleSystem.isFighting ? "ativa" : "encerrada"} · caça ${Aethra.GameState.hunt.isActive ? "ativa" : "encerrada"}`
+                    )
+                );
+
                 const failedChecks = checks.filter((check) => !check.passed);
                 const completedAt = Date.now();
 

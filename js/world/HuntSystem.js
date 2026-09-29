@@ -50,6 +50,12 @@
             Aethra.HuntCatalog?.applyTo?.(this);
             this.syncGameDataWithLootSystem();
             this.bindEvents();
+            /*
+             * O save é carregado antes deste listener existir. Sem este reset,
+             * uma caça salva como ativa voltava sem timers: o estado dizia
+             * "ativa" enquanto o runtime (e o Analyzer) dizia "nenhuma hunt".
+             */
+            this.resetInterruptedHunt();
             this.initialized = true;
 
             Aethra.EventBus.emit("hunt:ready", {
@@ -124,15 +130,7 @@
                 if (this.config.isRunning) this.stopHunt("hero-defeated");
             });
 
-            Aethra.EventBus.on("save:loaded", () => {
-                this.clearTimers();
-                this.config.isRunning = false;
-                this.config.isPaused = false;
-                this.ensureState();
-                Aethra.GameState.hunt.isActive = false;
-                Aethra.GameState.hunt.isPaused = false;
-                Aethra.GameState.hunt.currentEnemy = null;
-            });
+            Aethra.EventBus.on("save:loaded", () => this.resetInterruptedHunt());
 
             Aethra.EventBus.on("gamedata:creature-registered", () => {
                 this.syncGameDataWithLootSystem();
@@ -141,6 +139,22 @@
             Aethra.EventBus.on("gamedata:item-registered", () => {
                 this.syncGameDataWithLootSystem();
             });
+        },
+
+        /*
+         * Timers de encontro vivem só em memória, então uma caça vinda do
+         * disco não pode ser retomada: é encerrada e o herói volta ao
+         * planejamento da expedição.
+         */
+        resetInterruptedHunt() {
+            this.clearTimers();
+            this.config.isRunning = false;
+            this.config.isPaused = false;
+            this.ensureState();
+            Aethra.GameState.hunt.isActive = false;
+            Aethra.GameState.hunt.isPaused = false;
+            Aethra.GameState.hunt.currentEnemy = null;
+            return this.getSnapshot();
         },
 
         syncGameDataWithLootSystem() {

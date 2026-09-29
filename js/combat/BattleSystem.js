@@ -55,6 +55,13 @@
 
             this.ensureState();
             this.bindEvents();
+            /*
+             * O SaveManager carrega o save antes deste módulo registrar o
+             * listener de save:loaded. Um save gravado no meio de uma luta traz
+             * isFighting=true, mas o timer de rodadas não sobrevive ao reload:
+             * sem este reset o combate ficava congelado para sempre.
+             */
+            this.resetInterruptedBattle();
             this.initialized = true;
 
             Aethra.EventBus.emit("BattleSystemReady", this.getSnapshot());
@@ -253,29 +260,26 @@
                 });
             });
 
-            Aethra.EventBus.on("save:loaded", () => {
-                this.cancelTimer();
-                this.battleToken += 1;
-                this.ensureState();
+            Aethra.EventBus.on("save:loaded", () => this.resetInterruptedBattle());
+            Aethra.EventBus.on("state:restored", () => this.resetInterruptedBattle());
+        },
 
-                Aethra.GameState.battle.isFighting = false;
-                Aethra.GameState.battle.creature = null;
-                this.isFighting = false;
+        /*
+         * Uma luta não pode ser retomada de um save: o timer e o token da
+         * rodada vivem só em memória. Qualquer luta marcada como ativa vinda
+         * do disco é encerrada, devolvendo o herói ao estado ocioso.
+         */
+        resetInterruptedBattle() {
+            this.cancelTimer();
+            this.battleToken += 1;
+            this.ensureState();
 
-                this.syncCombatMirror();
-            });
+            Aethra.GameState.battle.isFighting = false;
+            Aethra.GameState.battle.creature = null;
+            this.isFighting = false;
 
-            Aethra.EventBus.on("state:restored", () => {
-                this.cancelTimer();
-                this.battleToken += 1;
-                this.ensureState();
-
-                Aethra.GameState.battle.isFighting = false;
-                Aethra.GameState.battle.creature = null;
-                this.isFighting = false;
-
-                this.syncCombatMirror();
-            });
+            this.syncCombatMirror();
+            return this.getSnapshot();
         },
 
         validateCreature(creatureId) {
