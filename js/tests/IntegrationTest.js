@@ -4449,6 +4449,30 @@
                 );
                 Aethra.UIManager?.setPrimaryView?.(cityViewBefore, { source: "integration-restore" });
 
+                /*
+                 * HuntAtlas: a caçada focada registra a rota da criatura, inicia
+                 * com o alvo certo e pedir a mesma rota de novo só retoma.
+                 */
+                const atlasTarget = Aethra.HuntAtlas?.getCreatureCatalog?.()
+                    .find((entry) => Aethra.HuntAtlas.isUnlocked(entry.level)) || null;
+                let atlasWorks = false;
+                let atlasDetail = "nenhuma criatura liberada no catálogo";
+                if (atlasTarget) {
+                    const firstStart = Aethra.HuntAtlas.startCreatureHunt(atlasTarget.id, { stopReason: "integration-atlas" });
+                    const huntDuring = { ...Aethra.GameState.hunt };
+                    const secondStart = Aethra.HuntAtlas.startRoute(firstStart.huntId, { stopReason: "integration-atlas" });
+                    Aethra.HuntSystem.stopHunt("integration-atlas");
+                    atlasWorks = firstStart.started === true
+                        && firstStart.resumed === false
+                        && secondStart.resumed === true
+                        && huntDuring.isActive === true
+                        && huntDuring.huntId === `targeted__${atlasTarget.id}`
+                        && huntDuring.targetCreatureId === atlasTarget.id
+                        && Aethra.GameState.hunt.isActive === false;
+                    atlasDetail = `${atlasTarget.name}: ${firstStart.started ? "iniciou" : "não iniciou"} · repetir ${secondStart.resumed ? "retomou" : "reiniciou"} · alvo ${huntDuring.targetCreatureId || "?"}`;
+                }
+                checks.push(createCheck("Atlas inicia caçada focada e retoma a mesma rota sem reiniciar", atlasWorks, atlasDetail));
+
                 // UI 3.0 — fase 4 (Missões): lista do QuestSystem e acompanhamento pelo dono.
                 windowManager.openWindow("quests-view", { source: "integration-ui3-quests" });
                 const questsLayer = document.querySelector("#ui3-root [data-ui3-window='quests-view']");

@@ -176,78 +176,15 @@
     }
 
     function getEncounterCreatureIds(definition) {
-        return Array.from(new Set((definition?.enemies || []).map((entry) => typeof entry === "string" ? entry : entry.id).filter(Boolean)));
+        return Aethra.HuntAtlas.encounterCreatureIds(definition);
     }
 
     function buildCreatureCatalog() {
-        const byId = new Map();
-        const definitions = Object.values(Hunt.hunts || {});
-        definitions.forEach((huntDef) => {
-            getEncounterCreatureIds(huntDef).forEach((creatureId) => {
-                const creature = Aethra.GameData?.creatures?.[creatureId];
-                if (!creature) return;
-                const level = Number(creature.level || creature.recommendedLevel || huntDef.minLevel || 1);
-                const existing = byId.get(creatureId) || {
-                    id: creatureId,
-                    name: creature.name || creatureId,
-                    level,
-                    type: creature.type || creature.family || creature.monsterType || 'Criatura',
-                    hunts: [],
-                    rewards: new Set(),
-                    tags: new Set()
-                };
-                existing.level = Math.min(existing.level, level);
-                existing.hunts.push({
-                    id: huntDef.id,
-                    name: huntDef.name,
-                    biome: huntDef.biome,
-                    minLevel: Number(huntDef.minLevel || 1),
-                    region: huntDef.region
-                });
-                (huntDef.rewards || []).forEach((reward) => existing.rewards.add(reward));
-                [creature.type, creature.family, huntDef.biome, huntDef.region].filter(Boolean).forEach((tag) => existing.tags.add(String(tag)));
-                byId.set(creatureId, existing);
-            });
-        });
-        return Array.from(byId.values()).sort((a,b) => a.level - b.level || a.name.localeCompare(b.name));
+        return Aethra.HuntAtlas.getCreatureCatalog();
     }
 
     function getCreatureLootPreview(creature = {}) {
-        const economyPreview = Aethra.LootSystem?.getEconomyPreview?.(creature.id || creature.catalogId);
-        if (economyPreview?.drops?.length) {
-            return economyPreview.drops
-                .map((drop) => ({
-                    templateId: drop.templateId,
-                    name: drop.name,
-                    icon: drop.icon || '◆',
-                    chance: Math.max(0, Number(drop.chance || 0)),
-                    min: Math.max(1, Number(drop.min || 1)),
-                    max: Math.max(1, Number(drop.max || drop.min || 1)),
-                    rarity: drop.rarity || 'Comum',
-                    value: Number(drop.value || 0),
-                    guaranteed: drop.guaranteed === true,
-                    sourceClass: drop.sourceClass || 'material'
-                }))
-                .sort((a, b) => Number(b.guaranteed) - Number(a.guaranteed) || b.chance - a.chance || b.value - a.value);
-        }
-
-        const directTable = Array.isArray(creature.lootTable) && creature.lootTable.length
-            ? creature.lootTable
-            : Aethra.LootProfileRegistry?.buildLootTable?.(creature) || [];
-        return directTable.map((drop) => {
-            const templateId = drop.templateId || drop.id;
-            const template = Aethra.GameData?.items?.[templateId] || Aethra.ItemTemplates?.[templateId] || Aethra.LootProfileRegistry?.materials?.[templateId] || {};
-            return {
-                templateId,
-                name: drop.name || template.name || templateId,
-                icon: drop.icon || template.icon || '◆',
-                chance: Math.max(0, Number(drop.chance || 0)),
-                min: Math.max(1, Number(drop.min ?? drop.minQuantity ?? 1)),
-                max: Math.max(1, Number(drop.max ?? drop.maxQuantity ?? drop.min ?? 1)),
-                rarity: drop.rarity || template.rarity || 'Comum',
-                value: Number(template.price ?? template.value ?? template.basePrice ?? 0)
-            };
-        }).sort((a, b) => b.chance - a.chance || b.value - a.value);
+        return Aethra.HuntAtlas.getCreatureLootPreview(creature);
     }
 
     function rarityClass(rarity) {
@@ -255,24 +192,11 @@
     }
 
     function getExpeditionTags(definition = {}) {
-        const enemies = getEncounterCreatureIds(definition)
-            .map((id) => Aethra.GameData?.creatures?.[id])
-            .filter(Boolean);
-        const danger = Number(definition.danger || 1);
-        const ranks = enemies.map((entry) => normalizedSearch(entry.rank));
-        const tags = [];
-        if (danger <= 3) tags.push('SOLO');
-        if (danger >= 3) tags.push('GRUPO');
-        if (danger >= 4 || ranks.some((rank) => rank.includes('elite'))) tags.push('ELITE');
-        if (danger >= 5 || ranks.some((rank) => rank.includes('boss') || rank.includes('legend'))) tags.push('BOSS');
-        return tags.length ? tags : ['SOLO'];
+        return Aethra.HuntAtlas.getExpeditionTags(definition);
     }
 
     function getExpeditionRecommendedMode(definition = {}) {
-        const tags = getExpeditionTags(definition);
-        if (tags.includes('BOSS')) return 'Grupo 3–5';
-        if (tags.includes('GRUPO')) return 'Solo avançado / Grupo';
-        return 'Solo';
+        return Aethra.HuntAtlas.getRecommendedMode(definition);
     }
 
     function filterCreatureCatalog(creatures, heroLevel, filters) {
@@ -303,33 +227,11 @@
     }
 
     function ensureTargetedCreatureHunt(creatureId) {
-        const creature = Aethra.GameData?.creatures?.[creatureId];
-        if (!creature) return null;
-        const source = Object.values(Hunt.hunts || {}).find((hunt) => getEncounterCreatureIds(hunt).includes(creatureId));
-        const huntId = `targeted__${creatureId}`;
-        Hunt.hunts[huntId] = {
-            id: huntId,
-            name: `Caçada: ${creature.name || creatureId}`,
-            region: source?.region || 'Hunt Direta',
-            biome: source?.biome || (creature.type || 'Caçada Direta'),
-            description: `Caçada focada em ${creature.name || creatureId}. Loop contínuo com essa criatura como alvo principal.`,
-            minLevel: Number(creature.level || creature.recommendedLevel || source?.minLevel || 1),
-            maxLevel: Number(creature.level || creature.recommendedLevel || source?.maxLevel || source?.minLevel || 1),
-            danger: Number(source?.danger || Math.max(1, Math.ceil(Number(creature.level || source?.minLevel || 1) / 20))),
-            icon: source?.icon || '✦',
-            position: source?.position || { x: 50, y: 50 },
-            rewards: Array.isArray(source?.rewards) ? [...source.rewards] : ['Loot focado', 'XP direta'],
-            enemies: [{ id: creatureId, weight: 100 }],
-            encounterChance: 0.82,
-            mode: 'hunt'
-        };
-        return Hunt.hunts[huntId];
+        return Aethra.HuntAtlas.ensureTargetedHunt(creatureId);
     }
 
     function getSpecializedHunts() {
-        return Object.values(Hunt.hunts || {})
-            .filter((definition) => definition?.id && definition.mode === "specialized")
-            .sort((a, b) => Number(a.minLevel || 1) - Number(b.minLevel || 1));
+        return Aethra.HuntAtlas.getSpecializedHunts();
     }
 
     function getHuntAtlasView() {
@@ -452,12 +354,8 @@
         });
         root.querySelector("[data-specialized-hunt-start]")?.addEventListener("click", (event) => {
             const huntId = event.currentTarget.dataset.specializedHuntStart;
-            const current = Aethra.GameState.hunt || {};
             Aethra.UIManager?.setPrimaryView?.("hunt", { source: "specialized-hunt" });
-            if (current.isActive && current.huntId !== huntId) Hunt.stopHunt?.("specialized-hunt-switch");
-            const started = current.isActive && current.huntId === huntId
-                ? true
-                : Hunt.startHunt?.(huntId, { mode: "specialized" });
+            const { started } = Aethra.HuntAtlas.startRoute(huntId, { mode: "specialized", stopReason: "specialized-hunt-switch" });
             if (!started) return renderWorldMap(huntId, "hunts");
             WorldWindows?.closeWindow?.("hunt-world-map-view", { source: "specialized-hunt-start" });
             Render.renderBattleCards?.();
@@ -626,13 +524,9 @@
             });
             root.querySelector('[data-world-hunt-creature-start]')?.addEventListener('click', (event) => {
                 const creatureId = event.currentTarget.dataset.worldHuntCreatureStart;
-                const definition = ensureTargetedCreatureHunt(creatureId);
-                if (!definition) return;
+                if (!Aethra.GameData?.creatures?.[creatureId]) return;
                 Aethra.UIManager?.setPrimaryView?.('hunt', { source: 'world-map-hunt' });
-                if (Aethra.GameState.hunt?.isActive && Aethra.GameState.hunt?.huntId !== definition.id) {
-                    Hunt.stopHunt?.('world-map-hunt-switch');
-                }
-                const started = Aethra.GameState.hunt?.isActive && Aethra.GameState.hunt?.huntId === definition.id ? true : Hunt.startHunt?.(definition.id, { mode: 'hunt', targetCreatureId: creatureId });
+                const { started } = Aethra.HuntAtlas.startCreatureHunt(creatureId, { stopReason: 'world-map-hunt-switch' });
                 if (!started) return renderWorldMap(creatureId, 'hunts');
                 WorldWindows?.closeWindow?.('hunt-world-map-view', { source: 'world-map-hunt-start' });
                 Render.renderBattleCards?.(); Render.renderExplorationFeed?.(); Render.renderHunt?.();
@@ -764,12 +658,8 @@
         });
         root.querySelector('[data-world-hunt-start]')?.addEventListener('click', (event) => {
             const huntId = event.currentTarget.dataset.worldHuntStart;
-            const current = Aethra.GameState.hunt || {};
             Aethra.UIManager?.setPrimaryView?.('hunt', { source: 'world-map' });
-            if (current.isActive && current.huntId !== huntId) {
-                Hunt.stopHunt?.('world-map-route-change');
-            }
-            const started = current.isActive && current.huntId === huntId ? true : Hunt.startHunt?.(huntId, { mode: 'expedition' });
+            const { started } = Aethra.HuntAtlas.startRoute(huntId, { mode: 'expedition', stopReason: 'world-map-route-change' });
             if (!started) {
                 renderWorldMap(huntId, 'expeditions');
                 return;
