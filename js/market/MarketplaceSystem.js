@@ -125,6 +125,59 @@
         );
     }
 
+    /*
+     * Regras de venda ao mercador NPC. Usadas pela venda e pela cotação,
+     * para a interface nunca oferecer um preço que a venda recusaria.
+     */
+    const LOOT_SALE_ORIGINS = Object.freeze([
+        "loot",
+        "enemy-drop",
+        "hunt-loot",
+        "hunt-system",
+        "monster-economy",
+        "battle-hunt"
+    ]);
+
+    function isLootSale(item) {
+        const origin = item?.market?.purchaseOrigin || item?.source || null;
+        return LOOT_SALE_ORIGINS.includes(origin)
+            || item?.type === "loot"
+            || item?.type === "material";
+    }
+
+    function sellBackTerms(item) {
+        const marketData = item?.market || {};
+        if (marketData.premium === true || marketData.noSellBack === true || item?.noSellBack === true) {
+            return { ok: false, reason: "sellback-disabled" };
+        }
+        if (marketData.purchaseOrigin !== "npc-shop" || marketData.sellBackEligible !== true) {
+            return { ok: false, reason: "item-not-eligible" };
+        }
+        const unitPurchasePrice = Math.max(0, Number(marketData.purchasePrice || getItemBasePrice(item)));
+        const rate = Math.min(1, Math.max(0, Number(marketData.sellBackRate ?? DEFAULT_SELLBACK_RATE)));
+        const stackQuantity = Math.max(1, Math.floor(Number(item.quantity) || 1));
+        /*
+         * Uma pilha pode misturar unidades compradas e obtidas como loot.
+         * Só as compradas são devolvíveis; o restante permanece na mochila.
+         * Sem sellBackQuantity (compras anteriores a este controle) a pilha
+         * inteira continua elegível, preservando o comportamento antigo.
+         */
+        const quantity = marketData.sellBackQuantity === undefined
+            ? stackQuantity
+            : Math.max(0, Math.min(stackQuantity, Math.floor(Number(marketData.sellBackQuantity) || 0)));
+        if (quantity <= 0) return { ok: false, reason: "item-not-eligible" };
+        const purchasePrice = unitPurchasePrice * quantity;
+        return {
+            ok: true,
+            quantity,
+            stackQuantity,
+            unitPurchasePrice,
+            purchasePrice,
+            rate,
+            salePrice: Math.floor(purchasePrice * rate)
+        };
+    }
+
     function findInventoryItem(itemId) {
         const hero = ensureHeroState();
 
@@ -497,19 +550,8 @@
             }
 
             const item = found.item;
-            const origin = item.market?.purchaseOrigin || item.source || null;
 
-            const isLoot =
-                origin === "loot" ||
-                origin === "enemy-drop" ||
-                origin === "hunt-loot" ||
-                origin === "hunt-system" ||
-                origin === "monster-economy" ||
-                origin === "battle-hunt" ||
-                item.type === "loot" ||
-                item.type === "material";
-
-            if (!isLoot) {
+            if (!isLootSale(item)) {
                 return this.fail("sellLoot", "item-is-not-loot", {
                     itemId,
                     instanceId: item.instanceId
@@ -560,72 +602,24 @@
 
             const item = found.item;
             const marketData = item.market || {};
+            const terms = sellBackTerms(item);
 
-            if (
-                marketData.premium === true ||
-                marketData.noSellBack === true ||
-                item.noSellBack === true
-            ) {
-                return this.fail("sellBack", "sellback-disabled", {
+            if (!terms.ok) {
+                return this.fail("sellBack", terms.reason, {
                     itemId,
                     instanceId: item.instanceId
                 });
             }
 
-            if (
-                marketData.purchaseOrigin !== "npc-shop" ||
-                marketData.sellBackEligible !== true
-            ) {
-                return this.fail("sellBack", "item-not-eligible", {
-                    itemId,
-                    instanceId: item.instanceId
-                });
-            }
-
-            const unitPurchasePrice = Math.max(
-                0,
-                Number(
-                    marketData.purchasePrice ||
-                    getItemBasePrice(item)
-                )
-            );
-
-            const rate = Math.min(
-                1,
-                Math.max(
-                    0,
-                    Number(
-                        marketData.sellBackRate ??
-                        DEFAULT_SELLBACK_RATE
-                    )
-                )
-            );
-
-            const stackQuantity = Math.max(1, Math.floor(Number(item.quantity) || 1));
-
-            /*
-             * Uma pilha pode misturar unidades compradas e obtidas como loot.
-             * Só as compradas são devolvíveis; o restante permanece na mochila.
-             * Sem sellBackQuantity (compras anteriores a este controle) a pilha
-             * inteira continua elegível, preservando o comportamento antigo.
-             */
-            const refundableQuantity = marketData.sellBackQuantity === undefined
-                ? stackQuantity
-                : Math.max(0, Math.min(
-                    stackQuantity,
-                    Math.floor(Number(marketData.sellBackQuantity) || 0)
-                ));
-
-            if (refundableQuantity <= 0) {
-                return this.fail("sellBack", "item-not-eligible", {
-                    itemId,
-                    instanceId: item.instanceId
-                });
-            }
-
-            const quantity = refundableQuantity;
-            const purchasePrice = unitPurchasePrice * quantity;
-            const salePrice = Math.floor(purchasePrice * rate);
+            const {
+                quantity,
+                stackQuantity,
+                unitPurchasePrice,
+                purchasePrice,
+                rate,
+                salePrice
+            } = terms;
+            const refundableQuantity = quantity;
 
             let soldItem;
 
@@ -667,6 +661,79 @@
             this.save();
 
             return payload;
+        },
+
+        /*
+         * Catálogo do mercador NPC para um nível de herói: suprimentos fixos e
+         * equipamento do nível atual e do anterior (limitado ao nível 10).
+         */
+        getNpcCatalog(heroLevel = ensureHeroState().level) {
+            const level = Math.min(10, Math.max(1, Math.floor(Number(heroLevel) || 1)));
+            const levels = [...new Set([Math.max(1, level - 1), level])];
+            const ids = ["potion_health", "potion_mana", "minor_vigor_tonic", "field_antidote"];
+            levels.forEach((currentLevel) => {
+                ["sword", "axe", "mace", "dagger", "bow", "focus"].forEach((family) => {
+                    ids.push(`eg_${family}_l${currentLevel}`);
+                });
+                ["head", "chest", "hands", "legs", "feet"].forEach((slot) => {
+                    ["cloth", "leather", "plate"].forEach((armorClass) => {
+                        ids.push(`eg_${slot}_${armorClass}_l${currentLevel}`);
+                    });
+                });
+                ids.push(`eg_shield_l${currentLevel}`, `eg_ring_l${currentLevel}`);
+            });
+
+            return [...new Set(ids)]
+                .map((id) => getTemplate(id))
+                .filter((item) => item && Math.floor(Number(item.price || item.value || 0)) > 0)
+                .map((item) => ({
+                    ...clone(item),
+                    price: Math.floor(Number(item.price || item.value || 0))
+                }));
+        },
+
+        /*
+         * Quanto o mercador paga por um item da mochila, com as mesmas regras
+         * de sellBack/sellLoot. mode: "sellback" | "loot" | null.
+         */
+        getSaleQuote(itemOrId) {
+            const item = typeof itemOrId === "object" && itemOrId
+                ? itemOrId
+                : findInventoryItem(itemOrId)?.item || null;
+            if (!item) return { sellable: false, mode: null, salePrice: 0, quantity: 0, reason: "item-not-in-inventory" };
+
+            const terms = sellBackTerms(item);
+            if (terms.ok) {
+                return {
+                    sellable: terms.salePrice > 0,
+                    mode: "sellback",
+                    salePrice: terms.salePrice,
+                    quantity: terms.quantity,
+                    rate: terms.rate,
+                    reason: terms.salePrice > 0 ? null : "invalid-price"
+                };
+            }
+
+            if (isLootSale(item)) {
+                const quantity = Math.max(1, Math.floor(Number(item.quantity) || 1));
+                const salePrice = getItemBasePrice(item) * quantity;
+                return {
+                    sellable: salePrice > 0,
+                    mode: "loot",
+                    salePrice,
+                    quantity,
+                    rate: 1,
+                    reason: salePrice > 0 ? null : "invalid-price"
+                };
+            }
+
+            return { sellable: false, mode: null, salePrice: 0, quantity: 0, reason: terms.reason || "item-is-not-loot" };
+        },
+
+        sellToNpc(itemId) {
+            const quote = this.getSaleQuote(itemId);
+            if (quote.mode === "sellback") return this.sellBack(itemId);
+            return this.sellLoot(itemId);
         },
 
         // =========================================================

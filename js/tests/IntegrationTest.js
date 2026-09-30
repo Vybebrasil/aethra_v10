@@ -2635,6 +2635,23 @@
                     )
                 );
 
+                // A cotação segue as mesmas regras da venda: a pilha que sobrou
+                // (crédito de compra zerado) não pode aparecer com preço de devolução.
+                const leftoverStack = (Aethra.GameState.hero.bag || []).find((item) => (item.templateId || item.id) === "potion_health");
+                const leftoverQuote = leftoverStack ? Aethra.MarketplaceSystem?.getSaleQuote?.(leftoverStack) : null;
+                const leftoverListed = (Aethra.NpcShopUI?.getSellableItems?.() || []).some((entry) => entry.item === leftoverStack);
+                const leftoverSellback = leftoverStack ? Aethra.MarketplaceSystem?.sellBack?.(leftoverStack.instanceId) : null;
+                checks.push(
+                    createCheck(
+                        "Loja só cota o que a venda aceita (pilha sem crédito de compra)",
+                        Boolean(leftoverStack)
+                            && leftoverQuote?.sellable === false
+                            && leftoverListed === false
+                            && !leftoverSellback,
+                        `cotação ${leftoverQuote?.sellable ? `${leftoverQuote.mode} ${leftoverQuote.salePrice} G` : "recusada"} · listada ${leftoverListed ? "sim" : "não"} · venda ${leftoverSellback ? "aceita" : "recusada"}`
+                    )
+                );
+
                 const idleGoldBefore = Number(Aethra.GameState.hero?.gold || 0);
                 const idleLoot = Aethra.ItemSystem?.generateItem?.("wolf_hide", {
                     source: "hunt-system",

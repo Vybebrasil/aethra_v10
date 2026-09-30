@@ -11,7 +11,6 @@
         .replaceAll('"', "&quot;")
         .replaceAll("'", "&#039;");
     const fmt = (value) => new Intl.NumberFormat("pt-BR").format(Math.floor(Number(value) || 0));
-    const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
     const CATEGORIES = [
         ["all", "Todos"],
         ["consumable", "Poções"],
@@ -72,61 +71,28 @@
         return parts.join(" · ") || item.description || "Item comercializado pelo mercador.";
     }
 
+    // Catálogo e preços vêm do MarketplaceSystem (dono das regras de venda):
+    // a tela nunca mostra um preço que a venda recusaria.
     function getShopCatalog(heroLevel = hero().level) {
-        const level = clamp(Math.floor(Number(heroLevel) || 1), 1, 10);
-        const levels = [...new Set([Math.max(1, level - 1), level])];
-        const ids = ["potion_health", "potion_mana", "minor_vigor_tonic", "field_antidote"];
-        levels.forEach((currentLevel) => {
-            ["sword", "axe", "mace", "dagger", "bow", "focus"].forEach((family) => {
-                ids.push(`eg_${family}_l${currentLevel}`);
-            });
-            ["head", "chest", "hands", "legs", "feet"].forEach((slot) => {
-                ["cloth", "leather", "plate"].forEach((armorClass) => {
-                    ids.push(`eg_${slot}_${armorClass}_l${currentLevel}`);
-                });
-            });
-            ids.push(`eg_shield_l${currentLevel}`, `eg_ring_l${currentLevel}`);
-        });
-
-        return [...new Set(ids)].map((id) => template(id)).filter((item) => {
-            return item && Math.floor(Number(item.price || item.value || 0)) > 0;
-        }).map((item) => ({
+        return (Aethra.MarketplaceSystem?.getNpcCatalog?.(heroLevel) || []).map((item) => ({
             ...item,
-            category: categoryOf(item),
-            price: Math.floor(Number(item.price || item.value || 0))
+            category: categoryOf(item)
         }));
     }
 
-    function itemOrigin(item = {}) {
-        return item.market?.purchaseOrigin || item.origin?.source || item.source || "unknown";
+    function saleQuote(item = {}) {
+        return Aethra.MarketplaceSystem?.getSaleQuote?.(item) || { sellable: false, mode: null, salePrice: 0 };
     }
 
-    function saleMode(item = {}) {
-        const origin = itemOrigin(item);
-        if (origin === "npc-shop" && item.market?.sellBackEligible === true) return "sellback";
-        if (["loot", "enemy-drop", "hunt-loot", "hunt-system", "monster-economy", "battle-hunt", "battle-loot"].includes(origin)) return "loot";
-        if (["loot", "material"].includes(String(item.type || item.itemType || "").toLowerCase())) return "loot";
-        return null;
-    }
-
-    function getSalePrice(item = {}, mode = saleMode(item)) {
-        const quantity = Math.max(1, Math.floor(Number(item.quantity) || 1));
-        if (mode === "sellback") {
-            const unit = Number(item.market?.purchasePrice || item.price || item.value || 0);
-            const rate = Number(item.market?.sellBackRate ?? 0.5);
-            return Math.max(0, Math.floor(unit * quantity * rate));
-        }
-        const itemTemplate = template(item.templateId || item.id);
-        const unit = Number(item.price ?? item.value ?? itemTemplate?.price ?? itemTemplate?.value ?? 0);
-        return Math.max(0, Math.floor(unit) * quantity);
+    function getSalePrice(item = {}) {
+        return saleQuote(item).salePrice;
     }
 
     function getSellableItems() {
-        return (Array.isArray(hero().bag) ? hero().bag : []).map((item, index) => ({
-            item,
-            index,
-            mode: saleMode(item)
-        })).filter((entry) => entry.mode && getSalePrice(entry.item, entry.mode) > 0);
+        return (Array.isArray(hero().bag) ? hero().bag : []).map((item, index) => {
+            const quote = saleQuote(item);
+            return { item, index, mode: quote.mode, quote };
+        }).filter((entry) => entry.quote.sellable);
     }
 
     function setNotice(message, tone = "success") {
@@ -165,9 +131,11 @@
             </article>`;
     }
 
-    function sellRow({ item, mode }) {
-        const quantity = Math.max(1, Math.floor(Number(item.quantity) || 1));
-        const sourceLabel = mode === "sellback" ? "Devolução ao mercador · 50%" : "Drop de caçada · valor integral";
+    function sellRow({ item, mode, quote }) {
+        const quantity = Math.max(1, Math.floor(Number(quote?.quantity || item.quantity) || 1));
+        const sourceLabel = mode === "sellback"
+            ? `Devolução ao mercador · ${Math.round(Number(quote?.rate ?? 0.5) * 100)}%`
+            : "Drop de caçada · valor integral";
         return `
             <article class="shop-sell-row" data-ui-tooltip="true" data-tooltip-kind="hud"
                 data-tooltip-eyebrow="${esc(sourceLabel.toUpperCase())}" data-tooltip-title="${esc(item.name || item.id)}"
@@ -177,7 +145,7 @@
                     <strong>${esc(item.name || item.id)}${quantity > 1 ? ` ×${quantity}` : ""}</strong>
                     <small>${esc(sourceLabel)}</small>
                 </div>
-                <span class="shop-sell-row__val">+${fmt(getSalePrice(item, mode))} G</span>
+                <span class="shop-sell-row__val">+${fmt(quote?.salePrice ?? getSalePrice(item))} G</span>
                 <button type="button" class="shop-sell-btn" data-sell-id="${esc(item.instanceId || item.id)}" data-sell-mode="${mode}">Vender</button>
             </article>`;
     }
@@ -191,7 +159,7 @@
             : catalog.filter((item) => item.category === activeCategory);
         const sellable = getSellableItems();
         const loot = sellable.filter((entry) => entry.mode === "loot");
-        const lootValue = loot.reduce((sum, entry) => sum + getSalePrice(entry.item, entry.mode), 0);
+        const lootValue = loot.reduce((sum, entry) => sum + entry.quote.salePrice, 0);
 
         win.innerHTML = `
             <div class="npc-shop-container">
