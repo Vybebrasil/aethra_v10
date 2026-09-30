@@ -2254,7 +2254,118 @@
 }
 
 /* =========================================================
-   17. MOVIMENTO REDUZIDO
+   17. MISSÕES (Ui3QuestsWindow)
+   ========================================================= */
+
+#ui3-root .ui3-dialog--medium {
+    width: min(calc(100% - 48px), max(920px, calc(40vw + 408px)));
+    height: min(calc(100% - 48px), max(560px, calc(40vh + 272px)));
+}
+
+#ui3-root .ui3-quests {
+    height: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(320px, 46%, 520px);
+}
+
+#ui3-root .ui3-quests__list {
+    box-sizing: border-box;
+    padding: var(--ui3-space-4) 18px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui3-space-1);
+}
+
+#ui3-root .ui3-quests__divider {
+    margin-top: var(--ui3-space-3);
+}
+
+#ui3-root .ui3-quest-row.is-done .ui3-list-row__text strong {
+    color: var(--ui3-text-2);
+}
+
+#ui3-root .ui3-quest-row .ui3-progress {
+    margin-top: 3px;
+}
+
+#ui3-root .ui3-quest-head {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+#ui3-root .ui3-quest-head__title {
+    margin: 0;
+    font-family: var(--ui3-font-display);
+    font-size: var(--ui3-fs-xl);
+    font-weight: 700;
+    color: var(--ui3-gold-1);
+}
+
+#ui3-root .ui3-objectives {
+    margin: 4px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    list-style: none;
+}
+
+#ui3-root .ui3-objectives li {
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--ui3-space-2);
+    font-size: var(--ui3-fs-md);
+}
+
+#ui3-root .ui3-objectives li strong {
+    font-weight: 700;
+}
+
+#ui3-root .ui3-objectives li.is-done span:nth-child(2) {
+    color: var(--ui3-text-3);
+    text-decoration: line-through;
+}
+
+#ui3-root .ui3-check {
+    box-sizing: border-box;
+    width: 18px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--ui3-line-strong);
+    border-radius: 4px;
+    color: var(--ui3-ok);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+#ui3-root .ui3-objectives li.is-done .ui3-check {
+    border-color: var(--ui3-ok);
+}
+
+#ui3-root .ui3-rewards {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+#ui3-root .ui3-reward {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: var(--ui3-fs-md);
+}
+
+#ui3-root .ui3-reward .ui3-glyph-box {
+    font-size: 11px;
+    font-weight: 700;
+}
+
+/* =========================================================
+   18. MOVIMENTO REDUZIDO
    ========================================================= */
 
 @media (prefers-reduced-motion: reduce) {

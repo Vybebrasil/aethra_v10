@@ -4449,6 +4449,37 @@
                 );
                 Aethra.UIManager?.setPrimaryView?.(cityViewBefore, { source: "integration-restore" });
 
+                // UI 3.0 — fase 4 (Missões): lista do QuestSystem e acompanhamento pelo dono.
+                windowManager.openWindow("quests-view", { source: "integration-ui3-quests" });
+                const questsLayer = document.querySelector("#ui3-root [data-ui3-window='quests-view']");
+                const questSnapshot = Aethra.QuestSystem.getState();
+                const questRows = questsLayer?.querySelectorAll("[data-ui3-quest]").length || 0;
+                const questTotal = (questSnapshot.active || []).length + (questSnapshot.completed || []).length;
+                const trackedBefore = Aethra.GameState.ui?.trackedQuestId || null;
+                const firstActive = (questSnapshot.active || [])[0] || null;
+                let trackingWorks = false;
+                if (firstActive) {
+                    questsLayer?.querySelector(`[data-ui3-quest="${firstActive.id}"]`)?.click();
+                    questsLayer?.querySelector("[data-ui3-quest-track]")?.click();
+                    const trackedAfter = Aethra.GameState.ui?.trackedQuestId || null;
+                    trackingWorks = trackedAfter !== trackedBefore
+                        && (trackedAfter === firstActive.id || trackedAfter === null);
+                    Aethra.QuestSystem.trackQuest(trackedBefore, { save: false });
+                }
+                windowManager.closeWindow("quests-view", { source: "integration-restore" });
+                checks.push(
+                    createCheck(
+                        "UI 3.0 Missões lista o QuestSystem e acompanha pelo dono",
+                        Aethra.Ui3QuestsWindow?.isOpen?.() === false
+                            && questRows === questTotal
+                            && questTotal > 0
+                            && Boolean(firstActive)
+                            && trackingWorks
+                            && (Aethra.GameState.ui?.trackedQuestId || null) === trackedBefore,
+                        `${questRows}/${questTotal} missões · acompanhamento ${firstActive ? (trackingWorks ? "alternou" : "não alternou") : "sem missão ativa"}`
+                    )
+                );
+
                 settings?.setInterfaceVersion?.(interfaceBefore || "classic", { source: "integration-restore" });
                 Aethra.GameState.hero.characterCreated = createdBefore;
 
