@@ -2785,7 +2785,89 @@
 #ui3-root .ui3-text-warn { color: var(--ui3-warn); }
 
 /* =========================================================
-   20. MOVIMENTO REDUZIDO
+   20. TELA DE TÍTULO (Ui3TitleScreen)
+   ========================================================= */
+
+#ui3-root .ui3-title {
+    position: absolute;
+    inset: 0;
+    z-index: 7;
+    box-sizing: border-box;
+    padding: var(--ui3-space-4);
+    display: grid;
+    place-items: center;
+    overflow-y: auto;
+    background:
+        radial-gradient(60% 50% at 50% 0%, rgba(216, 178, 92, 0.14), transparent 70%),
+        radial-gradient(40% 40% at 15% 85%, rgba(58, 104, 64, 0.25), transparent 70%),
+        radial-gradient(40% 40% at 85% 80%, rgba(46, 84, 110, 0.25), transparent 70%),
+        var(--ui3-bg-0);
+    pointer-events: auto;
+}
+
+#ui3-root .ui3-title[hidden] {
+    display: none;
+}
+
+#ui3-root .ui3-title__card {
+    box-sizing: border-box;
+    width: min(100%, clamp(480px, 30vw + 96px, 640px));
+    padding: var(--ui3-space-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui3-space-5);
+    background: rgba(17, 26, 31, 0.92);
+    border: 1px solid var(--ui3-line-strong);
+    border-radius: 16px;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+}
+
+#ui3-root .ui3-title__brand {
+    align-items: center;
+    text-align: center;
+}
+
+#ui3-root .ui3-title-hero {
+    display: flex;
+    align-items: center;
+    gap: var(--ui3-space-4);
+}
+
+#ui3-root .ui3-title-hero .ui3-stack {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+#ui3-root .ui3-title__actions .ui3-btn {
+    width: 100%;
+}
+
+#ui3-root .ui3-title__actions .ui3-btn--primary {
+    min-height: 48px;
+    font-size: var(--ui3-fs-xl);
+}
+
+#ui3-root .ui3-title-confirm {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui3-space-3);
+    background: rgba(90, 42, 38, 0.2);
+    border: 1px solid var(--ui3-danger-line);
+    border-radius: var(--ui3-radius-lg);
+}
+
+#ui3-root .ui3-title-confirm p,
+#ui3-root .ui3-title__footer {
+    margin: 0;
+}
+
+#ui3-root .ui3-title__footer {
+    text-align: center;
+}
+
+/* =========================================================
+   21. MOVIMENTO REDUZIDO
    ========================================================= */
 
 @media (prefers-reduced-motion: reduce) {

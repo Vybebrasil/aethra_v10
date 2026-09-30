@@ -39,6 +39,7 @@ todo o CSS clássico carregado, sai idêntica ao protótipo.
 | Raiz e versão | `js/ui3/Ui3Shell.js` | Cria `#ui3-root`, aplica a versão, cobre camadas clássicas, galeria de dev |
 | Barra superior | `js/ui3/Ui3TopBar.js` | Navegação, carteira, menu "Mais", atalhos B/K/M |
 | Tela de Hunt | `js/ui3/Ui3HuntScreen.js` | Palco do mapa, herói, alvo, expedição, registro, barra de ações |
+| Tela de título | `js/ui3/Ui3TitleScreen.js` | Substitui o lobby: Continuar, Novo herói (com confirmação, via `SaveManager.reset`), interface clássica |
 | Criação de personagem | `js/ui3/Ui3CreationScreen.js` | Assume `CharacterCreationUI.show()`: origem, atributos, primeiro ofício, validação e criação |
 | Cidade | `js/ui3/Ui3CityScreen.js` | Hub: resumo do herói, 8 serviços, próximo passo da missão e foco |
 | Apresentação de item | `js/ui3/Ui3Items.js` | Nome, raridade, ícone, atributos, comparação e durabilidade, para todas as janelas |
@@ -58,6 +59,7 @@ Criadas nos módulos donos (regra 9 do `AGENTS.md`), sem sobrescrever métodos:
 | --- | --- | --- |
 | `WindowManager.registerPresenter(id, presenter)` | `js/ui/WindowManager.js` | Uma janela nova assume um id clássico; `openWindow`, `closeWindow`, `isOpen`, Esc e exclusividade continuam no WindowManager |
 | `HuntAtlas.*` (`startRoute`, `startCreatureHunt`, catálogos) | `js/world/HuntAtlas.js` | Catálogo do mapa e troca de rota, usados pelas duas interfaces |
+| `Ui3Shell.holdGame(chave, sim)` + evento `ui3:screens-changed` | `js/ui3/Ui3Shell.js` | Uma tela cheia (título) segura as telas de jogo e as janelas |
 | `CharacterCreationUI.registerPresenter(p)` | `js/ui/CharacterCreationUI.js` | Outra interface assume a criação; ao trocar a versão, a camada certa assume |
 | `SkillSystem.placeSkill(tecla, habilidade)` | `js/combat/SkillSystem.js` | Coloca na tecla; se já estiver na barra, troca de lugar (nunca duplica) |
 | `MarketplaceSystem.getNpcCatalog` / `getSaleQuote` / `sellToNpc` | `js/market/MarketplaceSystem.js` | Catálogo e preço de venda com as mesmas regras da venda |
@@ -109,6 +111,16 @@ essa projeção para um módulo não visual antes de apagar o arquivo.
 Para zerar, limpe o armazenamento a partir de um arquivo estático da mesma
 origem (o autosave do jogo regrava o save ao descarregar a página).
 
+### Lobby → tela de título (decisão de 2026-09-30)
+
+O lobby clássico guardava 3 slots direto no `localStorage`, por fora do
+`SaveManager`, e ao "Jogar" sobrescrevia o save principal (conflito com o
+save compartilhado do servidor). Ele nunca aparecia (fica dentro de
+`#game-container`, oculto). A UI 3.0 não o recria: um herói por save,
+persistido só pelo `SaveManager`. A tela de título aparece na abertura do
+jogo quando a UI 3.0 está ligada e há herói; sem herói, a criação assume.
+O `LobbyUI` sai na fase 5.
+
 ## Migração por fases (branch `ui-v3`)
 
 | Fase | Escopo | Estado |
@@ -116,7 +128,7 @@ origem (o autosave do jogo regrava o save ao descarregar a página).
 | 1. Fundação | tokens, componentes, raiz, preferência, regras no gate | concluída |
 | 2. Hunt | mapa 2D como palco; barra superior; HUD flutuante: herói, alvo, expedição, registro, barra de ações | concluída |
 | 3. Janelas | Mochila/Equipamento, Loja, Habilidades/Automação | concluída |
-| 4. Demais telas | Cidade, Missões, Mapa-Mundi e Criação (feitos); Lobby aguardando decisão | em andamento |
+| 4. Demais telas | Cidade, Missões, Mapa-Mundi, Criação e Tela de título (no lugar do lobby) | concluída |
 | 5. Limpeza | remover `style.css` + v2/v5/v6 e o CSS/JS morto; desfazer os monkey-patches | pendente |
 
 Cada fase termina com a suíte verde, o gate verde e validação em 1280×720 e

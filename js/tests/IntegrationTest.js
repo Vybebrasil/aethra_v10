@@ -4550,6 +4550,42 @@
                 );
 
                 /*
+                 * UI 3.0 — fase 4 (Tela de título). Segura as telas de jogo,
+                 * "Novo herói" só apaga depois da confirmação e "Continuar"
+                 * devolve o jogo.
+                 */
+                settings?.setInterfaceVersion?.("v3", { source: "integration-ui3-title" });
+                Aethra.GameState.hero.characterCreated = true;
+                const originalReset = Aethra.SaveManager.reset;
+                let resetCalls = 0;
+                Aethra.SaveManager.reset = () => {
+                    resetCalls += 1;
+                    return false;
+                };
+                let titleWorks = false;
+                let titleDetail = "";
+                try {
+                    const opened = Aethra.Ui3TitleScreen?.show?.() === true;
+                    const titleScreen = document.querySelector("#ui3-root [data-ui3-screen='title']");
+                    const gameHeld = Aethra.Ui3TopBar?.isVisible?.() === false
+                        && Aethra.Ui3Shell?.canShowGame?.() === false;
+                    titleScreen?.querySelector("[data-ui3-title-new]")?.click();
+                    const askedFirst = resetCalls === 0 && Boolean(titleScreen?.querySelector("[data-ui3-title-reset]"));
+                    titleScreen?.querySelector("[data-ui3-title-reset]")?.click();
+                    const resetAfterConfirm = resetCalls === 1;
+                    titleScreen?.querySelector("[data-ui3-title-continue]")?.click();
+                    const released = Aethra.Ui3TitleScreen?.isVisible?.() === false
+                        && Aethra.Ui3Shell?.canShowGame?.() === true
+                        && Aethra.Ui3TopBar?.isVisible?.() === true;
+                    titleWorks = opened && gameHeld && askedFirst && resetAfterConfirm && released;
+                    titleDetail = `${opened ? "abriu" : "não abriu"} · jogo ${gameHeld ? "seguro" : "livre"} · reset ${askedFirst ? "pediu confirmação" : "sem confirmação"} e ${resetAfterConfirm ? "rodou após confirmar" : "não rodou"} · continuar ${released ? "liberou" : "prendeu"}`;
+                } finally {
+                    Aethra.SaveManager.reset = originalReset;
+                }
+                checks.push(createCheck("UI 3.0 Tela de título segura o jogo e só apaga o herói com confirmação", titleWorks, titleDetail));
+                settings?.setInterfaceVersion?.(interfaceBefore || "classic", { source: "integration-restore" });
+
+                /*
                  * UI 3.0 — fase 4 (Criação). Última verificação da suíte: criar
                  * um herói reinicia a progressão. A tela nova assume
                  * CharacterCreationUI.show(), recusa nome curto e cria pelo

@@ -70,6 +70,7 @@
         return `<div class="ui3-menu" role="menu" aria-label="Mais opções" data-ui3-more-menu${menuOpen ? "" : " hidden"}>
             ${items}
             <div class="ui3-menu__separator" role="separator"></div>
+            <button type="button" role="menuitem" class="ui3-menu__item" data-ui3-title-open><span>Tela inicial</span><small>Continuar ou começar um novo herói</small></button>
             <button type="button" role="menuitem" class="ui3-menu__item" data-ui3-interface="classic"><span>Interface clássica</span><small>Volta ao layout anterior</small></button>
         </div>`;
     }
@@ -172,6 +173,11 @@
             toggleWindow(windowItem.dataset.ui3OpenWindow);
             return;
         }
+        if (event.target.closest("[data-ui3-title-open]")) {
+            setMenuOpen(false);
+            Aethra.Ui3TitleScreen?.show?.();
+            return;
+        }
         if (event.target.closest("[data-ui3-interface]")) {
             setMenuOpen(false);
             Aethra.SettingsManager?.setInterfaceVersion?.("classic", { source: "ui3-topbar" });
@@ -242,7 +248,7 @@
         if (screen && !screen.hidden) syncHeight();
     }, { passive: true });
 
-    ["ui3:version-applied", "ui:primary-view-changed", "lobby:exited", "character:created", "state:restored", "save:loaded", "engine:ready"]
+    ["ui3:version-applied", "ui3:screens-changed", "ui:primary-view-changed", "lobby:exited", "character:created", "state:restored", "save:loaded", "engine:ready"]
         .forEach((eventName) => Aethra.EventBus.on(eventName, () => {
             sync();
             window.setTimeout(sync, 0);

@@ -185,7 +185,7 @@
         });
     }
 
-    ["ui3:version-applied", "state:restored", "save:loaded"]
+    ["ui3:version-applied", "ui3:screens-changed", "state:restored", "save:loaded"]
         .forEach((eventName) => Aethra.EventBus.on(eventName, closeInactive));
 
     Aethra.Ui3Window = Object.freeze({

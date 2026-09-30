@@ -90,8 +90,23 @@
         return Boolean(view && !view.classList.contains("is-hidden") && view.getClientRects().length > 0);
     }
 
+    /*
+     * Uma tela de tela cheia (título) pode segurar as telas de jogo. Quem
+     * segura avisa por ui3:screens-changed, e as telas se ressincronizam.
+     */
+    const gameHolds = new Set();
+
+    function holdGame(key, held) {
+        const before = gameHolds.size;
+        if (held) gameHolds.add(key);
+        else gameHolds.delete(key);
+        if (gameHolds.size !== before) Aethra.EventBus.emit("ui3:screens-changed", { holds: [...gameHolds] });
+        return gameHolds.size > 0;
+    }
+
     function canShowGame() {
         if (currentVersion() !== "v3") return false;
+        if (gameHolds.size > 0) return false;
         if (lobbyVisible()) return false;
         if (document.body.classList.contains("is-creating-character")) return false;
         return Aethra.GameState?.hero?.characterCreated === true;
@@ -233,6 +248,7 @@
         init,
         isActive: () => currentVersion() === "v3",
         canShowGame,
+        holdGame,
         refresh: syncRootVisibility,
         showGallery,
         hideGallery,
