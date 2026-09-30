@@ -3175,6 +3175,21 @@
     font-size: var(--ui3-fs-sm);
 }
 
+/* Social */
+#ui3-root .ui3-social__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: var(--ui3-space-3);
+}
+
+#ui3-root .ui3-service.is-locked {
+    background: var(--ui3-bg-0);
+}
+
+#ui3-root .ui3-service.is-locked .ui3-service__icon {
+    color: var(--ui3-text-3);
+}
+
 /* =========================================================
    23. MOVIMENTO REDUZIDO
    Pelo sistema (prefers-reduced-motion) ou pelas Opções.

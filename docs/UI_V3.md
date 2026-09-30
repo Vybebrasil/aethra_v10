@@ -56,6 +56,7 @@ todo o CSS clássico carregado, sai idêntica ao protótipo.
 | Coliseu | `js/ui3/Ui3ColiseumWindow.js` | Assume `coliseum-view`: perfil da temporada, matchmaking, aposta (bloqueada sem servidor autoritativo), guardiões, ranking global com o herói sempre visível e ranking de relíquias; estado de tela fora do `GameState` |
 | Mercado | `js/ui3/Ui3MarketWindow.js` | Assume `player-market-view` no layout da Loja: comprar (busca por item ou vendedor), anunciar com a cotação de `MarketplaceSystem.getListingQuote`, meus anúncios com cancelamento e resgate de saldo |
 | Loja de Diamantes | `js/ui3/Ui3PremiumShopWindow.js` | Assume `premium-shop-view` no layout da Loja: vitrine de `MarketplaceSystem.getPremiumCatalog`; diamantes são moeda paga, então comprar pede um segundo clique |
+| Social | `js/ui3/Ui3SocialWindow.js` | Assume `social-view`: sessão local, mercador (abre a Loja) e grupo/guilda indicados como indisponíveis offline |
 | Habilidades | `js/ui3/Ui3SkillsWindow.js` | Assume `skills-view`: Progressão (maestrias, foco, treino) e Barra e automação |
 | Preferência | `SettingsManager.interfaceVersion` | `"classic"` (padrão) ou `"v3"` |
 
@@ -148,7 +149,7 @@ antes de migrá-las quebraria essas telas.
 | 3. Janelas | Mochila/Equipamento, Loja, Habilidades/Automação | concluída |
 | 4. Demais telas | Cidade, Missões, Mapa-Mundi, Criação e Tela de título (no lugar do lobby) | concluída |
 | 5.1 Padrão e código morto | UI 3.0 como padrão (clássica só por escolha); 19 arquivos que nada carregava e o lobby removidos | concluída |
-| 5.2 Janelas restantes | Oficinas, Opções, Mural de Chefes, Especialização, Mentora, Coliseu, Mercado e Loja de Diamantes (feitos); Social, Masmorra, Log de combate, Inspeção | pendente |
+| 5.2 Janelas restantes | Oficinas, Opções, Mural de Chefes, Especialização, Mentora, Coliseu, Mercado, Loja de Diamantes e Social. Masmorra, Log de combate e Inspeção não têm abertura na UI 3.0 (mortas ou só clássicas) e saem na 5.3 | feito |
 | 5.3 Remoção da clássica | `style.css` + v2/v5/v6, HUD clássica e monkey-patches; mover `getViewModel`, `handleQuestGuidance` e o registro de loot para módulos não visuais | pendente |
 
 Cada fase termina com a suíte verde, o gate verde e validação em 1280×720 e

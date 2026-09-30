@@ -4771,6 +4771,25 @@
                 }
                 checks.push(createCheck("UI 3.0 Loja de Diamantes confirma a compra e delega ao MarketplaceSystem", premiumWorks, premiumDetail));
 
+                // UI 3.0 — fase 5.2 (Social): só o mercador está disponível offline e leva à Loja.
+                windowManager.openWindow("social-view", { source: "integration-ui3-social" });
+                const socialLayer = document.querySelector("#ui3-root [data-ui3-window='social-view']");
+                const socialOpen = Aethra.Ui3SocialWindow?.isOpen?.() === true;
+                const socialEnabled = [...(socialLayer?.querySelectorAll("[data-ui3-social]") || [])]
+                    .filter((button) => !button.disabled)
+                    .map((button) => button.dataset.ui3Social);
+                socialLayer?.querySelector("[data-ui3-social='merchant']")?.click();
+                const socialOpensShop = Aethra.Ui3ShopWindow?.isOpen?.() === true;
+                windowManager.closeWindow("npc-shop-view", { source: "integration-restore" });
+                windowManager.closeWindow("social-view", { source: "integration-restore" });
+                checks.push(
+                    createCheck(
+                        "UI 3.0 Social mostra só o que funciona offline e leva ao mercador",
+                        socialOpen && socialEnabled.join(",") === "merchant" && socialOpensShop,
+                        `${socialOpen ? "janela nova" : "janela errada"} · ativos: ${socialEnabled.join(", ") || "nenhum"} · ${socialOpensShop ? "abriu a Loja" : "não abriu a Loja"}`
+                    )
+                );
+
                 /*
                  * UI 3.0 — fase 4 (Cidade). A cidade nova cobre a clássica, lê o
                  * mesmo ouro do herói e libera o mapa da Hunt.
