@@ -490,6 +490,11 @@
             return { success: false, reason: "SERVER_COMMAND_REQUIRED", authority: authority.authority };
         },
 
+        // Peças da mochila que podem ir à custódia: equipamento único e não vinculado.
+        getWagerCandidates(hero = Aethra.GameState.hero) {
+            return (hero?.bag || []).filter((item) => item?.slot && !item.stackable && item.ownership?.bound !== true);
+        },
+
         createOpponentWagerItem(opponent = null) {
             const level = clamp(opponent?.level || Aethra.GameState.hero?.level || 1, 1, 10);
             const families = ["sword", "axe", "mace", "dagger", "bow", "focus"];

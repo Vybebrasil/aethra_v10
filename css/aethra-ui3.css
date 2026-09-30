@@ -3060,6 +3060,100 @@
     margin: 0;
 }
 
+/* Coliseu */
+#ui3-root .ui3-coliseum__profile {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ui3-space-4);
+}
+
+#ui3-root .ui3-coliseum__kpis {
+    flex: 1 1 480px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+#ui3-root .ui3-coliseum__arena {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    gap: var(--ui3-space-3);
+}
+
+#ui3-root .ui3-coliseum__versus {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: var(--ui3-space-3);
+}
+
+#ui3-root .ui3-coliseum__fighter {
+    display: flex;
+    align-items: center;
+    gap: var(--ui3-space-2);
+    min-width: 0;
+}
+
+#ui3-root .ui3-coliseum__vs {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: var(--ui3-font-display);
+    font-size: var(--ui3-fs-lg);
+    color: var(--ui3-gold-1);
+}
+
+#ui3-root .ui3-coliseum__vs small {
+    font-family: var(--ui3-font-ui);
+    font-size: var(--ui3-fs-xs);
+    color: var(--ui3-text-3);
+    text-transform: uppercase;
+}
+
+#ui3-root .ui3-coliseum__ranking {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr);
+    align-items: start;
+    gap: var(--ui3-space-4);
+}
+
+#ui3-root .ui3-rank-table {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--ui3-line);
+    border-radius: var(--ui3-radius-lg);
+    overflow: hidden;
+}
+
+#ui3-root .ui3-rank-table__row {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 2.4fr) repeat(3, minmax(0, 1fr));
+    align-items: center;
+    gap: var(--ui3-space-2);
+    padding: var(--ui3-space-2) var(--ui3-space-3);
+    border-top: 1px solid var(--ui3-line-soft);
+    font-variant-numeric: tabular-nums;
+}
+
+#ui3-root .ui3-rank-table__head {
+    border-top: 0;
+    background: var(--ui3-bg-2);
+    font-size: var(--ui3-fs-xs);
+    color: var(--ui3-text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+#ui3-root .ui3-rank-table__row.is-player {
+    background: rgba(216, 178, 92, 0.1);
+    box-shadow: inset 3px 0 0 var(--ui3-gold);
+}
+
+#ui3-root .ui3-rank-table__rank {
+    font-family: var(--ui3-font-display);
+    color: var(--ui3-gold-1);
+}
+
 /* =========================================================
    23. MOVIMENTO REDUZIDO
    Pelo sistema (prefers-reduced-motion) ou pelas Opções.

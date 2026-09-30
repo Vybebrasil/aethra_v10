@@ -4631,6 +4631,57 @@
                 }
                 checks.push(createCheck("UI 3.0 Mentora mostra a rota do herói e encaminha árvore e orientação", mentorWorks, mentorDetail));
 
+                // UI 3.0 — fase 5.2 (Coliseu): lê o ColiseumSystem e só encaminha comandos.
+                const coliseumSystem = Aethra.ColiseumSystem;
+                const coliseumFindOriginal = coliseumSystem.findMatch;
+                const coliseumStartOriginal = coliseumSystem.startMatch;
+                const coliseumCalls = { find: [], start: [] };
+                coliseumSystem.findMatch = (options) => {
+                    coliseumCalls.find.push(options);
+                    return null;
+                };
+                coliseumSystem.startMatch = (...args) => {
+                    coliseumCalls.start.push(args);
+                    return { success: false, reason: "match-active" };
+                };
+                let coliseumWorks = false;
+                let coliseumDetail = "";
+                try {
+                    windowManager.openWindow("coliseum-view", { source: "integration-ui3-coliseum" });
+                    const coliseumLayer = document.querySelector("#ui3-root [data-ui3-window='coliseum-view']");
+                    const coliseumOpen = Aethra.Ui3ColiseumWindow?.isOpen?.() === true;
+                    const coliseumSnapshot = coliseumSystem.getSnapshot();
+                    const ratingShown = [...(coliseumLayer?.querySelectorAll(".ui3-kpi") || [])]
+                        .some((kpi) => /rating/i.test(kpi.textContent) && kpi.querySelector(".ui3-kpi__value")?.textContent === Aethra.Ui3Kit.formatNumber(coliseumSnapshot.profile.rating));
+                    coliseumLayer?.querySelector("[data-ui3-coliseum-search='ranked']")?.click();
+                    const searchRouted = coliseumCalls.find.length === 1 && coliseumCalls.find[0]?.mode === "ranked"
+                        && Boolean(coliseumLayer?.querySelector(".ui3-notice--error"));
+                    const firstGate = coliseumSnapshot.gatekeepers[0];
+                    coliseumLayer?.querySelector(`[data-ui3-coliseum-gatekeeper='${firstGate?.id}']`)?.click();
+                    const gateRouted = coliseumCalls.start.length === 1
+                        && coliseumCalls.start[0][0]?.id === firstGate?.id
+                        && coliseumCalls.start[0][1]?.mode === "ranked"
+                        && /em andamento/i.test(coliseumLayer?.querySelector(".ui3-notice")?.textContent || "");
+                    coliseumLayer?.querySelector("[data-ui3-tab='ranking']")?.click();
+                    const rankRows = coliseumLayer?.querySelectorAll(".ui3-rank-table__row:not(.ui3-rank-table__head)").length || 0;
+                    const rankingShown = rankRows === Math.min(32, coliseumSystem.getLeaderboard(100).length) + (coliseumSnapshot.player.globalRank > 32 ? 1 : 0)
+                        && Boolean(coliseumLayer?.querySelector(".ui3-rank-table__row.is-player"));
+                    const candidates = coliseumSystem.getWagerCandidates({ bag: [
+                        { instanceId: "a", slot: "weapon" },
+                        { instanceId: "b", slot: "weapon", ownership: { bound: true } },
+                        { instanceId: "c", stackable: true },
+                        null
+                    ] });
+                    const wagerRule = candidates.length === 1 && candidates[0].instanceId === "a";
+                    coliseumWorks = coliseumOpen && ratingShown && searchRouted && gateRouted && rankingShown && wagerRule;
+                    coliseumDetail = `${coliseumOpen ? "janela nova" : "janela errada"} · rating ${ratingShown ? "exibido" : "ausente"} · busca ${searchRouted ? "encaminhada" : "falhou"} · guardião ${gateRouted ? "encaminhado" : "falhou"} · ranking ${rankRows} linhas · aposta ${wagerRule ? "filtrada pelo dono" : "regra errada"}`;
+                } finally {
+                    coliseumSystem.findMatch = coliseumFindOriginal;
+                    coliseumSystem.startMatch = coliseumStartOriginal;
+                    windowManager.closeWindow("coliseum-view", { source: "integration-restore" });
+                }
+                checks.push(createCheck("UI 3.0 Coliseu mostra perfil e ranking do ColiseumSystem e encaminha duelos", coliseumWorks, coliseumDetail));
+
                 /*
                  * UI 3.0 — fase 4 (Cidade). A cidade nova cobre a clássica, lê o
                  * mesmo ouro do herói e libera o mapa da Hunt.

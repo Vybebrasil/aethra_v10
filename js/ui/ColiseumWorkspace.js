@@ -62,7 +62,7 @@
         const opponent = queue?.opponent || null;
         const escrow = snapshot.escrow?.status === "locked" ? snapshot.escrow : null;
         const wagersEnabled = snapshot.authority?.capabilities?.wagerEscrow === true;
-        const bagItems = (Aethra.GameState.hero?.bag || []).filter((item) => item?.slot && !item.stackable && item.ownership?.bound !== true);
+        const bagItems = Aethra.ColiseumSystem.getWagerCandidates();
         return `
             <div class="coliseum-arena-grid">
                 <section class="coliseum-matchmaker">
