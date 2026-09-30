@@ -2078,7 +2078,183 @@
 }
 
 /* =========================================================
-   16. MOVIMENTO REDUZIDO
+   16. CIDADE (Ui3CityScreen)
+   ========================================================= */
+
+#ui3-root .ui3-city {
+    position: absolute;
+    top: var(--ui3-topbar-h, 48px);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    box-sizing: border-box;
+    padding: var(--ui3-space-5) clamp(16px, 2.5vw, 48px);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui3-space-5);
+    overflow-y: auto;
+    background:
+        radial-gradient(1200px 500px at 15% -10%, rgba(216, 178, 92, 0.08), transparent 60%),
+        radial-gradient(900px 600px at 100% 120%, rgba(60, 134, 219, 0.06), transparent 60%),
+        var(--ui3-bg-0);
+    pointer-events: auto;
+}
+
+#ui3-root .ui3-city[hidden] {
+    display: none;
+}
+
+#ui3-root .ui3-city__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--ui3-space-5);
+}
+
+#ui3-root .ui3-city__title {
+    flex: 1 1 360px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+#ui3-root .ui3-city__title p {
+    margin: 0;
+}
+
+#ui3-root .ui3-city__kpis {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(96px, 1fr));
+    gap: var(--ui3-space-2);
+}
+
+#ui3-root .ui3-city__kpis .ui3-kpi__value {
+    font-size: var(--ui3-fs-xl);
+}
+
+#ui3-root .ui3-city__body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(300px, 26%, 400px);
+    align-items: start;
+    gap: var(--ui3-space-5);
+}
+
+#ui3-root .ui3-city__services {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(clamp(240px, 16vw, 300px), 1fr));
+    gap: var(--ui3-space-4);
+}
+
+#ui3-root .ui3-service,
+#ui3-root .ui3-city-card {
+    box-sizing: border-box;
+    padding: var(--ui3-space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui3-space-3);
+    background: var(--ui3-bg-1);
+    border: 1px solid var(--ui3-line);
+    border-radius: var(--ui3-radius-xl);
+}
+
+#ui3-root .ui3-city-card {
+    gap: var(--ui3-space-2);
+}
+
+#ui3-root .ui3-service.is-objective {
+    border-color: var(--ui3-gold);
+    box-shadow: 0 0 0 3px rgba(216, 178, 92, 0.15);
+}
+
+/* Cartão horizontal: imagem à esquerda; texto e ação à direita. */
+#ui3-root .ui3-service {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-items: start;
+    column-gap: var(--ui3-space-3);
+    row-gap: var(--ui3-space-2);
+    padding: var(--ui3-space-3) var(--ui3-space-4);
+}
+
+#ui3-root .ui3-service__visual {
+    grid-row: 1 / span 2;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+#ui3-root .ui3-service .ui3-btn {
+    grid-column: 2;
+    justify-self: start;
+    min-height: 34px;
+    font-size: var(--ui3-fs-sm);
+}
+
+#ui3-root .ui3-service__portrait {
+    height: 56px;
+    image-rendering: pixelated;
+}
+
+#ui3-root .ui3-service__icon {
+    box-sizing: border-box;
+    width: 56px;
+    height: 56px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ui3-bg-2);
+    border: 1px solid var(--ui3-line-strong);
+    border-radius: var(--ui3-radius-lg);
+    color: var(--ui3-gold-1);
+}
+
+#ui3-root .ui3-service__text {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+#ui3-root .ui3-service__title {
+    margin: 0;
+    font-size: var(--ui3-fs-lg);
+    font-weight: 700;
+    color: var(--ui3-text-1);
+}
+
+#ui3-root .ui3-service__text p,
+#ui3-root .ui3-city-card p {
+    margin: 0;
+    font-size: var(--ui3-fs-sm);
+    color: var(--ui3-text-2);
+}
+
+#ui3-root .ui3-city-card .ui3-city__guidance,
+#ui3-root .ui3-city__guidance {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui3-space-3);
+}
+
+#ui3-root .ui3-city-card__objective strong {
+    color: var(--ui3-text-1);
+}
+
+#ui3-root .ui3-progress--gold > div {
+    background: var(--ui3-gold);
+}
+
+@media (max-width: 1100px) {
+    #ui3-root .ui3-city__body {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* =========================================================
+   17. MOVIMENTO REDUZIDO
    ========================================================= */
 
 @media (prefers-reduced-motion: reduce) {

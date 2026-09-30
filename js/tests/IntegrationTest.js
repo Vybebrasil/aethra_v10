@@ -4233,7 +4233,9 @@
                 const cityReleasesCanvas = Aethra.Ui3HuntScreen?.isVisible?.() === false
                     && Aethra.TileMapCanvas?.isHosted?.() === false
                     && document.querySelectorAll("#tilemap-canvas").length <= 1
-                    && (!worldLayer || worldLayer.inert === false);
+                    // A Cidade nova (fase 4) cobre a clássica: a camada continua inerte.
+                    && Aethra.Ui3CityScreen?.isVisible?.() === true
+                    && (!worldLayer || worldLayer.inert === true);
                 settings?.setInterfaceVersion?.(interfaceBefore || "classic", { source: "integration-restore" });
                 Aethra.UIManager?.setPrimaryView?.(huntViewBefore, { source: "integration-restore" });
                 Aethra.GameState.hero.characterCreated = createdBefore;
@@ -4416,6 +4418,36 @@
                     )
                 );
                 windowManager.closeWindow("skills-view", { source: "integration-restore" });
+
+                /*
+                 * UI 3.0 — fase 4 (Cidade). A cidade nova cobre a clássica, lê o
+                 * mesmo ouro do herói e libera o mapa da Hunt.
+                 */
+                const cityViewBefore = Aethra.UIManager?.primaryView || "hunt";
+                Aethra.UIManager?.setPrimaryView?.("city", { source: "integration-ui3-city" });
+                const cityScreen = document.querySelector("#ui3-root [data-ui3-screen='city']");
+                const cityGold = [...(cityScreen?.querySelectorAll(".ui3-kpi") || [])]
+                    .find((kpi) => /ouro/i.test(kpi.textContent))
+                    ?.querySelector(".ui3-kpi__value")?.textContent || "";
+                const cityServices = cityScreen?.querySelectorAll("[data-ui3-city-service]").length || 0;
+                const cityShown = Aethra.Ui3CityScreen?.isVisible?.() === true
+                    && Aethra.Ui3HuntScreen?.isVisible?.() === false
+                    && Aethra.TileMapCanvas?.isHosted?.() === false
+                    && (!document.getElementById("world-layer") || document.getElementById("world-layer").inert === true);
+                cityScreen?.querySelector("[data-ui3-city-service='bag']")?.click();
+                const cityOpensBag = Aethra.Ui3BagWindow?.isOpen?.() === true;
+                windowManager.closeWindow("inventory-view", { source: "integration-restore" });
+                checks.push(
+                    createCheck(
+                        "UI 3.0 Cidade cobre a clássica, mostra o ouro oficial e abre os serviços",
+                        cityShown
+                            && cityServices === 8
+                            && cityGold.replace(/\D/g, "") === String(Math.floor(Number(Aethra.GameState.hero.gold) || 0))
+                            && cityOpensBag,
+                        `${cityShown ? "cidade nova" : "tela errada"} · ${cityServices} serviços · ouro "${cityGold}" · mochila ${cityOpensBag ? "abriu" : "não abriu"}`
+                    )
+                );
+                Aethra.UIManager?.setPrimaryView?.(cityViewBefore, { source: "integration-restore" });
 
                 settings?.setInterfaceVersion?.(interfaceBefore || "classic", { source: "integration-restore" });
                 Aethra.GameState.hero.characterCreated = createdBefore;
