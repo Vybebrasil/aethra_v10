@@ -149,7 +149,7 @@ antes de migrá-las quebraria essas telas.
 | 3. Janelas | Mochila/Equipamento, Loja, Habilidades/Automação | concluída |
 | 4. Demais telas | Cidade, Missões, Mapa-Mundi, Criação e Tela de título (no lugar do lobby) | concluída |
 | 5.1 Padrão e código morto | UI 3.0 como padrão (clássica só por escolha); 19 arquivos que nada carregava e o lobby removidos | concluída |
-| 5.2 Janelas restantes | Oficinas, Opções, Mural de Chefes, Especialização, Mentora, Coliseu, Mercado, Loja de Diamantes e Social. Masmorra, Log de combate e Inspeção não têm abertura na UI 3.0 (mortas ou só clássicas) e saem na 5.3 | feito |
+| 5.2 Janelas restantes | Oficinas, Opções, Mural de Chefes, Especialização, Mentora, Coliseu, Mercado, Loja de Diamantes e Social. Masmorra, Log de combate e Inspeção não têm abertura na UI 3.0 (mortas ou só clássicas) e saem na 5.3 | concluída |
 | 5.3 Remoção da clássica | `style.css` + v2/v5/v6, HUD clássica e monkey-patches; mover `getViewModel`, `handleQuestGuidance` e o registro de loot para módulos não visuais | pendente |
 
 Cada fase termina com a suíte verde, o gate verde e validação em 1280×720 e
