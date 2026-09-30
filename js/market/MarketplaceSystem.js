@@ -866,6 +866,11 @@
             return payload;
         },
 
+        // Vitrine da Loja de Diamantes, na ordem de cadastro.
+        getPremiumCatalog() {
+            return Object.values(this.premiumCatalog).map(clone);
+        },
+
         registerPremiumItem(itemId, data) {
             if (!itemId || !data || typeof data !== "object") {
                 return false;

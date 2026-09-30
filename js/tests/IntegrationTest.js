@@ -4739,6 +4739,38 @@
                 }
                 checks.push(createCheck("UI 3.0 Mercado anuncia com a cotação do MarketplaceSystem", marketWorks, marketDetail));
 
+                // UI 3.0 — fase 5.2 (Cash): diamantes são moeda paga; comprar pede um segundo clique.
+                const premiumBuyOriginal = marketplace.buyPremiumItem;
+                const premiumCalls = [];
+                marketplace.buyPremiumItem = (...args) => {
+                    premiumCalls.push(args);
+                    return false;
+                };
+                const premiumHero = Aethra.GameState.hero;
+                const premiumDiamondsBefore = premiumHero.diamonds;
+                let premiumWorks = false;
+                let premiumDetail = "";
+                try {
+                    const premiumItem = marketplace.getPremiumCatalog()[0];
+                    premiumHero.diamonds = Number(premiumItem?.diamondPrice || 0) + 1;
+                    windowManager.openWindow("premium-shop-view", { source: "integration-ui3-premium" });
+                    const premiumLayer = document.querySelector("#ui3-root [data-ui3-window='premium-shop-view']");
+                    const premiumOpen = Aethra.Ui3PremiumShopWindow?.isOpen?.() === true;
+                    const premiumRows = premiumLayer?.querySelectorAll("[data-ui3-premium-item]").length || 0;
+                    premiumLayer?.querySelector(`[data-ui3-premium-item='${premiumItem?.id}']`)?.click();
+                    premiumLayer?.querySelector("[data-ui3-premium-buy]")?.click();
+                    const premiumAsked = premiumCalls.length === 0 && /confirmar/i.test(premiumLayer?.querySelector("[data-ui3-premium-buy]")?.textContent || "");
+                    premiumLayer?.querySelector("[data-ui3-premium-buy]")?.click();
+                    const premiumRouted = premiumCalls.length === 1 && premiumCalls[0][0] === premiumItem?.id;
+                    premiumWorks = premiumOpen && premiumRows === marketplace.getPremiumCatalog().length && premiumAsked && premiumRouted;
+                    premiumDetail = `${premiumOpen ? "janela nova" : "janela errada"} · ${premiumRows} itens · ${premiumAsked ? "pediu confirmação" : "sem confirmação"} · ${premiumRouted ? "delegou ao MarketplaceSystem" : "não delegou"}`;
+                } finally {
+                    marketplace.buyPremiumItem = premiumBuyOriginal;
+                    premiumHero.diamonds = premiumDiamondsBefore;
+                    windowManager.closeWindow("premium-shop-view", { source: "integration-restore" });
+                }
+                checks.push(createCheck("UI 3.0 Loja de Diamantes confirma a compra e delega ao MarketplaceSystem", premiumWorks, premiumDetail));
+
                 /*
                  * UI 3.0 — fase 4 (Cidade). A cidade nova cobre a clássica, lê o
                  * mesmo ouro do herói e libera o mapa da Hunt.
