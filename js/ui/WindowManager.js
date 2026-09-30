@@ -835,8 +835,85 @@
            ABERTURA, FOCO E FECHAMENTO
            ===================================================== */
 
+        /* =====================================================
+           APRESENTADORES ALTERNATIVOS (UI 3.0)
+           Outra interface pode assumir a apresentação de uma janela
+           sem que os chamadores mudem: openWindow/closeWindow/isOpen
+           continuam sendo a única porta de entrada.
+           presenter = { isActive(), open(options), close(options), isOpen() }
+           ===================================================== */
+
+        registerPresenter(windowId, presenter) {
+            windowId = this.resolveWindowId(windowId);
+            if (!windowId || typeof presenter?.open !== "function" || typeof presenter?.close !== "function") {
+                return false;
+            }
+            this.presenters = this.presenters || {};
+            this.presenters[windowId] = presenter;
+            return true;
+        },
+
+        unregisterPresenter(windowId) {
+            windowId = this.resolveWindowId(windowId);
+            if (!this.presenters?.[windowId]) return false;
+            delete this.presenters[windowId];
+            return true;
+        },
+
+        getActivePresenter(windowId) {
+            const presenter = this.presenters?.[windowId];
+            return presenter && presenter.isActive?.() !== false ? presenter : null;
+        },
+
+        openWithPresenter(windowId, presenter, options = {}) {
+            const exclusive = options.exclusive !== undefined
+                ? Boolean(options.exclusive)
+                : this.config.exclusive;
+            if (exclusive) {
+                this.closeAll({
+                    modalOnly: true,
+                    except: windowId,
+                    silent: options.silentClose === true,
+                    source: "openWindow"
+                });
+            }
+            if (presenter.open(options) === false) return false;
+            this.activeWindows = this.activeWindows.filter((id) => id !== windowId);
+            this.activeWindows.push(windowId);
+            const payload = {
+                id: windowId,
+                activeWindows: [...this.activeWindows],
+                exclusive,
+                source: options.source || null,
+                renderTriggered: true,
+                layer: "presenter"
+            };
+            Aethra.EventBus.emit("WindowOpened", payload);
+            Aethra.EventBus.emit("window:opened", payload);
+            return true;
+        },
+
+        closeWithPresenter(windowId, presenter, options = {}) {
+            const wasOpen = presenter.isOpen?.() === true || this.activeWindows.includes(windowId);
+            presenter.close(options);
+            this.activeWindows = this.activeWindows.filter((id) => id !== windowId);
+            if (wasOpen && !options.silent) {
+                const payload = {
+                    id: windowId,
+                    activeWindows: [...this.activeWindows],
+                    source: options.source || null,
+                    contentCleared: false
+                };
+                Aethra.EventBus.emit("WindowClosed", payload);
+                Aethra.EventBus.emit("window:closed", payload);
+            }
+            return true;
+        },
+
         openWindow(windowId, options = {}) {
             windowId = this.resolveWindowId(windowId);
+            const presenter = this.getActivePresenter(windowId);
+            if (presenter) return this.openWithPresenter(windowId, presenter, options);
             const element = this.getWindow(windowId);
 
             if (!element) {
@@ -1008,6 +1085,10 @@
 
         closeWindow(windowId, options = {}) {
             windowId = this.resolveWindowId(windowId);
+            const presenter = this.presenters?.[windowId];
+            if (presenter && (presenter.isOpen?.() === true || this.getActivePresenter(windowId))) {
+                return this.closeWithPresenter(windowId, presenter, options);
+            }
             const element = this.getWindow(windowId);
             if (!element) return false;
 
@@ -1136,6 +1217,8 @@
 
         isOpen(windowId) {
             windowId = this.resolveWindowId(windowId);
+            const presenter = this.getActivePresenter(windowId);
+            if (presenter) return presenter.isOpen?.() === true;
             const element = this.getWindow(windowId);
 
             return Boolean(

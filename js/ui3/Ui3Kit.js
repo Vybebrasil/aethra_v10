@@ -29,6 +29,7 @@
         sword: '<path d="M14.5 17.5 3 6V3h3l11.5 11.5"></path><path d="m13 19 6-6"></path><path d="m16 16 4 4"></path><path d="m19 21 2-2"></path>',
         shield: '<path d="M12 3 5 6v6c0 4 3 7 7 9 4-2 7-5 7-9V6z"></path>',
         plus: '<path d="M12 5v14"></path><path d="M5 12h14"></path>',
+        search: '<circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path>',
         flame: '<path d="M12 3c1 3 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-5 1-8.5z"></path>',
         snow: '<path d="M12 2v20"></path><path d="m4.9 7 14.2 10"></path><path d="m19.1 7-14.2 10"></path><path d="m9 4 3 2 3-2"></path><path d="m9 20 3-2 3 2"></path>',
         moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path>',
@@ -63,6 +64,50 @@
 
     function formatNumber(value) {
         return Math.round(number(value)).toLocaleString("pt-BR");
+    }
+
+    /* Atributos de item e herói. Percentuais chegam como fração (0,043). */
+    const STAT_LABELS = Object.freeze({
+        damageMin: "Dano mínimo",
+        damageMax: "Dano máximo",
+        damage: "Dano",
+        defense: "Defesa",
+        precision: "Precisão",
+        critical: "Crítico",
+        criticalMultiplier: "Dano crítico",
+        evasion: "Esquiva",
+        blockChance: "Bloqueio",
+        blockReduction: "Redução no bloqueio",
+        hpMax: "Vida máxima",
+        maxHp: "Vida máxima",
+        manaMax: "Mana máxima",
+        maxMana: "Mana máxima",
+        energyMax: "Vigor máximo",
+        maxEnergy: "Vigor máximo",
+        str: "Força",
+        strength: "Força",
+        mag: "Magia",
+        magic: "Magia",
+        agility: "Agilidade",
+        vitality: "Vitalidade"
+    });
+    const PERCENT_STATS = Object.freeze(["critical", "evasion", "blockChance", "blockReduction"]);
+
+    function statLabel(key) {
+        return STAT_LABELS[key] || String(key || "");
+    }
+
+    function formatDecimal(value, digits) {
+        return number(value).toLocaleString("pt-BR", { minimumFractionDigits: 0, maximumFractionDigits: digits });
+    }
+
+    function formatStat(key, value, { signed = false } = {}) {
+        const amount = number(value);
+        const sign = signed && amount > 0 ? "+" : amount < 0 ? "−" : "";
+        const magnitude = Math.abs(amount);
+        if (PERCENT_STATS.includes(key)) return `${sign}${formatDecimal(magnitude * 100, 1)}%`;
+        if (key === "criticalMultiplier") return `${sign}${formatDecimal(magnitude, 2)}×`;
+        return `${sign}${formatDecimal(magnitude, magnitude < 10 ? 2 : 0)}`;
     }
 
     function normalizeRarity(value) {
@@ -118,11 +163,13 @@
         active = false,
         disabled = false,
         empty = false,
+        caption = "",
         attributes = {}
     } = {}) {
         const key = hotkey !== "" && hotkey !== null ? `<span class="ui3-slot__key">${esc(hotkey)}</span>` : "";
         if (empty) {
-            return `<button type="button" class="ui3-slot ui3-slot--empty"${attrs({ "aria-label": label || "Espaço vazio", ...attributes })}>${key}</button>`;
+            const text = caption ? `<span class="ui3-slot__caption">${esc(caption)}</span>` : "";
+            return `<button type="button" class="ui3-slot ui3-slot--empty${selected ? " is-selected" : ""}"${attrs({ "aria-label": label || "Espaço vazio", "aria-pressed": selected ? "true" : undefined, ...attributes })}>${key}${text}</button>`;
         }
         const tier = normalizeRarity(rarity);
         const hue = SLOT_TONES.includes(tone) ? tone : "";
@@ -179,6 +226,8 @@
         esc,
         formatNumber,
         normalizeRarity,
+        statLabel,
+        formatStat,
         icon,
         iconNames: Object.freeze(Object.keys(ICON_PATHS)),
         button,

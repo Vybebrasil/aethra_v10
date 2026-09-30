@@ -39,6 +39,8 @@ todo o CSS clássico carregado, sai idêntica ao protótipo.
 | Raiz e versão | `js/ui3/Ui3Shell.js` | Cria `#ui3-root`, aplica a versão, cobre camadas clássicas, galeria de dev |
 | Barra superior | `js/ui3/Ui3TopBar.js` | Navegação, carteira, menu "Mais", atalhos B/K/M |
 | Tela de Hunt | `js/ui3/Ui3HuntScreen.js` | Palco do mapa, herói, alvo, expedição, registro, barra de ações |
+| Moldura de janela | `js/ui3/Ui3Window.js` | Diálogo modal, foco, apresentador no WindowManager |
+| Mochila e Equipamento | `js/ui3/Ui3BagWindow.js` | Assume `inventory-view`: equipar, desequipar, usar, filtros, comparação |
 | Preferência | `SettingsManager.interfaceVersion` | `"classic"` (padrão) ou `"v3"` |
 
 ### APIs de composição usadas pela UI 3.0
@@ -47,6 +49,7 @@ Criadas nos módulos donos (regra 9 do `AGENTS.md`), sem sobrescrever métodos:
 
 | API | Dono | Para quê |
 | --- | --- | --- |
+| `WindowManager.registerPresenter(id, presenter)` | `js/ui/WindowManager.js` | Uma janela nova assume um id clássico; `openWindow`, `closeWindow`, `isOpen`, Esc e exclusividade continuam no WindowManager |
 | `TileMapCanvas.setStageHost(el)` / `isHosted()` | `js/world/TileMapCanvas.js` | Empresta o único `#tilemap-canvas` a outro palco; `null` devolve ao clássico |
 | `TileMapCanvas.setStageInsets({top,right,bottom,left})` | idem | Faixas cobertas por painéis; atores e marcadores ficam na área livre |
 | `SkillController.requestManualSkill(id)` | `js/combat/SkillController.js` | Comando do jogador com validação de combate e recarga no dono |
@@ -85,7 +88,7 @@ de fonte valem exatamente 11/12/13/14/16/20/28px em 1280px e crescem até
 | --- | --- | --- |
 | 1. Fundação | tokens, componentes, raiz, preferência, regras no gate | concluída |
 | 2. Hunt | mapa 2D como palco; barra superior; HUD flutuante: herói, alvo, expedição, registro, barra de ações | concluída |
-| 3. Janelas | Mochila/Equipamento, Loja, Habilidades/Automação | pendente |
+| 3. Janelas | Mochila/Equipamento (feita), Loja, Habilidades/Automação | em andamento |
 | 4. Demais telas | Cidade, Mapa-Mundi/Atlas, Missões, Lobby, Criação | pendente |
 | 5. Limpeza | remover `style.css` + v2/v5/v6 e o CSS/JS morto; desfazer os monkey-patches | pendente |
 

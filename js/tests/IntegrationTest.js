@@ -4223,6 +4223,77 @@
                 const classicRestored = document.getElementById("ui3-root")?.hidden === true
                     && ![...document.querySelectorAll("#world-layer, #hud-layer, #hud-layer > .topbar")].some((element) => element.inert)
                     && Aethra.TileMapCanvas?.isHosted?.() === false;
+                /*
+                 * UI 3.0 — fase 3 (Mochila). A janela nova assume "inventory-view"
+                 * pelo WindowManager: os mesmos chamadores abrem a versão certa,
+                 * e equipar passa pelo EquipSystem.
+                 */
+                Aethra.GameState.hero.characterCreated = true;
+                settings?.setInterfaceVersion?.("v3", { source: "integration-ui3-bag" });
+                const windowManager = Aethra.WindowManager;
+                windowManager?.openWindow?.("inventory-view", { source: "integration-ui3-bag" });
+                const bagLayer = document.querySelector("#ui3-root [data-ui3-window='inventory-view']");
+                const legacyBag = document.getElementById("inventory-view");
+                const bagOpenedNew = Aethra.Ui3BagWindow?.isOpen?.() === true
+                    && windowManager.isOpen("inventory-view") === true
+                    && Boolean(bagLayer && !bagLayer.hidden)
+                    && (!legacyBag || legacyBag.classList.contains("hidden"));
+                const bagCells = bagLayer?.querySelectorAll("[data-ui3-bag-item]").length || 0;
+                const bagSize = (Aethra.GameState.hero.bag || []).filter(Boolean).length;
+                const equippedNow = Aethra.EquipSystem.getEquipment();
+                const equippedCount = Object.values(equippedNow).filter(Boolean).length;
+                const equipHeading = bagLayer?.querySelector(".ui3-bag__equip .ui3-eyebrow")?.textContent || "";
+                checks.push(
+                    createCheck(
+                        "UI 3.0 Mochila abre pelo WindowManager e mostra o estado oficial",
+                        bagOpenedNew && bagCells === bagSize && equipHeading.includes(`${equippedCount} de 11`),
+                        `${bagOpenedNew ? "janela nova" : "janela errada"} · ${bagCells}/${bagSize} itens · "${equipHeading}"`
+                    )
+                );
+
+                const equipCandidate = (Aethra.GameState.hero.bag || []).find((item) => item?.instanceId
+                    && Aethra.EquipSystem.validateEquip(item)?.allowed === true);
+                let bagEquipWorks = false;
+                let bagEquipDetail = "nenhum item equipável na mochila de teste";
+                if (equipCandidate) {
+                    const targetSlot = Aethra.EquipSystem.validateEquip(equipCandidate).slot;
+                    const previousInSlot = equippedNow[targetSlot]?.instanceId || null;
+                    bagLayer?.querySelector(`[data-ui3-bag-item="${equipCandidate.instanceId}"]`)?.click();
+                    bagLayer?.querySelector("[data-ui3-equip]")?.click();
+                    const equippedAfter = Aethra.EquipSystem.getEquipment()[targetSlot]?.instanceId;
+                    bagEquipWorks = equippedAfter === equipCandidate.instanceId
+                        && Boolean(bagLayer?.querySelector(`[data-ui3-equip-slot="${targetSlot}"][aria-pressed="true"]`));
+                    if (previousInSlot) Aethra.EquipSystem.equip(previousInSlot, targetSlot);
+                    else Aethra.EquipSystem.unequip(targetSlot);
+                    bagEquipDetail = `${equipCandidate.name} → ${targetSlot} · restaurado ${Aethra.EquipSystem.getEquipment()[targetSlot]?.instanceId === previousInSlot || (!previousInSlot && !Aethra.EquipSystem.getEquipment()[targetSlot]) ? "sim" : "não"}`;
+                }
+                checks.push(
+                    createCheck(
+                        "UI 3.0 Mochila equipa pelo EquipSystem",
+                        bagEquipWorks,
+                        bagEquipDetail
+                    )
+                );
+
+                document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", code: "Escape", bubbles: true, cancelable: true }));
+                const escClosed = Aethra.Ui3BagWindow?.isOpen?.() === false
+                    && !windowManager.activeWindows.includes("inventory-view");
+                settings?.setInterfaceVersion?.("classic", { source: "integration-ui3-bag" });
+                windowManager.openWindow("inventory-view", { source: "integration-ui3-bag" });
+                const classicBagOpens = Boolean(legacyBag && !legacyBag.classList.contains("hidden"))
+                    && Aethra.Ui3BagWindow?.isOpen?.() === false;
+                windowManager.closeWindow("inventory-view", { source: "integration-restore" });
+                checks.push(
+                    createCheck(
+                        "UI 3.0 Mochila fecha com Esc e a clássica volta na interface clássica",
+                        escClosed && classicBagOpens,
+                        `Esc ${escClosed ? "fechou" : "não fechou"} · clássica ${classicBagOpens ? "abriu" : "não abriu"}`
+                    )
+                );
+                settings?.setInterfaceVersion?.("v3", { source: "integration-ui3-bag" });
+                settings?.setInterfaceVersion?.(interfaceBefore || "classic", { source: "integration-restore" });
+                Aethra.GameState.hero.characterCreated = createdBefore;
+
                 checks.push(
                     createCheck(
                         "UI 3.0 devolve mapa e camadas clássicas ao sair da Hunt",

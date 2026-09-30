@@ -725,7 +725,8 @@
     }
 
     function hasOpenWindow() {
-        return Boolean(document.querySelector('.game-window[data-aethra-window]:not(#city-view):not(.hidden)[aria-hidden="false"]'));
+        return Boolean(Aethra.Ui3Window?.anyOpen?.())
+            || Boolean(document.querySelector('.game-window[data-aethra-window]:not(#city-view):not(.hidden)[aria-hidden="false"]'));
     }
 
     // Captura: roda antes do atalho clássico e o bloqueia (defaultPrevented),
@@ -734,7 +735,13 @@
         if (!screen || screen.hidden || event.repeat || isTyping(event.target)) return;
         if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
         const index = HOTKEY_CODES.indexOf(event.code);
-        if (index < 0 || hasOpenWindow()) return;
+        if (index < 0) return;
+        if (Aethra.Ui3Window?.anyOpen?.()) {
+            // Janela nova aberta: a tecla não vira habilidade em nenhuma barra.
+            event.preventDefault();
+            return;
+        }
+        if (hasOpenWindow()) return;
         event.preventDefault();
         useSlot(index);
     }
