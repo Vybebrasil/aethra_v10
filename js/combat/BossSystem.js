@@ -13,6 +13,8 @@
     const TIMER_INTERVAL_MS = 1000;
 
     const now = () => Date.now();
+    const WEEKLY_GOLD_REWARD = 250;
+    const WEEKLY_ITEM_REWARD = "silver_necklace";
 
     function clone(value) {
         return JSON.parse(JSON.stringify(value));
@@ -411,6 +413,18 @@
             };
         },
 
+        // Leitura para interfaces: progresso semanal e tempo até o reinício.
+        getWeeklySnapshot() {
+            this.resetWeeklyStateIfNeeded();
+            const weekly = clone(ensureBossState().weekly);
+            return {
+                ...weekly,
+                canClaim: weekly.progress >= weekly.required && !weekly.claimed,
+                resetInMs: Math.max(0, getNextWeeklyReset() - now()),
+                rewards: { gold: WEEKLY_GOLD_REWARD, item: WEEKLY_ITEM_REWARD }
+            };
+        },
+
         checkRequirement(bossId) {
             return this.getRequirementStatus(bossId).allowed;
         },
@@ -565,7 +579,7 @@
 
             weekly.claimed = true;
 
-            const goldReward = 250;
+            const goldReward = WEEKLY_GOLD_REWARD;
             Aethra.GameState.hero.gold =
                 Number(Aethra.GameState.hero.gold || 0) + goldReward;
 
@@ -575,7 +589,7 @@
                 Aethra.ItemSystem &&
                 typeof Aethra.ItemSystem.generateItem === "function"
             ) {
-                generatedItem = Aethra.ItemSystem.generateItem("silver_necklace", {
+                generatedItem = Aethra.ItemSystem.generateItem(WEEKLY_ITEM_REWARD, {
                     source: "weekly-boss-reward",
                     qualityMin: 75,
                     qualityMax: 100

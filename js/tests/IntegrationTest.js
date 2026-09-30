@@ -4521,6 +4521,29 @@
                 }
                 checks.push(createCheck("UI 3.0 Opções mudam preferências pelo dono e só apagam com confirmação", optionsWorks, optionsDetail));
 
+                // UI 3.0 — fase 5.2 (Mural de Chefes): requisitos e recompensa vêm do BossSystem.
+                Aethra.RenderEngine?.openBossesHall?.({ source: "integration-ui3-bosses" });
+                const bossesLayer = document.querySelector("#ui3-root [data-ui3-window='bosses-view']");
+                const bossIds = Object.keys(Aethra.BossSystem?.bosses || {});
+                const bossButtons = [...(bossesLayer?.querySelectorAll("[data-ui3-boss-challenge]") || [])];
+                const buttonsMatchRules = bossButtons.length === bossIds.length
+                    && bossButtons.every((button) => {
+                        const status = Aethra.BossSystem.getRequirementStatus(button.dataset.ui3BossChallenge);
+                        return button.disabled === !status.allowed;
+                    });
+                const weeklySnapshot = Aethra.BossSystem?.getWeeklySnapshot?.();
+                const claimButton = bossesLayer?.querySelector("[data-ui3-boss-claim]");
+                const claimMatchesRule = Boolean(claimButton) && claimButton.disabled === !weeklySnapshot?.canClaim;
+                const bossesOpen = Aethra.Ui3BossesWindow?.isOpen?.() === true;
+                windowManager.closeWindow("bosses-view", { source: "integration-restore" });
+                checks.push(
+                    createCheck(
+                        "UI 3.0 Mural de Chefes segue os requisitos e a recompensa semanal do BossSystem",
+                        bossesOpen && bossIds.length > 0 && buttonsMatchRules && claimMatchesRule,
+                        `${bossesOpen ? "janela nova" : "janela errada"} · ${bossButtons.length}/${bossIds.length} chefes · botões ${buttonsMatchRules ? "coerentes" : "incoerentes"} · semanal ${claimMatchesRule ? "coerente" : "incoerente"}`
+                    )
+                );
+
                 /*
                  * UI 3.0 — fase 4 (Cidade). A cidade nova cobre a clássica, lê o
                  * mesmo ouro do herói e libera o mapa da Hunt.

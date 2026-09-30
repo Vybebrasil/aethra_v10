@@ -50,6 +50,7 @@ todo o CSS clássico carregado, sai idêntica ao protótipo.
 | Missões | `js/ui3/Ui3QuestsWindow.js` | Assume `quests-view`: ativas e concluídas, objetivos, recompensas, acompanhar, ir para o objetivo |
 | Oficinas | `js/ui3/Ui3WorkshopWindow.js` | Assume `profession-workshop-view`: receitas por tier, materiais e resultado com ícones, qualidade estimada, manutenção e reparo automático |
 | Opções | `js/ui3/Ui3OptionsWindow.js` | Assume `options-view`: interface, velocidade, reduzir animações, salvar, tela inicial, apagar save com confirmação |
+| Mural de Chefes | `js/ui3/Ui3BossesWindow.js` | Assume `bosses-view`: recompensa semanal, chefes com requisitos, recarga, técnicas e histórico; desafiar leva à Hunt |
 | Habilidades | `js/ui3/Ui3SkillsWindow.js` | Assume `skills-view`: Progressão (maestrias, foco, treino) e Barra e automação |
 | Preferência | `SettingsManager.interfaceVersion` | `"classic"` (padrão) ou `"v3"` |
 
@@ -64,6 +65,7 @@ Criadas nos módulos donos (regra 9 do `AGENTS.md`), sem sobrescrever métodos:
 | `Ui3Shell.holdGame(chave, sim)` + evento `ui3:screens-changed` | `js/ui3/Ui3Shell.js` | Uma tela cheia (título) segura as telas de jogo e as janelas |
 | `CharacterCreationUI.registerPresenter(p)` | `js/ui/CharacterCreationUI.js` | Outra interface assume a criação; ao trocar a versão, a camada certa assume |
 | `CraftingSystem.estimateQuality(receita, técnica)` | `js/items/CraftingSystem.js` | Faixa de qualidade que o sorteio pode dar (mesma fórmula do `rollQuality`) |
+| `BossSystem.getWeeklySnapshot()` | `js/combat/BossSystem.js` | Progresso semanal, se dá para coletar, tempo até o reinício e a recompensa |
 | `SkillSystem.placeSkill(tecla, habilidade)` | `js/combat/SkillSystem.js` | Coloca na tecla; se já estiver na barra, troca de lugar (nunca duplica) |
 | `MarketplaceSystem.getNpcCatalog` / `getSaleQuote` / `sellToNpc` | `js/market/MarketplaceSystem.js` | Catálogo e preço de venda com as mesmas regras da venda |
 | `TileMapCanvas.setStageHost(el)` / `isHosted()` | `js/world/TileMapCanvas.js` | Empresta o único `#tilemap-canvas` a outro palco; `null` devolve ao clássico |
@@ -141,7 +143,7 @@ antes de migrá-las quebraria essas telas.
 | 3. Janelas | Mochila/Equipamento, Loja, Habilidades/Automação | concluída |
 | 4. Demais telas | Cidade, Missões, Mapa-Mundi, Criação e Tela de título (no lugar do lobby) | concluída |
 | 5.1 Padrão e código morto | UI 3.0 como padrão (clássica só por escolha); 19 arquivos que nada carregava e o lobby removidos | concluída |
-| 5.2 Janelas restantes | Oficinas e Opções (feitas); Especialização, Mural de Chefes, Mercado, Cash, Coliseu, Social, Masmorra, Log de combate, Inspeção | pendente |
+| 5.2 Janelas restantes | Oficinas, Opções e Mural de Chefes (feitos); Especialização, Mercado, Cash, Coliseu, Social, Masmorra, Log de combate, Inspeção | pendente |
 | 5.3 Remoção da clássica | `style.css` + v2/v5/v6, HUD clássica e monkey-patches; mover `getViewModel`, `handleQuestGuidance` e o registro de loot para módulos não visuais | pendente |
 
 Cada fase termina com a suíte verde, o gate verde e validação em 1280×720 e
