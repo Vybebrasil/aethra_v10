@@ -2867,7 +2867,131 @@
 }
 
 /* =========================================================
-   21. MOVIMENTO REDUZIDO
+   21. OFICINAS (Ui3WorkshopWindow)
+   ========================================================= */
+
+#ui3-root .ui3-workshop {
+    height: 100%;
+    display: grid;
+    grid-template-columns: clamp(260px, 22%, 320px) minmax(0, 1fr);
+}
+
+#ui3-root .ui3-workshop__sidebar,
+#ui3-root .ui3-workshop__main {
+    box-sizing: border-box;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui3-space-3);
+}
+
+#ui3-root .ui3-workshop__sidebar {
+    padding: var(--ui3-space-4) 16px;
+    overflow-y: auto;
+    background: #0F171B;
+    border-right: 1px solid var(--ui3-line);
+}
+
+#ui3-root .ui3-workshop__main {
+    min-width: 0;
+    padding: var(--ui3-space-3) 18px var(--ui3-space-4);
+}
+
+#ui3-root .ui3-workshop__content {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 2px;
+}
+
+#ui3-root .ui3-workshop__controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ui3-space-4);
+}
+
+#ui3-root .ui3-workshop__guidance {
+    border: 1px solid var(--ui3-gold-3);
+}
+
+#ui3-root .ui3-recipe-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--ui3-space-3);
+}
+
+#ui3-root .ui3-recipe {
+    box-sizing: border-box;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: var(--ui3-bg-1);
+    border: 1px solid var(--ui3-line);
+    border-radius: var(--ui3-radius-xl);
+}
+
+#ui3-root .ui3-recipe.is-ready {
+    border-color: rgba(87, 199, 136, 0.35);
+}
+
+#ui3-root .ui3-recipe.is-guided {
+    border-color: var(--ui3-gold);
+    box-shadow: 0 0 0 3px rgba(216, 178, 92, 0.15);
+}
+
+#ui3-root .ui3-recipe.is-locked {
+    opacity: 0.7;
+}
+
+#ui3-root .ui3-recipe__head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#ui3-root .ui3-recipe__flow {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--ui3-space-3);
+}
+
+#ui3-root .ui3-recipe .ui3-item-description,
+#ui3-root .ui3-recipe .ui3-caption {
+    margin: 0;
+}
+
+#ui3-root .ui3-text-bad { color: var(--ui3-danger-soft); }
+
+#ui3-root .ui3-tag--gold {
+    border-color: var(--ui3-gold);
+    color: var(--ui3-gold-1);
+}
+
+#ui3-root .ui3-workshop__policy {
+    padding: var(--ui3-space-3);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui3-space-3);
+    background: var(--ui3-bg-2);
+    border-radius: var(--ui3-radius-lg);
+}
+
+#ui3-root .ui3-workshop__policy-fields {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--ui3-space-2);
+}
+
+#ui3-root .ui3-workshop__policy-fields input {
+    height: 36px;
+    font-size: var(--ui3-fs-md);
+}
+
+/* =========================================================
+   22. MOVIMENTO REDUZIDO
    ========================================================= */
 
 @media (prefers-reduced-motion: reduce) {

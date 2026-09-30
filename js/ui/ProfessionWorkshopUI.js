@@ -61,12 +61,8 @@
     }
 
     function qualityEstimate(recipe, technique) {
-        const level   = Aethra.ProfessionSystem?.getState?.(recipe.professionId)?.level || 1;
-        const mastery = Aethra.XPSystem?.getDiminishingSkillBonus?.(level, { scale: 14, interval: 14 }) || 0;
-        const challenge = Math.min(18, Math.max(-12, (level - recipe.requiredLevel) * 0.7));
-        const perkBonus = Number(Aethra.ProfessionSystem?.getProfessionModifiers?.(recipe.professionId)?.craftQuality || 0);
-        const center  = Math.min(100, Math.max(1, Math.round(42 + mastery + challenge + Number(technique.qualityDelta || 0) + perkBonus)));
-        return `${Math.max(1, center - 8)}–${Math.min(100, center + 8)}`;
+        const range = Aethra.CraftingSystem?.estimateQuality?.(recipe, technique?.id);
+        return range ? `${range.min}–${range.max}` : "—";
     }
 
     function isEquipmentRecipe(recipe) {
@@ -78,15 +74,15 @@
         });
     }
 
-    function resolveWorkshopGuidance() {
+    function resolveWorkshopGuidance(professionId = ui.professionId) {
         const tracked = Aethra.QuestSystem?.getGuidance?.();
-        if (tracked?.action === "open-workshop" && tracked.professionId === ui.professionId) {
+        if (tracked?.action === "open-workshop" && tracked.professionId === professionId) {
             return tracked;
         }
         const focusId = Aethra.DisciplineSystem?.getFocusId?.();
         const focus = focusId ? Aethra.ProfessionSystem?.getFocusTrainingState?.(focusId) : null;
         const focusedGuidance = focus?.active ? focus.guidance : null;
-        return focusedGuidance?.action === "open-workshop" && focusedGuidance.professionId === ui.professionId
+        return focusedGuidance?.action === "open-workshop" && focusedGuidance.professionId === professionId
             ? focusedGuidance
             : null;
     }
@@ -561,7 +557,23 @@
     });
 
     // ─── API pública ──────────────────────────────────────────────────────────
-    Aethra.ProfessionWorkshopUI = { open, render, craft, repair, repairAll, getState: () => clone(ui) };
+    Aethra.ProfessionWorkshopUI = {
+        open,
+        render,
+        craft,
+        repair,
+        repairAll,
+        getState: () => clone(ui),
+        // Leitura para a UI 3.0 (a mover para um módulo não visual na fase 5.3).
+        professions: clone(professionMeta),
+        getGuidance: (professionId) => resolveWorkshopGuidance(professionId),
+        isGuidedRecipe: (recipe, guidance) => isGuidedRecipe(recipe, guidance),
+        clearNewlyDiscovered(professionId) {
+            ui.newlyDiscovered = ui.newlyDiscovered.filter(
+                (id) => Aethra.CraftingSystem?.getRecipe?.(id)?.professionId !== professionId
+            );
+        }
+    };
 
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ensureWindow, { once: true });
     else ensureWindow();

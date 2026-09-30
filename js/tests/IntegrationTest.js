@@ -4441,6 +4441,46 @@
                 windowManager.closeWindow("skills-view", { source: "integration-restore" });
 
                 /*
+                 * UI 3.0 — fase 5.2 (Oficinas). ProfessionWorkshopUI.open continua
+                 * a porta de entrada; a janela nova produz pelo CraftingSystem.
+                 */
+                const workshopViewBefore = Aethra.UIManager?.primaryView || "hunt";
+                const workshopBagBefore = [...(Aethra.GameState.hero.bag || [])];
+                if (Aethra.GameState.hunt?.isActive) Aethra.HuntSystem.stopHunt("integration-ui3-workshop");
+                Aethra.UIManager?.setPrimaryView?.("city", { source: "integration-ui3-workshop" });
+                Aethra.ProfessionWorkshopUI?.open?.("blacksmithing");
+                const workshopLayer = document.querySelector("#ui3-root [data-ui3-window='profession-workshop-view']");
+                const firstRecipe = (Aethra.CraftingSystem.getRecipes("blacksmithing") || [])[0] || null;
+                let workshopCrafts = false;
+                let workshopDetail = "nenhuma receita conhecida";
+                if (firstRecipe) {
+                    Aethra.CraftingSystem.resolveRequirements(firstRecipe, "balanced", 1).inputs.forEach((input) => {
+                        const material = Aethra.ItemSystem?.generateItem?.(input.itemId, { quantity: input.quantity, source: "integration-workshop" });
+                        if (material) Aethra.BagSystem.addItems([material], "integration-workshop");
+                    });
+                    Aethra.Ui3WorkshopWindow?.refresh?.();
+                    const outputId = firstRecipe.outputs?.[0]?.itemId;
+                    const outputBefore = Aethra.BagSystem.countItem(outputId);
+                    workshopLayer?.querySelector(`[data-ui3-craft="${firstRecipe.id}"]`)?.click();
+                    const outputAfter = Aethra.BagSystem.countItem(outputId);
+                    workshopCrafts = outputAfter > outputBefore;
+                    workshopDetail = `${firstRecipe.name}: ${outputBefore}→${outputAfter} ${outputId}`;
+                }
+                const workshopShown = Aethra.Ui3WorkshopWindow?.isOpen?.() === true
+                    && document.getElementById("profession-workshop-view")?.classList.contains("hidden") !== false
+                    && (workshopLayer?.querySelector(".ui3-dialog__subtitle")?.textContent || "").includes("Forja");
+                windowManager.closeWindow("profession-workshop-view", { source: "integration-restore" });
+                Aethra.GameState.hero.bag = workshopBagBefore;
+                Aethra.UIManager?.setPrimaryView?.(workshopViewBefore, { source: "integration-restore" });
+                checks.push(
+                    createCheck(
+                        "UI 3.0 Oficina abre na estação da Cidade e produz pelo CraftingSystem",
+                        workshopShown && workshopCrafts,
+                        `${workshopShown ? "janela nova na Forja" : "janela errada"} · ${workshopDetail}`
+                    )
+                );
+
+                /*
                  * UI 3.0 — fase 4 (Cidade). A cidade nova cobre a clássica, lê o
                  * mesmo ouro do herói e libera o mapa da Hunt.
                  */

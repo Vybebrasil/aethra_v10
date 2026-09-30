@@ -246,12 +246,27 @@
         },
 
         // ── Cálculo de qualidade ──────────────────────────────────────────────
-        rollQuality(skillLevel, requiredLevel, technique, professionId = null) {
+        // Centro da qualidade, sem a variação do sorteio (±8).
+        qualityCenter(skillLevel, requiredLevel, technique, professionId = null) {
             const mastery   = Aethra.XPSystem?.getDiminishingSkillBonus?.(skillLevel, { scale: 14, interval: 14 }) || 0;
             const challenge = clamp((skillLevel - requiredLevel) * 0.7, -12, 18);
-            const variance  = (clamp(this.randomSource(), 0, 1) * 16) - 8;
             const perkBonus = number(Aethra.ProfessionSystem?.getProfessionModifiers?.(professionId)?.craftQuality, 0);
-            return clamp(Math.round(42 + mastery + challenge + technique.qualityDelta + perkBonus + variance), 1, 100);
+            return 42 + mastery + challenge + number(technique?.qualityDelta, 0) + perkBonus;
+        },
+
+        rollQuality(skillLevel, requiredLevel, technique, professionId = null) {
+            const variance  = (clamp(this.randomSource(), 0, 1) * 16) - 8;
+            return clamp(Math.round(this.qualityCenter(skillLevel, requiredLevel, technique, professionId) + variance), 1, 100);
+        },
+
+        // Faixa que o sorteio pode dar agora, para as interfaces mostrarem.
+        estimateQuality(recipeOrId, techniqueId = "balanced") {
+            const recipe = typeof recipeOrId === "string" ? this.getRecipe(recipeOrId) : recipeOrId;
+            if (!recipe) return null;
+            const technique = this.techniques[techniqueId] || this.techniques.balanced;
+            const level = number(Aethra.ProfessionSystem?.getState?.(recipe.professionId)?.level, 1);
+            const center = clamp(Math.round(this.qualityCenter(level, number(recipe.requiredLevel, 1), technique, recipe.professionId)), 1, 100);
+            return { min: Math.max(1, center - 8), max: Math.min(100, center + 8), center };
         },
 
         // ── Transação de craft ────────────────────────────────────────────────
