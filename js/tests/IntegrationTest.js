@@ -1283,11 +1283,15 @@
             );
             if (Aethra.GameState.battle) Aethra.GameState.battle.heroGuard = previousGuard;
 
-            Aethra.CharacterCreationUI?.show?.();
-            const creationArchetypes = document.querySelectorAll(".creation-archetype");
-            const creationSubmit = document.querySelector("[data-create-character]");
-            const creationAttributes = document.querySelectorAll("[data-creation-adjust]");
-            const creationProfessions = document.querySelectorAll(".creation-profession-btn");
+            // A criação 3.0 aparece enquanto o herói não foi criado.
+            const creationCreatedBefore = Aethra.GameState.hero.characterCreated;
+            Aethra.GameState.hero.characterCreated = false;
+            Aethra.Ui3CreationScreen?.sync?.();
+            const creationRoot = document.querySelector("#ui3-root [data-ui3-screen='creation']");
+            const creationArchetypes = creationRoot?.querySelectorAll("[data-ui3-archetype]") || [];
+            const creationSubmit = creationRoot?.querySelector("[data-ui3-create]");
+            const creationAttributes = creationRoot?.querySelectorAll("[data-ui3-attribute]") || [];
+            const creationProfessions = creationRoot?.querySelectorAll("[data-ui3-profession]") || [];
             checks.push(
                 createCheck(
                     "Criação em página única com arquétipos, atributos e ofício",
@@ -1298,7 +1302,8 @@
                     `${creationArchetypes.length} arquétipos · ${creationAttributes.length} controles de atributo · ${creationProfessions.length} ofícios`
                 )
             );
-            Aethra.CharacterCreationUI?.close?.();
+            Aethra.GameState.hero.characterCreated = creationCreatedBefore;
+            Aethra.Ui3CreationScreen?.sync?.();
             checks.push(
                 createCheck(
                     "Combate configurado por rodadas legíveis",
@@ -3680,74 +3685,70 @@
                 Aethra.WindowManager?.openWindow?.("skills-view", {
                     source: "integration-hud-exclusive"
                 });
-                const skillsRect = document.getElementById("skills-view")?.getBoundingClientRect?.();
-                const topbarBottom = document.querySelector("#hud-layer .topbar, .topbar")
+                const skillsRect = document.querySelector("#ui3-root [data-ui3-window='skills-view'] .ui3-dialog")?.getBoundingClientRect?.();
+                const topbarBottom = document.querySelector("#ui3-root .ui3-topbar")
                     ?.getBoundingClientRect?.().bottom || 0;
-                const actionBarTop = document.getElementById("battle-actionbar-layer")
-                    ?.getBoundingClientRect?.().top || window.innerHeight;
+                const actionBarTop = window.innerHeight;
+                // Na 3.0 o diálogo fica por cima de tudo: o topo dele não pode estar sob a barra.
+                const skillsDialog = document.querySelector("#ui3-root [data-ui3-window='skills-view'] .ui3-dialog");
+                const skillsTopHit = skillsRect
+                    ? document.elementFromPoint(skillsRect.left + skillsRect.width / 2, skillsRect.top + 8)
+                    : null;
+                const skillsOnTop = Boolean(skillsDialog && skillsTopHit && skillsDialog.contains(skillsTopHit));
                 checks.push(
                     createCheck(
                         "Janelas do HUD são exclusivas e nunca ficam atrás da topbar",
                         Aethra.WindowManager?.config?.exclusive === true
                             && Aethra.WindowManager?.isOpen?.("skills-view") === true
                             && Aethra.WindowManager?.isOpen?.("inventory-view") === false
-                            && Number(skillsRect?.top || 0) >= Number(topbarBottom) + 6
+                            && skillsOnTop
+                            && Number(skillsRect?.top ?? -1) >= 0
                             && Number(skillsRect?.bottom || 0) <= Number(actionBarTop) + 1,
                         `inventário ${Aethra.WindowManager?.isOpen?.("inventory-view") ? "aberto" : "fechado"} · skills y=${Math.round(skillsRect?.top || 0)}–${Math.round(skillsRect?.bottom || 0)} · topbar=${Math.round(topbarBottom)} · actionbar=${Math.round(actionBarTop)}`
                     )
                 );
                 Aethra.WindowManager?.closeAll?.({ modalOnly: true, silent: true });
 
-                Aethra.openHuntWorldMap?.({ source: "integration-overlay" });
-                const worldMapWindow = document.getElementById("hunt-world-map-view");
-                const worldMapRect = worldMapWindow?.getBoundingClientRect?.();
-                const worldMapContent = worldMapWindow?.querySelector(".hunt-world-map-content");
-                const worldMapHeader = worldMapWindow?.querySelector(".hunt-world-map-window__header");
-                const worldMapHeaderRect = worldMapHeader?.getBoundingClientRect?.();
-                const worldMapLayout = worldMapWindow?.querySelector(".hunt-world-map-layout");
-                const worldMapDetail = worldMapWindow?.querySelector(".hunt-world-map-detail");
-                const worldMapStart = worldMapWindow?.querySelector(
-                    "[data-world-hunt-start], [data-world-hunt-creature-start]"
-                );
-                if (worldMapDetail) worldMapDetail.scrollTop = worldMapDetail.scrollHeight;
+                /*
+                 * O Mapa-Mundi 3.0 cobre o jogo com o fundo do diálogo e mantém
+                 * "Iniciar expedição" dentro da tela e clicável.
+                 */
+                Aethra.Ui3Navigation?.openHuntMap?.({ source: "integration-overlay", mode: "expeditions" });
+                const worldMapLayer = document.querySelector("#ui3-root [data-ui3-window='hunt-world-map-view']");
+                const worldMapDialog = worldMapLayer?.querySelector(".ui3-dialog");
+                const worldMapBackdrop = worldMapLayer?.querySelector(".ui3-dialog-backdrop");
+                worldMapLayer?.querySelector("[data-ui3-expedition]")?.click();
+                const worldMapStart = worldMapLayer?.querySelector("[data-ui3-expedition-start]");
                 const reportElement = document.getElementById("integration-test-report");
                 const reportWasHidden = reportElement?.hidden === true;
                 if (reportElement) reportElement.hidden = true;
+                worldMapStart?.scrollIntoView?.({ block: "nearest" });
                 const startRect = worldMapStart?.getBoundingClientRect?.();
                 const startHitTarget = startRect
-                    ? document.elementFromPoint(
-                        startRect.left + startRect.width / 2,
-                        startRect.top + startRect.height / 2
-                    )
+                    ? document.elementFromPoint(startRect.left + startRect.width / 2, startRect.top + startRect.height / 2)
                     : null;
-                const startHitStack = startRect
-                    ? document.elementsFromPoint(
-                        startRect.left + startRect.width / 2,
-                        startRect.top + startRect.height / 2
-                    ).slice(0, 6).map((element) => element.id || element.className || element.tagName).join(" > ")
-                    : "fora da tela";
+                const backdropRect = worldMapBackdrop?.getBoundingClientRect?.();
+                const dialogRect = worldMapDialog?.getBoundingClientRect?.();
+                const backdropHit = document.elementFromPoint(4, window.innerHeight - 4);
                 if (reportElement) reportElement.hidden = reportWasHidden;
-                const mapIsBlockingOverlay = Boolean(worldMapWindow)
-                    && Aethra.WindowManager?.isOverlayWindow?.("hunt-world-map-view") === true
-                    && getComputedStyle(document.getElementById("modal-layer")).pointerEvents === "auto"
-                    && Number(getComputedStyle(document.getElementById("modal-layer")).zIndex || 0)
-                        > Number(getComputedStyle(document.getElementById("hud-layer")).zIndex || 0)
-                    && Number(worldMapRect?.left || 0) <= 1
-                    && Number(worldMapRect?.top || 0) <= 1
-                    && Math.abs(Number(worldMapRect?.width || 0) - window.innerWidth) <= 1
-                    && Math.abs(Number(worldMapRect?.height || 0) - window.innerHeight) <= 1
-                    && Number(worldMapHeaderRect?.left ?? -1) >= 0
-                    && Number(worldMapHeaderRect?.top ?? -1) >= 0
-                    && Number(worldMapHeaderRect?.right ?? Infinity) <= window.innerWidth + 1;
+                const mapIsBlockingOverlay = Boolean(worldMapBackdrop)
+                    && Math.abs(Number(backdropRect?.width || 0) - window.innerWidth) <= 1
+                    && Math.abs(Number(backdropRect?.height || 0) - window.innerHeight) <= 1
+                    && backdropHit === worldMapBackdrop
+                    && Number(dialogRect?.left ?? -1) >= 0
+                    && Number(dialogRect?.top ?? -1) >= 0
+                    && Number(dialogRect?.right ?? Infinity) <= window.innerWidth + 1
+                    && Number(dialogRect?.bottom ?? Infinity) <= window.innerHeight + 1;
                 const startIsReachable = Boolean(worldMapStart)
-                    && Number(startRect?.top || -1) >= 0
-                    && Number(startRect?.bottom || Infinity) <= window.innerHeight
+                    && Number(startRect?.top ?? -1) >= 0
+                    && Number(startRect?.bottom ?? Infinity) <= window.innerHeight
                     && (startHitTarget === worldMapStart || worldMapStart.contains(startHitTarget));
+                const describeHit = (element) => element?.className || element?.tagName || "fora da tela";
                 checks.push(
                     createCheck(
                         "Mapa Mundi bloqueia o fundo e mantém Entrar na expedição clicável",
                         mapIsBlockingOverlay && startIsReachable,
-                        `viewport ${window.innerWidth}×${window.innerHeight} · overlay ${Math.round(worldMapRect?.left || 0)},${Math.round(worldMapRect?.top || 0)} ${Math.round(worldMapRect?.width || 0)}×${Math.round(worldMapRect?.height || 0)} pad ${worldMapWindow ? getComputedStyle(worldMapWindow).padding : "ausente"} eventos ${worldMapWindow ? getComputedStyle(worldMapWindow).pointerEvents : "ausente"}/${worldMapDetail ? getComputedStyle(worldMapDetail).pointerEvents : "ausente"}/${worldMapStart ? getComputedStyle(worldMapStart).pointerEvents : "ausente"} z ${worldMapWindow ? getComputedStyle(worldMapWindow).zIndex : "ausente"} · conteúdo ${Math.round(worldMapContent?.getBoundingClientRect?.().height || 0)} · layout ${Math.round(worldMapLayout?.getBoundingClientRect?.().height || 0)} · detalhe ${worldMapDetail?.clientHeight || 0}/${worldMapDetail?.scrollHeight || 0}@${Math.round(worldMapDetail?.scrollTop || 0)} · botão ${Math.round(startRect?.top || 0)}–${Math.round(startRect?.bottom || 0)} ${startIsReachable ? "alcançável" : `obstruído por ${startHitTarget?.className || startHitTarget?.tagName || "fora da tela"}`} · pilha ${startHitStack}`
+                        `viewport ${window.innerWidth}×${window.innerHeight} · fundo ${Math.round(backdropRect?.width || 0)}×${Math.round(backdropRect?.height || 0)} ${backdropHit === worldMapBackdrop ? "bloqueia" : `vaza (${describeHit(backdropHit)})`} · diálogo ${Math.round(dialogRect?.left || 0)},${Math.round(dialogRect?.top || 0)}–${Math.round(dialogRect?.right || 0)},${Math.round(dialogRect?.bottom || 0)} · botão ${startIsReachable ? "alcançável" : `obstruído por ${describeHit(startHitTarget)}`}`
                     )
                 );
                 Aethra.WindowManager?.closeWindow?.("hunt-world-map-view", {
@@ -4182,20 +4183,24 @@
                 const interfaceEvents = [];
                 const stopInterfaceListener = Aethra.EventBus.on("settings:interface-changed", (payload) => interfaceEvents.push(payload?.interfaceVersion));
                 const invalidInterface = settings?.setInterfaceVersion?.("v99", { source: "integration" });
+                const toClassic = settings?.setInterfaceVersion?.("classic", { source: "integration" });
+                const bodyLeftV3 = !document.body.classList.contains("ui3-active");
                 const toV3 = settings?.setInterfaceVersion?.("v3", { source: "integration" });
                 const bodyMarkedV3 = document.body.classList.contains("ui3-active");
-                settings?.setInterfaceVersion?.(interfaceBefore || "classic", { source: "integration-restore" });
+                settings?.setInterfaceVersion?.(interfaceBefore || "v3", { source: "integration-restore" });
                 if (typeof stopInterfaceListener === "function") stopInterfaceListener();
                 checks.push(
                     createCheck(
                         "Preferência de interface valida versões e avisa a UI 3.0",
-                        interfaceBefore === "classic"
+                        interfaceBefore === "v3"
                             && invalidInterface === false
+                            && toClassic === "classic"
+                            && bodyLeftV3
                             && toV3 === "v3"
                             && bodyMarkedV3
+                            && interfaceEvents.includes("classic")
                             && interfaceEvents.includes("v3")
-                            && settings.getInterfaceVersion() === "classic"
-                            && !document.body.classList.contains("ui3-active"),
+                            && settings.getInterfaceVersion() === "v3",
                         `padrão ${interfaceBefore} · inválida ${invalidInterface === false ? "recusada" : "aceita"} · v3 ${bodyMarkedV3 ? "aplicada" : "ignorada"}`
                     )
                 );
@@ -4221,8 +4226,9 @@
                     )
                 );
 
-                const galleryShown = Aethra.Ui3Shell?.showGallery?.();
                 const ui3Root = document.getElementById("ui3-root");
+                const rootHiddenBefore = ui3Root?.hidden === true;
+                const galleryShown = Aethra.Ui3Shell?.showGallery?.();
                 const gallery = ui3Root?.querySelector("[data-ui3-gallery]");
                 const galleryTexts = gallery
                     ? [...gallery.querySelectorAll("*")].filter((element) => [...element.childNodes].some((node) => node.nodeType === 3 && node.textContent.trim()))
@@ -4242,7 +4248,7 @@
                             && galleryTexts.length >= 20
                             && smallestGalleryFont >= 11
                             && primaryBackground === "rgb(216, 178, 92)"
-                            && ui3Root.hidden === true
+                            && ui3Root.hidden === rootHiddenBefore
                             && !ui3Root.querySelector("[data-ui3-gallery]"),
                         `${galleryTexts.length} textos · menor ${smallestGalleryFont}px · botão ${primaryBackground || "ausente"}`
                     )
@@ -4316,12 +4322,13 @@
                     // A Cidade nova (fase 4) cobre a clássica: a camada continua inerte.
                     && Aethra.Ui3CityScreen?.isVisible?.() === true
                     && (!worldLayer || worldLayer.inert === true);
-                settings?.setInterfaceVersion?.(interfaceBefore || "classic", { source: "integration-restore" });
+                settings?.setInterfaceVersion?.("classic", { source: "integration-ui3-classic-restore" });
                 Aethra.UIManager?.setPrimaryView?.(huntViewBefore, { source: "integration-restore" });
-                Aethra.GameState.hero.characterCreated = createdBefore;
                 const classicRestored = document.getElementById("ui3-root")?.hidden === true
                     && ![...document.querySelectorAll("#world-layer, #hud-layer, #hud-layer > .topbar")].some((element) => element.inert)
                     && Aethra.TileMapCanvas?.isHosted?.() === false;
+                settings?.setInterfaceVersion?.(interfaceBefore || "v3", { source: "integration-restore" });
+                Aethra.GameState.hero.characterCreated = createdBefore;
                 /*
                  * UI 3.0 — fase 3 (Mochila). A janela nova assume "inventory-view"
                  * pelo WindowManager: os mesmos chamadores abrem a versão certa,
@@ -4382,6 +4389,7 @@
                 const classicBagOpens = Boolean(legacyBag && !legacyBag.classList.contains("hidden"))
                     && Aethra.Ui3BagWindow?.isOpen?.() === false;
                 windowManager.closeWindow("inventory-view", { source: "integration-restore" });
+                settings?.setInterfaceVersion?.(interfaceBefore || "v3", { source: "integration-restore" });
                 checks.push(
                     createCheck(
                         "UI 3.0 Mochila fecha com Esc e a clássica volta na interface clássica",
@@ -4995,7 +5003,7 @@
                     )
                 );
 
-                settings?.setInterfaceVersion?.(interfaceBefore || "classic", { source: "integration-restore" });
+                settings?.setInterfaceVersion?.(interfaceBefore || "v3", { source: "integration-restore" });
                 Aethra.GameState.hero.characterCreated = createdBefore;
 
                 checks.push(
@@ -5040,7 +5048,7 @@
                     Aethra.SaveManager.reset = originalReset;
                 }
                 checks.push(createCheck("UI 3.0 Tela de título segura o jogo e só apaga o herói com confirmação", titleWorks, titleDetail));
-                settings?.setInterfaceVersion?.(interfaceBefore || "classic", { source: "integration-restore" });
+                settings?.setInterfaceVersion?.(interfaceBefore || "v3", { source: "integration-restore" });
 
                 /*
                  * UI 3.0 — fase 4 (Criação). Última verificação da suíte: criar
@@ -5075,7 +5083,7 @@
                     && ui3CreatedHero.introProfessionId === firstProfession
                     && Aethra.Ui3CreationScreen?.isVisible?.() === false
                     && Aethra.Ui3CityScreen?.isVisible?.() === true;
-                settings?.setInterfaceVersion?.(interfaceBefore || "classic", { source: "integration-restore" });
+                settings?.setInterfaceVersion?.(interfaceBefore || "v3", { source: "integration-restore" });
                 checks.push(
                     createCheck(
                         "UI 3.0 Criação assume a tela, recusa nome curto e cria pelo CharacterBuildSystem",

@@ -124,8 +124,9 @@
         syncQaDiagnostics();
         window.AETHRA_SAVE_KEY = "aethra_integration_test_v68";
         window.AETHRA_INTEGRATION_TEST = true;
-        // A suíte testa o fluxo clássico e liga a UI 3.0 onde precisa.
-        window.AETHRA_INTERFACE_DEFAULT = "classic";
+        // A suíte roda na UI 3.0, como o jogo; só as verificações de volta à
+        // clássica trocam de interface, e restauram a 3.0 no fim.
+        window.AETHRA_INTERFACE_DEFAULT = "v3";
         window.AETHRA_SETTINGS_KEY = "aethra.integration-test.settings";
 
         try {
@@ -291,7 +292,7 @@
     <script src="js/ui3/Ui3MarketWindow.js?v=1" defer></script>
     <script src="js/ui3/Ui3PremiumShopWindow.js?v=1" defer></script>
     <script src="js/ui3/Ui3SocialWindow.js?v=1" defer></script>
-    <script src="js/tests/IntegrationTest.js?v=101" defer></script>
+    <script src="js/tests/IntegrationTest.js?v=103" defer></script>
     <script src="js/core/GameLoader.js?v=17" defer></script>
 </body>
 </html>
