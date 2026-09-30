@@ -1666,7 +1666,110 @@
 }
 
 /* =========================================================
-   14. MOVIMENTO REDUZIDO
+   14. LOJA (Ui3ShopWindow) e listas
+   O painel do item reaproveita .ui3-bag__details e Ui3Items.
+   ========================================================= */
+
+#ui3-root .ui3-shop {
+    height: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(300px, 30%, 400px);
+}
+
+#ui3-root .ui3-shop__main {
+    box-sizing: border-box;
+    min-width: 0;
+    min-height: 0;
+    padding: var(--ui3-space-3) 18px var(--ui3-space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui3-space-3);
+}
+
+#ui3-root .ui3-shop__list {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui3-space-3);
+}
+
+#ui3-root .ui3-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 2px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui3-space-1);
+    overflow-y: auto;
+}
+
+#ui3-root .ui3-list-row {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 52px;
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    gap: var(--ui3-space-3);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--ui3-radius-md);
+    color: var(--ui3-text-1);
+    font-family: var(--ui3-font-ui);
+    text-align: left;
+    cursor: pointer;
+}
+
+#ui3-root .ui3-list-row:hover {
+    background: var(--ui3-bg-2);
+}
+
+#ui3-root .ui3-list-row[aria-pressed="true"] {
+    background: #1E2A30;
+    border-color: var(--ui3-gold);
+}
+
+#ui3-root .ui3-list-row__text {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+#ui3-root .ui3-list-row__text strong,
+#ui3-root .ui3-list-row__text small {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+#ui3-root .ui3-list-row__text strong {
+    font-size: var(--ui3-fs-md);
+    font-weight: 600;
+}
+
+#ui3-root .ui3-list-row__text small {
+    font-size: var(--ui3-fs-sm);
+    color: var(--ui3-text-2);
+}
+
+#ui3-root .ui3-price {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--ui3-fs-md);
+    font-weight: 700;
+    color: var(--ui3-text-1);
+}
+
+#ui3-root .ui3-price.is-short { color: var(--ui3-danger-soft); }
+#ui3-root .ui3-price.is-gain { color: var(--ui3-ok); }
+
+/* =========================================================
+   15. MOVIMENTO REDUZIDO
    ========================================================= */
 
 @media (prefers-reduced-motion: reduce) {

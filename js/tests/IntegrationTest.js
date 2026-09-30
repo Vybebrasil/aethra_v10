@@ -4307,7 +4307,64 @@
                         `Esc ${escClosed ? "fechou" : "não fechou"} · clássica ${classicBagOpens ? "abriu" : "não abriu"}`
                     )
                 );
-                settings?.setInterfaceVersion?.("v3", { source: "integration-ui3-bag" });
+                /*
+                 * UI 3.0 — fase 3 (Loja). Compra e venda passam pelo
+                 * MarketplaceSystem; o preço mostrado é o da cotação do dono.
+                 */
+                settings?.setInterfaceVersion?.("v3", { source: "integration-ui3-shop" });
+                const shopGoldOriginal = Aethra.GameState.hero.gold;
+                const shopBagOriginal = [...(Aethra.GameState.hero.bag || [])];
+                Aethra.GameState.hero.bag = shopBagOriginal.filter((item) => (item.templateId || item.id) !== "potion_health");
+                Aethra.GameState.hero.gold = Math.max(500, Number(shopGoldOriginal) || 0);
+                windowManager.openWindow("npc-shop-view", { source: "integration-ui3-shop" });
+                const shopLayer = document.querySelector("#ui3-root [data-ui3-window='npc-shop-view']");
+                const shopRows = shopLayer?.querySelectorAll("[data-ui3-shop-buy]").length || 0;
+                const catalogSize = Aethra.MarketplaceSystem.getNpcCatalog(Aethra.GameState.hero.level).length;
+                const shopGoldBeforeBuy = Number(Aethra.GameState.hero.gold);
+                shopLayer?.querySelector("[data-ui3-shop-buy='potion_health']")?.click();
+                shopLayer?.querySelector("[data-ui3-shop-quantity='5']")?.click();
+                const buyLabel = shopLayer?.querySelector("[data-ui3-shop-confirm-buy]")?.textContent || "";
+                shopLayer?.querySelector("[data-ui3-shop-confirm-buy]")?.click();
+                const potionPrice = Number(Aethra.GameData.items.potion_health?.price || 0);
+                const boughtPotions = Aethra.BagSystem.countItem("potion_health");
+                const goldAfterBuy = Number(Aethra.GameState.hero.gold);
+                checks.push(
+                    createCheck(
+                        "UI 3.0 Loja lista o catálogo do dono e compra em quantidade",
+                        Aethra.Ui3ShopWindow?.isOpen?.() === true
+                            && shopRows === catalogSize
+                            && buyLabel.includes(`${potionPrice * 5}`)
+                            && boughtPotions === 5
+                            && goldAfterBuy === shopGoldBeforeBuy - potionPrice * 5,
+                        `${shopRows}/${catalogSize} itens · botão "${buyLabel}" · ${boughtPotions} poções · ouro ${shopGoldBeforeBuy}→${goldAfterBuy}`
+                    )
+                );
+
+                shopLayer?.querySelector("[data-ui3-tab='sell']")?.click();
+                const boughtStack = (Aethra.GameState.hero.bag || []).find((item) => (item.templateId || item.id) === "potion_health");
+                const stackQuote = boughtStack ? Aethra.MarketplaceSystem.getSaleQuote(boughtStack) : null;
+                const sellRowShown = boughtStack
+                    ? shopLayer?.querySelector(`[data-ui3-shop-sell="${boughtStack.instanceId}"]`)
+                    : null;
+                const rowPrice = sellRowShown?.querySelector(".ui3-price")?.textContent || "";
+                sellRowShown?.click();
+                shopLayer?.querySelector("[data-ui3-shop-confirm-sell]")?.click();
+                const goldAfterSell = Number(Aethra.GameState.hero.gold);
+                checks.push(
+                    createCheck(
+                        "UI 3.0 Loja vende pelo preço da cotação",
+                        Boolean(sellRowShown)
+                            && stackQuote?.mode === "sellback"
+                            && rowPrice.includes(`${stackQuote.salePrice}`)
+                            && goldAfterSell === goldAfterBuy + stackQuote.salePrice
+                            && Aethra.BagSystem.countItem("potion_health") === 0,
+                        `linha ${sellRowShown ? rowPrice.trim() : "ausente"} · cotação ${stackQuote?.mode || "?"} ${stackQuote?.salePrice ?? "?"} · ouro ${goldAfterBuy}→${goldAfterSell}`
+                    )
+                );
+                windowManager.closeWindow("npc-shop-view", { source: "integration-restore" });
+                Aethra.GameState.hero.bag = shopBagOriginal;
+                Aethra.GameState.hero.gold = shopGoldOriginal;
+
                 settings?.setInterfaceVersion?.(interfaceBefore || "classic", { source: "integration-restore" });
                 Aethra.GameState.hero.characterCreated = createdBefore;
 

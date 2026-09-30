@@ -44,41 +44,6 @@
         { id: "recent", label: "Recentes" },
         { id: "name", label: "Nome" }
     ]);
-    const TYPE_LABELS = Object.freeze({
-        WEAPON: "Arma",
-        SHIELD: "Escudo",
-        OFFHAND: "Mão secundária",
-        HELMET: "Elmo",
-        HEAD: "Elmo",
-        ARMOR: "Armadura",
-        CHEST: "Armadura",
-        GLOVES: "Luvas",
-        HANDS: "Luvas",
-        LEGS: "Calça",
-        PANTS: "Calça",
-        BOOTS: "Botas",
-        FEET: "Botas",
-        AMULET: "Amuleto",
-        NECK: "Amuleto",
-        RING: "Anel",
-        RELIC: "Relíquia",
-        CONSUMABLE: "Consumível",
-        TOOL: "Ferramenta",
-        MATERIAL: "Material",
-        LOOT: "Espólio",
-        QUEST: "Missão"
-    });
-    const WEAPON_FAMILIES = Object.freeze({
-        sword: "Espada",
-        axe: "Machado",
-        mace: "Maça",
-        dagger: "Adaga",
-        bow: "Arco",
-        focus: "Foco",
-        staff: "Cajado",
-        wand: "Varinha"
-    });
-    const RARITY_RANK = Object.freeze({ common: 1, uncommon: 2, rare: 3, epic: 4, legendary: 5 });
     const EQUIP_ERRORS = Object.freeze({
         LEVEL_REQUIREMENT_NOT_MET: "Nível insuficiente",
         ITEM_TYPE_SLOT_MISMATCH: "Não cabe neste espaço",
@@ -141,12 +106,17 @@
         return item?.instanceId || `index:${index}`;
     }
 
+    // Apresentação de item compartilhada com a Loja (Ui3Items).
+    function shared() {
+        return Aethra.Ui3Items;
+    }
+
     function typeOf(item) {
-        return String(item?.itemType || item?.type || "").toUpperCase();
+        return shared().typeOf(item);
     }
 
     function isEquipable(item) {
-        return (Aethra.EquipSystem?.getAllowedSlots?.(item) || []).length > 0;
+        return shared().isEquipable(item);
     }
 
     function categoryOf(item) {
@@ -158,42 +128,27 @@
     }
 
     function rarityOf(item) {
-        const presentation = Aethra.GameData?.getRarityPresentation?.(item);
-        return {
-            id: kit().normalizeRarity(presentation?.id || item?.rarityId || item?.rarity),
-            name: presentation?.name || item?.rarity || "Comum"
-        };
+        return shared().rarityOf(item);
     }
 
     function imageOf(item) {
-        return Aethra.GameData?.getItemImage?.(item) || "";
+        return shared().imageOf(item);
     }
 
     function nameOf(item) {
-        return item?.name || item?.baseName || item?.templateId || "Item";
+        return shared().nameOf(item);
     }
 
     function glyphOf(item) {
-        return item?.icon || nameOf(item).charAt(0).toUpperCase();
+        return shared().glyphOf(item);
     }
 
     function unitValue(item) {
-        const template = Aethra.GameData?.items?.[item?.templateId] || {};
-        return Math.max(0, number(item?.price ?? item?.basePrice ?? template.price));
+        return shared().unitValue(item);
     }
 
     function quantityOf(item) {
-        return Math.max(1, Math.floor(number(item?.quantity, 1)));
-    }
-
-    function typeLabel(item) {
-        const family = String(item?.weaponFamily || "").toLowerCase();
-        return WEAPON_FAMILIES[family] || TYPE_LABELS[typeOf(item)] || "Item";
-    }
-
-    function metaLine(item) {
-        const level = Math.max(1, Math.floor(number(item?.levelReq, 1)));
-        return [rarityOf(item).name, typeLabel(item), `Nv ${level}`].join(" · ");
+        return shared().quantityOf(item);
     }
 
     function selectedEntry() {
@@ -281,7 +236,7 @@
         const entries = bagItems().map((item, index) => ({ item, index, key: itemKey(item, index) }));
         const byName = (left, right) => nameOf(left.item).localeCompare(nameOf(right.item), "pt-BR");
         const comparators = {
-            rarity: (left, right) => (RARITY_RANK[rarityOf(right.item).id] - RARITY_RANK[rarityOf(left.item).id]) || byName(left, right),
+            rarity: (left, right) => (shared().rarityRank(right.item) - shared().rarityRank(left.item)) || byName(left, right),
             value: (left, right) => (unitValue(right.item) * quantityOf(right.item) - unitValue(left.item) * quantityOf(left.item)) || byName(left, right),
             recent: (left, right) => right.index - left.index,
             name: byName
@@ -345,61 +300,8 @@
             <span class="ui3-caption">Venda na Loja da cidade</span>`;
     }
 
-    function statRows(stats = {}) {
-        const K = kit();
-        const rows = [];
-        const keys = Object.keys(stats).filter((key) => number(stats[key]) !== 0);
-        if (keys.includes("damageMin") || keys.includes("damageMax")) {
-            rows.push(["Dano", `${K.formatNumber(stats.damageMin)}–${K.formatNumber(stats.damageMax)}`]);
-        }
-        keys.filter((key) => key !== "damageMin" && key !== "damageMax").forEach((key) => {
-            rows.push([K.statLabel(key), K.formatStat(key, stats[key], { signed: true })]);
-        });
-        return rows;
-    }
-
     function compareTarget(item) {
-        const validation = Aethra.EquipSystem?.validateEquip?.(item);
-        const allowed = validation?.allowedSlots || Aethra.EquipSystem?.getAllowedSlots?.(item) || [];
-        const slot = validation?.slot || allowed[0] || null;
-        return { slot, equipped: slot ? equipment()[slot] || null : null, validation };
-    }
-
-    function comparisonHTML(item) {
-        const K = kit();
-        const { slot, equipped } = compareTarget(item);
-        if (!slot) return "";
-        const next = item.stats || {};
-        const current = equipped?.stats || {};
-        const diffs = [];
-        const averageDamage = (stats) => (number(stats.damageMin) + number(stats.damageMax)) / 2;
-        const damageDiff = averageDamage(next) - averageDamage(current);
-        if (Math.abs(damageDiff) > 0.001) diffs.push(["Dano médio", damageDiff, "damage"]);
-        [...new Set([...Object.keys(next), ...Object.keys(current)])]
-            .filter((key) => key !== "damageMin" && key !== "damageMax")
-            .forEach((key) => {
-                const diff = number(next[key]) - number(current[key]);
-                if (Math.abs(diff) > 0.0001) diffs.push([K.statLabel(key), diff, key]);
-            });
-        const title = equipped
-            ? `Comparado a ${nameOf(equipped)}`
-            : `${SLOT_LABELS[slot] || "Espaço"} vazio`;
-        const rows = diffs.length
-            ? diffs.map(([label, diff, key]) => `<div class="ui3-row-between"><span>${K.esc(label)}</span><strong class="${diff > 0 ? "is-up" : "is-down"}">${diff > 0 ? "▲" : "▼"} ${K.esc(K.formatStat(key, diff, { signed: true }))}</strong></div>`).join("")
-            : `<p class="ui3-empty">Nenhuma diferença de atributos.</p>`;
-        return `<div class="ui3-compare"><span class="ui3-eyebrow">${K.esc(title)}</span>${rows}</div>`;
-    }
-
-    function durabilityHTML(item) {
-        const K = kit();
-        const durability = item.durability;
-        if (!durability || !number(durability.max)) return "";
-        const percent = Math.max(0, Math.min(100, (number(durability.current) / number(durability.max)) * 100));
-        const tone = percent <= 25 ? "is-low" : percent <= 50 ? "is-mid" : "";
-        return `<div class="ui3-durability ${tone}">
-                <div class="ui3-row-between"><span>Durabilidade</span><strong>${K.formatNumber(durability.current)} / ${K.formatNumber(durability.max)}</strong></div>
-                <div class="ui3-durability__track" role="meter" aria-label="Durabilidade" aria-valuemin="0" aria-valuemax="${K.esc(durability.max)}" aria-valuenow="${K.esc(durability.current)}"><div style="width:${percent.toFixed(1)}%"></div></div>
-            </div>`;
+        return shared().compareTarget(item);
     }
 
     function actionsHTML(entry) {
@@ -437,28 +339,18 @@
                     <p class="ui3-empty">Escolha um item da mochila ou um espaço equipado para ver atributos, comparação e ações.</p>
                 </div>`;
         }
+        const I = shared();
         const item = entry.item;
-        const rarity = rarityOf(item);
-        const image = imageOf(item);
         const quantity = quantityOf(item);
-        const rows = statRows(item.stats || {});
-        const description = item.description || Aethra.GameData?.items?.[item.templateId]?.description || "";
+        const description = I.descriptionOf(item);
         const notice = state.notice
             ? `<p class="ui3-notice ui3-notice--${K.esc(state.notice.tone)}" role="status">${K.esc(state.notice.text)}</p>`
             : "";
-        return `<div class="ui3-item-head">
-                <div class="ui3-item-head__icon ui3-item-head__icon--${rarity.id}">${image
-                    ? `<img src="${K.esc(image)}" alt="" draggable="false">`
-                    : `<span aria-hidden="true">${K.esc(glyphOf(item))}</span>`}</div>
-                <div class="ui3-item-head__text">
-                    <strong class="ui3-item-head__name ui3-rarity-text--${rarity.id}">${K.esc(nameOf(item))}</strong>
-                    <span class="ui3-caption">${K.esc(metaLine(item))}${entry.kind === "slot" ? ` · equipado em ${K.esc(SLOT_LABELS[entry.slot] || entry.slot)}` : ""}</span>
-                </div>
-            </div>
+        return `${I.headHTML(item, entry.kind === "slot" ? `equipado em ${SLOT_LABELS[entry.slot] || entry.slot}` : "")}
             ${description ? `<p class="ui3-item-description">${K.esc(description)}</p>` : ""}
-            ${rows.length ? `<div class="ui3-item-stats">${rows.map(([label, value]) => `<div class="ui3-row-between"><span>${K.esc(label)}</span><strong>${K.esc(value)}</strong></div>`).join("")}</div>` : ""}
-            ${entry.kind === "bag" && isEquipable(item) ? comparisonHTML(item) : ""}
-            ${durabilityHTML(item)}
+            ${I.rowsHTML(I.statRows(item))}
+            ${entry.kind === "bag" && isEquipable(item) ? I.comparisonHTML(item) : ""}
+            ${I.durabilityHTML(item)}
             <div class="ui3-row-between ui3-item-value"><span>Valor base${quantity > 1 ? ` (${K.formatNumber(quantity)} un.)` : ""}</span><strong>${K.formatNumber(unitValue(item) * quantity)} o</strong></div>
             <div class="ui3-item-actions">${notice}${actionsHTML(entry)}</div>`;
     }
