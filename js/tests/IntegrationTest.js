@@ -4549,6 +4549,48 @@
                     )
                 );
 
+                /*
+                 * UI 3.0 — fase 4 (Criação). Última verificação da suíte: criar
+                 * um herói reinicia a progressão. A tela nova assume
+                 * CharacterCreationUI.show(), recusa nome curto e cria pelo
+                 * CharacterBuildSystem.
+                 */
+                settings?.setInterfaceVersion?.("v3", { source: "integration-ui3-creation" });
+                Aethra.GameState.hero.characterCreated = false;
+                Aethra.CharacterCreationUI?.show?.();
+                const creationScreen = document.querySelector("#ui3-root [data-ui3-screen='creation']");
+                const classicCreationLayer = document.getElementById("character-creation-layer");
+                const creationShown = Aethra.Ui3CreationScreen?.isVisible?.() === true
+                    && (!classicCreationLayer || classicCreationLayer.children.length === 0);
+                const nameInput = creationScreen?.querySelector("[data-ui3-hero-name]");
+                const typeName = (value) => {
+                    if (!nameInput) return;
+                    nameInput.value = value;
+                    nameInput.dispatchEvent(new Event("input", { bubbles: true }));
+                };
+                typeName("Al");
+                const blockedShortName = creationScreen?.querySelector("[data-ui3-create]")?.disabled === true;
+                const firstProfession = Object.keys(Aethra.CharacterBuildSystem.introProfessions || {})[0];
+                creationScreen?.querySelector("[data-ui3-archetype='ranger']")?.click();
+                creationScreen?.querySelector(`[data-ui3-profession="${firstProfession}"]`)?.click();
+                typeName("Heroína de Teste");
+                creationScreen?.querySelector("[data-ui3-create]")?.click();
+                const ui3CreatedHero = Aethra.GameState.hero || {};
+                const creationWorks = ui3CreatedHero.characterCreated === true
+                    && ui3CreatedHero.name === "Heroína de Teste"
+                    && ui3CreatedHero.archetypeId === "ranger"
+                    && ui3CreatedHero.introProfessionId === firstProfession
+                    && Aethra.Ui3CreationScreen?.isVisible?.() === false
+                    && Aethra.Ui3CityScreen?.isVisible?.() === true;
+                settings?.setInterfaceVersion?.(interfaceBefore || "classic", { source: "integration-restore" });
+                checks.push(
+                    createCheck(
+                        "UI 3.0 Criação assume a tela, recusa nome curto e cria pelo CharacterBuildSystem",
+                        creationShown && blockedShortName && creationWorks,
+                        `${creationShown ? "tela nova" : "tela errada"} · nome curto ${blockedShortName ? "bloqueado" : "aceito"} · ${creationWorks ? `${ui3CreatedHero.name} (${ui3CreatedHero.archetypeId}) na cidade` : "criação falhou"}`
+                    )
+                );
+
                 const failedChecks = checks.filter((check) => !check.passed);
                 const completedAt = Date.now();
 

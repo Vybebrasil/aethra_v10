@@ -39,6 +39,7 @@ todo o CSS clássico carregado, sai idêntica ao protótipo.
 | Raiz e versão | `js/ui3/Ui3Shell.js` | Cria `#ui3-root`, aplica a versão, cobre camadas clássicas, galeria de dev |
 | Barra superior | `js/ui3/Ui3TopBar.js` | Navegação, carteira, menu "Mais", atalhos B/K/M |
 | Tela de Hunt | `js/ui3/Ui3HuntScreen.js` | Palco do mapa, herói, alvo, expedição, registro, barra de ações |
+| Criação de personagem | `js/ui3/Ui3CreationScreen.js` | Assume `CharacterCreationUI.show()`: origem, atributos, primeiro ofício, validação e criação |
 | Cidade | `js/ui3/Ui3CityScreen.js` | Hub: resumo do herói, 8 serviços, próximo passo da missão e foco |
 | Apresentação de item | `js/ui3/Ui3Items.js` | Nome, raridade, ícone, atributos, comparação e durabilidade, para todas as janelas |
 | Moldura de janela | `js/ui3/Ui3Window.js` | Diálogo modal, foco, apresentador no WindowManager |
@@ -57,6 +58,7 @@ Criadas nos módulos donos (regra 9 do `AGENTS.md`), sem sobrescrever métodos:
 | --- | --- | --- |
 | `WindowManager.registerPresenter(id, presenter)` | `js/ui/WindowManager.js` | Uma janela nova assume um id clássico; `openWindow`, `closeWindow`, `isOpen`, Esc e exclusividade continuam no WindowManager |
 | `HuntAtlas.*` (`startRoute`, `startCreatureHunt`, catálogos) | `js/world/HuntAtlas.js` | Catálogo do mapa e troca de rota, usados pelas duas interfaces |
+| `CharacterCreationUI.registerPresenter(p)` | `js/ui/CharacterCreationUI.js` | Outra interface assume a criação; ao trocar a versão, a camada certa assume |
 | `SkillSystem.placeSkill(tecla, habilidade)` | `js/combat/SkillSystem.js` | Coloca na tecla; se já estiver na barra, troca de lugar (nunca duplica) |
 | `MarketplaceSystem.getNpcCatalog` / `getSaleQuote` / `sellToNpc` | `js/market/MarketplaceSystem.js` | Catálogo e preço de venda com as mesmas regras da venda |
 | `TileMapCanvas.setStageHost(el)` / `isHosted()` | `js/world/TileMapCanvas.js` | Empresta o único `#tilemap-canvas` a outro palco; `null` devolve ao clássico |
@@ -99,6 +101,14 @@ Progressão lê `ProgressionJournalUI.getViewModel()` (projeção das
 maestrias, guia de treino e próximo marco). Ao remover a UI clássica, mova
 essa projeção para um módulo não visual antes de apagar o arquivo.
 
+### Testar a criação sem mexer no save real
+
+`.claude/launch.json` (fora do repositório) tem a configuração
+`aethra-sandbox`: servidor estático na porta 8093, outra origem, então outro
+`localStorage` e nenhuma API de save. Um jogador novo cai direto na criação.
+Para zerar, limpe o armazenamento a partir de um arquivo estático da mesma
+origem (o autosave do jogo regrava o save ao descarregar a página).
+
 ## Migração por fases (branch `ui-v3`)
 
 | Fase | Escopo | Estado |
@@ -106,7 +116,7 @@ essa projeção para um módulo não visual antes de apagar o arquivo.
 | 1. Fundação | tokens, componentes, raiz, preferência, regras no gate | concluída |
 | 2. Hunt | mapa 2D como palco; barra superior; HUD flutuante: herói, alvo, expedição, registro, barra de ações | concluída |
 | 3. Janelas | Mochila/Equipamento, Loja, Habilidades/Automação | concluída |
-| 4. Demais telas | Cidade, Missões e Mapa-Mundi (feitos), Lobby, Criação | em andamento |
+| 4. Demais telas | Cidade, Missões, Mapa-Mundi e Criação (feitos); Lobby aguardando decisão | em andamento |
 | 5. Limpeza | remover `style.css` + v2/v5/v6 e o CSS/JS morto; desfazer os monkey-patches | pendente |
 
 Cada fase termina com a suíte verde, o gate verde e validação em 1280×720 e

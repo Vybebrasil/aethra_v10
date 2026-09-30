@@ -609,7 +609,22 @@
         `;
     }
 
+    /*
+     * Outra interface (UI 3.0) pode assumir a criação: quem chama show()
+     * continua igual. presenter = { isActive(), show(), close() }.
+     */
+    let presenter = null;
+
+    function activePresenter() {
+        return presenter && presenter.isActive?.() !== false ? presenter : null;
+    }
+
     function renderCreation() {
+        const external = activePresenter();
+        if (external) {
+            activeMode = "creation";
+            return external.show();
+        }
         activeMode = "creation";
         draft = draft || initialDraft();
         if (!draft.archetypeId) {
@@ -620,8 +635,12 @@
                 draft.masteries = { ...emptyFor(system().masteries), ...clone(selected.masteries) };
             }
         }
-        if (!draft.introProfessionId) {
-            draft.introProfessionId = "smithing";
+        // "smithing" não existe entre os ofícios iniciais: com ele a criação
+        // falhava em silêncio. O padrão é a Forjaria, mostrada como marcada.
+        if (!system().introProfessions?.[draft.introProfessionId]) {
+            draft.introProfessionId = system().introProfessions?.blacksmithing
+                ? "blacksmithing"
+                : Object.keys(system().introProfessions || {})[0] || null;
         }
 
         const selected = archetype();
@@ -672,6 +691,7 @@
     }
 
     function closeLayer() {
+        activePresenter()?.close?.();
         ensureLayer().replaceChildren();
         document.body.classList.remove("is-creating-character", "is-allocating-skills");
         activeMode = null;
@@ -800,8 +820,26 @@
     Aethra.EventBus.on("save:reset", () => window.setTimeout(maybeShowCreation, 0));
     Aethra.EventBus.on("battle:player-defeated", showDeathRecap);
 
+    // Troca de interface com a criação aberta: a camada certa assume.
+    Aethra.EventBus.on("ui3:version-applied", () => {
+        if (activeMode !== "creation" || Aethra.GameState.hero?.characterCreated) return;
+        const external = activePresenter();
+        if (external) {
+            ensureLayer().replaceChildren();
+            document.body.classList.remove("is-creating-character");
+            external.show();
+        } else if (!ensureLayer().children.length) {
+            renderCreation();
+        }
+    });
+
     Aethra.CharacterCreationUI = {
         show: renderCreation,
+        registerPresenter(next) {
+            if (next && (typeof next.show !== "function" || typeof next.close !== "function")) return false;
+            presenter = next || null;
+            return true;
+        },
         showSkillAllocation: renderSkillAllocation,
         close: closeLayer,
         getDraft: () => draft ? clone(draft) : null,
