@@ -91,7 +91,8 @@ de fonte valem exatamente 11/12/13/14/16/20/28px em 1280px e crescem até
 ## Desenvolvimento
 
 - `?ui3=galeria` abre a galeria de componentes sobre o jogo.
-- `?ui=3` ativa a UI 3.0; `?ui=classic` volta (fica salvo nas preferências).
+- A UI 3.0 é o padrão. `?ui=classic` (ou "Mais > Interface clássica") escolhe a clássica, e a escolha fica salva; `?ui=3` volta.
+- A suíte de testes usa a clássica como base (`window.AETHRA_INTERFACE_DEFAULT` em `tests/integration.html`) e liga a UI 3.0 onde testa.
 - Uma tela da UI 3.0 é um elemento com `data-ui3-screen` dentro de
   `#ui3-root`; a raiz só aparece quando há uma tela ou a galeria.
 
@@ -121,6 +122,12 @@ persistido só pelo `SaveManager`. A tela de título aparece na abertura do
 jogo quando a UI 3.0 está ligada e há herói; sem herói, a criação assume.
 O `LobbyUI` sai na fase 5.
 
+### Por que o `style.css` ainda não saiu
+
+As janelas listadas na fase 5.2 ainda são as clássicas, abertas por cima da
+UI 3.0, e dependem do `style.css` e das camadas v2/v5/v6. Remover o CSS
+antes de migrá-las quebraria essas telas.
+
 ## Migração por fases (branch `ui-v3`)
 
 | Fase | Escopo | Estado |
@@ -129,7 +136,9 @@ O `LobbyUI` sai na fase 5.
 | 2. Hunt | mapa 2D como palco; barra superior; HUD flutuante: herói, alvo, expedição, registro, barra de ações | concluída |
 | 3. Janelas | Mochila/Equipamento, Loja, Habilidades/Automação | concluída |
 | 4. Demais telas | Cidade, Missões, Mapa-Mundi, Criação e Tela de título (no lugar do lobby) | concluída |
-| 5. Limpeza | remover `style.css` + v2/v5/v6 e o CSS/JS morto; desfazer os monkey-patches | pendente |
+| 5.1 Padrão e código morto | UI 3.0 como padrão (clássica só por escolha); 19 arquivos que nada carregava e o lobby removidos | concluída |
+| 5.2 Janelas restantes | Opções, Oficinas, Especialização, Mural de Chefes, Mercado, Cash, Coliseu, Social, Masmorra, Log de combate, Inspeção | pendente |
+| 5.3 Remoção da clássica | `style.css` + v2/v5/v6, HUD clássica e monkey-patches; mover `getViewModel`, `handleQuestGuidance` e o registro de loot para módulos não visuais | pendente |
 
 Cada fase termina com a suíte verde, o gate verde e validação em 1280×720 e
 1920×1080. Ao substituir uma tela, migre também os testes dela para os

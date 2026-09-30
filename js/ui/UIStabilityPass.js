@@ -414,20 +414,6 @@
         }
     });
 
-    // Botão "Novo Personagem" → volta ao Lobby (seleção/criação/deleção de personagens)
-    document.addEventListener("click", (event) => {
-        if (!event.target.closest("[data-new-character]")) return;
-        const confirmed = window.confirm(
-            "Tem certeza? Você será levado à seleção de personagens. O progresso do herói atual está salvo no slot ativo."
-        );
-        if (!confirmed) return;
-        Aethra.WindowManager?.closeAll?.();
-        // Navegar ao Lobby em vez de criar diretamente
-        window.setTimeout(() => {
-            Aethra.LobbyUI?.open?.();
-        }, 100);
-    });
-
     // Botão "Resetar Save (Novo Começo)" → limpa todo o progresso e recarrega como novo jogador
     document.addEventListener("click", (event) => {
         if (!event.target.closest("[data-reset-save]")) return;

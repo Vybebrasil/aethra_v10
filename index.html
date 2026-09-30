@@ -21,7 +21,6 @@
     <link rel="stylesheet" href="css/character-creation.css?v=16">
     <link rel="stylesheet" href="css/coliseum-workspace.css?v=16">
     <link rel="stylesheet" href="css/npc-shop.css?v=16">
-    <link rel="stylesheet" href="css/lobby.css?v=16">
     <link rel="stylesheet" href="css/death-modal.css?v=16">
     <link rel="stylesheet" href="css/idle-loop.css?v=16">
     <link rel="stylesheet" href="css/aethra-ui-v2.css?v=46">
@@ -119,15 +118,6 @@
                 </div>
             </div>
         </header>
-
-        <!-- Lobby: tela de seleção de personagens (sempre a primeira tela) -->
-        <section
-            id="lobby-view"
-            class="is-hidden"
-            aria-label="Seleção de personagem"
-        >
-            <!-- Rendered by LobbyUI.js on engine:ready -->
-        </section>
 
         <!--
             Raiz visual do Modo de Batalha. O RenderEngine substitui este
@@ -597,16 +587,6 @@
                         </div>
 
                         <div class="settings-card-group">
-                            <article class="settings-card">
-                                <div>
-                                    <strong>Trocar Personagem</strong>
-                                    <small>Volta à seleção de personagens. O progresso atual permanece salvo.</small>
-                                </div>
-                                <button type="button" id="btn-new-character" class="settings-action-btn btn--secondary" data-new-character>
-                                    👤 Gerenciar personagens
-                                </button>
-                            </article>
-
                             <article class="settings-card settings-card--danger">
                                 <div>
                                     <strong>Resetar Save (Novo Começo)</strong>
@@ -702,7 +682,7 @@
     <script src="js/world/EntityManager.js?v=3" defer></script>
     <script src="js/world/SpriteLoader.js?v=18" defer></script>
     <script src="js/infrastructure/SaveManager.js?v=14" defer></script>
-    <script src="js/infrastructure/SettingsManager.js?v=4" defer></script>
+    <script src="js/infrastructure/SettingsManager.js?v=5" defer></script>
     <script src="js/infrastructure/AuthorityGateway.js?v=1" defer></script>
     <script src="js/economy/EconomyRNGManager.js" defer></script>
 
@@ -750,7 +730,7 @@
     <script src="js/world/HuntAtlas.js?v=1" defer></script>
     <script src="js/ui/HudWorldMapAndDrops.js?v=6" defer></script>
     <script src="js/ui/EncounterInteractionPass.js?v=2" defer></script>
-    <script src="js/ui/UIStabilityPass.js?v=7" defer></script>
+    <script src="js/ui/UIStabilityPass.js?v=8" defer></script>
     <script src="js/ui/UIFluidityPass.js" defer></script>
     <script src="js/ui/ActionBarWorkspace.js?v=4" defer></script>
     <script src="js/ui/HuntAnalyzerWorkspace.js?v=5" defer></script>
@@ -760,7 +740,6 @@
     <script src="js/ui/ProfessionWorkshopUI.js?v=11" defer></script>
     <script src="js/ui/ProfessionSpecializationUI.js?v=1" defer></script>
     <script src="js/ui/ProgressionJournalUI.js?v=3" defer></script>
-    <script src="js/ui/LobbyUI.js?v=3" defer></script>
     <script src="js/ui/CharacterCreationUI.js?v=11" defer></script>
     <script src="js/ui/ColiseumWorkspace.js?v=6" defer></script>
     <script src="js/ui/NpcShopUI.js?v=3" defer></script>
@@ -773,11 +752,11 @@
 
     <!-- UI 3.0 -->
     <script src="js/ui3/Ui3Kit.js?v=7" defer></script>
-    <script src="js/ui3/Ui3Shell.js?v=3" defer></script>
-    <script src="js/ui3/Ui3TopBar.js?v=2" defer></script>
-    <script src="js/ui3/Ui3HuntScreen.js?v=5" defer></script>
-    <script src="js/ui3/Ui3CityScreen.js?v=3" defer></script>
-    <script src="js/ui3/Ui3CreationScreen.js?v=1" defer></script>
+    <script src="js/ui3/Ui3Shell.js?v=4" defer></script>
+    <script src="js/ui3/Ui3TopBar.js?v=3" defer></script>
+    <script src="js/ui3/Ui3HuntScreen.js?v=6" defer></script>
+    <script src="js/ui3/Ui3CityScreen.js?v=4" defer></script>
+    <script src="js/ui3/Ui3CreationScreen.js?v=2" defer></script>
     <script src="js/ui3/Ui3TitleScreen.js?v=2" defer></script>
     <script src="js/ui3/Ui3Items.js?v=1" defer></script>
     <script src="js/ui3/Ui3Window.js?v=2" defer></script>

@@ -248,7 +248,7 @@
         if (screen && !screen.hidden) syncHeight();
     }, { passive: true });
 
-    ["ui3:version-applied", "ui3:screens-changed", "ui:primary-view-changed", "lobby:exited", "character:created", "state:restored", "save:loaded", "engine:ready"]
+    ["ui3:version-applied", "ui3:screens-changed", "ui:primary-view-changed", "character:created", "state:restored", "save:loaded", "engine:ready"]
         .forEach((eventName) => Aethra.EventBus.on(eventName, () => {
             sync();
             window.setTimeout(sync, 0);

@@ -17,12 +17,24 @@
         : "aethra.battleMode";
     const VALID_BATTLE_MODES = Object.freeze(["cards", "map2d"]);
     const VALID_COMBAT_SPEEDS = Object.freeze([1, 2, 4]);
-    // Interface em migração: "classic" (atual) e "v3" (UI 3.0, em construção).
+    /*
+     * Interface: "v3" (UI 3.0, padrão) ou "classic" (reserva até a remoção).
+     * A clássica só vale para quem a escolheu (interfaceVersionChosen): as
+     * preferências eram gravadas no carregamento, então um "classic" salvo
+     * sem escolha é só o padrão antigo e migra para a UI 3.0.
+     * A página de testes declara a clássica como base com
+     * window.AETHRA_INTERFACE_DEFAULT, e liga a UI 3.0 onde testa.
+     */
     const VALID_INTERFACE_VERSIONS = Object.freeze(["classic", "v3"]);
+    const PRODUCT_DEFAULT_INTERFACE = "v3";
+    const requestedDefaultInterface = String(window.AETHRA_INTERFACE_DEFAULT || "").trim().toLowerCase();
     const DEFAULT_SETTINGS = Object.freeze({
         battleMode: "cards",
         combatSpeed: 1,
-        interfaceVersion: "classic"
+        interfaceVersion: VALID_INTERFACE_VERSIONS.includes(requestedDefaultInterface)
+            ? requestedDefaultInterface
+            : PRODUCT_DEFAULT_INTERFACE,
+        interfaceVersionChosen: false
     });
 
     function clone(value) {
@@ -71,6 +83,14 @@
         return VALID_INTERFACE_VERSIONS.includes(version)
             ? version
             : DEFAULT_SETTINGS.interfaceVersion;
+    }
+
+    // Versão efetiva a partir das preferências gravadas.
+    function resolveInterfaceVersion(stored = {}, defaultVersion = DEFAULT_SETTINGS.interfaceVersion) {
+        const fallback = VALID_INTERFACE_VERSIONS.includes(defaultVersion) ? defaultVersion : PRODUCT_DEFAULT_INTERFACE;
+        if (stored?.interfaceVersionChosen !== true) return fallback;
+        const version = String(stored.interfaceVersion || "").trim().toLowerCase();
+        return VALID_INTERFACE_VERSIONS.includes(version) ? version : fallback;
     }
 
     Aethra.SettingsManager = {
@@ -124,14 +144,15 @@
                 storedSettings.battleMode ?? legacyBattleMode
             );
             const combatSpeed = normalizeCombatSpeed(storedSettings.combatSpeed);
-            const interfaceVersion = normalizeInterfaceVersion(storedSettings.interfaceVersion);
+            const interfaceVersion = resolveInterfaceVersion(storedSettings);
 
             this.settings = {
                 ...DEFAULT_SETTINGS,
                 ...storedSettings,
                 battleMode,
                 combatSpeed,
-                interfaceVersion
+                interfaceVersion,
+                interfaceVersionChosen: storedSettings.interfaceVersionChosen === true
             };
 
             this.syncGameState();
@@ -207,6 +228,12 @@
             return normalizeInterfaceVersion(this.settings.interfaceVersion);
         },
 
+        getDefaultInterfaceVersion() {
+            return PRODUCT_DEFAULT_INTERFACE;
+        },
+
+        resolveInterfaceVersion,
+
         isValidInterfaceVersion(version) {
             return VALID_INTERFACE_VERSIONS.includes(
                 String(version || "").trim().toLowerCase()
@@ -225,6 +252,7 @@
             const previousVersion = this.getInterfaceVersion();
 
             this.settings.interfaceVersion = nextVersion;
+            this.settings.interfaceVersionChosen = true;
             this.syncGameState();
             this.save();
 

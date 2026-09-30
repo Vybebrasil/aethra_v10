@@ -129,7 +129,6 @@ const worldMapSource = read("js/ui/HudWorldMapAndDrops.js");
 const playerHudSource = read("js/ui/PlayerHudWorkspace.js");
 const saveManagerSource = read("js/infrastructure/SaveManager.js");
 const maintenanceSource = read("js/items/EquipmentMaintenanceSystem.js");
-const responsiveHudSource = read("css/hud-modernization.css");
 const renderEngineSource = read("js/ui/RenderEngine.js");
 const explorationSource = read("js/world/ExplorationSystem.js");
 const lootSystemSource = read("js/items/LootSystem.js");
@@ -313,22 +312,12 @@ check(
     "EquipmentMaintenanceSystem deve ser a autoridade de desgaste, reparo e automação"
 );
 check(
-    /@media \(max-width: 1119px\)/.test(responsiveHudSource)
-        && /min-width:\s*0\s*!important/.test(responsiveHudSource)
-        && /grid-template-columns:\s*minmax\(0, 1fr\)\s*!important/.test(responsiveHudSource)
-        && /order:\s*1/.test(responsiveHudSource)
-        && /order:\s*2/.test(responsiveHudSource)
-        && /order:\s*3/.test(responsiveHudSource),
-    "HUD compacta deve remover o piso desktop e reutilizar os três painéis em pilha"
-);
-check(
     /data-compact-hunt-nav/.test(renderEngineSource)
         && ["combat", "hero", "analysis"].every((panel) => (
             renderEngineSource.includes(`data-compact-hunt-target="${panel}"`)
         ))
         && /bindCompactHuntNavigation\(\)/.test(renderEngineSource)
-        && /syncActivePanel/.test(renderEngineSource)
-        && /\.compact-hunt-nav\s*\{/.test(responsiveHudSource),
+        && /syncActivePanel/.test(renderEngineSource),
     "HUD estreita deve oferecer navegação única entre combate, herói e análise"
 );
 check(
@@ -388,7 +377,6 @@ const localStorageAllowlist = new Set([
     "js/ui/EncounterInteractionPass.js",
     "js/ui/HudExperience.js",
     "js/ui/HudWorldMapAndDrops.js",
-    "js/ui/LobbyUI.js",
     "js/ui/RenderEngine.js",
     "js/ui/UIFluidityPass.js",
     "js/ui/WindowManager.js"

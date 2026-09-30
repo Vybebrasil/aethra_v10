@@ -79,17 +79,9 @@
     }
 
     /*
-     * O jogo em si (não lobby nem criação de personagem) está na tela e a
+     * O jogo em si (não a tela de título nem a criação de personagem) está na tela e a
      * UI 3.0 está ligada: só então as telas de jogo da UI 3.0 aparecem.
      */
-    // LobbyUI.active sozinho não basta: o lobby pode estar ativo dentro de um
-    // contêiner oculto. Vale o que está na tela.
-    function lobbyVisible() {
-        if (!Aethra.LobbyUI?.active) return false;
-        const view = document.getElementById("lobby-view");
-        return Boolean(view && !view.classList.contains("is-hidden") && view.getClientRects().length > 0);
-    }
-
     /*
      * Uma tela de tela cheia (título) pode segurar as telas de jogo. Quem
      * segura avisa por ui3:screens-changed, e as telas se ressincronizam.
@@ -107,7 +99,6 @@
     function canShowGame() {
         if (currentVersion() !== "v3") return false;
         if (gameHolds.size > 0) return false;
-        if (lobbyVisible()) return false;
         if (document.body.classList.contains("is-creating-character")) return false;
         return Aethra.GameState?.hero?.characterCreated === true;
     }

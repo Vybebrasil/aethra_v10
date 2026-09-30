@@ -374,16 +374,10 @@
         return screen;
     }
 
-    function lobbyVisible() {
-        const view = document.getElementById("lobby-view");
-        return Boolean(Aethra.LobbyUI?.active && view && !view.classList.contains("is-hidden") && view.getClientRects().length > 0);
-    }
-
     function shouldShow() {
         return Boolean(Aethra.Ui3Shell?.isActive?.())
             && Boolean(build())
-            && Aethra.GameState?.hero?.characterCreated !== true
-            && !lobbyVisible();
+            && Aethra.GameState?.hero?.characterCreated !== true;
     }
 
     function sync() {
@@ -411,7 +405,7 @@
     };
     Aethra.CharacterCreationUI?.registerPresenter?.(presenter);
 
-    ["ui3:version-applied", "character:created", "state:restored", "save:loaded", "save:reset", "engine:ready", "lobby:exited"]
+    ["ui3:version-applied", "character:created", "state:restored", "save:loaded", "save:reset", "engine:ready"]
         .forEach((eventName) => Aethra.EventBus.on(eventName, () => {
             sync();
             window.setTimeout(sync, 0);

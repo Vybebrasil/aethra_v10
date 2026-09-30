@@ -4141,6 +4141,27 @@
                     )
                 );
 
+                /*
+                 * UI 3.0 é o padrão do produto. Um "classic" gravado sem escolha
+                 * (as preferências eram salvas no carregamento) migra; quem
+                 * escolheu a clássica continua nela.
+                 */
+                const resolveInterface = settings?.resolveInterfaceVersion;
+                const migratesUnchosen = resolveInterface?.({ interfaceVersion: "classic" }, "v3") === "v3";
+                const keepsChosen = resolveInterface?.({ interfaceVersion: "classic", interfaceVersionChosen: true }, "v3") === "classic";
+                const emptyGetsDefault = resolveInterface?.({}, "v3") === "v3";
+                checks.push(
+                    createCheck(
+                        "UI 3.0 é o padrão e a clássica só fica para quem a escolheu",
+                        settings?.getDefaultInterfaceVersion?.() === "v3"
+                            && migratesUnchosen
+                            && keepsChosen
+                            && emptyGetsDefault
+                            && settings.get("interfaceVersionChosen") === true,
+                        `padrão ${settings?.getDefaultInterfaceVersion?.()} · sem escolha ${migratesUnchosen ? "migra" : "fica"} · escolhida ${keepsChosen ? "respeitada" : "ignorada"}`
+                    )
+                );
+
                 const galleryShown = Aethra.Ui3Shell?.showGallery?.();
                 const ui3Root = document.getElementById("ui3-root");
                 const gallery = ui3Root?.querySelector("[data-ui3-gallery]");
