@@ -50,6 +50,29 @@
         fist: '<path d="M7 11V7a2 2 0 0 1 4 0v4"></path><path d="M11 10V6a2 2 0 0 1 4 0v5"></path><path d="M15 10a2 2 0 0 1 4 0v4a7 7 0 0 1-7 7h-1a6 6 0 0 1-6-6v-2a2 2 0 0 1 2-2h2"></path>'
     });
 
+    /* Tipo de criatura em português (os dados usam os nomes do SRD). */
+    const CREATURE_TYPES = Object.freeze({
+        aberration: "Aberração",
+        beast: "Fera",
+        celestial: "Celestial",
+        construct: "Constructo",
+        dragon: "Dragão",
+        elemental: "Elemental",
+        fey: "Feérico",
+        fiend: "Demônio",
+        giant: "Gigante",
+        humanoid: "Humanoide",
+        monstrosity: "Monstruosidade",
+        ooze: "Gosma",
+        plant: "Planta",
+        undead: "Morto-vivo"
+    });
+
+    function creatureType(type) {
+        const key = String(type || "").trim().toLowerCase();
+        return CREATURE_TYPES[key] || (key ? key.charAt(0).toUpperCase() + key.slice(1) : "Criatura");
+    }
+
     /* Ícone e cor de uma habilidade, iguais na barra de ações e na janela. */
     const SKILL_SYMBOLS = Object.freeze({
         brutal_cleave: "axe",
@@ -271,6 +294,7 @@
         icon,
         iconNames: Object.freeze(Object.keys(ICON_PATHS)),
         skillVisual,
+        creatureType,
         toggle,
         button,
         bar,

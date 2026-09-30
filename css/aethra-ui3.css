@@ -2365,7 +2365,178 @@
 }
 
 /* =========================================================
-   18. MOVIMENTO REDUZIDO
+   18. MAPA-MUNDI (Ui3AtlasWindow)
+   ========================================================= */
+
+#ui3-root .ui3-atlas {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+#ui3-root .ui3-atlas__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(320px, 34%, 440px);
+}
+
+#ui3-root .ui3-atlas__main {
+    box-sizing: border-box;
+    min-width: 0;
+    min-height: 0;
+    padding: var(--ui3-space-3) 18px var(--ui3-space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui3-space-3);
+}
+
+#ui3-root .ui3-map {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    background:
+        radial-gradient(28% 34% at 22% 62%, rgba(58, 104, 64, 0.55), transparent 70%),
+        radial-gradient(24% 30% at 48% 24%, rgba(92, 110, 120, 0.45), transparent 70%),
+        radial-gradient(26% 30% at 78% 44%, rgba(120, 88, 60, 0.45), transparent 70%),
+        radial-gradient(30% 26% at 60% 82%, rgba(46, 84, 110, 0.5), transparent 70%),
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 48px),
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 48px),
+        #0E1A1F;
+    border: 1px solid var(--ui3-line);
+    border-radius: var(--ui3-radius-xl);
+}
+
+#ui3-root .ui3-map__compass {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    box-sizing: border-box;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--ui3-gold-3);
+    border-radius: 50%;
+    color: var(--ui3-gold-1);
+    font-family: var(--ui3-font-display);
+    font-size: var(--ui3-fs-md);
+    font-weight: 700;
+}
+
+#ui3-root .ui3-map-node {
+    position: absolute;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: transparent;
+    border: 0;
+    color: var(--ui3-text-1);
+    font-family: var(--ui3-font-ui);
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+}
+
+#ui3-root .ui3-map-node__dot {
+    box-sizing: border-box;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ui3-bg-2);
+    border: 2px solid var(--ui3-gold-3);
+    border-radius: 50%;
+    color: var(--ui3-gold-1);
+    font-size: var(--ui3-fs-lg);
+    transition: box-shadow 120ms ease;
+}
+
+#ui3-root .ui3-map-node__label {
+    padding: 2px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(11, 16, 19, 0.78);
+    border-radius: var(--ui3-radius-sm);
+}
+
+#ui3-root .ui3-map-node__label strong {
+    font-size: var(--ui3-fs-sm);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+#ui3-root .ui3-map-node__label small {
+    font-size: var(--ui3-fs-xs);
+    color: var(--ui3-text-2);
+    white-space: nowrap;
+}
+
+#ui3-root .ui3-map-node:hover .ui3-map-node__dot,
+#ui3-root .ui3-map-node.is-selected .ui3-map-node__dot {
+    border-color: var(--ui3-gold);
+    box-shadow: 0 0 0 4px rgba(216, 178, 92, 0.25);
+}
+
+#ui3-root .ui3-map-node.is-selected .ui3-map-node__label {
+    outline: 1px solid var(--ui3-gold);
+}
+
+#ui3-root .ui3-map-node.is-active .ui3-map-node__dot {
+    border-color: var(--ui3-ok);
+}
+
+#ui3-root .ui3-map-node.is-locked {
+    opacity: 0.55;
+}
+
+#ui3-root .ui3-map-node.is-locked .ui3-map-node__dot {
+    border-color: var(--ui3-line);
+    color: var(--ui3-text-3);
+}
+
+#ui3-root .ui3-danger {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+#ui3-root .ui3-danger i {
+    width: 10px;
+    height: 6px;
+    background: var(--ui3-line);
+    border-radius: 2px;
+}
+
+#ui3-root .ui3-danger i.is-on {
+    background: var(--ui3-danger);
+}
+
+#ui3-root .ui3-atlas__filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ui3-space-2);
+}
+
+#ui3-root .ui3-atlas__filters .ui3-search {
+    flex: 1 1 220px;
+}
+
+#ui3-root .ui3-glyph-box img {
+    width: 26px;
+    height: 26px;
+    object-fit: contain;
+    image-rendering: pixelated;
+}
+
+/* =========================================================
+   19. MOVIMENTO REDUZIDO
    ========================================================= */
 
 @media (prefers-reduced-motion: reduce) {

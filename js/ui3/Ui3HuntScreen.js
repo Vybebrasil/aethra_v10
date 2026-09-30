@@ -31,22 +31,6 @@
         { id: "loot", label: "Loot" },
         { id: "registro", label: "Registro" }
     ]);
-    const CREATURE_TYPES = Object.freeze({
-        aberration: "Aberração",
-        beast: "Fera",
-        celestial: "Celestial",
-        construct: "Constructo",
-        dragon: "Dragão",
-        elemental: "Elemental",
-        fey: "Feérico",
-        fiend: "Demônio",
-        giant: "Gigante",
-        humanoid: "Humanoide",
-        monstrosity: "Monstruosidade",
-        ooze: "Gosma",
-        plant: "Planta",
-        undead: "Morto-vivo"
-    });
 
     let screen = null;
     let parts = {};
@@ -296,7 +280,7 @@
         const enemy = snapshot?.active ? snapshot.enemy : null;
         if (!enemy) return "";
         const hp = enemy.resources?.hp || { current: enemy.hp, maximum: enemy.maxHp };
-        const type = CREATURE_TYPES[String(enemy.type || "").toLowerCase()] || "";
+        const type = enemy.type ? K.creatureType(enemy.type) : "";
         const meta = [enemy.level ? `Nv ${enemy.level}` : "", type].filter(Boolean).join(" · ");
         const portrait = Aethra.SpriteLoader?.getCreatureSource?.(enemy) || "";
         return `<div class="ui3-portrait ui3-portrait--target">

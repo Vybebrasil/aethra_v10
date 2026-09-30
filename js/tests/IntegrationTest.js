@@ -4473,6 +4473,40 @@
                 }
                 checks.push(createCheck("Atlas inicia caçada focada e retoma a mesma rota sem reiniciar", atlasWorks, atlasDetail));
 
+                /*
+                 * UI 3.0 — fase 4 (Mapa-Mundi). Aethra.openHuntWorldMap abre a
+                 * janela nova; a caçada focada começa pelo HuntAtlas.
+                 */
+                const atlasViewBefore = Aethra.UIManager?.primaryView || "hunt";
+                Aethra.GameState.ui.worldMapMode = "expeditions";
+                Aethra.openHuntWorldMap?.({ source: "integration-ui3-atlas" });
+                const atlasLayer = document.querySelector("#ui3-root [data-ui3-window='hunt-world-map-view']");
+                const atlasNodes = atlasLayer?.querySelectorAll("[data-ui3-expedition]").length || 0;
+                atlasLayer?.querySelector("[data-ui3-tab='creatures']")?.click();
+                const atlasCreatureRows = atlasLayer?.querySelectorAll("[data-ui3-creature]").length || 0;
+                let atlasStartWorks = false;
+                if (atlasTarget) {
+                    atlasLayer?.querySelector(`[data-ui3-creature="${atlasTarget.id}"]`)?.click();
+                    atlasLayer?.querySelector("[data-ui3-creature-start]")?.click();
+                    atlasStartWorks = Aethra.GameState.hunt.isActive === true
+                        && Aethra.GameState.hunt.targetCreatureId === atlasTarget.id
+                        && Aethra.Ui3AtlasWindow?.isOpen?.() === false
+                        && Aethra.UIManager?.primaryView === "hunt";
+                    Aethra.HuntSystem.stopHunt("integration-ui3-atlas");
+                }
+                windowManager.closeWindow("hunt-world-map-view", { source: "integration-restore" });
+                Aethra.UIManager?.setPrimaryView?.(atlasViewBefore, { source: "integration-restore" });
+                checks.push(
+                    createCheck(
+                        "UI 3.0 Mapa-Mundi mostra o HuntAtlas e inicia a caçada focada",
+                        atlasNodes === Aethra.HuntAtlas.getExpeditions().length
+                            && atlasNodes > 0
+                            && atlasCreatureRows === Aethra.HuntAtlas.getCreatureCatalog().length
+                            && atlasStartWorks,
+                        `${atlasNodes} expedições · ${atlasCreatureRows} criaturas · caçada ${atlasStartWorks ? "iniciada e janela fechada" : "não iniciada"}`
+                    )
+                );
+
                 // UI 3.0 — fase 4 (Missões): lista do QuestSystem e acompanhamento pelo dono.
                 windowManager.openWindow("quests-view", { source: "integration-ui3-quests" });
                 const questsLayer = document.querySelector("#ui3-root [data-ui3-window='quests-view']");

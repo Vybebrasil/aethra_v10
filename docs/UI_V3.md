@@ -44,6 +44,7 @@ todo o CSS clássico carregado, sai idêntica ao protótipo.
 | Moldura de janela | `js/ui3/Ui3Window.js` | Diálogo modal, foco, apresentador no WindowManager |
 | Mochila e Equipamento | `js/ui3/Ui3BagWindow.js` | Assume `inventory-view`: equipar, desequipar, usar, filtros, comparação |
 | Loja | `js/ui3/Ui3ShopWindow.js` | Assume `npc-shop-view`: comprar em quantidade, vender pela cotação, vender todos os drops |
+| Mapa-Mundi | `js/ui3/Ui3AtlasWindow.js` | Assume `hunt-world-map-view`: mapa de expedições, caçadas focadas com loot esperado, focos de ofício |
 | Missões | `js/ui3/Ui3QuestsWindow.js` | Assume `quests-view`: ativas e concluídas, objetivos, recompensas, acompanhar, ir para o objetivo |
 | Habilidades | `js/ui3/Ui3SkillsWindow.js` | Assume `skills-view`: Progressão (maestrias, foco, treino) e Barra e automação |
 | Preferência | `SettingsManager.interfaceVersion` | `"classic"` (padrão) ou `"v3"` |
@@ -55,6 +56,7 @@ Criadas nos módulos donos (regra 9 do `AGENTS.md`), sem sobrescrever métodos:
 | API | Dono | Para quê |
 | --- | --- | --- |
 | `WindowManager.registerPresenter(id, presenter)` | `js/ui/WindowManager.js` | Uma janela nova assume um id clássico; `openWindow`, `closeWindow`, `isOpen`, Esc e exclusividade continuam no WindowManager |
+| `HuntAtlas.*` (`startRoute`, `startCreatureHunt`, catálogos) | `js/world/HuntAtlas.js` | Catálogo do mapa e troca de rota, usados pelas duas interfaces |
 | `SkillSystem.placeSkill(tecla, habilidade)` | `js/combat/SkillSystem.js` | Coloca na tecla; se já estiver na barra, troca de lugar (nunca duplica) |
 | `MarketplaceSystem.getNpcCatalog` / `getSaleQuote` / `sellToNpc` | `js/market/MarketplaceSystem.js` | Catálogo e preço de venda com as mesmas regras da venda |
 | `TileMapCanvas.setStageHost(el)` / `isHosted()` | `js/world/TileMapCanvas.js` | Empresta o único `#tilemap-canvas` a outro palco; `null` devolve ao clássico |
@@ -104,7 +106,7 @@ essa projeção para um módulo não visual antes de apagar o arquivo.
 | 1. Fundação | tokens, componentes, raiz, preferência, regras no gate | concluída |
 | 2. Hunt | mapa 2D como palco; barra superior; HUD flutuante: herói, alvo, expedição, registro, barra de ações | concluída |
 | 3. Janelas | Mochila/Equipamento, Loja, Habilidades/Automação | concluída |
-| 4. Demais telas | Cidade e Missões (feitas), Mapa-Mundi/Atlas, Lobby, Criação | em andamento |
+| 4. Demais telas | Cidade, Missões e Mapa-Mundi (feitos), Lobby, Criação | em andamento |
 | 5. Limpeza | remover `style.css` + v2/v5/v6 e o CSS/JS morto; desfazer os monkey-patches | pendente |
 
 Cada fase termina com a suíte verde, o gate verde e validação em 1280×720 e
