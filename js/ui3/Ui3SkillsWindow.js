@@ -399,11 +399,11 @@
     function goToDestination(skillId) {
         const guidance = Aethra.DisciplineSystem?.getFocusedGuidance?.(skillId) || null;
         if (guidance?.action === "open-workshop") {
-            return Aethra.ProfessionWorkshopUI?.open?.(guidance.professionId || skillId);
+            return Aethra.Ui3Navigation?.openWorkshop?.(guidance.professionId || skillId, { source: "ui3-skills" });
         }
         Aethra.WindowManager?.closeWindow?.(WINDOW_ID, { source: "ui3-skills" });
         Aethra.UIManager?.setPrimaryView?.("hunt", { source: "ui3-skills" });
-        return Aethra.openHuntWorldMap?.({
+        return Aethra.Ui3Navigation?.openHuntMap?.({
             source: "ui3-skills",
             focusSkillId: skillId,
             huntId: guidance?.huntId || null,
@@ -461,7 +461,7 @@
             return render();
         }
         const specialization = target.closest("[data-ui3-skill-specialization]");
-        if (specialization) return Aethra.ProfessionSpecializationUI?.open?.(specialization.dataset.ui3SkillSpecialization);
+        if (specialization) return Aethra.Ui3Navigation?.openSpecialization?.(specialization.dataset.ui3SkillSpecialization, { source: "ui3-skills" });
         const destination = target.closest("[data-ui3-skill-destination]");
         if (destination) return goToDestination(destination.dataset.ui3SkillDestination);
 

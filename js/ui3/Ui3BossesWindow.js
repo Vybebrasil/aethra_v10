@@ -2,7 +2,7 @@
  * Ui3BossesWindow.js — Mural de Chefes na UI 3.0 (fase 5.2).
  *
  * Assume "bosses-view" pelo Ui3Window/WindowManager (a Cidade e as missões
- * abrem por RenderEngine.openBossesHall, que termina em openWindow).
+ * abrem por Ui3Navigation.openBosses).
  *   leitura   BossSystem (chefes, requisitos, recarga, histórico,
  *             getWeeklySnapshot)
  *   comandos  BossSystem.challenge (leva à Hunt, onde o combate aparece)

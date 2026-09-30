@@ -149,7 +149,7 @@
                 if (Aethra.WindowManager?.isOpen?.("hunt-world-map-view")) {
                     return Aethra.WindowManager.closeWindow("hunt-world-map-view", { source: "ui3-topbar" });
                 }
-                return Aethra.openHuntWorldMap?.({ source: "ui3-topbar" });
+                return Aethra.Ui3Navigation?.openHuntMap?.({ source: "ui3-topbar" });
             default:
                 return false;
         }

@@ -20,11 +20,7 @@
     };
     let quantityRenderTimer = null;
 
-    const professionMeta = {
-        blacksmithing: { name: "Forjaria",  icon: "⚒", stationId: "forge",   station: "Forja da Cidade",   color: "#e5b65f" },
-        leatherworking: { name: "Couraria", icon: "◈", stationId: "tannery", station: "Curtume da Cidade", color: "#b68a62" },
-        alchemy: { name: "Alquimia", icon: "⚗", stationId: "laboratory", station: "Laboratório de Alquimia", color: "#72d6a5" }
-    };
+    const professionMeta = Aethra.CraftingGuidance.professions;
 
     const TIER_LABELS = { 1: "Iniciante", 2: "Oficial", 3: "Mestre" };
 
@@ -65,42 +61,16 @@
         return range ? `${range.min}–${range.max}` : "—";
     }
 
-    function isEquipmentRecipe(recipe) {
-        return (recipe?.outputs || []).some((output) => {
-            const template = Aethra.GameData?.items?.[output.itemId]
-                || Aethra.ItemSystem?.templates?.[output.itemId]
-                || {};
-            return Boolean(template.slot || template.allowedSlots?.length);
-        });
-    }
-
     function resolveWorkshopGuidance(professionId = ui.professionId) {
-        const tracked = Aethra.QuestSystem?.getGuidance?.();
-        if (tracked?.action === "open-workshop" && tracked.professionId === professionId) {
-            return tracked;
-        }
-        const focusId = Aethra.DisciplineSystem?.getFocusId?.();
-        const focus = focusId ? Aethra.ProfessionSystem?.getFocusTrainingState?.(focusId) : null;
-        const focusedGuidance = focus?.active ? focus.guidance : null;
-        return focusedGuidance?.action === "open-workshop" && focusedGuidance.professionId === professionId
-            ? focusedGuidance
-            : null;
+        return Aethra.CraftingGuidance.getGuidance(professionId);
     }
 
     function resolveGuidedRecipeId(guidance = resolveWorkshopGuidance()) {
-        return guidance?.objective?.type === "CraftRecipe" ? guidance.target : null;
+        return Aethra.CraftingGuidance.guidedRecipeId(guidance);
     }
 
     function isGuidedRecipe(recipe, guidance = resolveWorkshopGuidance()) {
-        if (!guidance || guidance.professionId !== recipe.professionId) return false;
-        if (guidance.objective?.type === "CraftRecipe") return guidance.target === recipe.id;
-        if (guidance.objective?.type === "CraftSupply") {
-            const allowedRecipeIds = guidance.objective.allowedRecipeIds || [];
-            return allowedRecipeIds.length === 0 || allowedRecipeIds.includes(recipe.id);
-        }
-        if (guidance.objective?.type !== "CraftEquipment" || !isEquipmentRecipe(recipe)) return false;
-        const allowedRecipeIds = guidance.objective.allowedRecipeIds || [];
-        return allowedRecipeIds.length === 0 || allowedRecipeIds.includes(recipe.id);
+        return Aethra.CraftingGuidance.isGuidedRecipe(recipe, guidance);
     }
 
     function workshopGuidanceHTML(guidance) {
@@ -399,22 +369,21 @@
     function open(professionId = "blacksmithing", stationId = null, options = {}) {
         if (professionMeta[professionId]) ui.professionId = professionId;
         const inCity = Aethra.GameState.ui?.primaryView === "city" && !Aethra.GameState.hunt?.isActive;
-        ui.stationId  = stationId || (inCity ? professionMeta[ui.professionId].stationId : null);
+        ui.stationId  = stationId || Aethra.CraftingGuidance.stationFor(ui.professionId, { inCity });
         ui.notice     = null;
         ui.guidedRecipeId = options.recipeId || resolveGuidedRecipeId();
         ui.tab        = options.tab === "maintenance" && ["blacksmithing", "leatherworking"].includes(ui.professionId) ? "maintenance" : "known";
 
-        // Seeding: se não há receitas descobertas, descobre os starters agora
-        const cs = Aethra.CraftingSystem;
-        if (cs && typeof cs.discoverStarters === "function") {
-            const discovered = Aethra.GameState.crafting?.discovered || [];
-            if (discovered.length === 0) {
-                ["blacksmithing", "leatherworking", "alchemy"].forEach((id) => cs.discoverStarters(id));
-            }
-        }
+        Aethra.CraftingSystem?.ensureStarterRecipes?.();
 
         render();
-        return Aethra.WindowManager?.openWindow?.(WINDOW_ID, { source: "profession-workshop", exclusive: true });
+        return Aethra.WindowManager?.openWindow?.(WINDOW_ID, {
+            source: options.source || "profession-workshop",
+            exclusive: true,
+            professionId: ui.professionId,
+            stationId: ui.stationId,
+            tab: ui.tab
+        });
     }
 
     // ─── Execução de craft ────────────────────────────────────────────────────
@@ -472,7 +441,7 @@
         if (profession) {
             ui.professionId = profession.dataset.workshopProfession;
             const inCity = Aethra.GameState.ui?.primaryView === "city" && !Aethra.GameState.hunt?.isActive;
-            ui.stationId = inCity ? professionMeta[ui.professionId].stationId : null;
+            ui.stationId = Aethra.CraftingGuidance.stationFor(ui.professionId, { inCity });
             ui.notice = null;
             render();
             return;
@@ -552,6 +521,7 @@
         if (Aethra.WindowManager?.isWindowOpen?.(WINDOW_ID)) render();
     });
     Aethra.EventBus.on("city:npcInteracted", ({ entity } = {}) => {
+        if (Aethra.Ui3Shell?.isActive?.()) return; // a UI 3.0 atende pelo Ui3Navigation
         if (entity?.id === "blacksmith") open("blacksmithing", "forge");
         if (entity?.id === "tanner")     open("leatherworking", "tannery");
     });
@@ -563,16 +533,7 @@
         craft,
         repair,
         repairAll,
-        getState: () => clone(ui),
-        // Leitura para a UI 3.0 (a mover para um módulo não visual na fase 5.3).
-        professions: clone(professionMeta),
-        getGuidance: (professionId) => resolveWorkshopGuidance(professionId),
-        isGuidedRecipe: (recipe, guidance) => isGuidedRecipe(recipe, guidance),
-        clearNewlyDiscovered(professionId) {
-            ui.newlyDiscovered = ui.newlyDiscovered.filter(
-                (id) => Aethra.CraftingSystem?.getRecipe?.(id)?.professionId !== professionId
-            );
-        }
+        getState: () => clone(ui)
     };
 
     if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ensureWindow, { once: true });

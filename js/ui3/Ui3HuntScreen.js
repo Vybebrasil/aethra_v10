@@ -576,7 +576,7 @@
     }
 
     function openMap() {
-        return Aethra.openHuntWorldMap?.({ source: "ui3-hunt", huntId: huntState().huntId || recommendedHunt()?.id });
+        return Aethra.Ui3Navigation?.openHuntMap?.({ source: "ui3-hunt", huntId: huntState().huntId || recommendedHunt()?.id });
     }
 
     function usePrimary(slot) {

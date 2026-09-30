@@ -3,9 +3,8 @@
  *
  * Assume a janela "quests-view" pelo Ui3Window/WindowManager.
  *   leitura   QuestSystem.getState/getGuidance/getProgress, GameData.items
- *   comandos  QuestSystem.trackQuest; "Ir para o objetivo" usa o roteador
- *             de objetivos RenderEngine.handleQuestGuidance (o mesmo da
- *             Cidade e do rastreador clássico)
+ *   comandos  QuestSystem.trackQuest; "Ir para o objetivo" segue
+ *             Ui3Navigation.followQuestGuidance (o mesmo da Cidade)
  */
 (function initUi3QuestsWindow(Aethra) {
     "use strict";
@@ -172,7 +171,7 @@
             const guidance = quest ? Aethra.QuestSystem?.getGuidance?.(quest) : null;
             if (!guidance) return false;
             Aethra.WindowManager?.closeWindow?.(WINDOW_ID, { source: "ui3-quests" });
-            return Aethra.RenderEngine?.handleQuestGuidance?.(guidance);
+            return Aethra.Ui3Navigation?.followQuestGuidance?.(guidance, { source: "ui3-quests" });
         }
         return undefined;
     }

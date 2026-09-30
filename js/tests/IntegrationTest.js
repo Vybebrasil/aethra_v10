@@ -4459,14 +4459,14 @@
                 windowManager.closeWindow("skills-view", { source: "integration-restore" });
 
                 /*
-                 * UI 3.0 — fase 5.2 (Oficinas). ProfessionWorkshopUI.open continua
-                 * a porta de entrada; a janela nova produz pelo CraftingSystem.
+                 * UI 3.0 — fase 5.2 (Oficinas). Ui3Navigation.openWorkshop abre a
+                 * janela nova, que produz pelo CraftingSystem.
                  */
                 const workshopViewBefore = Aethra.UIManager?.primaryView || "hunt";
                 const workshopBagBefore = [...(Aethra.GameState.hero.bag || [])];
                 if (Aethra.GameState.hunt?.isActive) Aethra.HuntSystem.stopHunt("integration-ui3-workshop");
                 Aethra.UIManager?.setPrimaryView?.("city", { source: "integration-ui3-workshop" });
-                Aethra.ProfessionWorkshopUI?.open?.("blacksmithing");
+                Aethra.Ui3Navigation.openWorkshop("blacksmithing", { source: "integration-ui3-workshop" });
                 const workshopLayer = document.querySelector("#ui3-root [data-ui3-window='profession-workshop-view']");
                 const firstRecipe = (Aethra.CraftingSystem.getRecipes("blacksmithing") || [])[0] || null;
                 let workshopCrafts = false;
@@ -4540,7 +4540,7 @@
                 checks.push(createCheck("UI 3.0 Opções mudam preferências pelo dono e só apagam com confirmação", optionsWorks, optionsDetail));
 
                 // UI 3.0 — fase 5.2 (Mural de Chefes): requisitos e recompensa vêm do BossSystem.
-                Aethra.RenderEngine?.openBossesHall?.({ source: "integration-ui3-bosses" });
+                Aethra.Ui3Navigation.openBosses({ source: "integration-ui3-bosses" });
                 const bossesLayer = document.querySelector("#ui3-root [data-ui3-window='bosses-view']");
                 const bossIds = Object.keys(Aethra.BossSystem?.bosses || {});
                 const bossButtons = [...(bossesLayer?.querySelectorAll("[data-ui3-boss-challenge]") || [])];
@@ -4584,7 +4584,7 @@
                 let specWorks = false;
                 let specDetail = "";
                 try {
-                    Aethra.ProfessionSpecializationUI.open(specProfessionId);
+                    Aethra.Ui3Navigation.openSpecialization(specProfessionId, { source: "integration-ui3-specialization" });
                     const specLayer = document.querySelector("#ui3-root [data-ui3-window='profession-specialization-view']");
                     const specOpen = Aethra.Ui3SpecializationWindow?.isOpen?.() === true;
                     const specSelected = specLayer?.querySelector(`[data-ui3-tab='${specProfessionId}']`)?.getAttribute("aria-selected") === "true";
@@ -4609,21 +4609,22 @@
                 checks.push(createCheck("UI 3.0 Especialização confirma a escolha permanente e delega ao ProfessionSystem", specWorks, specDetail));
 
                 // UI 3.0 — fase 5.2 (Mentora): lê a rota do herói e só encaminha comandos.
-                const mentorGuidanceOriginal = Aethra.RenderEngine.handleQuestGuidance;
-                const mentorTreeOriginal = Aethra.ProfessionSpecializationUI.open;
+                const navigation = Aethra.Ui3Navigation;
+                const mentorGuidanceOriginal = navigation.followQuestGuidance;
+                const mentorTreeOriginal = navigation.openSpecialization;
                 const mentorCalls = { guidance: [], tree: [] };
-                Aethra.RenderEngine.handleQuestGuidance = (guidance) => {
+                navigation.followQuestGuidance = (guidance) => {
                     mentorCalls.guidance.push(guidance);
                     return true;
                 };
-                Aethra.ProfessionSpecializationUI.open = (professionId) => {
+                navigation.openSpecialization = (professionId) => {
                     mentorCalls.tree.push(professionId);
                     return true;
                 };
                 let mentorWorks = false;
                 let mentorDetail = "";
                 try {
-                    Aethra.RenderEngine.openProfessionMentor();
+                    navigation.openMentor({ source: "integration-ui3-mentor" });
                     const mentorLayer = document.querySelector("#ui3-root [data-ui3-window='profession-mentor-view']");
                     const mentorOpen = Aethra.Ui3MentorWindow?.isOpen?.() === true;
                     const mentorProfession = Aethra.GameState.hero?.introProfessionId;
@@ -4643,11 +4644,38 @@
                     mentorWorks = mentorOpen && mentorShowsRoute && mentorTree && mentorGuidance;
                     mentorDetail = `${mentorOpen ? "janela nova" : "janela errada"} · rota ${mentorShowsRoute ? "exibida" : "ausente"} · árvore ${mentorTree ? "encaminhada" : "não encaminhada"} · orientação ${mentorGuidance ? (expectedGuidance ? "encaminhada" : "ausente, sem botão") : "incoerente"}`;
                 } finally {
-                    Aethra.RenderEngine.handleQuestGuidance = mentorGuidanceOriginal;
-                    Aethra.ProfessionSpecializationUI.open = mentorTreeOriginal;
+                    navigation.followQuestGuidance = mentorGuidanceOriginal;
+                    navigation.openSpecialization = mentorTreeOriginal;
                     windowManager.closeWindow("profession-mentor-view", { source: "integration-restore" });
                 }
                 checks.push(createCheck("UI 3.0 Mentora mostra a rota do herói e encaminha árvore e orientação", mentorWorks, mentorDetail));
+
+                /*
+                 * Ui3Navigation: a orientação de missão e de foco leva à janela certa,
+                 * e a oficina só tem estação quando o herói está na Cidade.
+                 */
+                const navViewBefore = Aethra.UIManager?.primaryView || "hunt";
+                if (Aethra.GameState.hunt?.isActive) Aethra.HuntSystem.stopHunt("integration-ui3-nav");
+                let navWorks = false;
+                let navDetail = "";
+                {
+                    navigation.followQuestGuidance({ action: "open-bosses" }, { source: "integration-ui3-nav" });
+                    const navBosses = Aethra.Ui3BossesWindow?.isOpen?.() === true && Aethra.UIManager?.primaryView === "city";
+                    windowManager.closeWindow("bosses-view", { source: "integration-restore" });
+                    navigation.followQuestGuidance({ action: "something-new" }, { source: "integration-ui3-nav" });
+                    const navQuests = Aethra.Ui3QuestsWindow?.isOpen?.() === true;
+                    windowManager.closeWindow("quests-view", { source: "integration-restore" });
+                    navigation.followDisciplineGuidance({ action: "open-workshop", professionId: "alchemy" }, { source: "integration-ui3-nav" });
+                    const navWorkshop = Aethra.Ui3WorkshopWindow?.isOpen?.() === true
+                        && Boolean(document.querySelector("#ui3-root [data-ui3-window='profession-workshop-view'] [data-ui3-workshop-profession='alchemy'][aria-pressed='true']"));
+                    windowManager.closeWindow("profession-workshop-view", { source: "integration-restore" });
+                    const stationRule = Aethra.CraftingGuidance.stationFor("alchemy", { inCity: true }) === "laboratory"
+                        && Aethra.CraftingGuidance.stationFor("alchemy", { inCity: false }) === null;
+                    navWorks = navBosses && navQuests && navWorkshop && stationRule;
+                    navDetail = `chefes ${navBosses ? "ok" : "falhou"} · missões ${navQuests ? "ok" : "falhou"} · oficina ${navWorkshop ? "alquimia" : "errada"} · estação ${stationRule ? "só na Cidade" : "incoerente"}`;
+                }
+                Aethra.UIManager?.setPrimaryView?.(navViewBefore, { source: "integration-restore" });
+                checks.push(createCheck("UI 3.0 navegação segue a orientação até a janela certa", navWorks, navDetail));
 
                 // UI 3.0 — fase 5.2 (Coliseu): lê o ColiseumSystem e só encaminha comandos.
                 const coliseumSystem = Aethra.ColiseumSystem;
@@ -4863,12 +4891,11 @@
                 checks.push(createCheck("Atlas inicia caçada focada e retoma a mesma rota sem reiniciar", atlasWorks, atlasDetail));
 
                 /*
-                 * UI 3.0 — fase 4 (Mapa-Mundi). Aethra.openHuntWorldMap abre a
+                 * UI 3.0 — fase 4 (Mapa-Mundi). Ui3Navigation.openHuntMap abre a
                  * janela nova; a caçada focada começa pelo HuntAtlas.
                  */
                 const atlasViewBefore = Aethra.UIManager?.primaryView || "hunt";
-                Aethra.GameState.ui.worldMapMode = "expeditions";
-                Aethra.openHuntWorldMap?.({ source: "integration-ui3-atlas" });
+                Aethra.Ui3Navigation.openHuntMap({ source: "integration-ui3-atlas", mode: "expeditions" });
                 const atlasLayer = document.querySelector("#ui3-root [data-ui3-window='hunt-world-map-view']");
                 const atlasNodes = atlasLayer?.querySelectorAll("[data-ui3-expedition]").length || 0;
                 atlasLayer?.querySelector("[data-ui3-tab='creatures']")?.click();

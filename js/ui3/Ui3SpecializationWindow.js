@@ -2,8 +2,9 @@
  * Ui3SpecializationWindow.js — Especialização de ofício na UI 3.0
  * (fase 5.2).
  *
- * Assume "profession-specialization-view" pelo Ui3Window/WindowManager.
- * ProfessionSpecializationUI.open(ofício) continua a porta de entrada.
+ * Assume "profession-specialization-view" pelo Ui3Window/WindowManager. O
+ * ofício chega em openWindow(id, { professionId }), por
+ * Ui3Navigation.openSpecialization.
  *   leitura   ProfessionSystem (árvores, estado, modificadores)
  *   comando   ProfessionSystem.chooseSpecialization, só depois de uma
  *             confirmação (a escolha é permanente)
@@ -166,9 +167,8 @@
         body.addEventListener("click", onClick);
     }
 
-    // O ofício pedido vem de ProfessionSpecializationUI.open.
-    function onOpen() {
-        const requested = Aethra.ProfessionSpecializationUI?.getState?.()?.professionId;
+    function onOpen(options = {}) {
+        const requested = options.professionId || Aethra.GameState?.hero?.introProfessionId;
         if (system()?.getSpecializationTree?.(requested)) state.professionId = requested;
         state.pendingBranchId = null;
         state.notice = null;

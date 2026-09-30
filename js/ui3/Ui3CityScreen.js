@@ -5,10 +5,9 @@
  * da missão acompanhada. Só apresentação:
  *   leitura   GameState.hero (só lê), QuestSystem, DisciplineSystem,
  *             ProfessionSystem
- *   comandos  WindowManager (janelas), ProfessionWorkshopUI.open,
- *             EntityManager.interactWithEntity (mentora), UIManager
- *             (Hunt), RenderEngine.handleQuestGuidance/handleDisciplineGuidance
- *             (roteador de objetivos, reaproveitado até a fase 5)
+ *   comandos  WindowManager (janelas), Ui3Navigation (oficina, chefes,
+ *             mentora, orientação de missão e de foco),
+ *             EntityManager.interactWithEntity (mentora), UIManager (Hunt)
  */
 (function initUi3CityScreen(Aethra) {
     "use strict";
@@ -269,11 +268,11 @@
         const service = SERVICES.find((entry) => entry.id === id);
         const command = service?.command || {};
         if (command.window) return Aethra.WindowManager?.openWindow?.(command.window, { source: "ui3-city", ...(command.options || {}) });
-        if (command.workshop) return Aethra.ProfessionWorkshopUI?.open?.(command.workshop, null, { source: "ui3-city" });
-        if (command.bosses) return Aethra.RenderEngine?.openBossesHall?.({ source: "ui3-city" });
+        if (command.workshop) return Aethra.Ui3Navigation?.openWorkshop?.(command.workshop, { source: "ui3-city" });
+        if (command.bosses) return Aethra.Ui3Navigation?.openBosses?.({ source: "ui3-city" });
         if (command.npc) {
             const interaction = Aethra.EntityManager?.interactWithEntity?.(command.npc, { source: "ui3-city" });
-            if (interaction && command.npc === "profession_mentor") Aethra.RenderEngine?.openProfessionMentor?.();
+            if (interaction && command.npc === "profession_mentor") Aethra.Ui3Navigation?.openMentor?.({ source: "ui3-city" });
             return interaction;
         }
         return false;
@@ -287,11 +286,11 @@
         if (target.closest("[data-ui3-city-quests]")) return Aethra.WindowManager?.openWindow?.("quests-view", { source: "ui3-city" });
         if (target.closest("[data-ui3-city-quest-action]")) {
             const tracked = trackedQuest();
-            return tracked ? Aethra.RenderEngine?.handleQuestGuidance?.(tracked.guidance) : false;
+            return tracked ? Aethra.Ui3Navigation?.followQuestGuidance?.(tracked.guidance, { source: "ui3-city" }) : false;
         }
         if (target.closest("[data-ui3-city-focus-action]")) {
             const focus = Aethra.DisciplineSystem?.getFocusedGuidance?.();
-            return focus ? Aethra.RenderEngine?.handleDisciplineGuidance?.(focus) : false;
+            return focus ? Aethra.Ui3Navigation?.followDisciplineGuidance?.(focus, { source: "ui3-city" }) : false;
         }
         return undefined;
     }

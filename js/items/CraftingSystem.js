@@ -133,6 +133,17 @@
             return starterIds;
         },
 
+        /**
+         * Rede de segurança para saves sem nenhuma receita: descobre os
+         * starters dos três ofícios de criação. Não faz nada se já houver
+         * alguma receita descoberta.
+         */
+        ensureStarterRecipes() {
+            if ((Aethra.GameState.crafting?.discovered || []).length > 0) return false;
+            ["blacksmithing", "leatherworking", "alchemy"].forEach((id) => this.discoverStarters(id));
+            return true;
+        },
+
         // ── Consulta de receitas ──────────────────────────────────────────────
         getRecipe(recipeId) {
             const recipe = getRecipeRaw(recipeId);

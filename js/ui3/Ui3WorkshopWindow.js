@@ -2,13 +2,13 @@
  * Ui3WorkshopWindow.js — Oficinas (Forjaria, Couraria, Alquimia) na UI 3.0
  * (fase 5.2).
  *
- * Assume "profession-workshop-view" pelo Ui3Window/WindowManager. A porta
- * de entrada continua sendo ProfessionWorkshopUI.open (estação da Cidade,
- * receita guiada, receitas iniciais); esta janela lê esse pedido por
- * getState() e só apresenta.
+ * Assume "profession-workshop-view" pelo Ui3Window/WindowManager. O pedido
+ * (ofício, estação, aba) chega nas opções de openWindow, normalmente por
+ * Ui3Navigation.openWorkshop.
  *   leitura   CraftingSystem (receitas, requisitos, validação, estimativa
- *             de qualidade), EquipmentMaintenanceSystem (manutenção),
- *             ProfessionSystem (nível do ofício)
+ *             de qualidade), CraftingGuidance (ofícios, estações, receita
+ *             pedida pelo contrato), EquipmentMaintenanceSystem
+ *             (manutenção), ProfessionSystem (nível do ofício)
  *   comandos  CraftingSystem.craft, EquipmentMaintenanceSystem.repairItem /
  *             repairEligible / setPolicy
  */
@@ -64,8 +64,8 @@
         return Aethra.EquipmentMaintenanceSystem;
     }
 
-    function workshopUi() {
-        return Aethra.ProfessionWorkshopUI;
+    function craftingGuidance() {
+        return Aethra.CraftingGuidance;
     }
 
     function patch(element, html) {
@@ -81,11 +81,7 @@
     }
 
     function professions() {
-        return workshopUi()?.professions || {
-            blacksmithing: { name: "Forjaria", icon: "⚒", stationId: "forge", station: "Forja da Cidade" },
-            leatherworking: { name: "Couraria", icon: "◈", stationId: "tannery", station: "Curtume da Cidade" },
-            alchemy: { name: "Alquimia", icon: "⚗", stationId: "laboratory", station: "Laboratório de Alquimia" }
-        };
+        return craftingGuidance().professions;
     }
 
     function meta(id = state.professionId) {
@@ -206,7 +202,7 @@
         const system = crafting();
         const requirements = system.resolveRequirements(recipe, state.techniqueId, state.quantity);
         const validation = system.validateCraft(recipe.id, { stationId: state.stationId, techniqueId: state.techniqueId, quantity: state.quantity });
-        const guided = Boolean(guidance && workshopUi()?.isGuidedRecipe?.(recipe, guidance));
+        const guided = Boolean(guidance && Aethra.CraftingGuidance.isGuidedRecipe(recipe, guidance));
         const xpBonus = number(Aethra.ProfessionSystem?.getProfessionModifiers?.(recipe.professionId)?.craftXpPercent);
         const xp = Math.max(1, Math.round(number(recipe.xp) * state.quantity * (1 + xpBonus / 100)));
         const quality = recipe.professionId === "alchemy" ? null : system.estimateQuality?.(recipe, state.techniqueId);
@@ -314,9 +310,9 @@
             const locked = crafting()?.getUndiscovered?.(state.professionId) || [];
             return locked.length ? byTier(locked, lockedCardHTML) : `<p class="ui3-empty">Você conhece todas as receitas deste ofício.</p>`;
         }
-        const guidance = workshopUi()?.getGuidance?.(state.professionId) || null;
+        const guidance = Aethra.CraftingGuidance.getGuidance(state.professionId);
         const known = [...(crafting()?.getRecipes?.(state.professionId) || [])]
-            .sort((a, b) => Number(Boolean(guidance && workshopUi()?.isGuidedRecipe?.(b, guidance))) - Number(Boolean(guidance && workshopUi()?.isGuidedRecipe?.(a, guidance))));
+            .sort((a, b) => Number(Boolean(guidance && Aethra.CraftingGuidance.isGuidedRecipe(b, guidance))) - Number(Boolean(guidance && Aethra.CraftingGuidance.isGuidedRecipe(a, guidance))));
         return `${guidanceHTML(guidance)}${controlsHTML()}${known.length ? byTier(known, (recipe) => recipeCardHTML(recipe, guidance)) : `<p class="ui3-empty">Nenhuma receita descoberta ainda.</p>`}`;
     }
 
@@ -381,14 +377,13 @@
         const profession = target.closest("[data-ui3-workshop-profession]");
         if (profession) {
             state.professionId = profession.dataset.ui3WorkshopProfession;
-            state.stationId = inCity() ? meta().stationId : null;
+            state.stationId = craftingGuidance().stationFor(state.professionId, { inCity: inCity() });
             state.notice = null;
             return render();
         }
         const tab = target.closest("[data-ui3-tab]");
         if (tab) {
             state.tab = tab.dataset.ui3Tab;
-            if (state.tab === "known") workshopUi()?.clearNewlyDiscovered?.(state.professionId);
             return render();
         }
         const quantity = target.closest("[data-ui3-workshop-quantity]");
@@ -404,7 +399,7 @@
         const toggle = target.closest("[data-ui3-policy-toggle]");
         if (toggle) return savePolicy({ enabled: toggle.getAttribute("aria-checked") !== "true" });
         const specialization = target.closest("[data-ui3-workshop-specialization]");
-        if (specialization) return Aethra.ProfessionSpecializationUI?.open?.(specialization.dataset.ui3WorkshopSpecialization);
+        if (specialization) return Aethra.Ui3Navigation?.openSpecialization?.(specialization.dataset.ui3WorkshopSpecialization, { source: "ui3-workshop" });
         return undefined;
     }
 
@@ -434,13 +429,13 @@
         body.addEventListener("change", onChange);
     }
 
-    // O pedido de abertura vem do ProfessionWorkshopUI.open (estação, aba).
-    function onOpen() {
-        const request = workshopUi()?.getState?.() || {};
-        if (professions()[request.professionId]) state.professionId = request.professionId;
-        state.stationId = request.stationId || null;
-        state.tab = request.tab === "maintenance" ? "maintenance" : request.tab === "undiscovered" ? "undiscovered" : "known";
+    // Pedido de abertura: { professionId, stationId, tab }.
+    function onOpen(options = {}) {
+        if (professions()[options.professionId]) state.professionId = options.professionId;
+        state.stationId = options.stationId || craftingGuidance().stationFor(state.professionId, { inCity: inCity() });
+        state.tab = options.tab === "maintenance" ? "maintenance" : options.tab === "undiscovered" ? "undiscovered" : "known";
         state.notice = null;
+        Aethra.CraftingSystem?.ensureStarterRecipes?.();
     }
 
     if (Aethra.Ui3Window?.define) {

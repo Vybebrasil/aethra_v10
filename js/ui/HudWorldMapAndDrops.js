@@ -688,6 +688,10 @@
         const height = Math.min(720, Math.max(560, window.innerHeight - 120));
         return WorldWindows?.openWindow?.("hunt-world-map-view", {
             source: options.source || "hunt-navigation",
+            mode: options.mode || focusGuidance?.mapMode || null,
+            huntId: options.huntId || focusGuidance?.huntId || null,
+            creatureId: options.creatureId || null,
+            view: focusGuidance?.mapMode === "hunts" ? "focus" : null,
             position: {
                 left: Math.max(20, (window.innerWidth - width) / 2),
                 top: Math.max(72, (window.innerHeight - height) / 2)

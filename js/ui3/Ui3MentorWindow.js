@@ -3,11 +3,10 @@
  * (fase 5.2).
  *
  * Assume "profession-mentor-view" pelo Ui3Window/WindowManager (a Cidade
- * abre por RenderEngine.openProfessionMentor, que termina em openWindow).
+ * abre por Ui3Navigation.openMentor).
  *   leitura   ProfessionSystem (rota inicial, benefício, especialização),
  *             QuestSystem (missão da rota, missão acompanhada, orientação)
- *   comandos  ProfessionSpecializationUI.open e
- *             RenderEngine.handleQuestGuidance (o mesmo da Cidade)
+ *   comandos  Ui3Navigation.openSpecialization e followQuestGuidance
  */
 (function initUi3MentorWindow(Aethra) {
     "use strict";
@@ -113,11 +112,11 @@
 
     function onClick(event) {
         const tree = event.target.closest("[data-ui3-mentor-tree]");
-        if (tree) return Aethra.ProfessionSpecializationUI?.open?.(tree.dataset.ui3MentorTree);
+        if (tree) return Aethra.Ui3Navigation?.openSpecialization?.(tree.dataset.ui3MentorTree, { source: "ui3-mentor" });
         if (event.target.closest("[data-ui3-mentor-guidance]")) {
             const view = snapshot();
             Aethra.WindowManager?.closeWindow?.(WINDOW_ID, { source: "ui3-mentor-guidance" });
-            return view.guidance ? Aethra.RenderEngine?.handleQuestGuidance?.(view.guidance) : false;
+            return view.guidance ? Aethra.Ui3Navigation?.followQuestGuidance?.(view.guidance, { source: "ui3-mentor" }) : false;
         }
         return undefined;
     }

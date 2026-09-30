@@ -1,9 +1,9 @@
 /*
  * Ui3AtlasWindow.js — Mapa-Mundi na UI 3.0 (fase 4).
  *
- * Assume a janela "hunt-world-map-view" pelo Ui3Window/WindowManager, então
- * Aethra.openHuntWorldMap (botões "Ver mapa", atalho M, Cidade, Missões)
- * abre esta versão quando a UI 3.0 está ligada.
+ * Assume a janela "hunt-world-map-view" pelo Ui3Window/WindowManager. Abre
+ * por Ui3Navigation.openHuntMap (botões "Ver mapa", atalho M, Cidade,
+ * Missões), que traz no pedido o modo, a rota e a criatura.
  *   leitura   HuntAtlas (expedições, criaturas, loot esperado, focos),
  *             QuestSystem/DisciplineSystem (rota recomendada)
  *   comandos  HuntAtlas.startRoute/startCreatureHunt, UIManager (Hunt)
@@ -416,17 +416,19 @@
     }
 
     /*
-     * Pedidos de abertura chegam pelo estado que Aethra.openHuntWorldMap já
-     * registra (modo, rota, criatura e foco), para qualquer chamador antigo
-     * abrir o mapa na seleção certa.
+     * Pedido de abertura (Ui3Navigation.openHuntMap):
+     *   { mode: "expeditions" | "hunts", view: "focus", huntId, creatureId }.
+     * Sem pedido, o mapa reabre na última seleção.
      */
     function onOpen(options = {}) {
-        const ui = Aethra.GameState?.ui || {};
-        const mode = options.mode || ui.worldMapMode || "expeditions";
-        state.tab = mode === "hunts" ? (ui.huntAtlasView === "focus" ? "focus" : "creatures") : "expeditions";
-        if (options.huntId || ui.selectedWorldHunt) state.expedition = options.huntId || ui.selectedWorldHunt;
-        if (ui.selectedHuntCreature) state.creature = ui.selectedHuntCreature;
-        if (ui.selectedFocusHunt) state.focus = ui.selectedFocusHunt;
+        if (options.view === "focus") state.tab = "focus";
+        else if (options.mode === "hunts") state.tab = state.tab === "focus" ? "focus" : "creatures";
+        else if (options.mode === "expeditions") state.tab = "expeditions";
+        if (options.huntId) {
+            if (state.tab === "focus") state.focus = options.huntId;
+            else state.expedition = options.huntId;
+        }
+        if (options.creatureId) state.creature = options.creatureId;
         state.notice = null;
     }
 

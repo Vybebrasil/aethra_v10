@@ -122,6 +122,7 @@ const xpSystemSource = read("js/progression/XPSystem.js");
 const recipeCatalogSource = read("js/data/recipes/RecipeCatalog.js");
 const professionSpecializationUiSource = read("js/ui/ProfessionSpecializationUI.js");
 const professionWorkshopUiSource = read("js/ui/ProfessionWorkshopUI.js");
+const craftingGuidanceSource = read("js/items/CraftingGuidance.js");
 const progressionJournalUiSource = read("js/ui/ProgressionJournalUI.js");
 const disciplineSource = read("js/progression/DisciplineSystem.js");
 const huntCatalogSource = read("js/data/hunts/HuntCatalog.js");
@@ -289,8 +290,8 @@ check(
     "XPSystem deve preservar o primeiro XP quando a descoberta normaliza o estado da skill"
 );
 check(
-    /CraftEquipment/.test(professionWorkshopUiSource)
-        && /isEquipmentRecipe/.test(professionWorkshopUiSource)
+    /CraftEquipment/.test(craftingGuidanceSource)
+        && /isEquipmentRecipe/.test(craftingGuidanceSource)
         && /Escolha seu primeiro equipamento/.test(professionWorkshopUiSource)
         && !/BagSystem\?\.(?:addItem|consumeItem)/.test(professionWorkshopUiSource)
         && /id:\s*["']forge_iron_sword["'][\s\S]{0,250}requiredLevel:\s*1/.test(recipeCatalogSource),

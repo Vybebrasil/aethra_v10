@@ -135,7 +135,7 @@
         ui.pendingBranchId = null;
         ui.notice = null;
         render();
-        return Aethra.WindowManager?.openWindow?.(WINDOW_ID, { source: "profession-specialization", exclusive: true });
+        return Aethra.WindowManager?.openWindow?.(WINDOW_ID, { source: "profession-specialization", exclusive: true, professionId: ui.professionId });
     }
 
     document.addEventListener("click", (event) => {
