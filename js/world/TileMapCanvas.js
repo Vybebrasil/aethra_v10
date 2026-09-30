@@ -345,12 +345,32 @@
         }
     }
 
-    function actorPoint(actor) {
-        const marginX = Math.min(130, canvas.width * 0.16);
-        const marginY = Math.min(96, canvas.height * 0.18);
+    /*
+     * Área jogável do canvas: o palco externo pode declarar faixas cobertas
+     * por painéis (setStageInsets). O terreno continua ocupando o canvas
+     * inteiro; só atores e marcadores ficam dentro da área livre.
+     */
+    function playArea() {
+        const insets = activeStageHost() ? stageInsets : { top: 0, right: 0, bottom: 0, left: 0 };
+        const left = clamp(insets.left, 0, canvas.width * 0.4);
+        const right = clamp(insets.right, 0, canvas.width * 0.4);
+        const top = clamp(insets.top, 0, canvas.height * 0.4);
+        const bottom = clamp(insets.bottom, 0, canvas.height * 0.4);
         return {
-            x: marginX + actor.x * Math.max(1, canvas.width - marginX * 2),
-            y: marginY + actor.y * Math.max(1, canvas.height - marginY * 2)
+            x: left,
+            y: top,
+            width: Math.max(1, canvas.width - left - right),
+            height: Math.max(1, canvas.height - top - bottom)
+        };
+    }
+
+    function actorPoint(actor) {
+        const area = playArea();
+        const marginX = Math.min(130, area.width * 0.16);
+        const marginY = Math.min(96, area.height * 0.18);
+        return {
+            x: area.x + marginX + actor.x * Math.max(1, area.width - marginX * 2),
+            y: area.y + marginY + actor.y * Math.max(1, area.height - marginY * 2)
         };
     }
 
@@ -415,19 +435,14 @@
     }
 
     function resolveEnemySprite(enemy = {}) {
-        const value = `${enemy.id || ""} ${enemy.name || ""}`.toLowerCase();
-        if (/wolf|lobo/.test(value)) return "wolf";
-        if (/rat|rato/.test(value)) return "rat";
-        if (/skeleton|esqueleto/.test(value)) return "skeleton";
-        if (/goblin/.test(value)) return "goblin";
-        if (/boss|demon|demônio|chefe/.test(value)) return "boss";
-        return "goblin";
+        return Aethra.SpriteLoader?.resolveCreatureKey?.(enemy) || "goblin";
     }
 
     function drawWaitingMarker(now) {
-        const x = canvas.width * .68;
-        const y = canvas.height * .48;
-        const scale = clamp(Math.min(canvas.width / 760, canvas.height / 440), .9, 1.35);
+        const area = playArea();
+        const x = area.x + area.width * .68;
+        const y = area.y + area.height * .48;
+        const scale = clamp(Math.min(area.width / 760, area.height / 440), .9, 1.35);
         const markerRadius = 20 * scale;
         const panelWidth = 206 * scale;
         const panelHeight = 45 * scale;
@@ -584,12 +599,49 @@
         }
     }
 
+    // Palco externo opcional (UI 3.0). Sem ele, o canvas vive no workspace
+    // clássico. Existe sempre um único #tilemap-canvas: ele é movido, nunca
+    // duplicado.
+    let stageHost = null;
+    let stageInsets = { top: 0, right: 0, bottom: 0, left: 0 };
+
+    function setStageInsets(insets = {}) {
+        stageInsets = ["top", "right", "bottom", "left"].reduce((result, side) => {
+            result[side] = Math.max(0, Math.floor(Number(insets[side]) || 0));
+            return result;
+        }, {});
+        return { ...stageInsets };
+    }
+
+    function activeStageHost() {
+        return stageHost && document.body.contains(stageHost) ? stageHost : null;
+    }
+
+    function ensureCanvasElement() {
+        let element = document.getElementById("tilemap-canvas");
+        if (!element) {
+            element = document.createElement("canvas");
+            element.id = "tilemap-canvas";
+            element.width = 768;
+            element.height = 512;
+            element.setAttribute("aria-label", "Mapa tático da expedição");
+        }
+        return element;
+    }
+
+    function placeCanvas(element) {
+        const target = activeStageHost()
+            || document.querySelector("#tilemap-canvas-root .tilemap-canvas-container");
+        if (target && element.parentElement !== target) target.prepend(element);
+        return Boolean(target);
+    }
+
     function startEngine() {
         const root = document.getElementById("tilemap-canvas-root");
-        if (!root) return false;
+        if (!root && !activeStageHost()) return false;
         terrainKey = currentTerrainKey();
 
-        if (!root.querySelector(".tilemap-workspace")) {
+        if (root && !root.querySelector(".tilemap-workspace")) {
             root.innerHTML = `
                 <div class="tilemap-workspace">
                     <header class="tilemap-header">
@@ -602,7 +654,6 @@
                     </header>
                     <aside id="tilemap-journey-stats" class="tilemap-journey-stats" aria-label="Resumo da expedição"></aside>
                     <div class="tilemap-canvas-container">
-                        <canvas id="tilemap-canvas" width="768" height="512" aria-label="Mapa tático da expedição"></canvas>
                         <div class="tilemap-chat-dock">
                             <header>Registro da expedição</header>
                             <div class="tilemap-chat-log" id="tilemap-chat-log"></div>
@@ -612,9 +663,10 @@
             `;
         }
 
-        canvas = document.getElementById("tilemap-canvas");
-        context = canvas?.getContext?.("2d") || null;
-        if (!canvas || !context) return false;
+        canvas = ensureCanvasElement();
+        if (!placeCanvas(canvas)) return false;
+        context = canvas.getContext?.("2d") || null;
+        if (!context) return false;
 
         context.imageSmoothingEnabled = false;
         projection = Aethra.CombatProjection?.getSnapshot?.() || null;
@@ -641,8 +693,27 @@
         return true;
     }
 
+    /*
+     * API de composição: outra interface oferece um elemento para ser o
+     * palco do mapa. null devolve o canvas ao workspace clássico.
+     */
+    function setStageHost(element = null) {
+        const next = element instanceof HTMLElement ? element : null;
+        if (next === stageHost) return ensureStarted();
+        stageHost = next;
+        const started = startEngine();
+        Aethra.EventBus.emit("tilemap:stage-changed", {
+            hosted: Boolean(activeStageHost()),
+            started
+        });
+        return started;
+    }
+
     function ensureStarted() {
         if (!running || !canvas || !document.body.contains(canvas)) {
+            return startEngine();
+        }
+        if (activeStageHost() && canvas.parentElement !== stageHost) {
             return startEngine();
         }
         terrainKey = currentTerrainKey();
@@ -673,6 +744,9 @@
     Aethra.TileMapCanvas = {
         start: startEngine,
         resize: resizeCanvasToArena,
+        setStageHost,
+        setStageInsets,
+        isHosted: () => Boolean(activeStageHost() && canvas?.parentElement === stageHost),
         syncEncounter,
         triggerAttack: visualizeAction,
         getSnapshot: () => ({

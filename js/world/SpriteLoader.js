@@ -92,6 +92,23 @@
         return path;
     }
 
+    // Chave de sprite de uma criatura sem arte própria. Mapa e HUD usam a
+    // mesma resposta, para o retrato bater com o que aparece no palco.
+    function resolveCreatureKey(creature = {}) {
+        const value = `${creature?.id || ""} ${creature?.name || ""}`.toLowerCase();
+        if (/wolf|lobo/.test(value)) return "wolf";
+        if (/rat|rato/.test(value)) return "rat";
+        if (/skeleton|esqueleto/.test(value)) return "skeleton";
+        if (/goblin/.test(value)) return "goblin";
+        if (/boss|demon|demônio|chefe/.test(value)) return "boss";
+        return "goblin";
+    }
+
+    function getCreatureSource(creature = {}) {
+        const key = resolveCreatureKey(creature);
+        return SPRITE_MANIFEST[key] || PIXEL_SPRITES[key] || "";
+    }
+
     function drawSprite(ctx, key, dx, dy, dw = 32, dh = 32, options = {}) {
         let img = spriteCache.get(key);
         if (!img) img = loadSprite(key);
@@ -130,6 +147,8 @@
         isReady,
         getHeroSource,
         normalizeHeroSource,
+        resolveCreatureKey,
+        getCreatureSource,
         cache: spriteCache,
         manifest: SPRITE_MANIFEST,
         pixelSprites: PIXEL_SPRITES

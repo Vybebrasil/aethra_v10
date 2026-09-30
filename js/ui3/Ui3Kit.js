@@ -22,6 +22,30 @@
     });
     const BAR_KINDS = Object.freeze(["hp", "mana", "vigor", "xp"]);
     const BUTTON_VARIANTS = Object.freeze(["secondary", "primary", "ghost", "danger"]);
+    const SLOT_TONES = Object.freeze(["gold", "blue", "green", "red", "violet"]);
+
+    /* Ícones de traço (24×24). Só nomes desta tabela viram SVG. */
+    const ICON_PATHS = Object.freeze({
+        sword: '<path d="M14.5 17.5 3 6V3h3l11.5 11.5"></path><path d="m13 19 6-6"></path><path d="m16 16 4 4"></path><path d="m19 21 2-2"></path>',
+        shield: '<path d="M12 3 5 6v6c0 4 3 7 7 9 4-2 7-5 7-9V6z"></path>',
+        plus: '<path d="M12 5v14"></path><path d="M5 12h14"></path>',
+        flame: '<path d="M12 3c1 3 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-5 1-8.5z"></path>',
+        snow: '<path d="M12 2v20"></path><path d="m4.9 7 14.2 10"></path><path d="m19.1 7-14.2 10"></path><path d="m9 4 3 2 3-2"></path><path d="m9 20 3-2 3 2"></path>',
+        moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"></path>',
+        spark: '<path d="M12 3v4"></path><path d="M12 17v4"></path><path d="M3 12h4"></path><path d="M17 12h4"></path><path d="m7 7 2.5 2.5"></path><path d="m14.5 14.5 2.5 2.5"></path><path d="m17 7-2.5 2.5"></path><path d="m9.5 14.5-2.5 2.5"></path>',
+        axe: '<path d="m14 12-9 9"></path><path d="M13 4c3 0 7 3 7 7l-4 1-4-4z"></path>',
+        dagger: '<path d="m14 4 6 0 0 6-9 9-3-3z"></path><path d="m5 16 3 3"></path><path d="m3 21 2-2"></path>',
+        bow: '<path d="M5 3c8 2 14 8 16 16"></path><path d="M5 3 19 19"></path><path d="m15 3 6 0 0 6"></path>',
+        hammer: '<path d="m15 12-8.5 8.5a2.1 2.1 0 0 1-3-3L12 9"></path><path d="m17.6 11.6-5.2-5.2 3-3 5.2 5.2z"></path>',
+        fist: '<path d="M7 11V7a2 2 0 0 1 4 0v4"></path><path d="M11 10V6a2 2 0 0 1 4 0v5"></path><path d="M15 10a2 2 0 0 1 4 0v4a7 7 0 0 1-7 7h-1a6 6 0 0 1-6-6v-2a2 2 0 0 1 2-2h2"></path>'
+    });
+
+    function icon(name, size = 24) {
+        const paths = ICON_PATHS[name];
+        if (!paths) return "";
+        const px = Math.max(10, Math.min(48, Number(size) || 24));
+        return `<svg class="ui3-icon" width="${px}" height="${px}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+    }
 
     function esc(value) {
         return String(value ?? "")
@@ -80,14 +104,19 @@
     }
 
     function slot({
-        icon = "",
+        icon: image = "",
+        symbol = "",
         glyph = "",
+        tone = "",
         label = "",
         rarity = "common",
         quantity = null,
         hotkey = "",
         cooldown = null,
+        badge = "",
         selected = false,
+        active = false,
+        disabled = false,
         empty = false,
         attributes = {}
     } = {}) {
@@ -96,15 +125,29 @@
             return `<button type="button" class="ui3-slot ui3-slot--empty"${attrs({ "aria-label": label || "Espaço vazio", ...attributes })}>${key}</button>`;
         }
         const tier = normalizeRarity(rarity);
-        const classes = ["ui3-slot", tier !== "common" ? `ui3-slot--${tier}` : "", selected ? "is-selected" : ""]
-            .filter(Boolean)
-            .join(" ");
-        const visual = icon
-            ? `<img class="ui3-slot__icon" src="${esc(icon)}" alt="" draggable="false">`
-            : `<span class="ui3-slot__glyph" aria-hidden="true">${esc(glyph || "◆")}</span>`;
+        const hue = SLOT_TONES.includes(tone) ? tone : "";
+        const classes = [
+            "ui3-slot",
+            tier !== "common" ? `ui3-slot--${tier}` : "",
+            hue ? `ui3-slot--tone-${hue}` : "",
+            selected ? "is-selected" : "",
+            active ? "is-active" : "",
+            disabled ? "is-disabled" : ""
+        ].filter(Boolean).join(" ");
+        const visual = image
+            ? `<img class="ui3-slot__icon" src="${esc(image)}" alt="" draggable="false">`
+            : ICON_PATHS[symbol]
+                ? `<span class="ui3-slot__symbol">${icon(symbol, 26)}</span>`
+                : `<span class="ui3-slot__glyph" aria-hidden="true">${esc(glyph || "◆")}</span>`;
         const qty = number(quantity, 0) > 1 ? `<span class="ui3-slot__qty">${formatNumber(quantity)}</span>` : "";
+        const tag = !qty && badge ? `<span class="ui3-slot__badge">${esc(badge)}</span>` : "";
         const cd = number(cooldown, 0) > 0 ? `<span class="ui3-slot__cooldown">${formatNumber(cooldown)}</span>` : "";
-        return `<button type="button" class="${classes}"${attrs({ "aria-label": label, "aria-pressed": selected ? "true" : undefined, ...attributes })}>${visual}${key}${qty}${cd}</button>`;
+        return `<button type="button" class="${classes}"${attrs({
+            "aria-label": label,
+            "aria-pressed": selected ? "true" : undefined,
+            "aria-disabled": disabled ? "true" : undefined,
+            ...attributes
+        })}>${visual}${key}${qty}${tag}${cd}</button>`;
     }
 
     function tabs({ label = "Abas", items = [], selected } = {}) {
@@ -136,6 +179,8 @@
         esc,
         formatNumber,
         normalizeRarity,
+        icon,
+        iconNames: Object.freeze(Object.keys(ICON_PATHS)),
         button,
         bar,
         slot,

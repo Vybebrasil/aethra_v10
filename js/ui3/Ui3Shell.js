@@ -47,10 +47,54 @@
         return active;
     }
 
+    /*
+     * Camadas clássicas que uma tela da UI 3.0 pode cobrir. A tela declara
+     * data-ui3-covers; a camada coberta vira inert para não receber foco nem
+     * clique por baixo. Some junto com a UI clássica na fase 5.
+     */
+    const LEGACY_COVER_TARGETS = Object.freeze({
+        world: ["#world-layer", "#hud-layer"],
+        topbar: ["#hud-layer > .topbar"]
+    });
+
+    function syncLegacyCover(root) {
+        const covered = new Set();
+        root.querySelectorAll("[data-ui3-screen][data-ui3-covers]:not([hidden])").forEach((screen) => {
+            String(screen.dataset.ui3Covers || "").split(/\s+/).forEach((key) => {
+                (LEGACY_COVER_TARGETS[key] || []).forEach((selector) => covered.add(selector));
+            });
+        });
+        Object.values(LEGACY_COVER_TARGETS).flat().forEach((selector) => {
+            document.querySelectorAll(selector).forEach((element) => {
+                element.inert = covered.has(selector);
+            });
+        });
+    }
+
     // A raiz aparece quando há algo da UI 3.0 para mostrar.
     function syncRootVisibility() {
         const root = ensureRoot();
-        root.hidden = !galleryOpen && !root.querySelector("[data-ui3-screen]");
+        root.hidden = !galleryOpen && !root.querySelector("[data-ui3-screen]:not([hidden])");
+        syncLegacyCover(root);
+    }
+
+    /*
+     * O jogo em si (não lobby nem criação de personagem) está na tela e a
+     * UI 3.0 está ligada: só então as telas de jogo da UI 3.0 aparecem.
+     */
+    // LobbyUI.active sozinho não basta: o lobby pode estar ativo dentro de um
+    // contêiner oculto. Vale o que está na tela.
+    function lobbyVisible() {
+        if (!Aethra.LobbyUI?.active) return false;
+        const view = document.getElementById("lobby-view");
+        return Boolean(view && !view.classList.contains("is-hidden") && view.getClientRects().length > 0);
+    }
+
+    function canShowGame() {
+        if (currentVersion() !== "v3") return false;
+        if (lobbyVisible()) return false;
+        if (document.body.classList.contains("is-creating-character")) return false;
+        return Aethra.GameState?.hero?.characterCreated === true;
     }
 
     function readUrlOptions() {
@@ -188,6 +232,8 @@
         },
         init,
         isActive: () => currentVersion() === "v3",
+        canShowGame,
+        refresh: syncRootVisibility,
         showGallery,
         hideGallery,
         isGalleryOpen: () => galleryOpen

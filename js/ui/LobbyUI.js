@@ -255,6 +255,7 @@
             view.classList.remove("is-exiting");
             Aethra.LobbyUI.active = false;
             callback?.();
+            Aethra.EventBus.emit("lobby:exited", { source: "lobby" });
         }, 450);
     }
 

@@ -4151,6 +4151,86 @@
                     )
                 );
 
+                /*
+                 * UI 3.0 — fase 2 (Hunt). O mapa é emprestado pelo TileMapCanvas:
+                 * continua existindo um único canvas, que vai para o palco novo e
+                 * volta ao clássico. O HUD novo lê o mesmo estado do clássico.
+                 */
+                const huntViewBefore = Aethra.UIManager?.primaryView || Aethra.GameState.ui?.primaryView || "hunt";
+                const createdBefore = Aethra.GameState.hero.characterCreated;
+                const speedBefore = settings?.getCombatSpeed?.() || 1;
+                Aethra.GameState.hero.characterCreated = true;
+                settings?.setInterfaceVersion?.("v3", { source: "integration-ui3-hunt" });
+                Aethra.UIManager?.setPrimaryView?.("hunt", { source: "integration-ui3-hunt" });
+                Aethra.Ui3TopBar?.sync?.();
+                Aethra.Ui3HuntScreen?.sync?.();
+
+                const huntScreen = document.querySelector("#ui3-root [data-ui3-screen='hunt']");
+                const stageCanvas = document.querySelectorAll("#tilemap-canvas");
+                const hostedCanvas = stageCanvas.length === 1 && Boolean(stageCanvas[0].closest(".ui3-hunt__stage"));
+                const heroHpBar = huntScreen?.querySelector(".ui3-hunt__hero .ui3-bar--hp");
+                const hudHp = Number(heroHpBar?.getAttribute("aria-valuenow"));
+                const hudHpMax = Number(heroHpBar?.getAttribute("aria-valuemax"));
+                const stateHp = Number(Aethra.GameState.hero.hp);
+                const stateHpMax = Number(Aethra.GameState.hero.maxHp);
+                const actionSlots = huntScreen?.querySelectorAll(".ui3-hunt__actions .ui3-slot").length || 0;
+                const worldLayer = document.getElementById("world-layer");
+                const worldCovered = !worldLayer || worldLayer.inert === true;
+                huntScreen?.querySelector("[data-ui3-speed='2']")?.click();
+                const speedFromHud = settings?.getCombatSpeed?.();
+                settings?.setCombatSpeed?.(speedBefore, { source: "integration-restore" });
+                const skillWithoutBattle = Aethra.GameState.battle?.isFighting
+                    ? { reason: "no-battle" }
+                    : Aethra.SkillController?.requestManualSkill?.("heal");
+
+                checks.push(
+                    createCheck(
+                        "UI 3.0 Hunt usa o mapa como palco, sem duplicar o canvas",
+                        Aethra.Ui3HuntScreen?.isVisible?.() === true
+                            && Aethra.Ui3TopBar?.isVisible?.() === true
+                            && hostedCanvas
+                            && Aethra.TileMapCanvas?.isHosted?.() === true
+                            && worldCovered,
+                        `${stageCanvas.length} canvas · ${hostedCanvas ? "no palco novo" : "fora do palco"} · camada clássica ${worldCovered ? "inerte" : "ativa"}`
+                    )
+                );
+                checks.push(
+                    createCheck(
+                        "UI 3.0 Hunt mostra o mesmo HP do estado oficial e a barra completa",
+                        hudHp === stateHp && hudHpMax === stateHpMax && actionSlots === 12,
+                        `HUD ${hudHp}/${hudHpMax} · estado ${stateHp}/${stateHpMax} · ${actionSlots} slots`
+                    )
+                );
+                checks.push(
+                    createCheck(
+                        "UI 3.0 Hunt comanda pelos donos: velocidade e habilidade validada",
+                        speedFromHud === 2
+                            && settings.getCombatSpeed() === speedBefore
+                            && skillWithoutBattle?.ok === false
+                            && skillWithoutBattle?.reason === "no-battle",
+                        `velocidade ${speedFromHud}× · habilidade fora de combate: ${skillWithoutBattle?.reason || "aceita"}`
+                    )
+                );
+
+                Aethra.UIManager?.setPrimaryView?.("city", { source: "integration-ui3-hunt" });
+                const cityReleasesCanvas = Aethra.Ui3HuntScreen?.isVisible?.() === false
+                    && Aethra.TileMapCanvas?.isHosted?.() === false
+                    && document.querySelectorAll("#tilemap-canvas").length <= 1
+                    && (!worldLayer || worldLayer.inert === false);
+                settings?.setInterfaceVersion?.(interfaceBefore || "classic", { source: "integration-restore" });
+                Aethra.UIManager?.setPrimaryView?.(huntViewBefore, { source: "integration-restore" });
+                Aethra.GameState.hero.characterCreated = createdBefore;
+                const classicRestored = document.getElementById("ui3-root")?.hidden === true
+                    && ![...document.querySelectorAll("#world-layer, #hud-layer, #hud-layer > .topbar")].some((element) => element.inert)
+                    && Aethra.TileMapCanvas?.isHosted?.() === false;
+                checks.push(
+                    createCheck(
+                        "UI 3.0 devolve mapa e camadas clássicas ao sair da Hunt",
+                        cityReleasesCanvas && classicRestored,
+                        `cidade ${cityReleasesCanvas ? "liberou o mapa" : "prendeu o mapa"} · clássica ${classicRestored ? "restaurada" : "com resíduos"}`
+                    )
+                );
+
                 const failedChecks = checks.filter((check) => !check.passed);
                 const completedAt = Date.now();
 

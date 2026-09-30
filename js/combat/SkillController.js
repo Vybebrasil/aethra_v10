@@ -671,6 +671,32 @@
             return true;
         },
 
+        /*
+         * Comando do jogador vindo de qualquer interface. Valida combate e
+         * recarga aqui, no dono, para as barras não repetirem a regra.
+         */
+        requestManualSkill(skillId) {
+            const skill = Aethra.SkillSystem.getSkill(skillId);
+            if (!skill) return { ok: false, reason: "unknown-skill" };
+
+            if (!Aethra.GameState.battle?.isFighting) {
+                Aethra.EventBus.emit("BattleLog", {
+                    message: "Nenhum combate ativo para executar a skill.",
+                    color: "#f1d17a",
+                    type: "system"
+                });
+                return { ok: false, reason: "no-battle" };
+            }
+
+            if (Aethra.SkillSystem.isOnCooldown?.(skillId)) {
+                return { ok: false, reason: "cooldown" };
+            }
+
+            return this.queueManualSkill(skillId)
+                ? { ok: true, reason: null }
+                : { ok: false, reason: "rejected" };
+        },
+
         consumeManualPriority(context = {}) {
             while (this.manualQueue.length > 0) {
                 const command =

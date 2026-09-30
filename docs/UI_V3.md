@@ -36,8 +36,37 @@ todo o CSS clássico carregado, sai idêntica ao protótipo.
 | --- | --- | --- |
 | Tokens e componentes | `css/aethra-ui3.css` | Cores, tipografia, espaço e todos os componentes |
 | Componentes | `js/ui3/Ui3Kit.js` | Funções puras que devolvem HTML; escapam todo texto |
-| Raiz e versão | `js/ui3/Ui3Shell.js` | Cria `#ui3-root`, aplica a versão, galeria de dev |
+| Raiz e versão | `js/ui3/Ui3Shell.js` | Cria `#ui3-root`, aplica a versão, cobre camadas clássicas, galeria de dev |
+| Barra superior | `js/ui3/Ui3TopBar.js` | Navegação, carteira, menu "Mais", atalhos B/K/M |
+| Tela de Hunt | `js/ui3/Ui3HuntScreen.js` | Palco do mapa, herói, alvo, expedição, registro, barra de ações |
 | Preferência | `SettingsManager.interfaceVersion` | `"classic"` (padrão) ou `"v3"` |
+
+### APIs de composição usadas pela UI 3.0
+
+Criadas nos módulos donos (regra 9 do `AGENTS.md`), sem sobrescrever métodos:
+
+| API | Dono | Para quê |
+| --- | --- | --- |
+| `TileMapCanvas.setStageHost(el)` / `isHosted()` | `js/world/TileMapCanvas.js` | Empresta o único `#tilemap-canvas` a outro palco; `null` devolve ao clássico |
+| `TileMapCanvas.setStageInsets({top,right,bottom,left})` | idem | Faixas cobertas por painéis; atores e marcadores ficam na área livre |
+| `SkillController.requestManualSkill(id)` | `js/combat/SkillController.js` | Comando do jogador com validação de combate e recarga no dono |
+| `SpriteLoader.getCreatureSource(criatura)` | `js/world/SpriteLoader.js` | Mesmo sprite no retrato do alvo e no mapa |
+| evento `lobby:exited` | `js/ui/LobbyUI.js` | Avisa quando o lobby sai da tela |
+
+### Convivência com a UI clássica (até a fase 5)
+
+- `#ui3-root` fica em z-index 90: acima do jogo clássico e abaixo de
+  `#modal-layer` (100). Mochila, Loja, Habilidades e demais janelas clássicas
+  abrem por cima da UI nova até migrarem na fase 3.
+- Uma tela declara `data-ui3-covers="world"` ou `"topbar"`; o `Ui3Shell` marca
+  as camadas clássicas cobertas como `inert` (sem foco nem clique escondido)
+  e desfaz ao sair.
+- A barra nova mede a barra clássica (`--ui3-topbar-h`) para a cidade e as
+  janelas continuarem alinhadas embaixo dela.
+- Os atalhos 1–0 são tratados pela tela de Hunt em captura e bloqueados para
+  o atalho clássico (`defaultPrevented`), evitando disparo duplo.
+- O lobby é considerado pelo que está na tela, não só por `LobbyUI.active`
+  (hoje ele fica ativo dentro de um contêiner oculto).
 
 Tipografia: Cinzel (títulos) + Barlow (interface), números tabulares. Os tokens
 de fonte valem exatamente 11/12/13/14/16/20/28px em 1280px e crescem até
@@ -55,7 +84,7 @@ de fonte valem exatamente 11/12/13/14/16/20/28px em 1280px e crescem até
 | Fase | Escopo | Estado |
 | --- | --- | --- |
 | 1. Fundação | tokens, componentes, raiz, preferência, regras no gate | concluída |
-| 2. Hunt | mapa 2D como palco; HUD flutuante: herói, alvo, expedição, registro, barra de ações | pendente |
+| 2. Hunt | mapa 2D como palco; barra superior; HUD flutuante: herói, alvo, expedição, registro, barra de ações | concluída |
 | 3. Janelas | Mochila/Equipamento, Loja, Habilidades/Automação | pendente |
 | 4. Demais telas | Cidade, Mapa-Mundi/Atlas, Missões, Lobby, Criação | pendente |
 | 5. Limpeza | remover `style.css` + v2/v5/v6 e o CSS/JS morto; desfazer os monkey-patches | pendente |
