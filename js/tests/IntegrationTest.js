@@ -52,6 +52,7 @@
         "UI_Renderer",
         "UIManager",
         "ActionBarWorkspace",
+        "HuntAnalyzer",
         "HuntAnalyzerWorkspace",
         "CombatHudModernizer",
         "EncounterCombatHUD",
@@ -1814,6 +1815,46 @@
                             : `${analyzerCards.length} KPIs; telemetria ${analyzer ? "disponível" : "ausente"}`
                     )
                 );
+                /*
+                 * HuntAnalyzer (sem tela) guarda recordes por Hunt: taxas só depois
+                 * de 10 s e cada sessão concluída conta uma única vez.
+                 */
+                const huntStateBackup = JSON.parse(JSON.stringify(Aethra.GameState.hunt || {}));
+                const recordsBackup = JSON.parse(JSON.stringify(Aethra.GameState.hero.huntAnalyzerRecords || {}));
+                let recordsWork = false;
+                let recordsDetail = "";
+                try {
+                    Object.assign(Aethra.GameState.hunt, {
+                        huntId: "integration_records_hunt",
+                        startedAt: "integration-records",
+                        elapsedMs: 20_000,
+                        xp: 100,
+                        gold: 30,
+                        lootValue: 20,
+                        supplyCost: 10,
+                        kills: 2
+                    });
+                    Aethra.HuntAnalyzer.getMetrics().session.peakDps = 12;
+                    Aethra.HuntAnalyzer.updateRecords({ completed: true });
+                    const recordAfterFirst = { ...Aethra.HuntAnalyzer.getRecords().byHunt.integration_records_hunt };
+                    Aethra.HuntAnalyzer.updateRecords({ completed: true });
+                    const recordAfterSecond = Aethra.HuntAnalyzer.getRecords().byHunt.integration_records_hunt;
+                    recordsWork = recordAfterFirst.sessions === 1
+                        && recordAfterSecond.sessions === 1
+                        && recordAfterFirst.bestXpPerHour === 18_000
+                        && recordAfterFirst.bestProfitPerHour === 7_200
+                        && recordAfterFirst.maxDps === 12
+                        && Aethra.HuntAnalyzer.getRecords().overall.maxDps >= 12;
+                    recordsDetail = `${recordAfterSecond.sessions} sessão · ${recordAfterFirst.bestXpPerHour} XP/h · ${recordAfterFirst.bestProfitPerHour} o/h · DPS ${recordAfterFirst.maxDps}`;
+                } finally {
+                    Aethra.GameState.hunt = Object.assign(Aethra.GameState.hunt, huntStateBackup);
+                    Object.keys(Aethra.GameState.hunt).forEach((key) => {
+                        if (!(key in huntStateBackup)) delete Aethra.GameState.hunt[key];
+                    });
+                    Aethra.GameState.hero.huntAnalyzerRecords = recordsBackup;
+                }
+                checks.push(createCheck("HuntAnalyzer registra recordes por Hunt uma vez por sessão", recordsWork, recordsDetail));
+
                 checks.push(
                     createCheck(
                         "Ordem Análise, Loot e Progresso",

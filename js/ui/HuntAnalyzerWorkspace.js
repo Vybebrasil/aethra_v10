@@ -2,13 +2,11 @@
 (function (Aethra) {
     "use strict";
 
-    if (!Aethra?.RenderEngine || !Aethra?.HuntSystem || !Aethra?.EventBus) return;
+    if (!Aethra?.RenderEngine || !Aethra?.HuntSystem || !Aethra?.EventBus || !Aethra?.HuntAnalyzer) return;
     if (Aethra.HuntAnalyzerWorkspace) return;
 
     const Render = Aethra.RenderEngine;
-    const RECORD_RATE_MINIMUM_MS = 10_000;
-    const PEAK_DPS_WINDOW_MS = 5_000;
-    let damageWindow = [];
+    const Analyzer = Aethra.HuntAnalyzer;
 
     const number = (value, fallback = 0) => {
         const parsed = Number(value);
@@ -52,138 +50,15 @@
         return Aethra.GameState.ui.huntTelemetry;
     }
 
-    function recordsState() {
-        const hero = Aethra.GameState.hero = Aethra.GameState.hero || {};
-        hero.huntAnalyzerRecords = hero.huntAnalyzerRecords || {};
-        const records = hero.huntAnalyzerRecords;
-        records.version = 1;
-        records.overall = records.overall || { maxDps: 0 };
-        records.byHunt = records.byHunt || {};
-        return records;
-    }
-
-    function createSessionIdentity(hunt) {
-        return [hunt.huntId || "idle", hunt.startedAt || "not-started"].join(":");
-    }
-
-    function analyzerSession() {
-        const hunt = Aethra.GameState.hunt = Aethra.GameState.hunt || {};
-        const expectedId = createSessionIdentity(hunt);
-        const current = hunt.analyzerSession;
-        if (!current || current.sessionId !== expectedId) {
-            hunt.analyzerSession = {
-                sessionId: expectedId,
-                huntId: hunt.huntId || null,
-                peakDps: 0,
-                createdAt: Date.now()
-            };
-            damageWindow = [];
-        }
-        return hunt.analyzerSession;
-    }
-
+    // Métricas do HuntAnalyzer mais a telemetria de combate desta tela.
     function metrics() {
-        const hunt = Aethra.GameState.hunt || {};
+        const current = Analyzer.getMetrics();
         const combat = telemetry();
-        const session = analyzerSession();
-        const elapsedMs = Math.max(0, number(hunt.elapsedMs, 0));
-        const seconds = elapsedMs / 1000;
-        const hours = Math.max(seconds / 3600, 1 / 3600);
-        const xp = integer(hunt.xp);
-        const gold = integer(hunt.gold);
-        const loot = integer(hunt.lootValue);
-        const spent = integer(hunt.supplyCost);
-        const gained = gold + loot;
-        const profit = gained - spent;
         return {
-            hunt,
+            ...current,
             combat,
-            session,
-            elapsedMs,
-            seconds,
-            xp,
-            xpPerHour: xp > 0 ? Math.floor(xp / hours) : 0,
-            gold,
-            loot,
-            spent,
-            gained,
-            profit,
-            profitPerHour: profit !== 0 ? Math.floor(profit / hours) : 0,
-            kills: integer(hunt.kills),
-            averageDps: seconds > 0 ? number(combat.damage, 0) / seconds : 0,
-            peakDps: number(session.peakDps, 0)
+            averageDps: current.seconds > 0 ? number(combat.damage, 0) / current.seconds : 0
         };
-    }
-
-    function recordForHunt(huntId) {
-        if (!huntId) return null;
-        const records = recordsState();
-        records.byHunt[huntId] = records.byHunt[huntId] || {
-            sessions: 0,
-            bestXpPerHour: 0,
-            bestProfitPerHour: 0,
-            bestSessionXp: 0,
-            bestSessionProfit: 0,
-            maxDps: 0,
-            lastCompletedSessionId: null,
-            updatedAt: null
-        };
-        return records.byHunt[huntId];
-    }
-
-    function updateRecords({ completed = false } = {}) {
-        const current = metrics();
-        const huntId = current.hunt.huntId;
-        const record = recordForHunt(huntId);
-        if (!record) return null;
-
-        const eligibleRate = current.elapsedMs >= RECORD_RATE_MINIMUM_MS;
-        if (eligibleRate) {
-            record.bestXpPerHour = Math.max(number(record.bestXpPerHour), current.xpPerHour);
-            record.bestProfitPerHour = Math.max(number(record.bestProfitPerHour), current.profitPerHour);
-        }
-        record.bestSessionXp = Math.max(number(record.bestSessionXp), current.xp);
-        record.bestSessionProfit = Math.max(number(record.bestSessionProfit), current.profit);
-        record.maxDps = Math.max(number(record.maxDps), current.peakDps);
-
-        const records = recordsState();
-        records.overall.maxDps = Math.max(number(records.overall.maxDps), current.peakDps);
-        record.updatedAt = Date.now();
-
-        const hasActivity = current.elapsedMs > 0
-            || current.xp > 0
-            || current.gained > 0
-            || current.spent > 0
-            || current.kills > 0
-            || number(current.combat.damage, 0) > 0;
-        if (completed && hasActivity && record.lastCompletedSessionId !== current.session.sessionId) {
-            record.sessions = integer(record.sessions) + 1;
-            record.lastCompletedSessionId = current.session.sessionId;
-            Aethra.EventBus.emit("hunt:record-updated", {
-                huntId,
-                sessionId: current.session.sessionId,
-                record: { ...record }
-            });
-        }
-        return record;
-    }
-
-    function registerDamage(payload = {}) {
-        if (payload.side !== "hero") return false;
-        const amount = Math.max(0, number(payload.amount, 0));
-        if (amount <= 0) return false;
-
-        const now = Date.now();
-        damageWindow.push({ at: now, amount });
-        damageWindow = damageWindow.filter((entry) => now - entry.at <= PEAK_DPS_WINDOW_MS);
-
-        const windowDamage = damageWindow.reduce((sum, entry) => sum + entry.amount, 0);
-        const peak = windowDamage / (PEAK_DPS_WINDOW_MS / 1000);
-        const session = analyzerSession();
-        session.peakDps = Math.max(number(session.peakDps), peak);
-        updateRecords();
-        Render.renderHunt?.();
-        return true;
     }
 
     function supplyRows(current) {
@@ -300,8 +175,8 @@
         const totals = Aethra.ExplorationSystem?.getSnapshot?.().totals || {};
         const definition = Aethra.HuntSystem.hunts?.[current.hunt.huntId] || null;
         const huntName = definition?.name || "Nenhuma hunt ativa";
-        const record = updateRecords() || {};
-        const overall = recordsState().overall;
+        const record = Analyzer.updateRecords() || {};
+        const overall = Analyzer.getRecords().overall;
         const supplies = supplyRows(current);
         const attacks = integer(current.combat.attacks);
         const panel = root.closest("#hunt-panel-analysis");
@@ -400,7 +275,6 @@
     }
 
     function resetMeasurement() {
-        updateRecords({ completed: true });
         Aethra.GameState.ui = Aethra.GameState.ui || {};
         Aethra.GameState.ui.huntTelemetry = {
             damage: 0,
@@ -409,27 +283,15 @@
             criticals: 0,
             attacks: 0
         };
-        damageWindow = [];
-        return Aethra.HuntSystem.resetAnalyzer?.();
-    }
-
-    function resetSession() {
-        const hunt = Aethra.GameState.hunt || {};
-        hunt.analyzerSession = {
-            sessionId: createSessionIdentity(hunt),
-            huntId: hunt.huntId || null,
-            peakDps: 0,
-            createdAt: Date.now()
-        };
-        damageWindow = [];
+        return Analyzer.resetMeasurement();
     }
 
     Aethra.HuntAnalyzerWorkspace = {
-        recordRateMinimumMs: RECORD_RATE_MINIMUM_MS,
-        peakDpsWindowMs: PEAK_DPS_WINDOW_MS,
+        recordRateMinimumMs: Analyzer.recordRateMinimumMs,
+        peakDpsWindowMs: Analyzer.peakDpsWindowMs,
         getMetrics: metrics,
-        getRecords: recordsState,
-        updateRecords,
+        getRecords: Analyzer.getRecords,
+        updateRecords: Analyzer.updateRecords,
         recordSupplyUse: (...args) => Aethra.HuntSystem.recordSupplyUse(...args),
         resetMeasurement,
         render: renderHuntAnalyzer
@@ -437,27 +299,15 @@
 
     Render.renderHunt = renderHuntAnalyzer;
 
-    Aethra.EventBus.on("DamageDealt", registerDamage);
-    Aethra.EventBus.on("hunt:started", () => {
-        resetSession();
-        renderHuntAnalyzer();
-    });
-    Aethra.EventBus.on("hunt:session-finalizing", () => updateRecords({ completed: true }));
-    Aethra.EventBus.on("hunt:ended", () => {
-        updateRecords({ completed: true });
-        renderHuntAnalyzer();
-    });
-    Aethra.EventBus.on("hunt:analyzer-reset", () => {
-        resetSession();
-        renderHuntAnalyzer();
-    });
-    Aethra.EventBus.on("hunt:supply-used", renderHuntAnalyzer);
-    Aethra.EventBus.on("save:loaded", () => {
-        recordsState();
-        resetSession();
-        renderHuntAnalyzer();
-    });
+    // HuntAnalyzer (carregado antes) já atualizou sessão e recordes nesses eventos.
+    [
+        "hunt:analyzer-updated",
+        "hunt:started",
+        "hunt:ended",
+        "hunt:analyzer-reset",
+        "hunt:supply-used",
+        "save:loaded"
+    ].forEach((eventName) => Aethra.EventBus.on(eventName, renderHuntAnalyzer));
 
-    recordsState();
     window.setTimeout(renderHuntAnalyzer, 0);
 })(window.Aethra);

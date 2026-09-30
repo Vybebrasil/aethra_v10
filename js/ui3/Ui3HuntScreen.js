@@ -3,7 +3,7 @@
  *
  * O mapa 2D é o palco em tela cheia; herói, alvo, expedição, registro e
  * barra de ações flutuam sobre ele. Tudo aqui é projeção:
- *   leitura   CombatProjection, HuntSystem, HuntAnalyzerWorkspace,
+ *   leitura   CombatProjection, HuntSystem, HuntAnalyzer,
  *             SkillSystem, SkillController, BattleSystem, GameState (só lê)
  *   comandos  HuntSystem.startHunt/stopHunt, SkillController.requestManualSkill,
  *             PrimaryAttackRequested, SettingsManager.setCombatSpeed,
@@ -125,7 +125,7 @@
     }
 
     function metrics() {
-        const current = Aethra.HuntAnalyzerWorkspace?.getMetrics?.();
+        const current = Aethra.HuntAnalyzer?.getMetrics?.();
         if (current) return current;
         const hunt = huntState();
         const seconds = number(hunt.elapsedMs) / 1000;
