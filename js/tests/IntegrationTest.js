@@ -4481,6 +4481,47 @@
                 );
 
                 /*
+                 * UI 3.0 — fase 5.2 (Opções): velocidade, animações e interface
+                 * pelo SettingsManager; apagar o save só depois de confirmar.
+                 */
+                const optionsSpeedBefore = settings.getCombatSpeed();
+                const optionsHudBefore = { ...(settings.get("hud", {}) || {}) };
+                const optionsResetOriginal = Aethra.SaveManager.reset;
+                let optionsResetCalls = 0;
+                Aethra.SaveManager.reset = () => {
+                    optionsResetCalls += 1;
+                    return false;
+                };
+                let optionsWorks = false;
+                let optionsDetail = "";
+                try {
+                    windowManager.openWindow("options-view", { source: "integration-ui3-options" });
+                    const optionsLayer = document.querySelector("#ui3-root [data-ui3-window='options-view']");
+                    const optionsOpen = Aethra.Ui3OptionsWindow?.isOpen?.() === true;
+                    optionsLayer?.querySelector("[data-ui3-option-speed='4']")?.click();
+                    const speedSet = settings.getCombatSpeed() === 4;
+                    const motionBefore = settings.get("hud", {})?.reduceMotion === true;
+                    optionsLayer?.querySelector("[data-ui3-option-motion]")?.click();
+                    const motionToggled = (settings.get("hud", {})?.reduceMotion === true) !== motionBefore
+                        && document.getElementById("ui3-root").classList.contains("ui3-reduce-motion") === !motionBefore;
+                    optionsLayer?.querySelector("[data-ui3-option-reset]")?.click();
+                    const resetAsked = optionsResetCalls === 0 && Boolean(optionsLayer?.querySelector("[data-ui3-option-reset-confirm]"));
+                    optionsLayer?.querySelector("[data-ui3-option-reset-cancel]")?.click();
+                    const resetCancelled = optionsResetCalls === 0 && Boolean(optionsLayer?.querySelector("[data-ui3-option-reset]"));
+                    optionsLayer?.querySelector("[data-ui3-option-interface='classic']")?.click();
+                    const switchedToClassic = settings.getInterfaceVersion() === "classic"
+                        && Aethra.Ui3OptionsWindow?.isOpen?.() === false;
+                    optionsWorks = optionsOpen && speedSet && motionToggled && resetAsked && resetCancelled && switchedToClassic;
+                    optionsDetail = `${optionsOpen ? "abriu" : "não abriu"} · velocidade ${speedSet ? "4×" : "inalterada"} · animações ${motionToggled ? "alternadas" : "iguais"} · apagar ${resetAsked && resetCancelled ? "pediu confirmação" : "sem confirmação"} · interface ${switchedToClassic ? "trocou" : "não trocou"}`;
+                } finally {
+                    Aethra.SaveManager.reset = optionsResetOriginal;
+                    settings.setCombatSpeed(optionsSpeedBefore, { source: "integration-restore" });
+                    settings.set("hud", optionsHudBefore, { source: "integration-restore" });
+                    settings.setInterfaceVersion("v3", { source: "integration-restore" });
+                }
+                checks.push(createCheck("UI 3.0 Opções mudam preferências pelo dono e só apagam com confirmação", optionsWorks, optionsDetail));
+
+                /*
                  * UI 3.0 — fase 4 (Cidade). A cidade nova cobre a clássica, lê o
                  * mesmo ouro do herói e libera o mapa da Hunt.
                  */

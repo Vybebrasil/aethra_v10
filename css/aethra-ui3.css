@@ -2991,8 +2991,45 @@
 }
 
 /* =========================================================
-   22. MOVIMENTO REDUZIDO
+   22. OPÇÕES (Ui3OptionsWindow)
    ========================================================= */
+
+#ui3-root .ui3-options {
+    height: 100%;
+}
+
+#ui3-root .ui3-options__body {
+    box-sizing: border-box;
+    max-height: 100%;
+    padding: var(--ui3-space-4) var(--ui3-space-5) var(--ui3-space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui3-space-4);
+}
+
+#ui3-root .ui3-options__section {
+    padding-bottom: var(--ui3-space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui3-space-3);
+    border-bottom: 1px solid var(--ui3-line-soft);
+}
+
+#ui3-root .ui3-options__section:last-child {
+    border-bottom: 0;
+}
+
+/* =========================================================
+   23. MOVIMENTO REDUZIDO
+   Pelo sistema (prefers-reduced-motion) ou pelas Opções.
+   ========================================================= */
+
+#ui3-root.ui3-reduce-motion *,
+#ui3-root.ui3-reduce-motion *::before,
+#ui3-root.ui3-reduce-motion *::after {
+    transition: none;
+    animation: none;
+}
 
 @media (prefers-reduced-motion: reduce) {
     #ui3-root .ui3-btn,

@@ -39,8 +39,15 @@
         return Aethra.SettingsManager?.getInterfaceVersion?.() || "classic";
     }
 
+    // "Reduzir animações" das Opções (SettingsManager.hud.reduceMotion).
+    function applyMotionPreference() {
+        const hud = Aethra.SettingsManager?.get?.("hud", {}) || {};
+        ensureRoot().classList.toggle("ui3-reduce-motion", hud.reduceMotion === true);
+    }
+
     function applyVersion() {
         const active = currentVersion() === "v3";
+        applyMotionPreference();
         document.body.classList.toggle("ui3-active", active);
         syncRootVisibility();
         Aethra.EventBus.emit("ui3:version-applied", { active, version: currentVersion() });
@@ -249,5 +256,6 @@
     // Inscrito no carregamento: uma troca de interface feita antes do
     // engine:ready (por outro módulo ou teste) não pode se perder.
     Aethra.EventBus.on("settings:interface-changed", applyVersion);
+    Aethra.EventBus.on("settings:changed", applyMotionPreference);
     Aethra.EventBus.on("engine:ready", init);
 })(window.Aethra = window.Aethra || {});

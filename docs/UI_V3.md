@@ -49,6 +49,7 @@ todo o CSS clássico carregado, sai idêntica ao protótipo.
 | Mapa-Mundi | `js/ui3/Ui3AtlasWindow.js` | Assume `hunt-world-map-view`: mapa de expedições, caçadas focadas com loot esperado, focos de ofício |
 | Missões | `js/ui3/Ui3QuestsWindow.js` | Assume `quests-view`: ativas e concluídas, objetivos, recompensas, acompanhar, ir para o objetivo |
 | Oficinas | `js/ui3/Ui3WorkshopWindow.js` | Assume `profession-workshop-view`: receitas por tier, materiais e resultado com ícones, qualidade estimada, manutenção e reparo automático |
+| Opções | `js/ui3/Ui3OptionsWindow.js` | Assume `options-view`: interface, velocidade, reduzir animações, salvar, tela inicial, apagar save com confirmação |
 | Habilidades | `js/ui3/Ui3SkillsWindow.js` | Assume `skills-view`: Progressão (maestrias, foco, treino) e Barra e automação |
 | Preferência | `SettingsManager.interfaceVersion` | `"classic"` (padrão) ou `"v3"` |
 
@@ -140,7 +141,7 @@ antes de migrá-las quebraria essas telas.
 | 3. Janelas | Mochila/Equipamento, Loja, Habilidades/Automação | concluída |
 | 4. Demais telas | Cidade, Missões, Mapa-Mundi, Criação e Tela de título (no lugar do lobby) | concluída |
 | 5.1 Padrão e código morto | UI 3.0 como padrão (clássica só por escolha); 19 arquivos que nada carregava e o lobby removidos | concluída |
-| 5.2 Janelas restantes | Oficinas (feita); Opções, Especialização, Mural de Chefes, Mercado, Cash, Coliseu, Social, Masmorra, Log de combate, Inspeção | pendente |
+| 5.2 Janelas restantes | Oficinas e Opções (feitas); Especialização, Mural de Chefes, Mercado, Cash, Coliseu, Social, Masmorra, Log de combate, Inspeção | pendente |
 | 5.3 Remoção da clássica | `style.css` + v2/v5/v6, HUD clássica e monkey-patches; mover `getViewModel`, `handleQuestGuidance` e o registro de loot para módulos não visuais | pendente |
 
 Cada fase termina com a suíte verde, o gate verde e validação em 1280×720 e
