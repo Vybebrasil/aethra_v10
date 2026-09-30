@@ -4590,6 +4590,47 @@
                 }
                 checks.push(createCheck("UI 3.0 Especialização confirma a escolha permanente e delega ao ProfessionSystem", specWorks, specDetail));
 
+                // UI 3.0 — fase 5.2 (Mentora): lê a rota do herói e só encaminha comandos.
+                const mentorGuidanceOriginal = Aethra.RenderEngine.handleQuestGuidance;
+                const mentorTreeOriginal = Aethra.ProfessionSpecializationUI.open;
+                const mentorCalls = { guidance: [], tree: [] };
+                Aethra.RenderEngine.handleQuestGuidance = (guidance) => {
+                    mentorCalls.guidance.push(guidance);
+                    return true;
+                };
+                Aethra.ProfessionSpecializationUI.open = (professionId) => {
+                    mentorCalls.tree.push(professionId);
+                    return true;
+                };
+                let mentorWorks = false;
+                let mentorDetail = "";
+                try {
+                    Aethra.RenderEngine.openProfessionMentor();
+                    const mentorLayer = document.querySelector("#ui3-root [data-ui3-window='profession-mentor-view']");
+                    const mentorOpen = Aethra.Ui3MentorWindow?.isOpen?.() === true;
+                    const mentorProfession = Aethra.GameState.hero?.introProfessionId;
+                    const mentorPath = Aethra.ProfessionSystem.introPaths?.[mentorProfession];
+                    const mentorShowsRoute = Boolean(mentorPath) && (mentorLayer?.textContent || "").includes(mentorPath.title);
+                    mentorLayer?.querySelector("[data-ui3-mentor-tree]")?.click();
+                    const mentorTree = mentorCalls.tree.length === 1 && mentorCalls.tree[0] === mentorProfession;
+                    const trackedForMentor = Aethra.QuestSystem.getTrackedQuest?.();
+                    const expectedGuidance = trackedForMentor ? Aethra.QuestSystem.getGuidance(trackedForMentor) : null;
+                    const guidanceButton = mentorLayer?.querySelector("[data-ui3-mentor-guidance]");
+                    guidanceButton?.click();
+                    const mentorGuidance = expectedGuidance
+                        ? mentorCalls.guidance.length === 1
+                            && mentorCalls.guidance[0]?.questId === expectedGuidance.questId
+                            && Aethra.Ui3MentorWindow?.isOpen?.() === false
+                        : !guidanceButton && mentorCalls.guidance.length === 0;
+                    mentorWorks = mentorOpen && mentorShowsRoute && mentorTree && mentorGuidance;
+                    mentorDetail = `${mentorOpen ? "janela nova" : "janela errada"} · rota ${mentorShowsRoute ? "exibida" : "ausente"} · árvore ${mentorTree ? "encaminhada" : "não encaminhada"} · orientação ${mentorGuidance ? (expectedGuidance ? "encaminhada" : "ausente, sem botão") : "incoerente"}`;
+                } finally {
+                    Aethra.RenderEngine.handleQuestGuidance = mentorGuidanceOriginal;
+                    Aethra.ProfessionSpecializationUI.open = mentorTreeOriginal;
+                    windowManager.closeWindow("profession-mentor-view", { source: "integration-restore" });
+                }
+                checks.push(createCheck("UI 3.0 Mentora mostra a rota do herói e encaminha árvore e orientação", mentorWorks, mentorDetail));
+
                 /*
                  * UI 3.0 — fase 4 (Cidade). A cidade nova cobre a clássica, lê o
                  * mesmo ouro do herói e libera o mapa da Hunt.

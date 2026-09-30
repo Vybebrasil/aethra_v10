@@ -3024,6 +3024,42 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+/* Mentora (Mestra Ilyra) */
+#ui3-root .ui3-mentor__intro {
+    display: flex;
+    align-items: center;
+    gap: var(--ui3-space-4);
+}
+
+#ui3-root .ui3-mentor__intro p {
+    margin: 0;
+    font-style: italic;
+    color: var(--ui3-text-2);
+}
+
+#ui3-root .ui3-mentor__steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--ui3-space-3);
+}
+
+#ui3-root .ui3-mentor__step.is-done {
+    border-color: var(--ui3-gold);
+}
+
+#ui3-root .ui3-mentor__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ui3-space-3);
+}
+
+#ui3-root .ui3-mentor__footer p {
+    flex: 1 1 240px;
+    margin: 0;
+}
+
 /* =========================================================
    23. MOVIMENTO REDUZIDO
    Pelo sistema (prefers-reduced-motion) ou pelas Opções.
