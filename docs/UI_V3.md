@@ -43,6 +43,7 @@ todo o CSS clássico carregado, sai idêntica ao protótipo.
 | Moldura de janela | `js/ui3/Ui3Window.js` | Diálogo modal, foco, apresentador no WindowManager |
 | Mochila e Equipamento | `js/ui3/Ui3BagWindow.js` | Assume `inventory-view`: equipar, desequipar, usar, filtros, comparação |
 | Loja | `js/ui3/Ui3ShopWindow.js` | Assume `npc-shop-view`: comprar em quantidade, vender pela cotação, vender todos os drops |
+| Habilidades | `js/ui3/Ui3SkillsWindow.js` | Assume `skills-view`: Progressão (maestrias, foco, treino) e Barra e automação |
 | Preferência | `SettingsManager.interfaceVersion` | `"classic"` (padrão) ou `"v3"` |
 
 ### APIs de composição usadas pela UI 3.0
@@ -52,6 +53,7 @@ Criadas nos módulos donos (regra 9 do `AGENTS.md`), sem sobrescrever métodos:
 | API | Dono | Para quê |
 | --- | --- | --- |
 | `WindowManager.registerPresenter(id, presenter)` | `js/ui/WindowManager.js` | Uma janela nova assume um id clássico; `openWindow`, `closeWindow`, `isOpen`, Esc e exclusividade continuam no WindowManager |
+| `SkillSystem.placeSkill(tecla, habilidade)` | `js/combat/SkillSystem.js` | Coloca na tecla; se já estiver na barra, troca de lugar (nunca duplica) |
 | `MarketplaceSystem.getNpcCatalog` / `getSaleQuote` / `sellToNpc` | `js/market/MarketplaceSystem.js` | Catálogo e preço de venda com as mesmas regras da venda |
 | `TileMapCanvas.setStageHost(el)` / `isHosted()` | `js/world/TileMapCanvas.js` | Empresta o único `#tilemap-canvas` a outro palco; `null` devolve ao clássico |
 | `TileMapCanvas.setStageInsets({top,right,bottom,left})` | idem | Faixas cobertas por painéis; atores e marcadores ficam na área livre |
@@ -85,13 +87,19 @@ de fonte valem exatamente 11/12/13/14/16/20/28px em 1280px e crescem até
 - Uma tela da UI 3.0 é um elemento com `data-ui3-screen` dentro de
   `#ui3-root`; a raiz só aparece quando há uma tela ou a galeria.
 
+### Dependências que a fase 5 precisa preservar
+
+A aba Progressão lê `ProgressionJournalUI.getViewModel()` (projeção das
+maestrias, guia de treino e próximo marco). Ao remover a UI clássica, mova
+essa projeção para um módulo não visual antes de apagar o arquivo.
+
 ## Migração por fases (branch `ui-v3`)
 
 | Fase | Escopo | Estado |
 | --- | --- | --- |
 | 1. Fundação | tokens, componentes, raiz, preferência, regras no gate | concluída |
 | 2. Hunt | mapa 2D como palco; barra superior; HUD flutuante: herói, alvo, expedição, registro, barra de ações | concluída |
-| 3. Janelas | Mochila/Equipamento e Loja (feitas), Habilidades/Automação | em andamento |
+| 3. Janelas | Mochila/Equipamento, Loja, Habilidades/Automação | concluída |
 | 4. Demais telas | Cidade, Mapa-Mundi/Atlas, Missões, Lobby, Criação | pendente |
 | 5. Limpeza | remover `style.css` + v2/v5/v6 e o CSS/JS morto; desfazer os monkey-patches | pendente |
 

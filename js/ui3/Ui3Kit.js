@@ -41,6 +41,37 @@
         fist: '<path d="M7 11V7a2 2 0 0 1 4 0v4"></path><path d="M11 10V6a2 2 0 0 1 4 0v5"></path><path d="M15 10a2 2 0 0 1 4 0v4a7 7 0 0 1-7 7h-1a6 6 0 0 1-6-6v-2a2 2 0 0 1 2-2h2"></path>'
     });
 
+    /* Ícone e cor de uma habilidade, iguais na barra de ações e na janela. */
+    const SKILL_SYMBOLS = Object.freeze({
+        brutal_cleave: "axe",
+        twin_fang: "dagger",
+        aimed_shot: "bow",
+        armor_breaker: "hammer",
+        heavy_strike: "fist",
+        fire_bolt: "flame",
+        ice_shard: "snow",
+        shadow_bolt: "moon"
+    });
+
+    function skillVisual(skill) {
+        if (!skill) return { symbol: "sword", tone: "gold" };
+        const type = String(skill.type || skill.effect?.type || "").toLowerCase();
+        const magic = String(skill.effect?.damageType || "").toLowerCase() === "magic";
+        const symbol = SKILL_SYMBOLS[skill.id]
+            || (type === "heal" ? "plus" : type === "buff" ? "shield" : magic ? "spark" : "sword");
+        const tone = type === "heal" ? "green" : type === "buff" ? "blue" : magic ? "violet" : "gold";
+        return { symbol, tone };
+    }
+
+    /* Interruptor liga/desliga (role="switch"). */
+    function toggle({ checked = false, label = "", onText = "Ligado", offText = "Desligado", disabled = false, attributes = {} } = {}) {
+        return `<button type="button" role="switch" class="ui3-switch" aria-checked="${checked ? "true" : "false"}"${attrs({
+            "aria-label": label || undefined,
+            disabled,
+            ...attributes
+        })}><span class="ui3-switch__track" aria-hidden="true"><span class="ui3-switch__thumb"></span></span><span class="ui3-switch__text">${esc(checked ? onText : offText)}</span></button>`;
+    }
+
     function icon(name, size = 24) {
         const paths = ICON_PATHS[name];
         if (!paths) return "";
@@ -230,6 +261,8 @@
         formatStat,
         icon,
         iconNames: Object.freeze(Object.keys(ICON_PATHS)),
+        skillVisual,
+        toggle,
         button,
         bar,
         slot,

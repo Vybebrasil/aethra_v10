@@ -924,6 +924,28 @@ window.Aethra = window.Aethra || {};
             return this.assignSkill(slotIndex, null, barIndex);
         },
 
+        /*
+         * Coloca uma habilidade numa tecla da barra. Se ela já estiver em
+         * outra tecla da mesma barra, as duas trocam de lugar (nunca fica
+         * duplicada). null esvazia a tecla.
+         */
+        placeSkill(slotIndex, skillId, barIndex = null) {
+            this.ensureState();
+            const hero = Aethra.GameState.hero;
+            const resolvedBarIndex = barIndex === null
+                ? hero.activeActionBar
+                : Math.floor(safeNumber(barIndex, -1));
+            const bar = hero.actionBars[resolvedBarIndex];
+            if (!bar) return false;
+            const target = Math.floor(safeNumber(slotIndex, -1));
+            const nextSkillId = skillId || null;
+            const existingIndex = nextSkillId ? bar.slots.indexOf(nextSkillId) : -1;
+            if (existingIndex === target) return true;
+            return existingIndex >= 0
+                ? this.moveSkill(existingIndex, target, resolvedBarIndex)
+                : this.assignSkill(target, nextSkillId, resolvedBarIndex);
+        },
+
         moveSkill(fromSlot, toSlot, barIndex = null) {
             this.ensureState();
             const hero = Aethra.GameState.hero;

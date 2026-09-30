@@ -47,16 +47,6 @@
         plant: "Planta",
         undead: "Morto-vivo"
     });
-    const SKILL_SYMBOLS = Object.freeze({
-        brutal_cleave: "axe",
-        twin_fang: "dagger",
-        aimed_shot: "bow",
-        armor_breaker: "hammer",
-        heavy_strike: "fist",
-        fire_bolt: "flame",
-        ice_shard: "snow",
-        shadow_bolt: "moon"
-    });
 
     let screen = null;
     let parts = {};
@@ -224,24 +214,6 @@
     function itemImage(item) {
         if (!item) return "";
         return Aethra.GameData?.getItemImage?.(item.templateId || item.id) || item.image || "";
-    }
-
-    function skillSymbol(skill) {
-        if (!skill) return "sword";
-        if (SKILL_SYMBOLS[skill.id]) return SKILL_SYMBOLS[skill.id];
-        const type = String(skill.type || skill.effect?.type || "").toLowerCase();
-        if (type === "heal") return "plus";
-        if (type === "buff") return "shield";
-        if (String(skill.effect?.damageType || "").toLowerCase() === "magic") return "spark";
-        return "sword";
-    }
-
-    function skillTone(skill) {
-        const type = String(skill?.type || skill?.effect?.type || "").toLowerCase();
-        if (type === "heal") return "green";
-        if (type === "buff") return "blue";
-        if (String(skill?.effect?.damageType || "").toLowerCase() === "magic") return "violet";
-        return "gold";
     }
 
     /* ---------------------------------------------------------------
@@ -518,8 +490,7 @@
         const unit = fighting ? (remaining === 1 ? "rodada" : "rodadas") : "s";
         const status = remaining > 0 ? `, recarregando ${remaining} ${unit}` : !affordable ? ", recurso insuficiente" : "";
         return K.slot({
-            symbol: skillSymbol(skill),
-            tone: skillTone(skill),
+            ...K.skillVisual(skill),
             hotkey,
             cooldown: remaining,
             badge: auto ? "AUTO" : "",
@@ -650,7 +621,7 @@
         const bar = Aethra.SkillSystem?.getActiveBar?.();
         const skillId = bar?.slots?.[index] || null;
         if (!skillId) {
-            Aethra.WindowManager?.openWindow?.("skills-view", { source: "ui3-actionbar" });
+            Aethra.WindowManager?.openWindow?.("skills-view", { source: "ui3-actionbar", tab: "actionbar", slot: index });
             return false;
         }
         const result = Aethra.SkillController?.requestManualSkill?.(skillId);

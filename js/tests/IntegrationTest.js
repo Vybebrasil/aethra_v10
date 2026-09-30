@@ -4365,6 +4365,58 @@
                 Aethra.GameState.hero.bag = shopBagOriginal;
                 Aethra.GameState.hero.gold = shopGoldOriginal;
 
+                /*
+                 * UI 3.0 — fase 3 (Habilidades). A barra é montada pelo
+                 * SkillSystem.placeSkill (uma habilidade nunca fica duplicada
+                 * na barra) e a automação pelo SkillController.
+                 */
+                windowManager.openWindow("skills-view", { source: "integration-ui3-skills" });
+                const skillsLayer = document.querySelector("#ui3-root [data-ui3-window='skills-view']");
+                const journalRows = skillsLayer?.querySelectorAll("[data-ui3-skill-entry]").length || 0;
+                const journalSize = Aethra.ProgressionJournalUI?.getViewModel?.().entries.length || 0;
+                skillsLayer?.querySelector("[data-ui3-tab='actionbar']")?.click();
+                const originalSlots = [...(Aethra.SkillSystem.getActiveBar()?.slots || [])];
+                const placedSkillId = originalSlots.find(Boolean)
+                    || Object.values(Aethra.SkillSystem.getSkills()).find((skill) => skill && !skill.primarySlot && skill.category !== "primary")?.id;
+                const emptyIndex = originalSlots.findIndex((skillId) => !skillId);
+                const targetIndex = emptyIndex >= 0 ? emptyIndex : originalSlots.length - 1;
+                skillsLayer?.querySelector(`[data-ui3-loadout-slot="${targetIndex}"]`)?.click();
+                skillsLayer?.querySelector(`[data-ui3-library-skill="${placedSkillId}"]`)?.click();
+                const slotsAfterPlace = Aethra.SkillSystem.getActiveBar()?.slots || [];
+                const placedOnce = slotsAfterPlace[targetIndex] === placedSkillId
+                    && slotsAfterPlace.filter((skillId) => skillId === placedSkillId).length === 1;
+                originalSlots.forEach((skillId, index) => Aethra.SkillSystem.assignSkill(index, skillId || null));
+                const barRestored = JSON.stringify(Aethra.SkillSystem.getActiveBar()?.slots || []) === JSON.stringify(originalSlots);
+
+                const ruleEntry = (Aethra.SkillController.getSnapshot().orderedSkills || [])[0] || null;
+                let autoToggles = false;
+                if (ruleEntry) {
+                    const autoBefore = Aethra.SkillController.getSettings()[ruleEntry.skillId]?.auto === true;
+                    skillsLayer?.querySelector(`[data-ui3-rule-auto="${ruleEntry.skillId}"]`)?.click();
+                    const autoAfter = Aethra.SkillController.getSettings()[ruleEntry.skillId]?.auto === true;
+                    Aethra.SkillController.setAuto(ruleEntry.skillId, autoBefore);
+                    autoToggles = autoAfter !== autoBefore;
+                }
+                checks.push(
+                    createCheck(
+                        "UI 3.0 Habilidades mostra as maestrias e monta a barra sem duplicar",
+                        Aethra.Ui3SkillsWindow?.isOpen?.() === true
+                            && journalRows === journalSize
+                            && journalSize > 0
+                            && placedOnce
+                            && barRestored,
+                        `${journalRows}/${journalSize} maestrias · ${placedSkillId} → tecla ${targetIndex + 1} ${placedOnce ? "sem duplicar" : "duplicada ou ausente"} · barra ${barRestored ? "restaurada" : "alterada"}`
+                    )
+                );
+                checks.push(
+                    createCheck(
+                        "UI 3.0 Habilidades liga e desliga a automação pelo SkillController",
+                        Boolean(ruleEntry) && autoToggles,
+                        ruleEntry ? `${ruleEntry.skillId}: ${autoToggles ? "alternou" : "não alternou"}` : "barra de teste sem regras"
+                    )
+                );
+                windowManager.closeWindow("skills-view", { source: "integration-restore" });
+
                 settings?.setInterfaceVersion?.(interfaceBefore || "classic", { source: "integration-restore" });
                 Aethra.GameState.hero.characterCreated = createdBefore;
 

@@ -1665,6 +1665,15 @@
     width: 100%;
 }
 
+/* Em painéis longos as ações ficam sempre à vista, no rodapé. */
+#ui3-root .ui3-bag__details > .ui3-item-actions {
+    position: sticky;
+    bottom: 0;
+    padding-top: var(--ui3-space-2);
+    background: #0F171B;
+    box-shadow: 0 -12px 12px -6px #0F171B;
+}
+
 /* =========================================================
    14. LOJA (Ui3ShopWindow) e listas
    O painel do item reaproveita .ui3-bag__details e Ui3Items.
@@ -1769,12 +1778,314 @@
 #ui3-root .ui3-price.is-gain { color: var(--ui3-ok); }
 
 /* =========================================================
-   15. MOVIMENTO REDUZIDO
+   15. HABILIDADES (Ui3SkillsWindow) e interruptor
+   ========================================================= */
+
+#ui3-root .ui3-skills {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+#ui3-root .ui3-skills__tabs {
+    flex-shrink: 0;
+    padding: 0 18px;
+}
+
+#ui3-root .ui3-skills__panel {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: grid;
+}
+
+#ui3-root .ui3-skills__panel[hidden] {
+    display: none;
+}
+
+#ui3-root .ui3-skills__journal {
+    grid-template-columns: minmax(0, 1fr) clamp(300px, 34%, 440px);
+}
+
+#ui3-root .ui3-skills__bar {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+}
+
+#ui3-root .ui3-skills__main,
+#ui3-root .ui3-skills__column {
+    box-sizing: border-box;
+    min-width: 0;
+    min-height: 0;
+    padding: var(--ui3-space-3) 18px var(--ui3-space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui3-space-3);
+}
+
+#ui3-root .ui3-skills__column + .ui3-skills__column {
+    border-left: 1px solid var(--ui3-line);
+}
+
+#ui3-root .ui3-kpi-grid--4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+#ui3-root .ui3-kpi-grid--4 .ui3-kpi__value {
+    overflow: hidden;
+    font-size: var(--ui3-fs-lg);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+#ui3-root .ui3-glyph-box {
+    box-sizing: border-box;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--ui3-bg-2);
+    border: 1px solid var(--ui3-line-strong);
+    border-radius: var(--ui3-radius-sm);
+    color: var(--ui3-gold-1);
+    font-size: var(--ui3-fs-lg);
+}
+
+#ui3-root .ui3-glyph-box--blue { color: #7FB4F2; }
+#ui3-root .ui3-glyph-box--green { color: var(--ui3-ok); }
+#ui3-root .ui3-glyph-box--violet { color: #C3A6FF; }
+
+#ui3-root .ui3-progress {
+    height: 4px;
+    overflow: hidden;
+    background: var(--ui3-xp-track);
+    border-radius: 2px;
+}
+
+#ui3-root .ui3-progress > div {
+    height: 100%;
+    background: var(--ui3-xp);
+}
+
+#ui3-root .ui3-skill-row .ui3-progress {
+    margin-top: 3px;
+}
+
+#ui3-root .ui3-skill-row.is-undiscovered {
+    opacity: 0.6;
+}
+
+#ui3-root .ui3-skill-row__status {
+    flex-shrink: 0;
+    font-size: var(--ui3-fs-xs);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+#ui3-root .ui3-skill-row__status.is-focus { color: var(--ui3-gold-1); }
+#ui3-root .ui3-skill-row__status.is-paused { color: var(--ui3-warn); }
+
+#ui3-root .ui3-section {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: var(--ui3-fs-md);
+}
+
+#ui3-root .ui3-section p {
+    margin: 0;
+    font-size: var(--ui3-fs-sm);
+    color: var(--ui3-text-2);
+}
+
+#ui3-root .ui3-steps {
+    margin: 2px 0 0;
+    padding-left: 18px;
+    font-size: var(--ui3-fs-sm);
+    color: var(--ui3-text-2);
+}
+
+#ui3-root .ui3-plain-list {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    list-style: none;
+    font-size: var(--ui3-fs-sm);
+    color: var(--ui3-text-2);
+}
+
+#ui3-root .ui3-plain-list strong {
+    color: var(--ui3-ok);
+}
+
+#ui3-root .ui3-section-head {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+#ui3-root .ui3-loadout {
+    display: grid;
+    grid-template-columns: repeat(5, var(--ui3-slot));
+    gap: 6px;
+}
+
+#ui3-root .ui3-list-row.is-locked,
+#ui3-root .ui3-rule.is-locked {
+    opacity: 0.6;
+}
+
+#ui3-root .ui3-rule {
+    box-sizing: border-box;
+    padding: var(--ui3-space-2) 10px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    background: var(--ui3-bg-2);
+    border-radius: var(--ui3-radius-md);
+}
+
+#ui3-root .ui3-rule--skill {
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+}
+
+#ui3-root .ui3-rule__priority {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#ui3-root .ui3-rule__rank {
+    box-sizing: border-box;
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--ui3-gold);
+    border-radius: 50%;
+    color: var(--ui3-gold-1);
+    font-size: var(--ui3-fs-sm);
+    font-weight: 700;
+}
+
+#ui3-root .ui3-rule__moves {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+#ui3-root .ui3-btn--mini {
+    width: 24px;
+    min-height: 18px;
+    padding: 0;
+    font-size: 11px;
+}
+
+#ui3-root .ui3-rule__actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#ui3-root .ui3-rule__actions .ui3-btn {
+    min-height: 32px;
+    padding: 0 var(--ui3-space-3);
+    font-size: var(--ui3-fs-sm);
+}
+
+#ui3-root .ui3-threshold {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: var(--ui3-fs-sm);
+    color: var(--ui3-text-2);
+}
+
+#ui3-root .ui3-threshold output {
+    font-weight: 700;
+    color: var(--ui3-ok);
+}
+
+#ui3-root .ui3-threshold input {
+    width: 100%;
+    accent-color: var(--ui3-gold);
+}
+
+#ui3-root .ui3-rule-note {
+    margin: 0;
+}
+
+#ui3-root .ui3-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ui3-space-2);
+    padding: 4px 2px;
+    background: transparent;
+    border: 0;
+    color: var(--ui3-text-2);
+    font-family: var(--ui3-font-ui);
+    font-size: var(--ui3-fs-sm);
+    font-weight: 600;
+    cursor: pointer;
+}
+
+#ui3-root .ui3-switch__track {
+    position: relative;
+    box-sizing: border-box;
+    width: 34px;
+    height: 18px;
+    flex-shrink: 0;
+    background: #2A363C;
+    border: 1px solid var(--ui3-line-strong);
+    border-radius: 9px;
+    transition: background-color 120ms ease;
+}
+
+#ui3-root .ui3-switch__thumb {
+    position: absolute;
+    top: 1px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    background: var(--ui3-text-3);
+    border-radius: 50%;
+    transition: left 120ms ease;
+}
+
+#ui3-root .ui3-switch[aria-checked="true"] {
+    color: var(--ui3-ok);
+}
+
+#ui3-root .ui3-switch[aria-checked="true"] .ui3-switch__track {
+    background: #24573C;
+    border-color: var(--ui3-ok);
+}
+
+#ui3-root .ui3-switch[aria-checked="true"] .ui3-switch__thumb {
+    left: 16px;
+    background: #EAF7EF;
+}
+
+#ui3-root .ui3-switch:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* =========================================================
+   16. MOVIMENTO REDUZIDO
    ========================================================= */
 
 @media (prefers-reduced-motion: reduce) {
     #ui3-root .ui3-btn,
-    #ui3-root .ui3-bar__fill {
+    #ui3-root .ui3-bar__fill,
+    #ui3-root .ui3-switch__track,
+    #ui3-root .ui3-switch__thumb {
         transition: none;
     }
 }

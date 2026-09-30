@@ -263,13 +263,8 @@
     }
 
     function assignLoadoutSkill(slotIndex, skillId) {
-        const bar = Aethra.SkillSystem.getActiveBar?.();
-        if (!bar) return false;
-        const nextSkillId = skillId || null;
-        const existingIndex = nextSkillId ? bar.slots.indexOf(nextSkillId) : -1;
-        const changed = existingIndex >= 0 && existingIndex !== slotIndex
-            ? Aethra.SkillSystem.moveSkill(existingIndex, slotIndex)
-            : Aethra.SkillSystem.assignSkill(slotIndex, nextSkillId);
+        // A regra de troca entre teclas vive no SkillSystem.placeSkill.
+        const changed = Aethra.SkillSystem.placeSkill(slotIndex, skillId || null);
         if (!changed) return false;
         Render.renderActionBar?.();
         Aethra.UIManager?.renderSkillSettings?.();
