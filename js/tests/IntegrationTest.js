@@ -4545,6 +4545,52 @@
                 );
 
                 /*
+                 * UI 3.0 — fase 5.2 (Especialização). A escolha é permanente:
+                 * o primeiro clique só pede confirmação; o segundo vai ao
+                 * ProfessionSystem. Estado e comando ficam espionados e restaurados.
+                 */
+                const professionSystem = Aethra.ProfessionSystem;
+                const specStateOriginal = professionSystem.getSpecializationState;
+                const specChooseOriginal = professionSystem.chooseSpecialization;
+                const specProfessionId = Object.keys(professionSystem.specializationTrees || {})[1] || "mining";
+                const specTree = professionSystem.getSpecializationTree(specProfessionId);
+                const specChoices = [];
+                professionSystem.getSpecializationState = (id) => {
+                    const real = specStateOriginal.call(professionSystem, id);
+                    return { ...real, level: Math.max(real.level, real.unlockLevel), branchId: null, branch: null };
+                };
+                professionSystem.chooseSpecialization = (...args) => {
+                    specChoices.push(args);
+                    return { accepted: false, reason: "insufficient-level", requiredLevel: 99 };
+                };
+                let specWorks = false;
+                let specDetail = "";
+                try {
+                    Aethra.ProfessionSpecializationUI.open(specProfessionId);
+                    const specLayer = document.querySelector("#ui3-root [data-ui3-window='profession-specialization-view']");
+                    const specOpen = Aethra.Ui3SpecializationWindow?.isOpen?.() === true;
+                    const specSelected = specLayer?.querySelector(`[data-ui3-tab='${specProfessionId}']`)?.getAttribute("aria-selected") === "true";
+                    const firstBranchId = specTree?.branches?.[0]?.id;
+                    specLayer?.querySelector(`[data-ui3-branch='${firstBranchId}']`)?.click();
+                    const specAsked = specChoices.length === 0 && Boolean(specLayer?.querySelector(`[data-ui3-branch-confirm='${firstBranchId}']`));
+                    specLayer?.querySelector("[data-ui3-branch-cancel]")?.click();
+                    const specCancelled = specChoices.length === 0 && !specLayer?.querySelector("[data-ui3-branch-confirm]");
+                    specLayer?.querySelector(`[data-ui3-branch='${firstBranchId}']`)?.click();
+                    specLayer?.querySelector("[data-ui3-branch-confirm]")?.click();
+                    const specDelegated = specChoices.length === 1
+                        && specChoices[0][0] === specProfessionId
+                        && specChoices[0][1] === firstBranchId
+                        && /nível 99/i.test(specLayer?.querySelector(".ui3-notice")?.textContent || "");
+                    specWorks = specOpen && specSelected && specAsked && specCancelled && specDelegated;
+                    specDetail = `${specOpen ? "janela nova" : "janela errada"} · ofício ${specSelected ? "pedido" : "outro"} · escolha ${specAsked && specCancelled ? "pediu confirmação" : "sem confirmação"} · ${specDelegated ? "delegou ao ProfessionSystem" : "não delegou"}`;
+                } finally {
+                    professionSystem.getSpecializationState = specStateOriginal;
+                    professionSystem.chooseSpecialization = specChooseOriginal;
+                    windowManager.closeWindow("profession-specialization-view", { source: "integration-restore" });
+                }
+                checks.push(createCheck("UI 3.0 Especialização confirma a escolha permanente e delega ao ProfessionSystem", specWorks, specDetail));
+
+                /*
                  * UI 3.0 — fase 4 (Cidade). A cidade nova cobre a clássica, lê o
                  * mesmo ouro do herói e libera o mapa da Hunt.
                  */

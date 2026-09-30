@@ -3019,6 +3019,11 @@
     border-bottom: 0;
 }
 
+/* Especialização: os dois caminhos lado a lado, sem coluna vazia. */
+#ui3-root .ui3-specialization__paths {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 /* =========================================================
    23. MOVIMENTO REDUZIDO
    Pelo sistema (prefers-reduced-motion) ou pelas Opções.
