@@ -4683,6 +4683,63 @@
                 checks.push(createCheck("UI 3.0 Coliseu mostra perfil e ranking do ColiseumSystem e encaminha duelos", coliseumWorks, coliseumDetail));
 
                 /*
+                 * Mercado de Players: o dono decide o que pode ser anunciado
+                 * (o kit inicial marca o vínculo em ownership) e quanto o
+                 * vendedor recebe (taxa mínima de 1 ouro, a mesma da compra).
+                 */
+                const marketplace = Aethra.MarketplaceSystem;
+                const marketRuleOk = marketplace.canListOnPlayerMarket({ name: "Livre" }) === true
+                    && marketplace.canListOnPlayerMarket({ ownership: { bound: true } }) === false
+                    && marketplace.canListOnPlayerMarket({ ownership: { tradeable: false } }) === false
+                    && marketplace.canListOnPlayerMarket({ market: { premium: true } }) === false;
+                const smallQuote = marketplace.getListingQuote(10);
+                const largeQuote = marketplace.getListingQuote(100);
+                const marketQuoteOk = smallQuote.tax === 1 && smallQuote.sellerNet === 9
+                    && largeQuote.tax === 5 && largeQuote.sellerNet === 95;
+                checks.push(
+                    createCheck(
+                        "Mercado de Players bloqueia peças vinculadas e projeta a taxa real",
+                        marketRuleOk && marketQuoteOk,
+                        `${marketRuleOk ? "vínculo respeitado" : "vínculo ignorado"} · 10 o → ${smallQuote.sellerNet} o · 100 o → ${largeQuote.sellerNet} o`
+                    )
+                );
+
+                // UI 3.0 — fase 5.2 (Mercado): anuncia com a cotação do dono e encaminha o comando.
+                const marketListableOriginal = marketplace.getListableItems;
+                const marketListOriginal = marketplace.listForSale;
+                const marketCalls = [];
+                marketplace.getListableItems = () => [{ instanceId: "ui3_market_probe", name: "Pedra de Teste", type: "material", price: 10, quantity: 1 }];
+                marketplace.listForSale = (...args) => {
+                    marketCalls.push(args);
+                    return false;
+                };
+                let marketWorks = false;
+                let marketDetail = "";
+                try {
+                    windowManager.openWindow("player-market-view", { source: "integration-ui3-market", tab: "sell" });
+                    const marketLayer = document.querySelector("#ui3-root [data-ui3-window='player-market-view']");
+                    const marketOpen = Aethra.Ui3MarketWindow?.isOpen?.() === true;
+                    marketLayer?.querySelector("[data-ui3-tab='sell']")?.click();
+                    marketLayer?.querySelector("[data-ui3-market-item='ui3_market_probe']")?.click();
+                    const priceInput = marketLayer?.querySelector("[data-ui3-market-price]");
+                    if (priceInput) {
+                        priceInput.value = "12";
+                        priceInput.dispatchEvent(new Event("input", { bubbles: true }));
+                    }
+                    const quoteShown = /recebe 11 o/.test(marketLayer?.querySelector("[data-ui3-market-quote]")?.textContent || "");
+                    marketLayer?.querySelector("[data-ui3-market-publish='ui3_market_probe']")?.click();
+                    const publishRouted = marketCalls.length === 1 && marketCalls[0][0] === "ui3_market_probe" && marketCalls[0][1] === 12
+                        && Boolean(marketLayer?.querySelector(".ui3-notice--error"));
+                    marketWorks = marketOpen && quoteShown && publishRouted;
+                    marketDetail = `${marketOpen ? "janela nova" : "janela errada"} · cotação ${quoteShown ? "do dono" : "divergente"} · anúncio ${publishRouted ? "encaminhado" : "não encaminhado"}`;
+                } finally {
+                    marketplace.getListableItems = marketListableOriginal;
+                    marketplace.listForSale = marketListOriginal;
+                    windowManager.closeWindow("player-market-view", { source: "integration-restore" });
+                }
+                checks.push(createCheck("UI 3.0 Mercado anuncia com a cotação do MarketplaceSystem", marketWorks, marketDetail));
+
+                /*
                  * UI 3.0 — fase 4 (Cidade). A cidade nova cobre a clássica, lê o
                  * mesmo ouro do herói e libera o mapa da Hunt.
                  */

@@ -178,6 +178,31 @@
         };
     }
 
+    /*
+     * Mercado entre jogadores. Premium, vinculados (inclusive o kit inicial,
+     * que marca o vínculo em ownership) e não negociáveis ficam de fora.
+     */
+    function canListOnPlayerMarket(item) {
+        return Boolean(item)
+            && item.noPlayerMarket !== true
+            && item.market?.noPlayerMarket !== true
+            && item.market?.premium !== true
+            && item.bound !== true
+            && item.ownership?.bound !== true
+            && item.ownership?.tradeable !== false;
+    }
+
+    // A taxa mínima é 1 ouro: o vendedor nunca recebe o preço cheio.
+    function playerMarketTerms(price, taxRate) {
+        const listingPrice = Math.max(1, Math.floor(Number(price) || 0));
+        const tax = Math.max(1, Math.floor(listingPrice * taxRate));
+        return { price: listingPrice, tax, taxRate, sellerNet: Math.max(0, listingPrice - tax) };
+    }
+
+    function localSellerId(hero) {
+        return hero.id || hero.name || "local-player";
+    }
+
     function findInventoryItem(itemId) {
         const hero = ensureHeroState();
 
@@ -890,12 +915,7 @@
 
             const item = found.item;
 
-            if (
-                item.noPlayerMarket === true ||
-                item.market?.noPlayerMarket === true ||
-                item.market?.premium === true ||
-                item.bound === true
-            ) {
+            if (!canListOnPlayerMarket(item)) {
                 return this.fail(
                     "listForSale",
                     "item-cannot-be-listed",
@@ -913,7 +933,7 @@
 
             const listing = {
                 listingId: uniqueId("listing"),
-                sellerId: hero.id || hero.name || "local-player",
+                sellerId: localSellerId(hero),
                 sellerName: hero.name || "Jogador",
                 item: clone(removedItem),
                 price: listingPrice,
@@ -965,7 +985,7 @@
             }
 
             const listing = market.listings[listingIndex];
-            const buyerId = hero.id || hero.name || "local-player";
+            const buyerId = localSellerId(hero);
 
             if (listing.sellerId === buyerId) {
                 return this.fail(
@@ -991,12 +1011,7 @@
 
             try {
                 const taxRate = market.transactionTaxRate;
-                const tax = Math.max(
-                    1,
-                    Math.floor(listing.price * taxRate)
-                );
-
-                const sellerNet = Math.max(0, listing.price - tax);
+                const { tax, sellerNet } = playerMarketTerms(listing.price, taxRate);
 
                 setGold(
                     hero.gold - listing.price,
@@ -1073,7 +1088,7 @@
                 );
             }
 
-            const sellerId = hero.id || hero.name || "local-player";
+            const sellerId = localSellerId(hero);
 
             if (listing.sellerId !== sellerId) {
                 return this.fail(
@@ -1106,11 +1121,7 @@
         claimSellerBalance(sellerId = null) {
             const hero = ensureHeroState();
             const market = ensureMarketState();
-            const resolvedSellerId =
-                sellerId ||
-                hero.id ||
-                hero.name ||
-                "local-player";
+            const resolvedSellerId = sellerId || localSellerId(hero);
 
             const balance = Math.max(
                 0,
@@ -1158,6 +1169,31 @@
 
         getMarketState() {
             return clone(ensureMarketState());
+        },
+
+        canListOnPlayerMarket,
+
+        // Peças da mochila que o herói pode anunciar agora.
+        getListableItems() {
+            return clone(ensureHeroState().bag.filter(canListOnPlayerMarket));
+        },
+
+        // O que o vendedor recebe por um anúncio a este preço (mesma conta da compra).
+        getListingQuote(price) {
+            return playerMarketTerms(price, ensureMarketState().transactionTaxRate);
+        },
+
+        // Visão do vendedor local: saldo a resgatar, anúncios ativos e histórico recente.
+        getSellerSummary(historyLimit = 12) {
+            const market = ensureMarketState();
+            const sellerId = localSellerId(ensureHeroState());
+            return {
+                sellerId,
+                balance: Math.max(0, Math.floor(Number(market.sellerBalances[sellerId] || 0))),
+                taxRate: market.transactionTaxRate,
+                activeListings: clone(market.listings.filter((listing) => listing.status === "active" && listing.sellerId === sellerId)),
+                history: clone(market.history.slice(-Math.max(1, historyLimit)).reverse())
+            };
         },
 
         fail(operation, reason, details = {}) {

@@ -3154,6 +3154,27 @@
     color: var(--ui3-gold-1);
 }
 
+/* Mercado de Players (layout da Loja) */
+#ui3-root .ui3-market__search {
+    flex: 0 0 auto;
+}
+
+#ui3-root .ui3-market__search[hidden] {
+    display: none;
+}
+
+#ui3-root .ui3-market__balance {
+    font-family: var(--ui3-font-display);
+    font-size: var(--ui3-fs-xl);
+    color: var(--ui3-gold-1);
+}
+
+#ui3-root .ui3-market__history-row {
+    padding: var(--ui3-space-2) 10px;
+    border-bottom: 1px solid var(--ui3-line-soft);
+    font-size: var(--ui3-fs-sm);
+}
+
 /* =========================================================
    23. MOVIMENTO REDUZIDO
    Pelo sistema (prefers-reduced-motion) ou pelas Opções.

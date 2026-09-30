@@ -189,15 +189,11 @@
     }
 
     function eligibleMarketItems() {
-        return (Aethra.GameState.hero?.bag || []).filter((item) => {
-            return item && !item.bound && !item.noPlayerMarket &&
-                !item.market?.noPlayerMarket && !item.market?.premium;
-        });
+        return Aethra.MarketplaceSystem?.getListableItems?.() || [];
     }
 
     function sellerId() {
-        const hero = Aethra.GameState.hero || {};
-        return hero.id || hero.name || "local-player";
+        return Aethra.MarketplaceSystem?.getSellerSummary?.()?.sellerId || "local-player";
     }
 
     function setMarketTab(tabName) {
@@ -253,9 +249,8 @@
             const updateProjection = (preferBase = false) => {
                 const basePrice = Number(select?.selectedOptions?.[0]?.dataset.basePrice || 1);
                 if (preferBase && price) price.value = String(Math.max(1, basePrice));
-                const total = Math.max(1, Math.floor(Number(price?.value || 1)));
-                const net = Math.max(0, total - Math.floor(total * 0.05));
-                if (projection) projection.textContent = `Preço ${fmt(total)} G · você recebe ${fmt(net)} G após a taxa.`;
+                const quote = system.getListingQuote(price?.value);
+                if (projection) projection.textContent = `Preço ${fmt(quote.price)} G · você recebe ${fmt(quote.sellerNet)} G após a taxa.`;
             };
             select?.addEventListener("change", () => updateProjection(true));
             price?.addEventListener("input", () => updateProjection(false));
