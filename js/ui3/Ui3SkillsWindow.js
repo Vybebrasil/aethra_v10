@@ -4,7 +4,7 @@
  *
  * Assume a janela "skills-view" pelo Ui3Window/WindowManager.
  * Aba Progressão
- *   leitura   ProgressionJournalUI.getViewModel (projeção pronta das
+ *   leitura   ProgressionJournal.getViewModel (projeção pronta das
  *             maestrias; os filtros desta janela são próprios)
  *   comandos  DisciplineSystem.setFocus/setTrainingMode,
  *             ProfessionSystem.setCollectionPolicy
@@ -82,7 +82,7 @@
        --------------------------------------------------------------- */
 
     function journal() {
-        return Aethra.ProgressionJournalUI?.getViewModel?.() || { entries: [], categories: [], summary: {}, recent: [] };
+        return Aethra.ProgressionJournal?.getViewModel?.() || { entries: [], categories: [], summary: {}, recent: [] };
     }
 
     function filteredEntries(model) {

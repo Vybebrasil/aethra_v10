@@ -57,6 +57,8 @@
         "EncounterCombatHUD",
         "PlayerHudWorkspace",
         "ProfessionSpecializationUI",
+        "DisciplineMilestones",
+        "ProgressionJournal",
         "ProgressionJournalUI",
         "CharacterCreationUI",
         "GameLoader"
@@ -219,6 +221,22 @@
                         && Boolean(document.querySelector('[data-skills-workspace-panel="actionbar"] #skills-config-list'))
                         && typeof Aethra.RenderEngine?.getDisciplineMilestones === "function",
                     "Progressão, marcos e automação acessíveis sem duplicar janela"
+                )
+            );
+
+            // A projeção do diário vive fora da tela: marcos vêm dos dados, não do RenderEngine.
+            const swordMilestone = (Aethra.DisciplineMilestones?.get?.("sword") || []).find((entry) => entry.level > 1);
+            const swordNext = Aethra.ProgressionJournal?.nextMilestone?.({ id: "sword", level: 1 });
+            const neutralJournal = Aethra.ProgressionJournal?.getViewModel?.();
+            checks.push(
+                createCheck(
+                    "Diário de Progressão tem projeção sem tela, com marcos vindos dos dados",
+                    Boolean(swordMilestone)
+                        && swordNext?.level === swordMilestone.level
+                        && swordNext?.title === swordMilestone.title
+                        && neutralJournal?.entries?.length === progressionJournalModel?.entries?.length
+                        && Array.isArray(neutralJournal?.recent),
+                    `espada Nv 1 → ${swordNext?.title || "sem marco"} (Nv ${swordNext?.level ?? "?"}) · ${neutralJournal?.entries?.length ?? 0} skills`
                 )
             );
 

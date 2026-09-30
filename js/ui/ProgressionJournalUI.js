@@ -2,18 +2,16 @@
 (function initProgressionJournalUI(Aethra) {
     "use strict";
 
-    if (!Aethra?.EventBus || !Aethra?.DisciplineSystem) return;
+    if (!Aethra?.EventBus || !Aethra?.DisciplineSystem || !Aethra?.ProgressionJournal) return;
     if (Aethra.ProgressionJournalUI) return;
 
     const WINDOW_ID = "skills-view";
     const ROOT_ID = "progression-journal-root";
-    const MAX_RECENT = 8;
     const state = {
         tab: "journal",
         category: "all",
         search: "",
         selectedId: null,
-        recent: [],
         renderFrame: null,
         initialized: false
     };
@@ -54,105 +52,12 @@
         return preferred;
     }
 
-    function nextMilestone(skill) {
-        const level = Math.max(1, number(skill?.level, 1));
-        const candidates = [];
-        const disciplineMilestone = (Aethra.RenderEngine?.getDisciplineMilestones?.(skill.id) || [])
-            .filter((entry) => number(entry.level) > level)
-            .sort((a, b) => number(a.level) - number(b.level))[0];
-        if (disciplineMilestone) {
-            candidates.push({
-                level: disciplineMilestone.level,
-                type: disciplineMilestone.type || "marco",
-                title: disciplineMilestone.title,
-                description: disciplineMilestone.desc
-            });
-        }
-
-        const recipes = Aethra.RecipeCatalog?.byProfession?.(skill.id) || [];
-        const recipe = recipes
-            .filter((entry) => number(entry.unlockLevel, 1) > level)
-            .sort((a, b) => number(a.unlockLevel) - number(b.unlockLevel))[0];
-        if (recipe) {
-            candidates.push({
-                level: recipe.unlockLevel,
-                type: "receita",
-                title: recipe.name,
-                description: `${Aethra.RecipeCatalog?.tierName?.(recipe.tier) || `Tier ${recipe.tier}`} · ${recipe.description || "Nova receita de criação."}`
-            });
-        }
-
-        const specialization = Aethra.ProfessionSystem?.getSpecializationState?.(skill.id);
-        const tree = Aethra.ProfessionSystem?.getSpecializationTree?.(skill.id);
-        if (specialization && tree) {
-            if (!specialization.branchId) {
-                candidates.push({
-                    level: Math.max(level, specialization.unlockLevel),
-                    type: "especialização",
-                    title: level >= specialization.unlockLevel ? "Especialização disponível" : "Escolha de especialização",
-                    description: level >= specialization.unlockLevel
-                        ? "Escolha agora um caminho permanente para esta profissão."
-                        : "Dois caminhos permanentes passam a definir sua maestria."
-                });
-            } else {
-                const nextNode = specialization.branch?.nodes
-                    ?.filter((entry) => number(entry.level) > level)
-                    .sort((a, b) => number(a.level) - number(b.level))[0];
-                if (nextNode) {
-                    candidates.push({
-                        level: nextNode.level,
-                        type: "especialização",
-                        title: nextNode.name,
-                        description: nextNode.description || `Novo marco de ${specialization.branch.name}.`
-                    });
-                } else {
-                    candidates.push({
-                        level: specialization.nextMasteryLevel,
-                        type: "maestria",
-                        title: `Pulso de ${specialization.branch.name}`,
-                        description: "Novo ganho permanente com retorno decrescente; a progressão não tem nível máximo."
-                    });
-                }
-            }
-        }
-
-        return candidates.sort((a, b) => number(a.level) - number(b.level))[0] || {
-            level: level + 1,
-            type: "nível",
-            title: "Maestria contínua",
-            description: "Continue praticando: os benefícios crescem sem um nível máximo, com retorno decrescente."
-        };
-    }
-
-    function entryViewModel(skill, focused) {
-        const guide = Aethra.DisciplineSystem.getTrainingGuide?.(skill.id) || {};
-        const specialization = Aethra.ProfessionSystem?.getSpecializationState?.(skill.id) || null;
-        const policy = skill.policy || Aethra.ProfessionSystem?.getState?.(skill.id)?.policy || null;
-        const bonus = Aethra.DisciplineSystem.getDiminishingBonus?.(skill.id, { scale: 12, interval: 10 });
-        return {
-            ...skill,
-            focused: skill.id === focused,
-            training: skill.trainingMode !== "locked",
-            guide,
-            policy,
-            specialization,
-            contract: skill.id === focused
-                ? Aethra.ProfessionSystem?.getFocusTrainingState?.(skill.id) || null
-                : null,
-            nextUnlock: nextMilestone(skill),
-            bonusPercent: number(bonus),
-            progressPercent: Math.min(100, Math.max(0, number(skill.progressPercent)))
-        };
-    }
-
+    // Projeção de ProgressionJournal com o filtro e a seleção desta tela.
     function getViewModel() {
-        const skills = allSkills();
-        const focused = focusId(skills);
-        const selected = selectedId(skills);
-        const entries = skills.map((skill) => entryViewModel(skill, focused));
-        const categories = [...new Set(entries.map((entry) => entry.category))];
+        const model = Aethra.ProgressionJournal.getViewModel();
+        const selected = selectedId(model.entries);
         const normalizedSearch = state.search.trim().toLocaleLowerCase("pt-BR");
-        const filtered = entries.filter((entry) => {
+        const filtered = model.entries.filter((entry) => {
             const categoryMatches = state.category === "all" || entry.category === state.category;
             const searchMatches = !normalizedSearch || `${entry.name} ${entry.role} ${entry.description}`
                 .toLocaleLowerCase("pt-BR")
@@ -160,18 +65,9 @@
             return categoryMatches && searchMatches;
         });
         return {
-            entries,
+            ...model,
             filtered,
-            categories,
-            selected: entries.find((entry) => entry.id === selected) || entries[0] || null,
-            focused: entries.find((entry) => entry.focused) || null,
-            summary: {
-                total: entries.length,
-                training: entries.filter((entry) => entry.training).length,
-                paused: entries.filter((entry) => !entry.training).length,
-                discovered: entries.filter((entry) => entry.discovered).length
-            },
-            recent: clone(state.recent),
+            selected: model.entries.find((entry) => entry.id === selected) || model.entries[0] || null,
             category: state.category,
             search: state.search
         };
@@ -310,38 +206,6 @@
         return Aethra.WindowManager?.openWindow?.(WINDOW_ID, { source: "progression-journal", exclusive: true });
     }
 
-    function sourceLabel(source) {
-        const labels = {
-            "weapon-use": "Ataque com arma",
-            "skill-use": "Técnica usada",
-            "defense-block": "Bloqueio",
-            "defense-hit": "Armadura em combate",
-            mining: "Mineração",
-            "creature-harvest": "Esfolamento",
-            forge: "Forjaria",
-            smelt: "Fundição",
-            tan: "Curtimento",
-            "craft-leather": "Couraria",
-            exploration: "Exploração",
-            survival: "Sobrevivência"
-        };
-        return labels[source] || String(source || "Ação de treino").replaceAll("-", " ");
-    }
-
-    function recordXP(payload = {}) {
-        const skillId = payload.skillId || payload.id;
-        if (!validSkillId(skillId) || number(payload.amount) <= 0) return;
-        state.recent.unshift({
-            skillId,
-            amount: number(payload.amount),
-            source: payload.source || "skill-action",
-            sourceLabel: sourceLabel(payload.source),
-            time: new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(new Date())
-        });
-        state.recent = state.recent.slice(0, MAX_RECENT);
-        scheduleRender();
-    }
-
     function handleClick(event) {
         const tab = event.target.closest("[data-skills-workspace-tab]");
         if (tab) return void setActiveTab(tab.dataset.skillsWorkspaceTab);
@@ -410,8 +274,8 @@
             input?.focus?.({ preventScroll: true });
             input?.setSelectionRange?.(caret, caret);
         });
-        Aethra.EventBus.on("skill:xp-changed", recordXP);
         [
+            "progression-journal:recent-changed",
             "skill:training-mode-changed",
             "profession:policy-changed",
             "profession:specialization-chosen",
