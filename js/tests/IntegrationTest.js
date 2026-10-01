@@ -3845,6 +3845,56 @@
                     `${coliseumLoss || "sem registro"} · ${coliseumWin || "sem registro"}`
                 ));
 
+                /*
+                 * Cidade é zona segura: voltar a ela enche vida, mana e vigor.
+                 * Olhar a Cidade com a expedição rodando não cura; encerrar a
+                 * expedição com o jogador lá, sim.
+                 */
+                const restHero = Aethra.GameState.hero;
+                const restBackup = {
+                    hp: restHero.hp, mana: restHero.mana, energy: restHero.energy,
+                    stats: JSON.parse(JSON.stringify(restHero.stats || {})),
+                    created: restHero.characterCreated,
+                    huntActive: Aethra.GameState.hunt.isActive,
+                    view: Aethra.UIManager.primaryView
+                };
+                const wound = () => {
+                    restHero.hp = 10;
+                    restHero.stats.hp = 10;
+                    restHero.mana = 0;
+                    restHero.stats.mana = 0;
+                };
+                let cityRestWorks = false;
+                let cityRestDetail = "";
+                try {
+                    restHero.characterCreated = true;
+                    const maxHp = Math.max(1, Number(restHero.stats.maxHp ?? restHero.maxHp));
+                    Aethra.UIManager.setPrimaryView("hunt", { source: "integration-rest" });
+                    Aethra.GameState.hunt.isActive = false;
+                    wound();
+                    Aethra.UIManager.setPrimaryView("city", { source: "integration-rest" });
+                    const healedOnReturn = restHero.hp === maxHp && restHero.stats.hp === maxHp && restHero.mana === Number(restHero.stats.maxMana ?? restHero.maxMana);
+                    Aethra.UIManager.setPrimaryView("hunt", { source: "integration-rest" });
+                    Aethra.GameState.hunt.isActive = true;
+                    wound();
+                    Aethra.UIManager.setPrimaryView("city", { source: "integration-rest" });
+                    const notDuringHunt = restHero.hp === 10;
+                    Aethra.GameState.hunt.isActive = false;
+                    Aethra.EventBus.emit("hunt:ended", { reason: "manual" });
+                    const healedWhenHuntEnds = restHero.hp === maxHp;
+                    cityRestWorks = healedOnReturn && notDuringHunt && healedWhenHuntEnds;
+                    cityRestDetail = `voltar à cidade ${healedOnReturn ? "enche" : "não cura"} · com expedição ativa ${notDuringHunt ? "não cura" : "cura"} · fim da expedição na cidade ${healedWhenHuntEnds ? "enche" : "não cura"}`;
+                } finally {
+                    Aethra.GameState.hunt.isActive = restBackup.huntActive;
+                    Aethra.UIManager.setPrimaryView(restBackup.view, { source: "integration-restore" });
+                    restHero.stats = restBackup.stats;
+                    restHero.hp = restBackup.hp;
+                    restHero.mana = restBackup.mana;
+                    restHero.energy = restBackup.energy;
+                    restHero.characterCreated = restBackup.created;
+                }
+                checks.push(createCheck("Voltar à cidade recupera vida, mana e vigor", cityRestWorks, cityRestDetail));
+
                 // Registro em português e no andar final a escada conclui a expedição.
                 const rewardText = Aethra.BattleLogger.formatRewardMessage("Lobo", { xp: 5, gold: 0, lootCount: 2 });
                 const finalHunt = Aethra.GameState.hunt;
