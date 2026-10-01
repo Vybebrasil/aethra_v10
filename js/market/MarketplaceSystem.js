@@ -700,13 +700,12 @@
                 ["sword", "axe", "mace", "dagger", "bow", "focus"].forEach((family) => {
                     ids.push(`eg_${family}_l${currentLevel}`);
                 });
-                ["head", "chest", "hands", "legs", "feet"].forEach((slot) => {
-                    ["cloth", "leather", "plate"].forEach((armorClass) => {
-                        ids.push(`eg_${slot}_${armorClass}_l${currentLevel}`);
-                    });
-                });
                 ids.push(`eg_shield_l${currentLevel}`, `eg_ring_l${currentLevel}`);
             });
+            // Armadura inicial (Recruta) em todos os níveis: ninguém fica sem
+            // elmo, luvas, calça e botas. As melhores vêm das Oficinas e dos
+            // drops. (Os ids eg_<slot>_<classe>_l<n> pedidos antes não existem.)
+            ["head", "chest", "hands", "legs", "feet"].forEach((slot) => ids.push(`eg_${slot}_l1`));
 
             return [...new Set(ids)]
                 .map((id) => getTemplate(id))

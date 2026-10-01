@@ -3895,6 +3895,30 @@
                 }
                 checks.push(createCheck("Voltar à cidade recupera vida, mana e vigor", cityRestWorks, cityRestDetail));
 
+                /*
+                 * A Loja vende a armadura inicial (Recruta) em qualquer nível: na
+                 * partida completa o herói nível 6 não achava elmo, luvas, calça
+                 * nem botas (o catálogo pedia ids que não existem).
+                 */
+                const starterArmor = ["eg_head_l1", "eg_chest_l1", "eg_hands_l1", "eg_legs_l1", "eg_feet_l1"];
+                const catalogIds = (level) => Aethra.MarketplaceSystem.getNpcCatalog(level).map((item) => item.id || item.templateId);
+                const armorAtLevel1 = starterArmor.every((id) => catalogIds(1).includes(id));
+                const armorAtLevel6 = starterArmor.every((id) => catalogIds(6).includes(id)) && !catalogIds(6).includes("eg_head_l6");
+                let armorInShop = false;
+                withUi3Game(() => {
+                    windowManager.openWindow("npc-shop-view", { source: "integration-starter-armor" });
+                    const shopLayer = document.querySelector("#ui3-root [data-ui3-window='npc-shop-view']");
+                    shopLayer?.querySelector("[data-ui3-shop-category='armor']")?.click();
+                    armorInShop = starterArmor.every((id) => shopLayer?.querySelector(`[data-ui3-shop-buy='${id}']`));
+                    shopLayer?.querySelector("[data-ui3-shop-category='all']")?.click();
+                    windowManager.closeWindow("npc-shop-view", { source: "integration-restore" });
+                });
+                checks.push(createCheck(
+                    "Loja vende a armadura inicial em qualquer nível",
+                    armorAtLevel1 && armorAtLevel6 && armorInShop,
+                    `nível 1 ${armorAtLevel1 ? "completo" : "faltando"} · nível 6 ${armorAtLevel6 ? "só a inicial" : "errado"} · aba Armaduras ${armorInShop ? "lista as 5 peças" : "incompleta"}`
+                ));
+
                 // Registro em português e no andar final a escada conclui a expedição.
                 const rewardText = Aethra.BattleLogger.formatRewardMessage("Lobo", { xp: 5, gold: 0, lootCount: 2 });
                 const finalHunt = Aethra.GameState.hunt;
