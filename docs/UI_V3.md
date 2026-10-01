@@ -103,18 +103,40 @@ de fonte valem exatamente 11/12/13/14/16/20/28px em 1280px e crescem até
 
 - `?ui3=galeria` abre a galeria de componentes sobre o jogo.
 - A UI 3.0 é o padrão. `?ui=classic` (ou "Mais > Interface clássica") escolhe a clássica, e a escolha fica salva; `?ui=3` volta.
-- A suíte de testes usa a clássica como base (`window.AETHRA_INTERFACE_DEFAULT` em `tests/integration.html`) e liga a UI 3.0 onde testa.
+- A suíte de testes roda na UI 3.0, como o jogo (`window.AETHRA_INTERFACE_DEFAULT` em `tests/integration.html`); só as verificações de volta à clássica trocam de interface.
 - Uma tela da UI 3.0 é um elemento com `data-ui3-screen` dentro de
   `#ui3-root`; a raiz só aparece quando há uma tela ou a galeria.
 
-### Dependências que a fase 5 precisa preservar
+### Remoção da clássica (fase 5.3)
 
-As Oficinas leem `ProfessionWorkshopUI.getState/getGuidance/isGuidedRecipe`
-(pedido de abertura e receita guiada). A Cidade usa `RenderEngine.handleQuestGuidance`/`handleDisciplineGuidance` (roteador
-de objetivos) e `RenderEngine.openBossesHall`/`openProfessionMentor`. A aba
-Progressão lê `ProgressionJournalUI.getViewModel()` (projeção das
-maestrias, guia de treino e próximo marco). Ao remover a UI clássica, mova
-essa projeção para um módulo não visual antes de apagar o arquivo.
+Já fora das telas clássicas (5.3a–c e correções):
+
+| O quê | Para onde |
+| --- | --- |
+| Marcos das disciplinas e projeção do diário | `js/data/progression/DisciplineMilestones.js`, `js/progression/ProgressionJournal.js` |
+| Rotas da 3.0 e orientação de missão/foco | `js/ui3/Ui3Navigation.js` (janelas recebem o pedido em `openWindow(id, opções)`) |
+| Ofícios, estações e receita pedida pelo contrato | `js/items/CraftingGuidance.js`; receitas iniciais em `CraftingSystem.ensureStarterRecipes` |
+| Sessão, pico de DPS e recordes da Hunt | `js/world/HuntAnalyzer.js` |
+| Bloqueio por nível, fim da luta, `targetCreatureId` | `HuntSystem.startHunt/stopHunt` (antes injetados pelo `HudWorldMapAndDrops`) |
+| Escolha de eventos de exploração | `ExplorationSystem.getEventPreview` + cartão na Hunt 3.0 (antes só na HUD clássica: a 3.0 travava na Mineração do tutorial) |
+
+Ainda falta, antes de apagar arquivos:
+
+1. **Automação** — `IdleLoopSystem` desenha os próprios controles na HUD
+   clássica (auto-venda, plano de suprimentos e compra, uso automático de
+   poções, continuidade). Separar regra e tela e criar a janela 3.0.
+2. **Avisos de save** — `SaveStatusBanner` (falha de gravação) e
+   `SharedSaveStatus` (save compartilhado) usam estilos do `aethra-ui-v2.css`.
+3. **Tela de derrota** — `DeathModalUI` tem CSS próprio (`death-modal.css`) e
+   já aparece por cima da 3.0; fica.
+4. **TooltipManager** — a 3.0 não usa; sair também do `GameLoader`.
+5. Remover a opção "clássica" (Opções, menu Mais, `?ui=classic`,
+   `SettingsManager`), os módulos e o CSS clássicos, e as verificações que
+   medem a clássica (`window.AETHRA_INTERFACE_DEFAULT` deixa de existir).
+
+Decisões de produto em aberto: pontos de habilidade (`XPSystem` dá 1 por
+nível, mas nenhuma tela abre a distribuição) e a "Lâmina do Fundador"
+(premium com dano 10–14).
 
 ### Testar a criação sem mexer no save real
 
@@ -136,9 +158,8 @@ O `LobbyUI` sai na fase 5.
 
 ### Por que o `style.css` ainda não saiu
 
-As janelas listadas na fase 5.2 ainda são as clássicas, abertas por cima da
-UI 3.0, e dependem do `style.css` e das camadas v2/v5/v6. Remover o CSS
-antes de migrá-las quebraria essas telas.
+Ainda há recursos vivos que só a HUD clássica mostra (Automação e avisos de
+save, acima). O CSS sai junto com os módulos, depois deles.
 
 ## Migração por fases (branch `ui-v3`)
 
@@ -150,7 +171,7 @@ antes de migrá-las quebraria essas telas.
 | 4. Demais telas | Cidade, Missões, Mapa-Mundi, Criação e Tela de título (no lugar do lobby) | concluída |
 | 5.1 Padrão e código morto | UI 3.0 como padrão (clássica só por escolha); 19 arquivos que nada carregava e o lobby removidos | concluída |
 | 5.2 Janelas restantes | Oficinas, Opções, Mural de Chefes, Especialização, Mentora, Coliseu, Mercado, Loja de Diamantes e Social. Masmorra, Log de combate e Inspeção não têm abertura na UI 3.0 (mortas ou só clássicas) e saem na 5.3 | concluída |
-| 5.3 Remoção da clássica | `style.css` + v2/v5/v6, HUD clássica e monkey-patches; mover `getViewModel`, `handleQuestGuidance` e o registro de loot para módulos não visuais | pendente |
+| 5.3 Remoção da clássica | Extrações (diário, navegação, oficina, medição da Hunt, regras do HuntSystem), testes na 3.0 e eventos de exploração feitos; faltam Automação, avisos de save e a remoção em si (ver "Remoção da clássica") | em andamento |
 
 Cada fase termina com a suíte verde, o gate verde e validação em 1280×720 e
 1920×1080. Ao substituir uma tela, migre também os testes dela para os
