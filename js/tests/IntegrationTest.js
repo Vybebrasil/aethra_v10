@@ -3782,6 +3782,38 @@
                 }
                 checks.push(createCheck("Luta contra chefe impede iniciar expedição", bossLockWorks, bossLockDetail));
 
+                /*
+                 * Derrota contra chefe libera o chefe. Antes, activeBossId só era
+                 * limpo quando o chefe morria: depois de perder para o Lobo Alfa o
+                 * Mural mostrava "Em combate" para sempre e a missão travava.
+                 */
+                const bossSystem = Aethra.BossSystem;
+                const bossState = Aethra.GameState.bosses;
+                const bossBackup = { active: bossState.activeBossId, cooldown: bossState.cooldowns?.alpha_wolf, save: bossSystem.save };
+                let bossReleaseWorks = false;
+                let bossReleaseDetail = "";
+                try {
+                    bossSystem.save = () => {};
+                    if (bossState.cooldowns) delete bossState.cooldowns.alpha_wolf;
+                    bossState.activeBossId = "alpha_wolf";
+                    Aethra.EventBus.emit("battle:ended", { source: "boss", reason: "victory" });
+                    const keptOnVictory = bossState.activeBossId === "alpha_wolf";
+                    Aethra.EventBus.emit("battle:ended", { source: "hunt", reason: "defeat" });
+                    const keptOnHunt = bossState.activeBossId === "alpha_wolf";
+                    Aethra.EventBus.emit("battle:ended", { source: "boss", reason: "defeat" });
+                    const releasedOnDefeat = bossState.activeBossId === null
+                        && bossSystem.getRequirementStatus("alpha_wolf").reason !== "Em combate";
+                    bossState.activeBossId = "alpha_wolf";
+                    const staleReleased = bossSystem.releaseStaleBoss("integration") === true && bossState.activeBossId === null;
+                    bossReleaseWorks = keptOnVictory && keptOnHunt && releasedOnDefeat && staleReleased;
+                    bossReleaseDetail = `vitória ${keptOnVictory ? "não mexe" : "libera"} · luta de caçada ${keptOnHunt ? "não mexe" : "libera"} · derrota ${releasedOnDefeat ? "libera" : "prende"} · save antigo ${staleReleased ? "liberado" : "preso"}`;
+                } finally {
+                    bossState.activeBossId = bossBackup.active;
+                    if (bossState.cooldowns && bossBackup.cooldown !== undefined) bossState.cooldowns.alpha_wolf = bossBackup.cooldown;
+                    bossSystem.save = bossBackup.save;
+                }
+                checks.push(createCheck("Derrota contra chefe libera o Mural", bossReleaseWorks, bossReleaseDetail));
+
                 // Registro em português e no andar final a escada conclui a expedição.
                 const rewardText = Aethra.BattleLogger.formatRewardMessage("Lobo", { xp: 5, gold: 0, lootCount: 2 });
                 const finalHunt = Aethra.GameState.hunt;

@@ -227,6 +227,8 @@
 
             ensureBossState();
             this.bindEvents();
+            // O save pode ter sido carregado antes deste listener existir.
+            this.releaseStaleBoss("init");
             this.startTimer();
             this.renderBossList();
             this.renderWeeklyReward();
@@ -249,14 +251,24 @@
 
             Aethra.EventBus.on("save:loaded", () => {
                 ensureBossState();
+                this.releaseStaleBoss("save-loaded");
                 this.renderBossList();
                 this.renderWeeklyReward();
             });
 
             Aethra.EventBus.on("state:restored", () => {
                 ensureBossState();
+                this.releaseStaleBoss("state-restored");
                 this.renderBossList();
                 this.renderWeeklyReward();
+            });
+
+            // Luta de chefe que termina sem vitória (derrota, luta interrompida)
+            // libera o chefe; antes ele ficava "Em combate" para sempre.
+            Aethra.EventBus.on("battle:ended", (payload = {}) => {
+                if (payload.source === "boss" && payload.reason !== "victory") {
+                    this.releaseActiveBoss(payload.reason || "ended");
+                }
             });
 
             Aethra.EventBus.on("EnemyDefeated", (enemy) => {
@@ -492,6 +504,24 @@
             this.save();
 
             return true;
+        },
+
+        releaseActiveBoss(reason = "ended") {
+            const state = ensureBossState();
+            const bossId = state.activeBossId;
+            if (!bossId) return false;
+            state.activeBossId = null;
+            Aethra.EventBus.emit("boss:attempt-ended", { bossId, reason });
+            this.renderBossList();
+            this.save();
+            return true;
+        },
+
+        // A luta não sobrevive a um save: chefe marcado como ativo sem luta de
+        // chefe em andamento é resto de uma tentativa antiga.
+        releaseStaleBoss(reason = "stale") {
+            const fightingBoss = Boolean(Aethra.BattleSystem?.isFighting && Aethra.GameState.battle?.source === "boss");
+            return fightingBoss ? false : this.releaseActiveBoss(reason);
         },
 
         handleBossDefeated(bossId, enemyData = {}) {
