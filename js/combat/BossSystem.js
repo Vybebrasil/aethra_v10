@@ -455,6 +455,9 @@
                 return false;
             }
 
+            // O Mural fica na cidade: desafiar um chefe encerra a expedição em andamento.
+            if (Aethra.GameState.hunt?.isActive) Aethra.HuntSystem?.stopHunt?.("boss-challenge");
+
             const state = ensureBossState();
             state.activeBossId = bossId;
 

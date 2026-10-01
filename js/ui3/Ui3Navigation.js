@@ -25,6 +25,12 @@
         Aethra.UIManager?.setPrimaryView?.(view, { source });
     }
 
+    // Ir a um lugar da cidade (NPC, oficina, Mural) é sair da caçada.
+    function returnToCity(source) {
+        if (Aethra.GameState?.hunt?.isActive) Aethra.HuntSystem?.stopHunt?.("returned-to-city");
+        setView("city", source);
+    }
+
     function inCity() {
         return Aethra.UIManager?.primaryView === "city" && !Aethra.GameState?.hunt?.isActive;
     }
@@ -76,20 +82,19 @@
                     return Navigation.openHuntMap({ source, huntId: guidance.huntId || null });
                 case "go-city":
                     // Voltar à cidade é sair da caçada (olhar a Cidade não basta).
-                    if (Aethra.GameState?.hunt?.isActive) Aethra.HuntSystem?.stopHunt?.("returned-to-city");
-                    setView("city", source);
+                    returnToCity(source);
                     return true;
                 case "interact-npc":
-                    setView("city", source);
+                    returnToCity(source);
                     return Aethra.EntityManager?.interactWithEntity?.(guidance.target, { source }) ?? false;
                 case "focus-hunt":
                     setView("hunt", source);
                     return true;
                 case "open-workshop":
-                    setView("city", source);
+                    returnToCity(source);
                     return Navigation.openWorkshop(guidance.professionId || guidance.target, { source });
                 case "open-bosses":
-                    setView("city", source);
+                    returnToCity(source);
                     return Navigation.openBosses({ source });
                 default:
                     return openWindow("quests-view", { source });

@@ -4068,6 +4068,43 @@
                 const routeQuestLabel = Aethra.GameData.quests?.tutorial_first_hunt?.objectives?.[0]?.label || "";
                 checks.push(createCheck("Objetivo de abates diz o total, não \"mais\"", routeQuestLabel === "Derrote 5 criaturas no Bosque", routeQuestLabel || "sem rótulo"));
 
+                /*
+                 * O Mural fica na cidade: "Desafiar Lobo Alfa" vindo da caçada e o
+                 * desafio feito pelo Mural encerram a expedição (antes a caçada
+                 * seguia rodando por baixo da luta contra o chefe).
+                 */
+                const muralHunt = Aethra.GameState.hunt;
+                const muralBackup = {
+                    active: muralHunt.isActive, view: Aethra.UIManager.primaryView, stop: Aethra.HuntSystem.stopHunt,
+                    requirement: Aethra.BossSystem.getRequirementStatus, startCombat: Aethra.BattleSystem.startCombat,
+                    activeBoss: Aethra.GameState.bosses?.activeBossId, save: Aethra.BossSystem.save
+                };
+                const muralStops = [];
+                let muralWorks = false;
+                let muralDetail = "";
+                try {
+                    Aethra.HuntSystem.stopHunt = (reason) => { muralStops.push(reason); muralHunt.isActive = false; return true; };
+                    Aethra.BossSystem.getRequirementStatus = () => ({ allowed: true, reason: "Disponível" });
+                    Aethra.BattleSystem.startCombat = () => true;
+                    Aethra.BossSystem.save = () => {};
+                    muralHunt.isActive = true;
+                    Aethra.Ui3Navigation.followQuestGuidance({ action: "open-bosses", target: "alpha_wolf" }, { source: "integration-mural" });
+                    Aethra.WindowManager.closeWindow("bosses-view", { source: "integration-restore" });
+                    muralHunt.isActive = true;
+                    Aethra.BossSystem.challenge("alpha_wolf");
+                    muralWorks = muralStops[0] === "returned-to-city" && muralStops[1] === "boss-challenge";
+                    muralDetail = `orientação ${muralStops[0] || "não encerrou"} · desafio ${muralStops[1] || "não encerrou"}`;
+                } finally {
+                    Aethra.HuntSystem.stopHunt = muralBackup.stop;
+                    Aethra.BossSystem.getRequirementStatus = muralBackup.requirement;
+                    Aethra.BattleSystem.startCombat = muralBackup.startCombat;
+                    Aethra.BossSystem.save = muralBackup.save;
+                    if (Aethra.GameState.bosses) Aethra.GameState.bosses.activeBossId = muralBackup.activeBoss;
+                    muralHunt.isActive = muralBackup.active;
+                    Aethra.UIManager.setPrimaryView(muralBackup.view, { source: "integration-restore" });
+                }
+                checks.push(createCheck("Ir ao Mural ou desafiar um chefe encerra a expedição", muralWorks, muralDetail));
+
                 // Registro em português e no andar final a escada conclui a expedição.
                 const rewardText = Aethra.BattleLogger.formatRewardMessage("Lobo", { xp: 5, gold: 0, lootCount: 2 });
                 const finalHunt = Aethra.GameState.hunt;
