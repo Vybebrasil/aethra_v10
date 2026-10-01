@@ -279,10 +279,14 @@
      * Evento de exploração pendente (Minerar, Esfolar, baú...). Os manuais
      * pausam a caçada até o jogador escolher; a prévia vem do ExplorationSystem.
      */
+    const LOW_EVENT_CHANCE = 0.3;
+
     function eventHTML(preview) {
         const K = kit();
         const xp = preview.xpMin === preview.xpMax ? K.formatNumber(preview.xpMin) : `${K.formatNumber(preview.xpMin)}–${K.formatNumber(preview.xpMax)}`;
         const odds = preview.requiresManual ? `${Math.round(preview.successChance * 100)}% de sucesso` : `Risco ${preview.risk.toLocaleLowerCase("pt-BR")}`;
+        // Com chance baixa, o destaque vai para Ignorar.
+        const risky = preview.requiresManual && preview.successChance < LOW_EVENT_CHANCE;
         return `<div class="ui3-portrait ui3-portrait--target ui3-event__icon" aria-hidden="true">${K.esc(preview.icon)}</div>
             <div class="ui3-unit__body ui3-event">
                 <div class="ui3-unit__head">
@@ -291,9 +295,10 @@
                 </div>
                 <p class="ui3-caption">${K.esc(preview.description)}</p>
                 <p class="ui3-event__odds">${K.esc(preview.professionName)} Nv ${K.formatNumber(preview.professionLevel)}${preview.requiresManual ? ` / ${K.formatNumber(preview.requiredLevel)}` : ""} · ${K.esc(odds)} · ${xp} XP</p>
+                ${risky ? `<p class="ui3-event__odds ui3-text-warn">Chance baixa: falhar pode custar vida. Ignorar segue a caçada sem risco.</p>` : ""}
                 <div class="ui3-expedition__row">
-                    ${K.button({ label: "Ignorar", attributes: { "data-ui3-event-skip": preview.eventId } })}
-                    ${K.button({ label: preview.actionLabel, variant: "primary", attributes: { "data-ui3-event-resolve": preview.eventId } })}
+                    ${K.button({ label: "Ignorar", variant: risky ? "primary" : "secondary", attributes: { "data-ui3-event-skip": preview.eventId } })}
+                    ${K.button({ label: preview.actionLabel, variant: risky ? "secondary" : "primary", attributes: { "data-ui3-event-resolve": preview.eventId } })}
                 </div>
             </div>`;
     }
@@ -383,6 +388,25 @@
         return entries.map((entry) => `<p class="ui3-log__line ui3-log__line--${K.esc(entry.tone)}">${K.esc(entry.text)}</p>`).join("");
     }
 
+    /*
+     * Próximo passo da missão acompanhada, visível durante a caçada. Se o
+     * passo pede sair dela (Cidade, oficina, mural), oferece o botão.
+     */
+    function questStripHTML() {
+        const K = kit();
+        const quest = Aethra.QuestSystem?.getTrackedQuest?.();
+        const guidance = quest ? Aethra.QuestSystem?.getGuidance?.(quest) : null;
+        if (!quest || !guidance) return "";
+        const objective = guidance.objective || {};
+        const staysHere = guidance.action === "focus-hunt"
+            || (guidance.action === "open-hunt-map" && (!guidance.huntId || guidance.huntId === huntState().huntId));
+        return `<div class="ui3-hunt-quest" role="status">
+                <div class="ui3-row-between"><span class="ui3-eyebrow">Próximo passo · ${K.esc(quest.title)}</span><strong>${K.formatNumber(objective.progress)}/${K.formatNumber(objective.required)}</strong></div>
+                <span>${K.esc(objective.label || guidance.detail || "")}</span>
+                ${staysHere ? "" : K.button({ label: guidance.actionLabel || "Seguir", variant: "primary", attributes: { "data-ui3-hunt-quest": "" } })}
+            </div>`;
+    }
+
     function summaryHTML(current) {
         const K = kit();
         const hours = Math.max(number(current.seconds) / 3600, 1 / 3600);
@@ -390,7 +414,7 @@
         const recent = lootEntries().sort((left, right) => right.at - left.at).slice(0, LOOT_PREVIEW);
         const supplies = supplyUsage(current);
         const profitTone = current.profit > 0 ? "positive" : current.profit < 0 ? "negative" : "";
-        return `<div class="ui3-kpi-grid">
+        return `${questStripHTML()}<div class="ui3-kpi-grid">
                 ${K.kpi({ label: "XP / hora", value: K.formatNumber(current.xpPerHour) })}
                 ${K.kpi({ label: "Ouro / hora", value: K.formatNumber(goldPerHour) })}
                 ${K.kpi({ label: "Abates", value: K.formatNumber(current.kills) })}
@@ -691,6 +715,10 @@
         if (primary) return usePrimary(primary.dataset.ui3Primary);
         const slot = target.closest("[data-ui3-skill-slot]");
         if (slot) return useSlot(Number(slot.dataset.ui3SkillSlot));
+        if (target.closest("[data-ui3-hunt-quest]")) {
+            const quest = Aethra.QuestSystem?.getTrackedQuest?.();
+            return Aethra.Ui3Navigation?.followQuestGuidance?.(Aethra.QuestSystem?.getGuidance?.(quest), { source: "ui3-hunt" });
+        }
         if (target.closest("[data-ui3-next-room]")) {
             Aethra.HuntSystem?.nextRoom?.();
             return render();
@@ -860,6 +888,8 @@
     });
     Aethra.EventBus.on("exploration:updated", () => scheduleRender());
     Aethra.EventBus.on("hunt:loot-ledger-updated", () => scheduleRender());
+    ["quest:objective-updated", "quest:accepted", "quest:finished", "quest:tracking-changed"]
+        .forEach((eventName) => Aethra.EventBus.on(eventName, () => scheduleRender()));
     Aethra.EventBus.on("hunt:stairs-reached", (payload = {}) => {
         pushLog(`Andar ${payload.room || 1} limpo: desça a escada para continuar.`, "system");
         scheduleRender();

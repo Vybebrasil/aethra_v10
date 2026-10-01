@@ -59,7 +59,9 @@
         const state = Aethra.GameState || {};
         const stored = state.idleLoop && typeof state.idleLoop === "object" ? state.idleLoop : {};
         const supplyPlan = normalizeSupplyPlan(stored.supplyPlan, stored);
-        state.idleLoop = {
+        // Normaliza no mesmo objeto: quem já tem a referência (processCycle)
+        // continua escrevendo no estado salvo.
+        const normalized = {
             ...DEFAULTS,
             ...stored,
             enabled: stored.enabled !== false,
@@ -76,6 +78,8 @@
             healthTarget: supplyPlan.potion_health.target,
             manaTarget: supplyPlan.potion_mana.target
         };
+        if (state.idleLoop && typeof state.idleLoop === "object") Object.assign(state.idleLoop, normalized);
+        else state.idleLoop = normalized;
         return state.idleLoop;
     }
 
@@ -347,7 +351,10 @@
         if (source === "character-created" || source === "npc-shop") return;
         autoSellItems(Array.isArray(items) ? items : []);
     });
-    Aethra.EventBus.on("tilemap:floor-cleared", () => processCycle("floor-cleared"));
+    // Ao partir, repõe o que faltar (por exemplo, depois de uma derrota).
+    Aethra.EventBus.on("hunt:started", () => restockSupplies());
+    // Andar limpo (a expedição para na escada): vende o loot e repõe suprimentos.
+    Aethra.EventBus.on("hunt:stairs-reached", () => processCycle("floor-cleared"));
     Aethra.EventBus.on("hunt:ended", ({ reason } = {}) => {
         if (reason !== "hero-defeated") processCycle(`hunt-ended:${reason || "unknown"}`);
     });

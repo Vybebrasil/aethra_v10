@@ -3635,6 +3635,39 @@
                 }
                 checks.push(createCheck("UI 3.0 mostra o save compartilhado e publica pelo SaveManager", saveStatusWorks, saveStatusDetail));
 
+                /*
+                 * A Automação roda ao fim de cada andar: o evento real é
+                 * hunt:stairs-reached (o antigo tilemap:floor-cleared não existia mais,
+                 * e as poções só eram repostas ao encerrar a caçada).
+                 */
+                const cycleIdle = Aethra.IdleLoopSystem;
+                const cycleBefore = JSON.parse(JSON.stringify(Aethra.GameState.idleLoop || {}));
+                // Sem vender nem comprar: só o ciclo conta.
+                Object.assign(cycleIdle.config, { enabled: true, autoSell: false, autoRestock: false });
+                const cyclesBefore = cycleIdle.config.cyclesCompleted;
+                Aethra.EventBus.emit("hunt:stairs-reached", { huntId: "whispering_forest", room: 1 });
+                const floorCycles = cycleIdle.config.cyclesCompleted - cyclesBefore;
+                // Ao partir, a reposição roda (o herói não sai sem poções depois de morrer).
+                Aethra.GameState.idleLoop = cycleBefore;
+                const restockSpy = [];
+                Aethra.EventBus.on("idle-loop:restocked", (payload) => restockSpy.push(payload));
+                const departHero = Aethra.GameState.hero;
+                const departBag = departHero.bag;
+                const departGold = departHero.gold;
+                departHero.bag = departBag.filter((item) => (item?.templateId || item?.id) !== "potion_health");
+                departHero.gold = 500;
+                Object.assign(cycleIdle.config, { enabled: true, autoRestock: true, goldReserve: 0, maxRestockSpend: 0 });
+                Aethra.EventBus.emit("hunt:started", { huntId: "integration_depart", hunt: { name: "Teste" } });
+                const restockedOnDepart = restockSpy.some((payload) => payload.items?.some((line) => line.itemId === "potion_health"));
+                departHero.bag = departBag;
+                departHero.gold = departGold;
+                Aethra.GameState.idleLoop = cycleBefore;
+                checks.push(createCheck(
+                    "Automação repõe suprimentos ao fim de cada andar e ao partir",
+                    floorCycles === 1 && restockedOnDepart,
+                    `${floorCycles} ciclo(s) ao limpar o andar · ao partir ${restockedOnDepart ? "repôs Poção de Vida" : "não repôs"}`
+                ));
+
                 // UI 3.0 — fase 5.2 (Social): só o mercador está disponível offline e leva à Loja.
                 windowManager.openWindow("social-view", { source: "integration-ui3-social" });
                 const socialLayer = document.querySelector("#ui3-root [data-ui3-window='social-view']");

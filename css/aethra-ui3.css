@@ -2791,8 +2791,16 @@
     gap: var(--ui3-space-1);
 }
 
+/* Fixo no pé da coluna: "Entrar em Aethra" sempre à vista, mesmo em 1280×720. */
 #ui3-root .ui3-creation__submit {
+    position: sticky;
+    bottom: calc(-1 * var(--ui3-space-4));
+    z-index: 1;
     margin-top: auto;
+    margin-bottom: calc(-1 * var(--ui3-space-4));
+    padding: var(--ui3-space-3) 0 var(--ui3-space-4);
+    background: #0F171B;
+    border-top: 1px solid var(--ui3-line);
 }
 
 #ui3-root .ui3-creation__submit .ui3-btn {
@@ -3371,6 +3379,18 @@
     padding: var(--ui3-space-3);
     border: 1px solid var(--ui3-gold-3);
     border-radius: var(--ui3-radius-lg);
+}
+
+/* Hunt: próximo passo da missão durante a caçada */
+#ui3-root .ui3-hunt-quest {
+    padding: var(--ui3-space-2) var(--ui3-space-3);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: var(--ui3-bg-2);
+    border: 1px solid var(--ui3-gold-3);
+    border-radius: var(--ui3-radius-md);
+    font-size: var(--ui3-fs-sm);
 }
 
 /* Social */
