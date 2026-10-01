@@ -476,6 +476,10 @@ check(
     /payload\.creatureName/.test(deathModalSource) && !/\b(?:supplies|Skills|slots)\b/.test(deathModalSource),
     "js/ui/DeathModalUI.js: nomeie a criatura (payload.creatureName) e use rótulos em português"
 );
+const deathCss = read("css/death-modal.css").replace(/\/\*[\s\S]*?\*\//g, "");
+for (const match of deathCss.matchAll(/(?<!-)font(?:-size)?\s*:\s*[^;]*?(\d+(?:\.\d+)?)px/gi)) {
+    check(Number(match[1]) >= 11, `css/death-modal.css: fonte abaixo de 11px (${match[0].trim()})`);
+}
 
 if (failures.length > 0) {
     console.error(`Quality gate falhou: ${failures.length}/${checks} verificação(ões).`);
