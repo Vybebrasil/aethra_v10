@@ -340,8 +340,9 @@
             quantity: state.quantity,
             commandId: commandId("craft")
         });
+        const made = (result?.outputs || []).reduce((total, output) => total + Math.max(1, Math.floor(Number(output?.quantity) || 1)), 0);
         notify(result?.accepted
-            ? `${result.recipe.name}: ${result.outputs.length} resultado(s) na mochila.`
+            ? `${result.recipe.name}: ${made === 1 ? "1 item foi para a mochila" : `${made} itens foram para a mochila`}.`
             : craftReason(result || {}), result?.accepted ? "ok" : "error");
         render();
         return result;

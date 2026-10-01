@@ -597,7 +597,7 @@
                         id: "defeat_more_forest_creatures",
                         type: "DefeatInHunt",
                         target: "whispering_forest",
-                        label: "Derrote mais 5 criaturas no Bosque",
+                        label: "Derrote 5 criaturas no Bosque",
                         required: 5,
                         progress: 0,
                         completed: false

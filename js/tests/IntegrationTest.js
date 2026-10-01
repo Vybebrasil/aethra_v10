@@ -3235,8 +3235,10 @@
                     const outputBefore = Aethra.BagSystem.countItem(outputId);
                     workshopLayer?.querySelector(`[data-ui3-craft="${firstRecipe.id}"]`)?.click();
                     const outputAfter = Aethra.BagSystem.countItem(outputId);
-                    workshopCrafts = outputAfter > outputBefore;
-                    workshopDetail = `${firstRecipe.name}: ${outputBefore}→${outputAfter} ${outputId}`;
+                    // Aviso em português, contando unidades ("1 item foi para a mochila").
+                    const craftNotice = workshopLayer?.querySelector(".ui3-notice")?.textContent || "";
+                    workshopCrafts = outputAfter > outputBefore && /: \d+ (item foi|itens foram) para a mochila\.$/.test(craftNotice);
+                    workshopDetail = `${firstRecipe.name}: ${outputBefore}→${outputAfter} ${outputId} · "${craftNotice}"`;
                 }
                 const workshopShown = Aethra.Ui3WorkshopWindow?.isOpen?.() === true
                     && document.getElementById("profession-workshop-view")?.classList.contains("hidden") !== false
@@ -4061,6 +4063,10 @@
                     srdCreatures.length > 300 && untranslatedCreatures.length === 0 && untranslatedAbilities.length === 0 && orcAxe.includes("Machado Grande"),
                     `${srdCreatures.length} criaturas · sem tradução: ${[...untranslatedCreatures, ...untranslatedAbilities].slice(0, 6).join(", ") || "nenhuma"} · Orc: ${orcAxe.join(", ")}`
                 ));
+
+                // Rótulo da missão "Conheça sua Rota": "Derrote mais 5" com progresso 1/5 confundia.
+                const routeQuestLabel = Aethra.GameData.quests?.tutorial_first_hunt?.objectives?.[0]?.label || "";
+                checks.push(createCheck("Objetivo de abates diz o total, não \"mais\"", routeQuestLabel === "Derrote 5 criaturas no Bosque", routeQuestLabel || "sem rótulo"));
 
                 // Registro em português e no andar final a escada conclui a expedição.
                 const rewardText = Aethra.BattleLogger.formatRewardMessage("Lobo", { xp: 5, gold: 0, lootCount: 2 });
