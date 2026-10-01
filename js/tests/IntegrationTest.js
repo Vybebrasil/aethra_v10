@@ -505,6 +505,8 @@
                     guidedWorkshopVisible,
                     guidedEncounterIdentified,
                     bridgeAction: bridgeGuidance?.action || null,
+                    bridgeHuntId: bridgeGuidance?.huntId || null,
+                    bridgeWhileHunting: Boolean(Aethra.GameState.hunt?.isActive),
                     accepted: Boolean(bridge && mentor && intro)
                 };
             });
@@ -535,7 +537,8 @@
                             && route.provisionedAtStart
                             && route.guidedWorkshopVisible
                             && route.guidedEncounterIdentified
-                            && route.bridgeAction === "focus-hunt"
+                            && route.bridgeAction === (route.bridgeWhileHunting ? "focus-hunt" : "open-hunt-map")
+                            && route.bridgeHuntId === "whispering_forest"
                             && (expectedGuarantee ? route.guaranteeEventId === expectedGuarantee : true);
                     }),
                     introRouteResults.map((route) => `${route.professionId}:${route.introCompleted ? "ok" : "falhou"}/oficina:${route.guidedWorkshopVisible ? "ok" : "falhou"}/encontro:${route.guidedEncounterIdentified ? "ok" : "falhou"}`).join(" · ")
@@ -3980,6 +3983,29 @@
                     "Vida e mana máximas ficam inteiras com as passivas de armadura",
                     Number.isInteger(roundedStats.maxHp) && Number.isInteger(roundedStats.maxMana) && roundedStats.maxHp === 65,
                     `vida ${roundedStats.maxHp} · mana ${roundedStats.maxMana}`
+                ));
+
+                // Sem expedição ativa a orientação manda iniciar (não "continuar") no lugar certo.
+                const defeatQuest = { id: "integration_defeat", title: "Teste", objectives: [{ id: "kills", type: "DefeatInHunt", target: "whispering_forest", label: "Derrote 12 criaturas", required: 12, progress: 2, completed: false, dependsOn: [] }] };
+                const defeatHunt = Aethra.GameState.hunt;
+                const defeatBackup = { active: defeatHunt.isActive, huntId: defeatHunt.huntId };
+                let idleDefeat = null;
+                let activeDefeat = null;
+                try {
+                    defeatHunt.isActive = false;
+                    idleDefeat = Aethra.QuestSystem.getGuidance(defeatQuest);
+                    defeatHunt.isActive = true;
+                    defeatHunt.huntId = "whispering_forest";
+                    activeDefeat = Aethra.QuestSystem.getGuidance(defeatQuest);
+                } finally {
+                    defeatHunt.isActive = defeatBackup.active;
+                    defeatHunt.huntId = defeatBackup.huntId;
+                }
+                checks.push(createCheck(
+                    "Missão de abates sem expedição ativa manda iniciar no Bosque",
+                    idleDefeat?.action === "open-hunt-map" && idleDefeat?.huntId === "whispering_forest" && idleDefeat?.actionLabel === "Iniciar expedição"
+                        && activeDefeat?.action === "focus-hunt",
+                    `parado: ${idleDefeat?.actionLabel} (${idleDefeat?.huntId}) · caçando: ${activeDefeat?.actionLabel}`
                 ));
 
                 // Registro em português e no andar final a escada conclui a expedição.

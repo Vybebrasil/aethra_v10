@@ -713,9 +713,16 @@
                     ? `Volte à cidade e desafie ${boss.name}. Requisito: nível ${boss.levelReq}.`
                     : "Abra o Mural de Chefes na cidade e conclua o desafio indicado.";
             } else if (objective.type === "DefeatInHunt") {
-                action = "focus-hunt";
-                actionLabel = "Continuar expedição";
-                detail = "Continue combatendo nesta expedição; qualquer criatura derrotada conta.";
+                // "Continuar" só faz sentido caçando lá; parado, é iniciar a expedição.
+                const targetHuntId = objective.huntId || objective.target;
+                const huntState = Aethra.GameState.hunt || {};
+                const huntingThere = Boolean(huntState.isActive) && (!targetHuntId || huntState.huntId === targetHuntId);
+                const huntName = Aethra.HuntSystem?.hunts?.[targetHuntId]?.name || "a expedição indicada";
+                action = huntingThere ? "focus-hunt" : "open-hunt-map";
+                actionLabel = huntingThere ? "Continuar expedição" : "Iniciar expedição";
+                detail = huntingThere
+                    ? "Continue combatendo nesta expedição; qualquer criatura derrotada conta."
+                    : `Inicie uma expedição em ${huntName}; qualquer criatura derrotada lá conta.`;
             } else if (["StartHunt", "DefeatEnemy", "EnterZone", "ItemAcquired"].includes(objective.type)) {
                 action = "open-hunt-map";
                 actionLabel = objective.type === "StartHunt" ? "Escolher expedição" : "Abrir mapa";
