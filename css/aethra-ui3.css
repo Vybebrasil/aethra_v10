@@ -3204,6 +3204,63 @@
     font-size: var(--ui3-fs-sm);
 }
 
+/* Automação */
+#ui3-root .ui3-number {
+    box-sizing: border-box;
+    width: 72px;
+    height: 32px;
+    padding: 0 var(--ui3-space-2);
+    background: #0E1519;
+    border: 1px solid var(--ui3-line-strong);
+    border-radius: var(--ui3-radius-md);
+    color: var(--ui3-text-1);
+    font-family: var(--ui3-font-ui);
+    font-size: var(--ui3-fs-md);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+#ui3-root .ui3-number:focus-visible {
+    border-color: var(--ui3-gold);
+    outline: none;
+}
+
+#ui3-root .ui3-automation__setting {
+    align-items: center;
+}
+
+#ui3-root .ui3-automation__supplies {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--ui3-space-3);
+}
+
+#ui3-root .ui3-automation__controls {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ui3-space-2);
+}
+
+#ui3-root .ui3-automation__controls .ui3-row-between {
+    align-items: center;
+}
+
+#ui3-root .ui3-automation__stock {
+    flex: 0 0 auto;
+    text-align: right;
+}
+
+#ui3-root .ui3-automation__order {
+    min-width: 24px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+#ui3-root .ui3-automation__order-bar {
+    align-items: center;
+    padding-top: var(--ui3-space-2);
+}
+
 /* Social */
 #ui3-root .ui3-social__list {
     display: grid;

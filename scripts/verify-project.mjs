@@ -263,7 +263,7 @@ check(
     /CraftSupply/.test(questSystemSource)
         && /Escolha seu primeiro supply/.test(professionWorkshopUiSource)
         && /data-open-profession-workshop=["']alchemy["']/.test(renderEngineSource)
-        && /Produz.*vel na Alquimia/.test(idleLoopSource)
+        && /craftRecipeId:\s*["']brew_health_potion["']/.test(idleLoopSource)
         && !/BagSystem\?\.(?:addItem|consumeItem)/.test(professionWorkshopUiSource),
     "LaboratÃ³rio deve projetar a escolha de supply e reutilizar o estoque oficial"
 );

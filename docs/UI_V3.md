@@ -57,6 +57,7 @@ todo o CSS clássico carregado, sai idêntica ao protótipo.
 | Mercado | `js/ui3/Ui3MarketWindow.js` | Assume `player-market-view` no layout da Loja: comprar (busca por item ou vendedor), anunciar com a cotação de `MarketplaceSystem.getListingQuote`, meus anúncios com cancelamento e resgate de saldo |
 | Loja de Diamantes | `js/ui3/Ui3PremiumShopWindow.js` | Assume `premium-shop-view` no layout da Loja: vitrine de `MarketplaceSystem.getPremiumCatalog`; diamantes são moeda paga, então comprar pede um segundo clique |
 | Social | `js/ui3/Ui3SocialWindow.js` | Assume `social-view`: sessão local, mercador (abre a Loja) e grupo/guilda indicados como indisponíveis offline |
+| Automação | `js/ui3/Ui3AutomationWindow.js` | Janela `automation-view`: continuidade, auto-venda, reposição por suprimento (gatilho, meta), uso automático em combate, compra imediata e limites de gasto; cada ajuste vai ao `IdleLoopSystem` na hora |
 | Habilidades | `js/ui3/Ui3SkillsWindow.js` | Assume `skills-view`: Progressão (maestrias, foco, treino) e Barra e automação |
 | Preferência | `SettingsManager.interfaceVersion` | `"classic"` (padrão) ou `"v3"` |
 
@@ -122,9 +123,10 @@ Já fora das telas clássicas (5.3a–c e correções):
 
 Ainda falta, antes de apagar arquivos:
 
-1. **Automação** — `IdleLoopSystem` desenha os próprios controles na HUD
-   clássica (auto-venda, plano de suprimentos e compra, uso automático de
-   poções, continuidade). Separar regra e tela e criar a janela 3.0.
+1. ~~Automação~~ — feita: `IdleLoopSystem` só regra (`getSupplyOverview`,
+   `configureAutoUse`, aviso `idle-loop:updated`); a tela clássica foi para
+   `js/ui/IdleLoopControls.js` e a 3.0 tem `Ui3AutomationWindow`
+   (`automation-view`, menu Mais e atalho na Hunt).
 2. **Avisos de save** — `SaveStatusBanner` (falha de gravação) e
    `SharedSaveStatus` (save compartilhado) usam estilos do `aethra-ui-v2.css`.
 3. **Tela de derrota** — `DeathModalUI` tem CSS próprio (`death-modal.css`) e

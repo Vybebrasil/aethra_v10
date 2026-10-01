@@ -1,4 +1,8 @@
 // IdleLoopSystem.js — automação segura apoiada na economia e na caçada oficiais.
+// Regras e estado (GameState.idleLoop): auto-venda de loot, reposição de
+// suprimentos, compra manual, uso automático de poções e continuidade.
+// Não desenha nada: avisa por "idle-loop:updated" e as telas leem
+// getSupplyOverview/getSnapshot.
 (function initIdleLoopSystem(Aethra) {
     "use strict";
 
@@ -25,18 +29,9 @@
         totalRestockCost: 0,
         lastCycleAt: null
     });
-    const uiState = {
-        supplyPanelOpen: false,
-        manualQuantities: Object.fromEntries(SUPPLIES.map((supply) => [supply.id, 0])),
-        feedback: "",
-        positionFrame: 0
-    };
-    const esc = (value) => String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;");
-    const fmt = (value) => new Intl.NumberFormat("pt-BR").format(Math.floor(Number(value) || 0));
+    const AUTO_USE_MIN_PERCENT = 5;
+    const AUTO_USE_MAX_PERCENT = 95;
+
     const integer = (value, fallback = 0, maximum = Number.MAX_SAFE_INTEGER) => {
         const parsed = Number(value);
         return Math.min(maximum, Math.max(0, Math.floor(Number.isFinite(parsed) ? parsed : fallback)));
@@ -84,6 +79,10 @@
         return state.idleLoop;
     }
 
+    function notifyChanged(reason) {
+        Aethra.EventBus.emit("idle-loop:updated", { reason });
+    }
+
     function templateFor(itemId) {
         return Aethra.GameData?.getItem?.(itemId)
             || Aethra.GameData?.items?.[itemId]
@@ -126,8 +125,8 @@
         if (total > 0) {
             config.totalProfit += total;
             Aethra.EventBus.emit("idle-loop:auto-sold", { sold, total, totalProfit: config.totalProfit });
+            notifyChanged("auto-sold");
         }
-        renderControls();
         return { sold, total };
     }
 
@@ -174,9 +173,15 @@
                 cost,
                 items: clone(items)
             });
+            notifyChanged("supplies-purchased");
         }
-        renderControls();
         return { purchased, cost, requestedCost, items };
+    }
+
+    // Quanto a reposição automática pode gastar agora: ouro menos a reserva, até o teto por ciclo.
+    function cycleBudget(config = ensureState()) {
+        const spendableGold = Math.max(0, (Number(Aethra.GameState?.hero?.gold) || 0) - config.goldReserve);
+        return config.maxRestockSpend > 0 ? Math.min(spendableGold, config.maxRestockSpend) : spendableGold;
     }
 
     function restockSupplies() {
@@ -184,10 +189,7 @@
         const hero = Aethra.GameState?.hero;
         if (!config.enabled || !config.autoRestock || !hero?.characterCreated) return { purchased: 0, cost: 0, items: [] };
 
-        const spendableGold = Math.max(0, (Number(hero.gold) || 0) - config.goldReserve);
-        let remainingBudget = config.maxRestockSpend > 0
-            ? Math.min(spendableGold, config.maxRestockSpend)
-            : spendableGold;
+        let remainingBudget = cycleBudget(config);
         let purchased = 0;
         let cost = 0;
         const items = [];
@@ -221,8 +223,8 @@
                 items: clone(items),
                 totalRestockCost: config.totalRestockCost
             });
+            notifyChanged("restocked");
         }
-        renderControls();
         return { purchased, cost, items };
     }
 
@@ -242,7 +244,7 @@
         };
         Aethra.EventBus.emit("idle-loop:cycle-completed", payload);
         Aethra.SaveManager?.save?.("idle-loop-cycle");
-        renderControls();
+        notifyChanged("cycle-completed");
         return payload;
     }
 
@@ -252,7 +254,7 @@
         config[key] = Boolean(value);
         Aethra.EventBus.emit("idle-loop:setting-changed", { key, value: config[key], config: clone(config) });
         Aethra.SaveManager?.save?.("idle-loop-setting");
-        renderControls();
+        notifyChanged("setting-changed");
         return config[key];
     }
 
@@ -269,7 +271,7 @@
         config.manaTarget = config.supplyPlan.potion_mana.target;
         Aethra.EventBus.emit("idle-loop:restock-configured", clone(config));
         Aethra.SaveManager?.save?.("idle-loop-restock-config");
-        renderControls();
+        notifyChanged("restock-configured");
         return clone(config);
     }
 
@@ -278,229 +280,67 @@
         return updateSetting("enabled", forceState === null ? !config.enabled : forceState);
     }
 
-    function syncControlPosition() {
-        const root = document.getElementById("idle-loop-controls-root");
-        const workspace = document.querySelector(".tilemap-workspace");
-        if (!root || !workspace) return false;
-        const bounds = workspace.getBoundingClientRect();
-        const actionbarBounds = document.getElementById("battle-actionbar-layer")?.getBoundingClientRect?.();
-        const fixedContextTop = root.closest(".world-scene")?.getBoundingClientRect?.().top || 0;
-        const visibleBottom = Math.min(
-            bounds.bottom - 12,
-            actionbarBounds?.top ? actionbarBounds.top - 18 : window.innerHeight - 18
-        );
-        const panelTop = Math.max(8, bounds.top + 48);
-        root.style.setProperty("--idle-map-left", `${Math.max(0, bounds.left)}px`);
-        root.style.setProperty("--idle-map-right", `${Math.min(window.innerWidth, bounds.right)}px`);
-        root.style.setProperty("--idle-dock-top", `${Math.max(0, visibleBottom - 40 - fixedContextTop)}px`);
-        root.style.setProperty("--idle-panel-top", `${Math.max(0, panelTop - fixedContextTop)}px`);
-        root.style.setProperty("--idle-panel-height", `${Math.max(260, visibleBottom - panelTop)}px`);
-        return true;
-    }
-
-    function scheduleControlPosition() {
-        if (uiState.positionFrame) cancelAnimationFrame(uiState.positionFrame);
-        uiState.positionFrame = requestAnimationFrame(() => {
-            uiState.positionFrame = 0;
-            syncControlPosition();
-        });
-    }
-
-    function supplySummary(config) {
-        return SUPPLIES.reduce((summary, definition) => {
-            const rule = config.supplyPlan[definition.id];
-            if (!rule.enabled) return summary;
-            const current = inventoryQuantity(definition.id);
-            const missing = Math.max(0, rule.target - current);
-            summary.current += current;
-            summary.target += rule.target;
-            summary.enabled += 1;
-            summary.missing += missing;
-            summary.restockCost += missing * unitPriceFor(definition.id);
-            return summary;
-        }, { current: 0, target: 0, enabled: 0, missing: 0, restockCost: 0 });
-    }
-
-    function renderSupplyCard(definition, config, policy) {
-        const rule = config.supplyPlan[definition.id];
-        const current = inventoryQuantity(definition.id);
-        const price = unitPriceFor(definition.id);
-        const autoUse = definition.policyItemKey
-            ? policy.enabled !== false && policy[definition.policyItemKey] === definition.id
-            : false;
-        const threshold = definition.policyThresholdKey
-            ? Math.round((Number(policy[definition.policyThresholdKey]) || 0) * 100)
-            : 0;
-        const manualQuantity = integer(uiState.manualQuantities[definition.id], 0, 99);
-        const stockRatio = rule.target > 0 ? Math.min(100, Math.round(current / rule.target * 100)) : 100;
-        const stockState = !rule.enabled
-            ? { key: "manual", label: "Somente manual" }
-            : current >= rule.target
-                ? { key: "ready", label: "Estoque pronto" }
-                : current < rule.reorderAt
-                    ? { key: "danger", label: "Reposição pendente" }
-                    : { key: "stable", label: "Estoque estável" };
-        return `
-            <article class="idle-supply-card idle-tone-${definition.tone} ${rule.enabled ? "is-enabled" : ""}">
-                <header class="idle-supply-card-head">
-                    <span class="idle-supply-icon" aria-hidden="true">${definition.icon}</span>
-                    <span class="idle-supply-identity"><strong>${esc(definition.label)}</strong><small>${esc(definition.role)} · ${esc(definition.effect)}${definition.craftRecipeId ? " · Produzível na Alquimia" : ""}</small></span>
-                    <span class="idle-stock-count"><b>${fmt(current)}</b><small>/ ${fmt(rule.target)}</small></span>
-                </header>
-                <div class="idle-stock-track"><i style="width:${stockRatio}%"></i></div>
-                <div class="idle-card-meta"><span class="idle-stock-state is-${stockState.key}">${stockState.label}</span><span>${fmt(price)} G <small>/ unidade</small></span></div>
-                <div class="idle-auto-buy-row">
-                    <label class="idle-switch-label" title="Incluir este item na reposição automática">
-                        <input type="checkbox" data-supply-field="enabled" data-item-id="${definition.id}" ${rule.enabled ? "checked" : ""}>
-                        <span class="idle-switch-control"></span>
-                        <span><b>Auto-compra</b><small>${rule.enabled ? "Item protegido pelo loop" : "Reposição desativada"}</small></span>
-                    </label>
-                    <div class="idle-rule-inputs">
-                        <label><span>Gatilho</span><i>&lt;</i><input type="number" min="0" max="99" step="1" value="${rule.reorderAt}" data-supply-field="reorderAt" data-item-id="${definition.id}"></label>
-                        <span class="idle-rule-arrow">→</span>
-                        <label><span>Meta</span><input type="number" min="0" max="99" step="1" value="${rule.target}" data-supply-field="target" data-item-id="${definition.id}"></label>
-                    </div>
-                </div>
-                <div class="idle-manual-row">
-                    <span class="idle-manual-copy"><b>Compra imediata</b><small data-manual-subtotal="${definition.id}">Subtotal ${fmt(manualQuantity * price)} G</small></span>
-                    <div class="idle-quantity-stepper">
-                        <button type="button" data-idle-action="quantity" data-item-id="${definition.id}" data-delta="-1" aria-label="Diminuir ${esc(definition.label)}">−</button>
-                        <input type="number" min="0" max="99" step="1" value="${manualQuantity}" data-manual-quantity="${definition.id}" aria-label="Quantidade de ${esc(definition.label)}">
-                        <button type="button" data-idle-action="quantity" data-item-id="${definition.id}" data-delta="1" aria-label="Aumentar ${esc(definition.label)}">+</button>
-                    </div>
-                </div>
-                ${definition.policyItemKey ? `
-                    <div class="idle-auto-use-row">
-                        <label class="idle-switch-label idle-switch-label--small">
-                            <input type="checkbox" data-auto-use-item="${definition.id}" ${autoUse ? "checked" : ""}>
-                            <span class="idle-switch-control"></span>
-                            <span><b>Auto-uso</b></span>
-                        </label>
-                        <label class="idle-threshold-label"><span>Ativar abaixo de</span>
-                            <input type="number" min="5" max="95" step="5" value="${threshold}" data-auto-threshold="${definition.id}">%
-                        </label>
-                    </div>` : `<div class="idle-auto-use-note"><span>☤</span><div><b>Uso tático manual</b><small>Disponível quando o herói estiver envenenado.</small></div></div>`}
-            </article>`;
-    }
-
-    function renderSupplyPanel(config) {
+    /*
+     * Uso automático em combate: { [supplyId]: { enabled, thresholdPercent } }.
+     * Traduz para a política do ConsumableSystem; a política fica ligada se
+     * algum suprimento continuar com uso automático.
+     */
+    function configureAutoUse(patch = {}) {
         const policy = Aethra.ConsumableSystem?.ensurePolicy?.() || {};
-        const selectedTotal = SUPPLIES.reduce((total, definition) => {
-            return total + integer(uiState.manualQuantities[definition.id], 0, 99) * unitPriceFor(definition.id);
-        }, 0);
-        const selectedUnits = SUPPLIES.reduce((total, definition) => {
-            return total + integer(uiState.manualQuantities[definition.id], 0, 99);
-        }, 0);
-        const gold = integer(Aethra.GameState?.hero?.gold);
-        const summary = supplySummary(config);
-        const spendableGold = Math.max(0, gold - config.goldReserve);
-        const cycleBudget = config.maxRestockSpend > 0
-            ? Math.min(spendableGold, config.maxRestockSpend)
-            : spendableGold;
-        const restockReady = summary.restockCost <= cycleBudget;
-        return `
-            <section class="idle-supply-panel" role="dialog" aria-modal="false" aria-label="Gerenciar supplies">
-                <div class="idle-supply-panel-head">
-                    <span class="idle-panel-emblem" aria-hidden="true">▦</span>
-                    <div class="idle-panel-title"><span class="idle-panel-kicker">QUARTEL-MESTRE // PROTOCOLO DE CAMPO</span><h3>Arsenal de Suprimentos</h3><p>O loop verifica o estoque ao concluir cada andar ou caçada.</p></div>
-                    <button type="button" class="idle-panel-close" data-idle-action="close-supplies" aria-label="Fechar painel">×</button>
-                </div>
-                <div class="idle-supply-overview">
-                    <div><span class="idle-overview-icon">◈</span><small>OURO DISPONÍVEL</small><strong>${fmt(gold)} G</strong><em>${fmt(config.goldReserve)} G protegidos</em></div>
-                    <div><span class="idle-overview-icon">▰</span><small>ESTOQUE PROTEGIDO</small><strong>${fmt(summary.current)} / ${fmt(summary.target)}</strong><em>${summary.enabled} de ${SUPPLIES.length} tipos ativos</em></div>
-                    <div class="${restockReady ? "is-ready" : "is-warning"}"><span class="idle-overview-icon">${restockReady ? "✓" : "!"}</span><small>PRÓXIMA REPOSIÇÃO</small><strong>${fmt(summary.restockCost)} G</strong><em>${restockReady ? "Orçamento suficiente" : `Faltam ${fmt(summary.restockCost - cycleBudget)} G`}</em></div>
-                </div>
-                <div class="idle-supply-grid">${SUPPLIES.map((definition) => renderSupplyCard(definition, config, policy)).join("")}</div>
-                <div class="idle-restock-protocol">
-                    <div class="idle-protocol-head"><span>⚙</span><div><strong>Protocolo automático</strong><small>Define até onde o quartel-mestre pode gastar sem sua confirmação.</small></div></div>
-                    <div class="idle-restock-options">
-                        <label class="idle-switch-label idle-option-primary">
-                            <input type="checkbox" data-restock-option="autoRestock" ${config.autoRestock ? "checked" : ""}>
-                            <span class="idle-switch-control"></span>
-                            <span><b>Reposição do loop</b><small>${config.autoRestock ? "Operacional" : "Pausada"}</small></span>
-                        </label>
-                        <label><span>Reserva inviolável</span><span class="idle-input-suffix"><input type="number" min="0" step="10" value="${config.goldReserve}" data-restock-option="goldReserve"><b>G</b></span></label>
-                        <label><span>Teto por ciclo</span><span class="idle-input-suffix"><input type="number" min="0" step="10" value="${config.maxRestockSpend}" data-restock-option="maxRestockSpend"><b>G</b></span><small>0 significa sem limite</small></label>
-                        <label class="idle-switch-label idle-partial-option">
-                            <input type="checkbox" data-restock-option="allowPartialRestock" ${config.allowPartialRestock ? "checked" : ""}>
-                            <span class="idle-switch-control"></span>
-                            <span><b>Compra parcial</b><small>Comprar o que o ouro permitir</small></span>
-                        </label>
-                    </div>
-                </div>
-                ${uiState.feedback ? `<div class="idle-panel-feedback" role="status">${esc(uiState.feedback)}</div>` : ""}
-                <footer class="idle-supply-panel-footer">
-                    <div class="idle-purchase-total"><small>PEDIDO MANUAL</small><strong>Total: ${fmt(selectedTotal)} G</strong><span data-purchase-detail>${fmt(selectedUnits)} unidade(s) · saldo após compra ${fmt(Math.max(0, gold - selectedTotal))} G</span></div>
-                    <div class="idle-panel-actions">
-                        <button type="button" class="idle-secondary-btn" data-idle-action="save-supplies"><span>✓</span> Salvar protocolo</button>
-                        <button type="button" class="idle-primary-btn" data-idle-action="purchase-supplies" ${selectedTotal <= 0 ? "disabled" : ""}><span>◆</span> Comprar agora</button>
-                    </div>
-                </footer>
-            </section>`;
-    }
-
-    function renderControls() {
-        const root = document.getElementById("idle-loop-controls-root");
-        if (!root) return false;
-        const config = ensureState();
-        const summary = supplySummary(config);
-        root.classList.toggle("is-panel-open", uiState.supplyPanelOpen);
-        root.innerHTML = `
-            ${uiState.supplyPanelOpen ? renderSupplyPanel(config) : ""}
-            <div class="idle-loop-bar">
-                <div class="idle-loop-status">
-                    <span class="idle-loop-indicator ${config.enabled ? "" : "is-inactive"}">${config.enabled ? "● Continuidade ativa" : "○ Automação pausada"}</span>
-                    <div class="idle-loop-telemetry"><span>Ciclos <strong>${fmt(config.cyclesCompleted)}</strong></span>
-                        <span>Auto-venda <strong>+${fmt(config.totalProfit)} G</strong></span>
-                        <span>Reposição <strong>−${fmt(config.totalRestockCost)} G</strong></span></div>
-                </div>
-                <div class="idle-loop-controls">
-                    <button type="button" class="idle-toggle-btn ${config.autoSell ? "is-active" : ""}" data-idle-setting="autoSell"
-                        title="Vende automaticamente apenas materiais e loot; equipamentos são preservados."><span class="idle-quick-icon">◆</span><span><small>AUTO-VENDA</small><strong>${config.autoSell ? "ATIVA" : "DESLIGADA"}</strong></span></button>
-                    <button type="button" class="idle-toggle-btn idle-supplies-btn ${config.autoRestock ? "is-active" : ""}" data-idle-action="open-supplies"
-                        title="Escolher supplies, quantidades e regras de reposição."><span class="idle-quick-icon">▦</span><span><small>SUPRIMENTOS</small><strong>${summary.current}/${summary.target} EM ESTOQUE</strong></span></button>
-                    <button type="button" class="idle-toggle-btn ${config.enabled ? "is-active" : ""}" data-idle-setting="enabled"><span class="idle-quick-icon">${config.enabled ? "▶" : "Ⅱ"}</span><span><small>CONTINUIDADE</small><strong>${config.enabled ? "LOOP ATIVO" : "PAUSADO"}</strong></span></button>
-                </div>
-            </div>`;
-        scheduleControlPosition();
-        return true;
-    }
-
-    function readManualQuantities(root) {
-        root?.querySelectorAll?.("[data-manual-quantity]").forEach((input) => {
-            uiState.manualQuantities[input.dataset.manualQuantity] = integer(input.value, 0, 99);
-        });
-    }
-
-    function savePanelConfiguration(root) {
-        const supplyPlan = {};
-        SUPPLIES.forEach((definition) => {
-            const enabled = root.querySelector(`[data-supply-field="enabled"][data-item-id="${definition.id}"]`)?.checked === true;
-            const reorderAt = integer(root.querySelector(`[data-supply-field="reorderAt"][data-item-id="${definition.id}"]`)?.value, 0, 99);
-            const target = integer(root.querySelector(`[data-supply-field="target"][data-item-id="${definition.id}"]`)?.value, 0, 99);
-            supplyPlan[definition.id] = { enabled, reorderAt: Math.min(reorderAt, target), target };
-        });
-        configureRestock({
-            autoRestock: root.querySelector('[data-restock-option="autoRestock"]')?.checked === true,
-            goldReserve: root.querySelector('[data-restock-option="goldReserve"]')?.value,
-            maxRestockSpend: root.querySelector('[data-restock-option="maxRestockSpend"]')?.value,
-            allowPartialRestock: root.querySelector('[data-restock-option="allowPartialRestock"]')?.checked === true,
-            supplyPlan
-        });
-
         const policyPatch = {};
-        let anyAutoUse = false;
         SUPPLIES.filter((definition) => definition.policyItemKey).forEach((definition) => {
-            const checked = root.querySelector(`[data-auto-use-item="${definition.id}"]`)?.checked === true;
-            const percent = integer(root.querySelector(`[data-auto-threshold="${definition.id}"]`)?.value, 5, 95);
-            policyPatch[definition.policyItemKey] = checked ? definition.id : null;
+            const request = patch[definition.id];
+            const currentlyEnabled = policy.enabled !== false && policy[definition.policyItemKey] === definition.id;
+            const enabled = request?.enabled === undefined ? currentlyEnabled : Boolean(request.enabled);
+            const currentPercent = Math.round((Number(policy[definition.policyThresholdKey]) || 0) * 100);
+            const percent = Math.min(AUTO_USE_MAX_PERCENT, Math.max(AUTO_USE_MIN_PERCENT,
+                integer(request?.thresholdPercent, currentPercent || 30)));
+            policyPatch[definition.policyItemKey] = enabled ? definition.id : null;
             policyPatch[definition.policyThresholdKey] = percent / 100;
-            anyAutoUse ||= checked;
         });
-        policyPatch.enabled = anyAutoUse;
-        Aethra.ConsumableSystem?.configure?.(policyPatch);
-        uiState.feedback = "Configuração salva.";
-        renderControls();
+        policyPatch.enabled = SUPPLIES.some((definition) => definition.policyItemKey && policyPatch[definition.policyItemKey] === definition.id);
+        const result = Aethra.ConsumableSystem?.configure?.(policyPatch);
+        notifyChanged("auto-use-configured");
+        return result;
+    }
+
+    // Leitura pronta para telas: estoque, regra, preço e uso automático de cada suprimento.
+    function getSupplyOverview() {
+        const config = ensureState();
+        const policy = Aethra.ConsumableSystem?.ensurePolicy?.() || {};
+        const supplies = SUPPLIES.map((definition) => {
+            const rule = config.supplyPlan[definition.id];
+            const current = inventoryQuantity(definition.id);
+            const stockState = !rule.enabled
+                ? "manual"
+                : current >= rule.target ? "ready" : current < rule.reorderAt ? "low" : "stable";
+            return {
+                ...clone(definition),
+                current,
+                unitPrice: unitPriceFor(definition.id),
+                rule: clone(rule),
+                stockState,
+                autoUse: definition.policyItemKey
+                    ? {
+                        enabled: policy.enabled !== false && policy[definition.policyItemKey] === definition.id,
+                        thresholdPercent: Math.round((Number(policy[definition.policyThresholdKey]) || 0) * 100)
+                    }
+                    : null
+            };
+        });
+        const summary = supplies.reduce((total, supply) => {
+            if (!supply.rule.enabled) return total;
+            const missing = Math.max(0, supply.rule.target - supply.current);
+            total.current += supply.current;
+            total.target += supply.rule.target;
+            total.enabled += 1;
+            total.missing += missing;
+            total.restockCost += missing * supply.unitPrice;
+            return total;
+        }, { current: 0, target: 0, enabled: 0, missing: 0, restockCost: 0 });
+        summary.cycleBudget = cycleBudget(config);
+        summary.restockReady = summary.restockCost <= summary.cycleBudget;
+        return { config: clone(config), supplies, summary };
     }
 
     Aethra.EventBus.on("bag:items-added", ({ items = [], source } = {}) => {
@@ -511,96 +351,27 @@
     Aethra.EventBus.on("hunt:ended", ({ reason } = {}) => {
         if (reason !== "hero-defeated") processCycle(`hunt-ended:${reason || "unknown"}`);
     });
-    Aethra.EventBus.on("tilemap:ready", renderControls);
-    Aethra.EventBus.on("consumable:used", renderControls);
     Aethra.EventBus.on("state:restored", () => {
         ensureState();
-        renderControls();
+        notifyChanged("state-restored");
     });
-
-    document.addEventListener("input", (event) => {
-        const input = event.target.closest?.("#idle-loop-controls-root [data-manual-quantity]");
-        if (!input) return;
-        uiState.manualQuantities[input.dataset.manualQuantity] = integer(input.value, 0, 99);
-        const root = document.getElementById("idle-loop-controls-root");
-        const total = SUPPLIES.reduce((sum, definition) => sum + integer(uiState.manualQuantities[definition.id]) * unitPriceFor(definition.id), 0);
-        const units = SUPPLIES.reduce((sum, definition) => sum + integer(uiState.manualQuantities[definition.id]), 0);
-        const totalElement = root?.querySelector(".idle-purchase-total strong");
-        const detailElement = root?.querySelector("[data-purchase-detail]");
-        const subtotalElement = root?.querySelector(`[data-manual-subtotal="${input.dataset.manualQuantity}"]`);
-        const purchaseButton = root?.querySelector('[data-idle-action="purchase-supplies"]');
-        if (totalElement) totalElement.textContent = `Total: ${fmt(total)} G`;
-        if (detailElement) detailElement.textContent = `${fmt(units)} unidade(s) · saldo após compra ${fmt(Math.max(0, integer(Aethra.GameState?.hero?.gold) - total))} G`;
-        if (subtotalElement) subtotalElement.textContent = `Subtotal ${fmt(integer(input.value) * unitPriceFor(input.dataset.manualQuantity))} G`;
-        if (purchaseButton) purchaseButton.disabled = total <= 0;
-    });
-
-    document.addEventListener("click", (event) => {
-        const root = event.target.closest?.("#idle-loop-controls-root");
-        if (!root) return;
-        const settingButton = event.target.closest("[data-idle-setting]");
-        if (settingButton) {
-            const key = settingButton.dataset.idleSetting;
-            const config = ensureState();
-            updateSetting(key, !config[key]);
-            return;
-        }
-        const actionButton = event.target.closest("[data-idle-action]");
-        if (!actionButton) return;
-        const action = actionButton.dataset.idleAction;
-        if (action === "open-supplies") {
-            uiState.supplyPanelOpen = true;
-            uiState.feedback = "";
-            renderControls();
-        } else if (action === "close-supplies") {
-            readManualQuantities(root);
-            uiState.supplyPanelOpen = false;
-            renderControls();
-        } else if (action === "quantity") {
-            readManualQuantities(root);
-            const itemId = actionButton.dataset.itemId;
-            uiState.manualQuantities[itemId] = integer(uiState.manualQuantities[itemId] + Number(actionButton.dataset.delta || 0), 0, 99);
-            renderControls();
-        } else if (action === "save-supplies") {
-            readManualQuantities(root);
-            savePanelConfiguration(root);
-        } else if (action === "purchase-supplies") {
-            readManualQuantities(root);
-            const result = purchaseSupplies(uiState.manualQuantities, { source: "player-manual" });
-            if (result.reason === "INSUFFICIENT_BUDGET") {
-                uiState.feedback = `Ouro insuficiente: faltam ${fmt(result.requestedCost - integer(Aethra.GameState?.hero?.gold))} G.`;
-            } else if (result.purchased > 0) {
-                uiState.feedback = `${fmt(result.purchased)} supply(s) comprado(s) por ${fmt(result.cost)} G.`;
-                result.items.forEach((line) => { uiState.manualQuantities[line.itemId] = 0; });
-            } else {
-                uiState.feedback = "Escolha ao menos uma quantidade para comprar.";
-            }
-            renderControls();
-        }
-    });
-
-    document.addEventListener("keydown", (event) => {
-        if (event.key !== "Escape" || !uiState.supplyPanelOpen) return;
-        uiState.supplyPanelOpen = false;
-        renderControls();
-    });
-    window.addEventListener("resize", scheduleControlPosition, { passive: true });
-    window.addEventListener("scroll", scheduleControlPosition, { passive: true });
 
     Aethra.IdleLoopSystem = {
         get config() { return ensureState(); },
         supplies: SUPPLIES,
+        autoUseRange: Object.freeze({ min: AUTO_USE_MIN_PERCENT, max: AUTO_USE_MAX_PERCENT }),
         toggleLoop,
         updateSetting,
         configureRestock,
+        configureAutoUse,
         purchaseSupplies,
         autoSellItems,
         restockSupplies,
         processCycle,
-        renderControls,
-        syncControlPosition,
         inventoryQuantity,
+        unitPriceFor,
         isAutoSellEligible,
+        getSupplyOverview,
         getSnapshot: () => clone(ensureState())
     };
 

@@ -2804,7 +2804,7 @@
                 restoreEnumerableState(Aethra.GameState.hero, supplyManagerBefore.hero);
                 Aethra.GameState.idleLoop = JSON.parse(JSON.stringify(supplyManagerBefore.idleLoop));
                 Aethra.ConsumableSystem?.ensurePolicy?.();
-                Aethra.IdleLoopSystem?.renderControls?.();
+                Aethra.IdleLoopControls?.render?.();
 
                 Aethra.RenderEngine?.renderEquipment?.();
                 const fullEquipmentSlots = document.querySelectorAll(
@@ -4909,6 +4909,59 @@
                     windowManager.closeWindow("premium-shop-view", { source: "integration-restore" });
                 }
                 checks.push(createCheck("UI 3.0 Loja de Diamantes confirma a compra e delega ao MarketplaceSystem", premiumWorks, premiumDetail));
+
+                /*
+                 * UI 3.0 — fase 5.3 (Automação). Cada ajuste vai ao IdleLoopSystem na
+                 * hora; o uso automático vira política do ConsumableSystem.
+                 */
+                const idleSystem = Aethra.IdleLoopSystem;
+                const idleBefore = JSON.parse(JSON.stringify(Aethra.GameState.idleLoop || {}));
+                const policyBefore = JSON.parse(JSON.stringify(Aethra.ConsumableSystem?.ensurePolicy?.() || {}));
+                const idlePurchaseOriginal = idleSystem.purchaseSupplies;
+                const idlePurchases = [];
+                idleSystem.purchaseSupplies = (requests, options) => {
+                    idlePurchases.push({ requests: { ...requests }, options });
+                    return { purchased: 0, cost: 0, items: [], reason: "INSUFFICIENT_BUDGET" };
+                };
+                let automationWorks = false;
+                let automationDetail = "";
+                try {
+                    windowManager.openWindow("automation-view", { source: "integration-ui3-automation" });
+                    const autoLayer = document.querySelector("#ui3-root [data-ui3-window='automation-view']");
+                    const autoOpen = Aethra.Ui3AutomationWindow?.isOpen?.() === true;
+                    const autoSellBefore = idleSystem.config.autoSell;
+                    autoLayer?.querySelector("[data-ui3-auto-setting='autoSell']")?.click();
+                    const autoSellToggled = idleSystem.config.autoSell === !autoSellBefore;
+                    const targetInput = autoLayer?.querySelector("[data-ui3-auto-rule='target'][data-supply='potion_health']");
+                    if (targetInput) {
+                        targetInput.value = "9";
+                        targetInput.dispatchEvent(new Event("change", { bubbles: true }));
+                    }
+                    const targetSaved = idleSystem.getSnapshot().supplyPlan.potion_health.target === 9;
+                    const useToggle = autoLayer?.querySelector("[data-ui3-auto-use='potion_mana']");
+                    const manaUseBefore = idleSystem.getSupplyOverview().supplies.find((supply) => supply.id === "potion_mana").autoUse.enabled;
+                    useToggle?.click();
+                    const policyAfter = Aethra.ConsumableSystem.ensurePolicy();
+                    const manaUseToggled = (policyAfter.manaItemId === "potion_mana" && policyAfter.enabled !== false) === !manaUseBefore;
+                    autoLayer?.querySelector("[data-ui3-auto-order='potion_health'][data-delta='1']")?.click();
+                    autoLayer?.querySelector("[data-ui3-auto-order='potion_health'][data-delta='1']")?.click();
+                    const buyButton = autoLayer?.querySelector("[data-ui3-auto-buy]");
+                    if (buyButton) buyButton.disabled = false;
+                    buyButton?.click();
+                    const orderRouted = idlePurchases.length === 1 && idlePurchases[0].requests.potion_health === 2;
+                    const overview = idleSystem.getSupplyOverview();
+                    const overviewOk = overview.supplies.length === idleSystem.supplies.length
+                        && overview.supplies.find((supply) => supply.id === "potion_health").rule.target === 9
+                        && typeof overview.summary.restockReady === "boolean";
+                    automationWorks = autoOpen && autoSellToggled && targetSaved && manaUseToggled && orderRouted && overviewOk;
+                    automationDetail = `${autoOpen ? "janela nova" : "janela errada"} · auto-venda ${autoSellToggled ? "alternou" : "parada"} · meta ${targetSaved ? "salva" : "ignorada"} · uso de mana ${manaUseToggled ? "alternou" : "parado"} · pedido ${orderRouted ? "encaminhado" : "perdido"} · leitura ${overviewOk ? "coerente" : "incoerente"}`;
+                } finally {
+                    idleSystem.purchaseSupplies = idlePurchaseOriginal;
+                    Aethra.GameState.idleLoop = idleBefore;
+                    Aethra.ConsumableSystem?.configure?.(policyBefore);
+                    windowManager.closeWindow("automation-view", { source: "integration-restore" });
+                }
+                checks.push(createCheck("UI 3.0 Automação ajusta o IdleLoopSystem e a política de consumíveis", automationWorks, automationDetail));
 
                 // UI 3.0 — fase 5.2 (Social): só o mercador está disponível offline e leva à Loja.
                 windowManager.openWindow("social-view", { source: "integration-ui3-social" });
