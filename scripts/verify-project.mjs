@@ -465,6 +465,18 @@ for (const file of walk(join(root, "js", "ui3"), (entry) => extname(entry) === "
     );
 }
 
+// Tela de derrota: o BattleSystem aplica a penalidade e restaura a vida;
+// a tela só mostra, em português, quem derrotou o herói.
+const deathModalSource = read("js/ui/DeathModalUI.js");
+check(
+    !/\b(?:hero|stats)\.(?:hp|mana|energy|gold)\s*=(?!=)/.test(deathModalSource),
+    "js/ui/DeathModalUI.js: a tela de derrota não restaura vida nem mexe no ouro (é o BattleSystem)"
+);
+check(
+    /payload\.creatureName/.test(deathModalSource) && !/\b(?:supplies|Skills|slots)\b/.test(deathModalSource),
+    "js/ui/DeathModalUI.js: nomeie a criatura (payload.creatureName) e use rótulos em português"
+);
+
 if (failures.length > 0) {
     console.error(`Quality gate falhou: ${failures.length}/${checks} verificação(ões).`);
     for (const failure of failures) console.error(`- ${failure}`);

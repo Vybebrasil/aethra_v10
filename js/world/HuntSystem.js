@@ -367,6 +367,18 @@
                 return false;
             }
 
+            // Luta de chefe ou de Coliseu não é abortada por uma rota nova.
+            const battleLock = this.getBattleLock();
+            if (battleLock.locked) {
+                Aethra.EventBus.emit("BattleLog", {
+                    message: `Termine a luta contra ${battleLock.creatureName} antes de partir.`,
+                    color: "#ffb36a",
+                    type: "system"
+                });
+                Aethra.EventBus.emit("hunt:locked", { huntId, reason: "battle-in-progress", source: battleLock.source });
+                return false;
+            }
+
             // BattleSystem é a única autoridade de combate: uma rota nova encerra a luta anterior.
             Aethra.BattleSystem?.stopCombat?.("new-hunt-started");
 
@@ -732,6 +744,20 @@
             }
 
             return clone(encounter);
+        },
+
+        /*
+         * Luta fora da caçada (chefe do Mural, partida do Coliseu) em andamento:
+         * enquanto durar, nenhuma expedição começa.
+         */
+        getBattleLock() {
+            const battle = Aethra.GameState.battle || {};
+            const locked = Boolean(Aethra.BattleSystem?.isFighting && ["boss", "coliseum"].includes(battle.source));
+            return {
+                locked,
+                source: locked ? battle.source : null,
+                creatureName: locked ? (battle.creature?.name || "o adversário") : null
+            };
         },
 
         /*

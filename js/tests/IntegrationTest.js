@@ -1474,8 +1474,9 @@
                     Number(deathRouteResult?.xpLost) === 5
                         && Number(deathRouteResult?.goldLost) === 10
                         && deathRouteResult?.returnTo === "city"
+                        && deathRouteResult?.creatureName === "Bandido"
                         && Number(levelPointHero.hp) === Number(levelPointHero.maxHp),
-                    `${deathRouteResult?.xpLost || 0} XP · ${deathRouteResult?.goldLost || 0} Gold · destino ${deathRouteResult?.returnTo || "indefinido"}`
+                    `${deathRouteResult?.xpLost || 0} XP · ${deathRouteResult?.goldLost || 0} Gold · destino ${deathRouteResult?.returnTo || "indefinido"} · derrotado por ${deathRouteResult?.creatureName || "sem nome"}`
                 )
             );
             const restoreEnumerableState = (target, snapshot) => {
@@ -3741,6 +3742,45 @@
                     idleQuestShown && idleQuestFollowed && idleQuestHiddenHere,
                     `botão ${idleQuestShown ? "Desafiar Lobo Alfa" : "ausente"} · clique ${idleQuestFollowed ? "segue a orientação" : "perdido"} · passo na própria caçada ${idleQuestHiddenHere ? "sem botão" : "errado"}`
                 ));
+
+                /*
+                 * Luta de chefe em andamento: nenhuma expedição começa (antes,
+                 * "Iniciar expedição" seguia ativo e abortava o Lobo Alfa).
+                 */
+                const lockBattle = Aethra.GameState.battle;
+                const lockBackup = { fighting: Aethra.BattleSystem.isFighting, source: lockBattle.source, creature: lockBattle.creature };
+                const lockHunt = Aethra.GameState.hunt;
+                const lockHuntActive = lockHunt.isActive;
+                let bossLockWorks = false;
+                let bossLockDetail = "";
+                try {
+                    Aethra.BattleSystem.isFighting = true;
+                    lockBattle.source = "boss";
+                    lockBattle.creature = { id: "alpha_wolf", name: "Lobo Alfa" };
+                    lockHunt.isActive = false;
+                    const refused = Aethra.HuntSystem.startHunt("whispering_forest") === false && lockHunt.isActive === false
+                        && Aethra.BattleSystem.isFighting === true;
+                    let panelLocked = false;
+                    withUi3Game(() => {
+                        Aethra.UIManager?.setPrimaryView?.("hunt");
+                        Aethra.Ui3HuntScreen.sync();
+                        Aethra.Ui3HuntScreen.render();
+                        const huntRoot = document.querySelector("#ui3-root .ui3-hunt");
+                        panelLocked = huntRoot?.querySelector("[data-ui3-hunt-start]")?.disabled === true
+                            && /Lobo Alfa/.test(huntRoot?.querySelector(".ui3-expedition__title")?.textContent || "");
+                    });
+                    lockBattle.source = "hunt";
+                    const huntBattleFree = Aethra.HuntSystem.getBattleLock().locked === false;
+                    bossLockWorks = refused && panelLocked && huntBattleFree;
+                    bossLockDetail = `partir ${refused ? "recusado" : "aceito"} · painel ${panelLocked ? "travado" : "livre"} · luta da caçada ${huntBattleFree ? "não trava" : "trava"}`;
+                } finally {
+                    Aethra.BattleSystem.isFighting = lockBackup.fighting;
+                    lockBattle.source = lockBackup.source;
+                    lockBattle.creature = lockBackup.creature;
+                    lockHunt.isActive = lockHuntActive;
+                    Aethra.Ui3HuntScreen?.render?.();
+                }
+                checks.push(createCheck("Luta contra chefe impede iniciar expedição", bossLockWorks, bossLockDetail));
 
                 // Registro em português e no andar final a escada conclui a expedição.
                 const rewardText = Aethra.BattleLogger.formatRewardMessage("Lobo", { xp: 5, gold: 0, lootCount: 2 });

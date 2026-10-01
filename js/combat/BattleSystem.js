@@ -1598,6 +1598,7 @@
             const payload = {
                 battleId: battle.battleId,
                 creatureId: battle.creature?.id || null,
+                creatureName: battle.creature?.name || null,
                 penalty,
                 goldLost: penalty,
                 xpLost: Math.max(0, integer(xpPenalty.lost, 0)),

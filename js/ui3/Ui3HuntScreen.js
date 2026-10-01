@@ -347,6 +347,10 @@
             </div>`;
     }
 
+    function battleLock() {
+        return Aethra.HuntSystem?.getBattleLock?.() || { locked: false };
+    }
+
     function expeditionHeadHTML() {
         const K = kit();
         const hunt = huntState();
@@ -362,6 +366,12 @@
                     ${chips.map((chip) => `<span class="ui3-tag">${K.esc(chip)}</span>`).join("")}
                     <span class="ui3-expedition__timer" aria-label="Tempo de expedição">${formatDuration(number(hunt.elapsedMs) / 1000)}</span>
                 </div>`;
+        }
+        const lock = battleLock();
+        if (lock.locked) {
+            return `<span class="ui3-eyebrow">${lock.source === "coliseum" ? "Partida do Coliseu" : "Luta contra chefe"}</span>
+                <h2 class="ui3-expedition__title">${K.esc(lock.creatureName)}</h2>
+                <div class="ui3-expedition__meta"><span class="ui3-caption">Termine a luta antes de partir.</span></div>`;
         }
         const next = recommendedHunt();
         return `<span class="ui3-eyebrow">Próxima rota</span>
@@ -398,7 +408,8 @@
         const guidance = quest ? Aethra.QuestSystem?.getGuidance?.(quest) : null;
         if (!quest || !guidance) return "";
         const objective = guidance.objective || {};
-        const staysHere = guidance.action === "focus-hunt"
+        const staysHere = battleLock().locked
+            || guidance.action === "focus-hunt"
             || (guidance.action === "open-hunt-map" && (!guidance.huntId || guidance.huntId === huntState().huntId));
         return `<div class="ui3-hunt-quest" role="status">
                 <div class="ui3-row-between"><span class="ui3-eyebrow">Próximo passo · ${K.esc(quest.title)}</span><strong>${K.formatNumber(objective.progress)}/${K.formatNumber(objective.required)}</strong></div>
@@ -485,7 +496,8 @@
         const K = kit();
         if (!isHuntRunning()) {
             const next = recommendedHunt();
-            return `${K.button({ label: "Iniciar expedição", variant: "primary", disabled: !next, attributes: { "data-ui3-hunt-start": next?.id || "" } })}
+            const locked = battleLock().locked;
+            return `${K.button({ label: "Iniciar expedição", variant: "primary", disabled: !next || locked, attributes: { "data-ui3-hunt-start": next?.id || "" } })}
                 <div class="ui3-expedition__row">
                     ${K.button({ label: "Ver mapa", attributes: { "data-ui3-hunt-map": "" } })}
                     ${K.button({ label: "Missões", attributes: { "data-ui3-open-window": "quests-view" } })}
