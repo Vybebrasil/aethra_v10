@@ -570,7 +570,22 @@ window.Aethra = window.Aethra || {};
             return result;
         },
 
+        /*
+         * fixedRolls: todos os sorteios no meio da faixa, o mesmo item para
+         * qualquer jogador (kit inicial e a prévia dele na criação).
+         */
         generateItem(templateId, options = {}) {
+            if (options.fixedRolls !== true) return this.rollItem(templateId, options);
+            const random = this.randomSource;
+            this.randomSource = () => 0.5;
+            try {
+                return this.rollItem(templateId, options);
+            } finally {
+                this.randomSource = random;
+            }
+        },
+
+        rollItem(templateId, options = {}) {
             if (
                 !Aethra.ItemTemplates[templateId] &&
                 Aethra.GameData.items?.[templateId]
@@ -789,6 +804,10 @@ window.Aethra = window.Aethra || {};
                 };
                 item.rollScore = inspection.ivPercent;
             }
+
+            // Prévia (ex.: kit da criação): o item não existe no jogo, então não
+            // entra na telemetria nem no ranking.
+            if (options.preview === true) return item;
 
             Aethra.EventBus.emit("ItemGenerated", {
                 item,

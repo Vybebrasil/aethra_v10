@@ -158,6 +158,18 @@
         return Object.values(allocation || {}).reduce((sum, value) => sum + Math.max(0, integer(value, 0)), 0);
     }
 
+    // Itens do kit inicial: iguais para todo herói (sorteios fixos) e vinculados.
+    const STARTER_ITEM_OPTIONS = Object.freeze({
+        fixedRolls: true,
+        quality: 55,
+        potential: 45,
+        rarity: "common",
+        affixes: [],
+        bound: true,
+        tradeable: false,
+        source: "character-created"
+    });
+
     Aethra.CharacterBuildSystem = {
         initialized: false,
         attributePoints: ATTRIBUTE_POINTS,
@@ -229,6 +241,32 @@
                     energy: maxEnergy
                 }
             };
+        },
+
+        // Equipamento com que cada arquétipo nasce (a criação e a prévia usam a mesma lista).
+        getStarterEquipment(archetypeId) {
+            const archetype = ARCHETYPES[archetypeId];
+            if (!archetype) return [];
+            return [
+                { slot: "weapon", templateId: archetype.starterItemId },
+                { slot: "chest", templateId: "eg_chest_l1" },
+                archetype.starterShield ? { slot: "offhand", templateId: "eg_shield_l1" } : null
+            ].filter((entry) => entry?.templateId);
+        },
+
+        /*
+         * Prévia da criação com o kit inicial vestido: os números que o herói
+         * terá ao entrar (antes mostrava só os atributos, sem arma nem peitoral).
+         */
+        previewStarterStats(source = {}, archetypeId = null) {
+            const preview = this.previewAttributes(source);
+            const equipment = {};
+            this.getStarterEquipment(archetypeId).forEach(({ slot, templateId }) => {
+                const item = Aethra.ItemSystem?.generateItem?.(templateId, { ...STARTER_ITEM_OPTIONS, preview: true });
+                if (item) equipment[slot] = item;
+            });
+            const composed = Aethra.EquipSystem?.composeStats?.(preview.stats, equipment);
+            return { ...preview, stats: composed ? composed.stats : preview.stats };
         },
 
         validateCreation(input = {}) {
@@ -430,22 +468,11 @@
             Aethra.DisciplineSystem?.configureStarterLoadout?.(archetype?.masteries || {});
             const generateStarter = (templateId, options = {}) => {
                 if (!templateId) return null;
-                return Aethra.ItemSystem?.generateItem?.(templateId, {
-                    quality: 55,
-                    potential: 45,
-                    rarity: "common",
-                    affixes: [],
-                    bound: true,
-                    tradeable: false,
-                    source: "character-created",
-                    ...options
-                }) || null;
+                return Aethra.ItemSystem?.generateItem?.(templateId, { ...STARTER_ITEM_OPTIONS, ...options }) || null;
             };
-            const starterEquipment = [
-                { slot: "weapon", item: generateStarter(archetype?.starterItemId) },
-                { slot: "chest", item: generateStarter("eg_chest_l1") },
-                { slot: "offhand", item: archetype?.starterShield ? generateStarter("eg_shield_l1") : null }
-            ].filter((entry) => entry.item);
+            const starterEquipment = this.getStarterEquipment(validation.archetypeId)
+                .map(({ slot, templateId }) => ({ slot, item: generateStarter(templateId) }))
+                .filter((entry) => entry.item);
             const starterSupplies = [
                 generateStarter("potion_health", { quantity: 5 }),
                 generateStarter("potion_mana", { quantity: 5 })

@@ -106,7 +106,8 @@
     function previewHTML() {
         const K = kit();
         const archetype = build().archetypes?.[draft.archetypeId] || null;
-        const stats = build().previewAttributes(draft.attributes)?.stats || {};
+        const stats = build().previewStarterStats?.(draft.attributes, draft.archetypeId)?.stats
+            || build().previewAttributes(draft.attributes)?.stats || {};
         const sprite = Aethra.SpriteLoader?.getHeroSource?.(draft.archetypeId) || "";
         const hit = Math.min(98, 85 + number(stats.precision));
         return `<div class="ui3-creation__figure">

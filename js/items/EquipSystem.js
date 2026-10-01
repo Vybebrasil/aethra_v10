@@ -629,12 +629,13 @@
             return true;
         },
 
-        updatePlayerStats(options = {}) {
-            const { hero, equipment } =
-                ensureHeroEquipmentState();
-
-            const previousStats = cloneStats(hero.stats);
-            const baseStats = cloneStats(hero.baseStats);
+        /*
+         * Atributos finais = base + bônus do equipamento + passivas de armadura.
+         * Pura: não grava nada (o jogo e a prévia da criação usam a mesma conta).
+         * armorLevels: { cloth, leather, plate }; ausente = nível 1 (sem passiva).
+         */
+        composeStats(baseStatsInput = {}, equipment = {}, { previousStats = {}, armorLevels = {} } = {}) {
+            const baseStats = cloneStats(baseStatsInput);
             const equipmentBonuses =
                 getEquipmentBonuses(equipment);
 
@@ -737,25 +738,37 @@
                 }
             });
 
-            // Apply armor discipline passives to nextStats
-            if (Aethra.DisciplineSystem) {
-                const clothLevel = Math.max(1, Number(Aethra.DisciplineSystem.getState("cloth_armor")?.level || 1));
-                const leatherLevel = Math.max(1, Number(Aethra.DisciplineSystem.getState("leather_armor")?.level || 1));
-                const plateLevel = Math.max(1, Number(Aethra.DisciplineSystem.getState("plate_armor")?.level || 1));
-
-                if (clothLevel > 1) {
-                    nextStats.mag = (nextStats.mag || 0) * (1 + (clothLevel - 1) * 0.01);
-                    nextStats.maxMana = (nextStats.maxMana || 0) * (1 + (clothLevel - 1) * 0.005);
-                }
-                if (leatherLevel > 1) {
-                    nextStats.evasion = (nextStats.evasion || 0) + (leatherLevel - 1) * 0.005;
-                    nextStats.critical = (nextStats.critical || 0) + (leatherLevel - 1) * 0.002;
-                }
-                if (plateLevel > 1) {
-                    nextStats.defense = (nextStats.defense || 0) * (1 + (plateLevel - 1) * 0.01);
-                    nextStats.maxHp = (nextStats.maxHp || 0) * (1 + (plateLevel - 1) * 0.01);
-                }
+            // Passivas das disciplinas de armadura.
+            const clothLevel = Math.max(1, Number(armorLevels.cloth || 1));
+            const leatherLevel = Math.max(1, Number(armorLevels.leather || 1));
+            const plateLevel = Math.max(1, Number(armorLevels.plate || 1));
+            if (clothLevel > 1) {
+                nextStats.mag = (nextStats.mag || 0) * (1 + (clothLevel - 1) * 0.01);
+                nextStats.maxMana = (nextStats.maxMana || 0) * (1 + (clothLevel - 1) * 0.005);
             }
+            if (leatherLevel > 1) {
+                nextStats.evasion = (nextStats.evasion || 0) + (leatherLevel - 1) * 0.005;
+                nextStats.critical = (nextStats.critical || 0) + (leatherLevel - 1) * 0.002;
+            }
+            if (plateLevel > 1) {
+                nextStats.defense = (nextStats.defense || 0) * (1 + (plateLevel - 1) * 0.01);
+                nextStats.maxHp = (nextStats.maxHp || 0) * (1 + (plateLevel - 1) * 0.01);
+            }
+
+            return { stats: nextStats, baseStats, equipmentBonuses };
+        },
+
+        updatePlayerStats(options = {}) {
+            const { hero, equipment } =
+                ensureHeroEquipmentState();
+
+            const discipline = (id) => Number(Aethra.DisciplineSystem?.getState?.(id)?.level || 1);
+            const { stats: nextStats, baseStats, equipmentBonuses } = this.composeStats(hero.baseStats, equipment, {
+                previousStats: cloneStats(hero.stats),
+                armorLevels: Aethra.DisciplineSystem
+                    ? { cloth: discipline("cloth_armor"), leather: discipline("leather_armor"), plate: discipline("plate_armor") }
+                    : {}
+            });
 
             hero.stats = nextStats;
             hero.equipment = equipment;

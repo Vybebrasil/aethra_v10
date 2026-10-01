@@ -1738,6 +1738,19 @@
                 Aethra.GameState.hunt.supplyBreakdown = supplyBreakdownBefore;
 
                 const vanguardPreset = Aethra.CharacterBuildSystem?.archetypes?.vanguard;
+                // A prévia da criação mostra o herói com o kit inicial vestido, sem
+                // criar itens de verdade (nada de telemetria nem ranking).
+                const previewEvents = [];
+                const countPreviewEvent = () => previewEvents.push(1);
+                Aethra.EventBus.on("item:generated", countPreviewEvent);
+                const vanguardPreview = vanguardPreset
+                    ? Aethra.CharacterBuildSystem.previewStarterStats(vanguardPreset.attributes, "vanguard")?.stats
+                    : null;
+                const rangerPreset = Aethra.CharacterBuildSystem?.archetypes?.ranger;
+                const rangerPreview = rangerPreset ? Aethra.CharacterBuildSystem.previewStarterStats(rangerPreset.attributes, "ranger")?.stats : null;
+                const rangerBare = rangerPreset ? Aethra.CharacterBuildSystem.previewAttributes(rangerPreset.attributes)?.stats : null;
+                Aethra.EventBus.off?.("item:generated", countPreviewEvent);
+                const previewSilent = previewEvents.length === 0;
                 const createdHero = vanguardPreset
                     ? Aethra.CharacterBuildSystem.createCharacter({
                         name: "Herói de Teste",
@@ -1749,6 +1762,19 @@
                     : null;
                 const equippedStarter = Aethra.GameState.playerEquipment?.weapon;
                 const starterBar = Aethra.SkillSystem?.getActionBars?.()[0];
+                const PREVIEW_KEYS = ["maxHp", "maxMana", "maxEnergy", "damageMin", "damageMax", "defense", "precision", "critical", "evasion"];
+                const createdStats = Aethra.GameState.hero?.stats || {};
+                const previewMismatch = PREVIEW_KEYS.filter((key) => Math.abs(Number(vanguardPreview?.[key]) - Number(createdStats[key])) > 1e-6)
+                    .map((key) => `${key} ${vanguardPreview?.[key]}≠${createdStats[key]}`);
+                const rangerHasBow = Number(rangerPreview?.damageMin) > Number(rangerBare?.damageMin)
+                    && Number(rangerPreview?.defense) > Number(rangerBare?.defense);
+                checks.push(
+                    createCheck(
+                        "Prévia da criação mostra os números com que o herói nasce",
+                        Boolean(vanguardPreview) && previewMismatch.length === 0 && rangerHasBow && previewSilent,
+                        `${previewMismatch.length ? previewMismatch.join(", ") : "Vanguarda igual ao herói criado"} · Batedor ${rangerHasBow ? `com arco e peitoral (${rangerPreview.damageMin}–${rangerPreview.damageMax})` : "sem kit"} · ${previewSilent ? "sem eventos de item" : `${previewEvents.length} evento(s) de item`}`
+                    )
+                );
                 checks.push(
                     createCheck(
                         "Criação equipa arma e ActionBar coerentes com a origem",
