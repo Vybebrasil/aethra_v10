@@ -4034,7 +4034,9 @@
                     stockHero.stats.hp = 1;
                     Aethra.ConsumableSystem.use("potion_health", { source: "integration-stock" });
                     const usedMessage = afterFirst.find((message) => /^Você usou Poção de Vida/.test(message || ""));
-                    const oneLeft = afterFirst.includes("Resta 1 Poção de Vida.");
+                    // O aviso vem depois da mensagem de uso no registro.
+                    const oneLeft = afterFirst.includes("Resta 1 Poção de Vida.")
+                        && afterFirst.indexOf("Resta 1 Poção de Vida.") > afterFirst.findIndex((message) => /^Você usou Poção de Vida/.test(message || ""));
                     const outOfStock = stockLogs.some((message) => /^Acabaram as Poções de Vida\. Volte à cidade/.test(message || ""));
                     stockWorks = Boolean(usedMessage) && oneLeft && outOfStock;
                     stockDetail = `${usedMessage || "sem mensagem de uso"} · ${oneLeft ? "avisou 1 restante" : "sem aviso de 1"} · ${outOfStock ? "avisou que acabou" : "sem aviso de fim"}`;

@@ -243,7 +243,8 @@
                 message: `Você usou ${evaluation.item.name}${effectLabels.length ? `: ${effectLabels.join(" · ")}` : ""}.`
             };
 
-            Aethra.EventBus.emit("consumable:used", clone(payload));
+            // A mensagem de uso vem antes do evento: avisos que reagem ao uso
+            // (estoque acabando) aparecem depois dela no registro.
             const battleLog = {
                 eventId,
                 message: payload.message,
@@ -258,6 +259,7 @@
             } else {
                 Aethra.EventBus.emit("BattleLog", battleLog);
             }
+            Aethra.EventBus.emit("consumable:used", clone(payload));
             Aethra.SaveManager?.save?.("consumable-used");
             return clone(payload);
         },
