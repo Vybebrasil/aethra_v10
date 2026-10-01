@@ -2942,7 +2942,18 @@
 }
 
 #ui3-root .ui3-workshop__guidance {
+    box-sizing: border-box;
+    padding: var(--ui3-space-3);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: var(--ui3-bg-1);
     border: 1px solid var(--ui3-gold-3);
+    border-radius: var(--ui3-radius-lg);
+}
+
+#ui3-root .ui3-workshop__guidance p {
+    margin: 0;
 }
 
 #ui3-root .ui3-recipe-grid {

@@ -19,7 +19,6 @@
         "HuntCatalog",
         "EarlyGameItemCatalog",
         "WindowManager",
-        "TooltipManager",
         "SpriteLoader",
         "EntityManager",
         "CombatSystem",
@@ -45,24 +44,16 @@
         "QuestSystem",
         "DungeonSystem",
         "MarketplaceSystem",
-        "NpcShopUI",
         "TileMapCanvas",
         "IdleLoopSystem",
-        "RenderEngine",
-        "UI_Renderer",
         "UIManager",
-        "ActionBarWorkspace",
         "HuntAnalyzer",
         "HuntLootLedger",
-        "HuntAnalyzerWorkspace",
-        "CombatHudModernizer",
-        "EncounterCombatHUD",
-        "PlayerHudWorkspace",
-        "ProfessionSpecializationUI",
         "DisciplineMilestones",
         "ProgressionJournal",
-        "ProgressionJournalUI",
-        "CharacterCreationUI",
+        "CraftingGuidance",
+        "Ui3Shell",
+        "Ui3Navigation",
         "GameLoader"
     ];
 
@@ -149,6 +140,22 @@
         };
     }
 
+    const UI3_WORKSHOP = "#ui3-root [data-ui3-window='profession-workshop-view']";
+
+    // A UI 3.0 só mostra o jogo com herói criado; libera isso durante run().
+    function withUi3Game(run) {
+        const hero = Aethra.GameState.hero || {};
+        const createdBefore = hero.characterCreated;
+        hero.characterCreated = true;
+        Aethra.EventBus.emit("ui3:screens-changed", { source: "integration" });
+        try {
+            return run();
+        } finally {
+            hero.characterCreated = createdBefore;
+            Aethra.EventBus.emit("ui3:screens-changed", { source: "integration-restore" });
+        }
+    }
+
     function createCheck(name, passed, details = null) {
         return {
             check: name,
@@ -203,8 +210,10 @@
                 );
             });
 
-            const progressionJournalModel = Aethra.ProgressionJournalUI?.getViewModel?.();
-            const progressionJournalSelected = progressionJournalModel?.selected;
+            const progressionJournalModel = Aethra.ProgressionJournal?.getViewModel?.();
+            const progressionJournalSelected = progressionJournalModel?.focused
+                || progressionJournalModel?.entries?.find((entry) => entry.discovered)
+                || progressionJournalModel?.entries?.[0];
             checks.push(
                 createCheck(
                     "Diário reúne todas as skills e orienta o próximo treino",
@@ -214,15 +223,6 @@
                     progressionJournalModel
                         ? `${progressionJournalModel.entries.length} skills · foco em ${progressionJournalSelected?.name || "nenhuma"}`
                         : "ViewModel indisponível"
-                )
-            );
-            checks.push(
-                createCheck(
-                    "Diário e ActionBar compartilham a janela oficial de Skills",
-                    Boolean(document.querySelector("#progression-journal-root .progression-workspace"))
-                        && Boolean(document.querySelector('[data-skills-workspace-panel="actionbar"] #skills-config-list'))
-                        && typeof Aethra.RenderEngine?.getDisciplineMilestones === "function",
-                    "Progressão, marcos e automação acessíveis sem duplicar janela"
                 )
             );
 
@@ -236,7 +236,7 @@
                     Boolean(swordMilestone)
                         && swordNext?.level === swordMilestone.level
                         && swordNext?.title === swordMilestone.title
-                        && neutralJournal?.entries?.length === progressionJournalModel?.entries?.length
+                        && neutralJournal?.entries?.length === Object.keys(Aethra.DisciplineSystem?.definitions || {}).length
                         && Array.isArray(neutralJournal?.recent),
                     `espada Nv 1 → ${swordNext?.title || "sem marco"} (Nv ${swordNext?.level ?? "?"}) · ${neutralJournal?.entries?.length ?? 0} skills`
                 )
@@ -464,14 +464,13 @@
                     || intro?.objectives?.find((objective) => objective.id === "receive_training_ore")?.completed === true;
                 let guidedWorkshopVisible = true;
                 if (professionId === "blacksmithing") {
-                    Aethra.ProfessionWorkshopUI?.open?.("blacksmithing", "forge", {
-                        recipeId: "smelt_iron",
-                        source: "integration-route"
+                    guidedWorkshopVisible = withUi3Game(() => {
+                        Aethra.Ui3Navigation.openWorkshop("blacksmithing", { stationId: "forge", source: "integration-route" });
+                        return Boolean(
+                            document.querySelector(`${UI3_WORKSHOP} .ui3-recipe.is-guided [data-ui3-craft="smelt_iron"]`)
+                            && document.querySelector(`${UI3_WORKSHOP} .ui3-workshop__guidance`)
+                        );
                     });
-                    guidedWorkshopVisible = Boolean(
-                        document.querySelector('.workshop-recipe.is-guided [data-craft-recipe="smelt_iron"]')
-                        && document.querySelector(".profession-workshop__guidance")
-                    );
                     Aethra.WindowManager?.closeWindow?.("profession-workshop-view", { source: "integration-route" });
                 }
                 let guidedEncounterIdentified = true;
@@ -614,23 +613,15 @@
 
             const alphaChapter = Aethra.QuestSystem.getQuest("chapter_one_alpha_wolf");
             const alphaGuidance = Aethra.QuestSystem.getGuidance(alphaChapter);
-            const bossGuidanceOpened = Aethra.RenderEngine?.handleQuestGuidance?.(alphaGuidance);
-            Aethra.RenderEngine?.renderBosses?.();
+            const bossGuidanceOpened = Aethra.Ui3Navigation?.followQuestGuidance?.(alphaGuidance, { source: "integration-chapter-one" });
+            Aethra.Ui3BossesWindow?.refresh?.();
             const bossWindowProbe = {
                 action: alphaGuidance?.action || null,
                 opened: Boolean(bossGuidanceOpened),
-                isOpen: Boolean(Aethra.WindowManager?.isOpen?.("bosses-view")),
-                hasElement: Boolean(document.getElementById("bosses-view")),
-                registered: Boolean(Aethra.WindowManager?.registeredWindows?.has?.("bosses-view")),
-                listCount: document.querySelectorAll("#boss-list").length,
-                alphaEnabled: Boolean(document.querySelector('#bosses-view [data-render-challenge-boss="alpha_wolf"]:not(:disabled)'))
+                isOpen: Aethra.Ui3BossesWindow?.isOpen?.() === true,
+                alphaEnabled: Boolean(document.querySelector("#ui3-root [data-ui3-window='bosses-view'] [data-ui3-boss-challenge='alpha_wolf']:not(:disabled)"))
             };
-            const bossWindowFunctional = Boolean(
-                bossWindowProbe.opened
-                && bossWindowProbe.isOpen
-                && bossWindowProbe.listCount === 1
-                && bossWindowProbe.alphaEnabled
-            );
+            const bossWindowFunctional = Boolean(bossWindowProbe.opened && bossWindowProbe.isOpen && bossWindowProbe.alphaEnabled);
             const necklaceBeforeChapter = Aethra.BagSystem?.countItem?.("silver_necklace") || 0;
             const bossChallengeStarted = Aethra.BossSystem?.challenge?.("alpha_wolf") === true;
             const bossVictory = bossChallengeStarted
@@ -705,16 +696,19 @@
                     restoredMentor?.name || "NPC ausente"
                 )
             );
-            const mentorPanelOpened = Aethra.RenderEngine?.openProfessionMentor?.();
-            const mentorPanel = document.getElementById("profession-mentor-view");
             const mentorCurrentGuidance = Aethra.QuestSystem?.getGuidance?.();
-            const mentorPanelFunctional = Boolean(
-                mentorPanelOpened
-                && mentorPanel?.textContent?.includes("SUA ROTA INICIAL")
-                && mentorPanel?.textContent?.includes("BENEFÍCIO PERMANENTE")
-                && (!mentorCurrentGuidance || mentorPanel?.querySelector?.("[data-mentor-follow-guidance]"))
-            );
-            Aethra.WindowManager?.closeWindow?.("profession-mentor-view", { source: "integration-route" });
+            const mentorPanelFunctional = withUi3Game(() => {
+                const opened = Aethra.Ui3Navigation?.openMentor?.({ source: "integration-route" });
+                const mentorPanel = document.querySelector("#ui3-root [data-ui3-window='profession-mentor-view']");
+                const functional = Boolean(
+                    opened
+                    && /Sua rota inicial/i.test(mentorPanel?.textContent || "")
+                    && /Benefício permanente/i.test(mentorPanel?.textContent || "")
+                    && (!mentorCurrentGuidance || mentorPanel?.querySelector?.("[data-ui3-mentor-guidance]"))
+                );
+                Aethra.WindowManager?.closeWindow?.("profession-mentor-view", { source: "integration-route" });
+                return functional;
+            });
             checks.push(
                 createCheck(
                     "Ilyra apresenta rota, lição, benefício e próximo passo",
@@ -1004,13 +998,15 @@
                     `NV60 +${level60Yield.toFixed(2)}% · NV85 +${level85Yield.toFixed(2)}% · NV110 +${level110Yield.toFixed(2)}% · NV135 +${level135Yield.toFixed(2)}%`
                 )
             );
-            Aethra.ProfessionSpecializationUI?.open?.("mining");
-            const specializationWindow = document.getElementById("profession-specialization-view");
-            const specializationUIWorks = Boolean(specializationWindow)
-                && specializationWindow.querySelectorAll(".profession-specialization__branch").length === 2
-                && specializationWindow.querySelectorAll(".profession-specialization__branch li").length === 6
-                && specializationWindow.textContent.includes("MAESTRIA INFINITA")
-                && specializationWindow.querySelector(".profession-specialization__branch.is-chosen");
+            const specializationUIWorks = withUi3Game(() => {
+                Aethra.Ui3Navigation?.openSpecialization?.("mining", { source: "integration" });
+                const specializationWindow = document.querySelector("#ui3-root [data-ui3-window='profession-specialization-view']");
+                return Boolean(specializationWindow)
+                    && specializationWindow.querySelectorAll(".ui3-specialization__paths > .ui3-recipe").length === 2
+                    && specializationWindow.querySelectorAll(".ui3-specialization__nodes li").length === 6
+                    && /Maestria infinita/i.test(specializationWindow.textContent)
+                    && Boolean(specializationWindow.querySelector(".ui3-specialization__paths > .ui3-recipe.is-guided"));
+            });
             checks.push(
                 createCheck(
                     "Árvore de ofício mostra escolha, marcos e maestria infinita",
@@ -1170,13 +1166,21 @@
                 )
             );
 
-            Aethra.ProfessionWorkshopUI?.render?.();
-            const sourceGuidance = document.querySelector("#profession-workshop-view .workshop-recipe__source");
+            const rareRecipe = ["blacksmithing", "leatherworking", "alchemy"]
+                .flatMap((professionId) => Aethra.CraftingSystem.getRecipes(professionId) || [])
+                .find((recipe) => recipe.sourceHint);
+            const sourceGuidance = rareRecipe ? withUi3Game(() => {
+                Aethra.Ui3Navigation.openWorkshop(rareRecipe.professionId, { source: "integration-rare-source" });
+                const card = [...document.querySelectorAll(`${UI3_WORKSHOP} .ui3-recipe`)]
+                    .find((entry) => entry.textContent.includes("Onde conseguir"));
+                Aethra.WindowManager?.closeWindow?.("profession-workshop-view", { source: "integration-rare-source" });
+                return card || null;
+            }) : null;
             checks.push(
                 createCheck(
                     "Oficina orienta onde conseguir materiais raros",
-                    Boolean(sourceGuidance?.textContent?.includes("ONDE CONSEGUIR")),
-                    sourceGuidance ? sourceGuidance.textContent.trim() : "orientação ausente"
+                    Boolean(rareRecipe && sourceGuidance),
+                    sourceGuidance ? `${rareRecipe.name}: dica exibida` : rareRecipe ? "orientação ausente" : "nenhuma receita descoberta com dica"
                 )
             );
 
@@ -1617,208 +1621,24 @@
                     )
                 );
 
-                Aethra.PlayerHudWorkspace?.refresh?.();
-                const playerHud = document.querySelector(".hero-hub--cockpit .player-hud-workspace");
-                const playerFixedEquipment = document.querySelector(
-                    ".hero-hub--cockpit .player-equipment-matrix"
-                );
-                const playerHudSections = playerHud?.querySelectorAll(".player-hud-section") || [];
-                const equipmentSlots = playerFixedEquipment?.querySelectorAll(".player-equipment-slot") || [];
-                const skillCategories = playerHud?.querySelectorAll("[data-skill-category-select] option") || [];
-                const backpackSlots = playerHud?.querySelectorAll(".player-backpack-slot.is-filled") || [];
-                const inspectedBackpackSlots = [...backpackSlots].filter((slot) => slot.dataset.itemTooltipBound === "true");
-                const combatSpeedControls = document.querySelectorAll("[data-battle-speed]");
-                const retiredUiStyles = [
-                    "style-stability.css", "ui-fluidity.css", "actionbar-workspace.css",
-                    "hunt-analyzer-workspace.css", "combat-hud-modern.css",
-                    "encounter-combat-hud.css", "player-hud-workspace.css",
-                    "tilemap-canvas.css", "hud-modernization.css", "aethra-windows.css"
-                ];
-                const runtimeStyles = [...document.querySelectorAll('link[rel="stylesheet"]')]
-                    .map((link) => link.getAttribute("href") || "");
-                checks.push(
-                    createCheck(
-                        "Fundação visual UI 2.0 substitui folhas legadas conflitantes",
-                        document.body.classList.contains("aethra-ui-v2")
-                            && document.body.dataset.uiVersion === "2"
-                            && runtimeStyles.some((href) => href.includes("aethra-ui-v2.css"))
-                            && retiredUiStyles.every((file) => !runtimeStyles.some((href) => href.includes(file))),
-                        `${runtimeStyles.length} folhas ativas · contrato UI ${document.body.dataset.uiVersion || "ausente"}`
-                    )
-                );
+                const combatSpeedControls = withUi3Game(() => {
+                    Aethra.Ui3HuntScreen?.sync?.();
+                    return [...document.querySelectorAll("#ui3-root [data-ui3-speed]")];
+                });
                 checks.push(
                     createCheck(
                         "HUD oferece velocidades 1×, 2× e 4×",
                         combatSpeedControls.length === 3
-                            && [...combatSpeedControls].map((button) => Number(button.dataset.battleSpeed)).join(",") === "1,2,4",
+                            && combatSpeedControls.map((button) => Number(button.dataset.ui3Speed)).join(",") === "1,2,4",
                         `${combatSpeedControls.length}/3 controles renderizados`
                     )
                 );
+                const analyzerMetrics = Aethra.HuntAnalyzer?.getMetrics?.() || {};
                 checks.push(
                     createCheck(
-                        "Painel do herói sem acordeões conflitantes",
-                        Boolean(playerHud)
-                            && playerHudSections.length === 3
-                            && !playerHud.querySelector(".hero-hub__accordion-section, .is-collapsed"),
-                        playerHud ? `${playerHudSections.length} seções no scroll único` : "cockpit ausente"
-                    )
-                );
-                checks.push(
-                    createCheck(
-                        "Paperdoll completo do herói",
-                        equipmentSlots.length === 11,
-                        `${equipmentSlots.length}/11 slots renderizados`
-                    )
-                );
-                const heroHubBounds = document.querySelector("[data-hero-hub]")?.getBoundingClientRect?.();
-                const compactEquipmentFits = window.innerHeight > 820 || [...equipmentSlots].every((slot) => {
-                    const bounds = slot.getBoundingClientRect();
-                    return bounds.left >= heroHubBounds.left - 1 && bounds.right <= heroHubBounds.right + 1;
-                });
-                checks.push(
-                    createCheck(
-                        "Faixa compacta mantém os onze equipamentos dentro da Central",
-                        Boolean(heroHubBounds) && compactEquipmentFits,
-                        compactEquipmentFits ? "11/11 slots dentro da coluna" : "há slot cortado na lateral"
-                    )
-                );
-                checks.push(
-                    createCheck(
-                        "Skills organizadas por categoria",
-                        skillCategories.length >= 4 && Boolean(playerHud?.querySelector("[data-player-skill-search]")),
-                        `${skillCategories.length} categorias com busca`
-                    )
-                );
-                checks.push(
-                    createCheck(
-                        "Backpack com busca, ordenação e hover rico",
-                        Boolean(playerHud?.querySelector("[data-backpack-search]"))
-                            && Boolean(playerHud?.querySelector("[data-backpack-sort]"))
-                            && (backpackSlots.length === 0 || inspectedBackpackSlots.length === backpackSlots.length),
-                        `${inspectedBackpackSlots.length}/${backpackSlots.length} itens com inspeção`
-                    )
-                );
-                const tooltipBagItem = Aethra.BagSystem?.getItems?.()
-                    ?.find((item) => item?.instanceId);
-                const tooltipBagHTML = tooltipBagItem
-                    ? Aethra.TooltipManager?.buildItemHTML?.(tooltipBagItem.instanceId) || ""
-                    : "";
-                checks.push(
-                    createCheck(
-                        "Tooltip resolve instâncias antigas da mochila",
-                        !tooltipBagItem || (
-                            !tooltipBagHTML.includes("Item Desconhecido")
-                            && tooltipBagHTML.includes(tooltipBagItem.name || Aethra.GameData?.items?.[tooltipBagItem.templateId]?.name || "")
-                        ),
-                        tooltipBagItem
-                            ? `${tooltipBagItem.instanceId} resolvido pelo template ${tooltipBagItem.templateId || tooltipBagItem.id}`
-                            : "mochila vazia; compatibilidade preservada"
-                    )
-                );
-
-                const compactHuntTargetBeforeStats = document.querySelector(
-                    "[data-compact-hunt-target][aria-pressed='true']"
-                )?.dataset.compactHuntTarget;
-                const intelligenceTabBeforeStats = document.querySelector(
-                    "[data-intelligence-tab][aria-selected='true']"
-                )?.dataset.intelligenceTab;
-                if (window.innerWidth <= 1120) {
-                    document.querySelector("[data-compact-hunt-target='analysis']")?.click();
-                }
-                document.querySelector("[data-intelligence-tab='analyzer']")?.click();
-                Aethra.RenderEngine?.renderExplorationFeed?.();
-                const journeyStatCards = [...document.querySelectorAll(".expedition-live-stats > span")];
-                const analyzerIsPreparingForJourney = document.getElementById("hunt-panel-analysis")
-                    ?.classList.contains("is-preparing");
-                const journeyStatsVisible = journeyStatCards.length === 4 && (
-                    analyzerIsPreparingForJourney
-                        ? journeyStatCards.every((card) => getComputedStyle(card).display === "none"
-                            || getComputedStyle(card.closest(".hunt-session-summary")).display === "none")
-                        : journeyStatCards.every((card) => {
-                    const value = card.querySelector("strong");
-                    if (!value) return false;
-                    const cardRect = card.getBoundingClientRect();
-                    const valueRect = value.getBoundingClientRect();
-                    return valueRect.top >= cardRect.top - 0.5
-                        && valueRect.bottom <= cardRect.bottom + 0.5
-                        && valueRect.height > 0;
-                        })
-                );
-                checks.push(
-                    createCheck(
-                        "Totais da jornada sem números cortados",
-                        journeyStatsVisible,
-                        analyzerIsPreparingForJourney
-                            ? `${journeyStatCards.length}/4 cards recolhidos durante a preparação`
-                            : `${journeyStatCards.length}/4 cards íntegros`
-                    )
-                );
-                if (compactHuntTargetBeforeStats && window.innerWidth <= 1120) {
-                    document.querySelector(
-                        `[data-compact-hunt-target='${compactHuntTargetBeforeStats}']`
-                    )?.click();
-                }
-                if (intelligenceTabBeforeStats) {
-                    document.querySelector(
-                        `[data-intelligence-tab='${intelligenceTabBeforeStats}']`
-                    )?.click();
-                }
-
-                const workspaceSlots = document.querySelectorAll("#skill-action-bar .battle-action-slot");
-                const workspaceToolbar = document.querySelector(".actionbar-workspace__toolbar");
-                checks.push(
-                    createCheck(
-                        "HUD escalável da ActionBar",
-                        workspaceSlots.length >= 10 && Boolean(workspaceToolbar),
-                        `${workspaceSlots.length} slots visíveis; seletor ${workspaceToolbar ? "presente" : "ausente"}`
-                    )
-                );
-
-                const analyzer = Aethra.HuntAnalyzerWorkspace;
-                const analyzerMetrics = analyzer?.getMetrics?.() || {};
-                const analyzerCards = document.querySelectorAll(".analyzer-ledger-card");
-                const analyzerPreparation = document.querySelector(".analyzer-preparation");
-                // As abas de inteligência são montadas por UIFluidityPass de forma
-                // orientada a eventos; força a montagem síncrona para o teste.
-                Aethra.UIFluidityPass?.enhance?.();
-                const progressionLogBackup = JSON.parse(JSON.stringify(
-                    Aethra.GameState.ui?.progressionLog || []
-                ));
-                Aethra.EventBus.emit("xpChanged", {
-                    amount: 1,
-                    source: { enemyName: "Lobo de teste" }
-                });
-                const progressionSourceDetail = String(
-                    Aethra.GameState.ui?.progressionLog?.[0]?.detail || ""
-                );
-                const progressionSourceReadable = progressionSourceDetail.includes("Combate")
-                    && !progressionSourceDetail.includes("[object Object]");
-                checks.push(
-                    createCheck(
-                        "Progresso traduz fontes estruturadas sem [object Object]",
-                        progressionSourceReadable,
-                        progressionSourceDetail || "fonte ausente"
-                    )
-                );
-                Aethra.GameState.ui.progressionLog = progressionLogBackup;
-                Aethra.EventBus.emit("render:ready", { source: "integration-progression-cleanup" });
-                const analyzerTabs = [...document.querySelectorAll("[data-intelligence-tab]")]
-                    .map((tab) => tab.dataset.intelligenceTab);
-                checks.push(
-                    createCheck(
-                        "Hunt Analyzer alterna preparação contextual e telemetria",
-                        Boolean(analyzer)
-                            && (
-                                analyzerCards.length >= 6
-                                || Boolean(
-                                    analyzerPreparation?.querySelector(".analyzer-objective-card")
-                                    && analyzerPreparation?.querySelectorAll(".analyzer-readiness__grid > span").length === 4
-                                )
-                            )
-                            && ["xp", "gained", "spent", "profit"].every((key) => Number.isFinite(Number(analyzerMetrics[key]))),
-                        analyzerPreparation
-                            ? "preparação contextual ativa; telemetria disponível"
-                            : `${analyzerCards.length} KPIs; telemetria ${analyzer ? "disponível" : "ausente"}`
+                        "Medição da Hunt expõe XP, ganhos, gastos e saldo",
+                        ["xp", "gained", "spent", "profit", "xpPerHour", "profitPerHour"].every((key) => Number.isFinite(Number(analyzerMetrics[key]))),
+                        `XP ${analyzerMetrics.xp ?? "?"} · saldo ${analyzerMetrics.profit ?? "?"}`
                     )
                 );
                 /*
@@ -1861,13 +1681,6 @@
                 }
                 checks.push(createCheck("HuntAnalyzer registra recordes por Hunt uma vez por sessão", recordsWork, recordsDetail));
 
-                checks.push(
-                    createCheck(
-                        "Ordem Análise, Loot e Progresso",
-                        analyzerTabs.slice(0, 3).join(",") === "analyzer,loot,progression",
-                        analyzerTabs.slice(0, 3).join(" → ") || "abas ausentes"
-                    )
-                );
 
                 const supplyCostBefore = Number(Aethra.GameState.hunt?.supplyCost || 0);
                 const supplyBreakdownBefore = JSON.parse(JSON.stringify(Aethra.GameState.hunt?.supplyBreakdown || {}));
@@ -1890,155 +1703,6 @@
                 );
                 Aethra.GameState.hunt.supplyCost = supplyCostBefore;
                 Aethra.GameState.hunt.supplyBreakdown = supplyBreakdownBefore;
-                Aethra.RenderEngine?.renderHunt?.();
-
-                Aethra.CombatHudModernizer?.renderSkillSettings?.();
-                const primaryAttackCards = document.querySelectorAll("#primary-attack-bar .primary-attack-card");
-                const survivalResources = document.querySelectorAll(".modern-combat-summary__resources [data-modern-resource]");
-                const loadoutSlots = document.querySelectorAll("#skills-view .modern-loadout-slot");
-                const skillRules = document.querySelectorAll("#skills-view .modern-skill-rule");
-                checks.push(
-                    createCheck(
-                        "HUD moderno de combate e sobrevivência",
-                        primaryAttackCards.length === 2 && survivalResources.length === 3,
-                        `${primaryAttackCards.length} ataques primários; ${survivalResources.length} recursos vitais`
-                    )
-                );
-                checks.push(
-                    createCheck(
-                        "Configurador compacto de ActionBar",
-                        loadoutSlots.length >= 10 && skillRules.length >= 3,
-                        `${loadoutSlots.length} slots; ${skillRules.length} regras editáveis`
-                    )
-                );
-
-                const previousBattleState = JSON.parse(JSON.stringify(Aethra.GameState.battle || {}));
-                const previousCombatState = JSON.parse(JSON.stringify(Aethra.GameState.combat || {}));
-                const heroForResourceTest = Aethra.GameState.hero || {};
-                const previousHeroResources = {
-                    hp: heroForResourceTest.hp,
-                    maxHp: heroForResourceTest.maxHp,
-                    mana: heroForResourceTest.mana,
-                    maxMana: heroForResourceTest.maxMana,
-                    energy: heroForResourceTest.energy,
-                    maxEnergy: heroForResourceTest.maxEnergy,
-                    stats: JSON.parse(JSON.stringify(heroForResourceTest.stats || {}))
-                };
-                heroForResourceTest.stats = heroForResourceTest.stats || {};
-                heroForResourceTest.hp = 44;
-                heroForResourceTest.maxHp = 100;
-                heroForResourceTest.mana = 7;
-                heroForResourceTest.maxMana = 50;
-                heroForResourceTest.energy = 33;
-                heroForResourceTest.maxEnergy = 100;
-                heroForResourceTest.stats.hp = 100;
-                heroForResourceTest.stats.mana = 50;
-                heroForResourceTest.stats.energy = 100;
-                Aethra.GameState.battle = {
-                    ...previousBattleState,
-                    isFighting: true,
-                    battleId: "integration_combat_hud",
-                    round: 3,
-                    creature: {
-                        id: "integration_target",
-                        name: "Alvo de Teste",
-                        level: 2,
-                        hp: 34,
-                        maxHp: 50,
-                        stats: { damageMax: 6, defense: 2 }
-                    }
-                };
-                Aethra.GameState.combat = { ...previousCombatState, isActive: false, enemy: null };
-                Aethra.CombatProjection?.reset?.("integration-combat-hud");
-                Aethra.EventBus.emit("battle:started", {
-                    battleId: "integration_combat_hud",
-                    creature: Aethra.GameState.battle.creature
-                });
-                Aethra.EventBus.emit("battle:damage-dealt", {
-                    battleId: "integration_combat_hud",
-                    round: 3,
-                    side: "hero",
-                    attacker: "hero",
-                    attackerName: "Aethra",
-                    target: "integration_target",
-                    targetName: "Alvo de Teste",
-                    skillName: "Golpe Pesado",
-                    hit: true,
-                    isCrit: true,
-                    amount: 16
-                });
-                Aethra.EventBus.emit("battle:attack-missed", {
-                    battleId: "integration_combat_hud",
-                    round: 3,
-                    side: "creature",
-                    attacker: "integration_target",
-                    actorName: "Alvo de Teste",
-                    attackerName: "Alvo de Teste",
-                    target: "hero",
-                    targetName: "Aethra",
-                    skillName: "Mordida",
-                    hit: false,
-                    amount: 0
-                });
-                Aethra.RenderEngine?.renderBattleCards?.();
-
-                const combatTimeline = document.querySelector(".encounter-exchange__timeline");
-                const heroCombatEntry = combatTimeline?.querySelector(".encounter-exchange__event.is-hero");
-                const enemyCombatEntry = combatTimeline?.querySelector(".encounter-exchange__event.is-enemy");
-                const encounterResources = document.querySelectorAll("#battle-hero-card [data-encounter-resource]");
-                const centralResourceValues = Object.fromEntries(
-                    [...encounterResources].map((resource) => [
-                        resource.dataset.encounterResource,
-                        Number(resource.querySelector("[role='progressbar']")?.getAttribute("aria-valuenow"))
-                    ])
-                );
-                checks.push(
-                    createCheck(
-                        "Linha do tempo identifica ator e alvo",
-                        Boolean(heroCombatEntry && enemyCombatEntry)
-                            && /VOCÊ/.test(heroCombatEntry.textContent)
-                            && /INIMIGO/.test(enemyCombatEntry.textContent),
-                        heroCombatEntry && enemyCombatEntry ? "herói e inimigo diferenciados" : "ações sem identificação"
-                    )
-                );
-                checks.push(
-                    createCheck(
-                        "Resultados de ataque legíveis",
-                        /Golpe Pesado/.test(combatTimeline?.textContent || "")
-                            && /Crítico/.test(combatTimeline?.textContent || "")
-                            && /Mordida/.test(combatTimeline?.textContent || "")
-                            && /ERROU/.test(combatTimeline?.textContent || ""),
-                        combatTimeline ? "habilidade, crítico e erro visíveis" : "timeline ausente"
-                    )
-                );
-                checks.push(
-                    createCheck(
-                        "Recursos padronizados na arena",
-                        encounterResources.length === 3,
-                        `${encounterResources.length} recursos renderizados`
-                    )
-                );
-                checks.push(
-                    createCheck(
-                        "Recursos centrais usam o estado vivo do herói",
-                        centralResourceValues.hp === 44
-                            && centralResourceValues.mp === 7
-                            && centralResourceValues.vigor === 33,
-                        `HP ${centralResourceValues.hp} · MP ${centralResourceValues.mp} · Vigor ${centralResourceValues.vigor}`
-                    )
-                );
-
-                Aethra.GameState.battle = previousBattleState;
-                Aethra.GameState.combat = previousCombatState;
-                heroForResourceTest.hp = previousHeroResources.hp;
-                heroForResourceTest.maxHp = previousHeroResources.maxHp;
-                heroForResourceTest.mana = previousHeroResources.mana;
-                heroForResourceTest.maxMana = previousHeroResources.maxMana;
-                heroForResourceTest.energy = previousHeroResources.energy;
-                heroForResourceTest.maxEnergy = previousHeroResources.maxEnergy;
-                heroForResourceTest.stats = previousHeroResources.stats;
-                Aethra.CombatProjection?.reset?.("integration-combat-hud-restored");
-                Aethra.RenderEngine?.renderBattleCards?.();
 
                 const vanguardPreset = Aethra.CharacterBuildSystem?.archetypes?.vanguard;
                 const createdHero = vanguardPreset
@@ -2148,10 +1812,10 @@
 
                 Aethra.GameState.hunt.isActive = false;
                 Aethra.UIManager?.setPrimaryView?.("city", { emit: false, source: "integration-mining-contract" });
-                Aethra.ProfessionWorkshopUI?.open?.("blacksmithing", "forge", { source: "integration-mining-contract" });
+                Aethra.Ui3Navigation.openWorkshop("blacksmithing", { stationId: "forge", source: "integration-mining-contract" });
                 const guidedSmeltingVisible = Boolean(
-                    document.querySelector('.workshop-recipe.is-guided [data-craft-recipe="smelt_iron"]')
-                    && /Produza Fundir Ferro/.test(document.querySelector(".profession-workshop__guidance")?.textContent || "")
+                    document.querySelector(`${UI3_WORKSHOP} .ui3-recipe.is-guided [data-ui3-craft="smelt_iron"]`)
+                    && /Produza Fundir Ferro/.test(document.querySelector(`${UI3_WORKSHOP} .ui3-workshop__guidance`)?.textContent || "")
                 );
                 const smeltingResult = Aethra.CraftingSystem?.craft?.("smelt_iron", {
                     stationId: "forge",
@@ -2160,10 +1824,10 @@
                     commandId: "integration-focus-smelt"
                 });
                 const miningContractAfterSmelt = Aethra.ProfessionSystem?.getFocusTrainingState?.("mining");
-                Aethra.ProfessionWorkshopUI?.open?.("blacksmithing", "forge", { source: "integration-mining-contract-equipment" });
-                const guidedEquipmentCards = [...document.querySelectorAll(".workshop-recipe.is-guided [data-craft-recipe]")];
+                Aethra.Ui3WorkshopWindow?.refresh?.();
+                const guidedEquipmentCards = [...document.querySelectorAll(`${UI3_WORKSHOP} .ui3-recipe.is-guided [data-ui3-craft]`)];
                 const equipmentChoiceVisible = guidedEquipmentCards.length === 3
-                    && /Escolha seu primeiro equipamento/.test(document.querySelector(".profession-workshop__guidance")?.textContent || "");
+                    && /Escolha seu primeiro equipamento/.test(document.querySelector(`${UI3_WORKSHOP} .ui3-workshop__guidance`)?.textContent || "");
                 checks.push(
                     createCheck(
                         "Oficina conduz da fundição para três escolhas de equipamento",
@@ -2194,34 +1858,33 @@
                 );
                 Aethra.WindowManager?.closeWindow?.("profession-workshop-view", { source: "integration-mining-contract" });
 
-                Aethra.PlayerHudWorkspace?.renderSkills?.();
-                const focusedMiningCard = document.querySelector('[data-skill-id="mining"].is-focused');
+                const focusedJournal = Aethra.ProgressionJournal?.getViewModel?.();
                 checks.push(
                     createCheck(
-                        "Central do Herói reflete a skill focada",
-                        Boolean(focusedMiningCard)
-                            && Boolean(focusedMiningCard?.querySelector('[data-focus-discipline="mining"][disabled]')),
-                        focusedMiningCard ? "Mineração destacada na Central" : "Card focado ausente"
+                        "Diário reflete a skill focada",
+                        focusedJournal?.focused?.id === "mining"
+                            && focusedJournal.entries.filter((entry) => entry.focused).length === 1,
+                        focusedJournal?.focused ? `${focusedJournal.focused.name} em foco` : "nenhuma skill em foco"
                     )
                 );
 
-                Aethra.RenderEngine?.renderQuestTracker?.();
                 const trackedIntroQuest = Aethra.QuestSystem?.getTrackedQuest?.();
                 const trackedGuidance = Aethra.QuestSystem?.getGuidance?.(trackedIntroQuest);
-                const questTrackerSlots = [...document.querySelectorAll("[data-quest-tracker-slot]")];
+                const journeyViewBefore = Aethra.UIManager?.primaryView || "hunt";
+                Aethra.UIManager?.setPrimaryView?.("city", { source: "integration-journey" });
+                Aethra.Ui3CityScreen?.sync?.();
+                const cityGuidance = document.querySelector("#ui3-root [data-ui3-screen='city'] [data-ui3-part='guidance']");
+                const journeyShown = Boolean(cityGuidance?.querySelector("[data-ui3-city-quest-action]"))
+                    && Boolean(cityGuidance?.querySelector("[data-ui3-city-focus-action]"))
+                    && /Primeiros Passos/.test(cityGuidance?.textContent || "");
+                Aethra.UIManager?.setPrimaryView?.(journeyViewBefore, { source: "integration-restore" });
                 checks.push(
                     createCheck(
                         "HUD da jornada mostra objetivo e próximo passo",
                         trackedIntroQuest?.id === "tutorial_first_steps"
                             && trackedGuidance?.action === "open-hunt-map"
-                            && questTrackerSlots.length === 2
-                            && questTrackerSlots.every((slot) => {
-                                return slot.hidden === false
-                                    && Boolean(slot.querySelector("[data-quest-next-action]"))
-                                    && Boolean(slot.querySelector("[data-focus-skill-next-action]"))
-                                    && /Primeiros Passos/.test(slot.textContent || "");
-                            }),
-                        `${questTrackerSlots.length}/2 pontos da HUD · missão ${trackedGuidance?.actionLabel || "ausente"} · foco ${miningGuidance?.actionLabel || "ausente"}`
+                            && journeyShown,
+                        `Cidade ${journeyShown ? "mostra missão e foco" : "sem próximo passo"} · missão ${trackedGuidance?.actionLabel || "ausente"} · foco ${miningGuidance?.actionLabel || "ausente"}`
                     )
                 );
 
@@ -2315,10 +1978,10 @@
 
                 Aethra.GameState.hunt.isActive = false;
                 Aethra.UIManager?.setPrimaryView?.("city", { emit: false, source: "integration-skinning-contract" });
-                Aethra.ProfessionWorkshopUI?.open?.("leatherworking", "tannery", { source: "integration-skinning-contract" });
+                Aethra.Ui3Navigation.openWorkshop("leatherworking", { stationId: "tannery", source: "integration-skinning-contract" });
                 const guidedTanningVisible = Boolean(
-                    document.querySelector('.workshop-recipe.is-guided [data-craft-recipe="tan_beast_hide"]')
-                    && /Produza Curtir Pele/.test(document.querySelector(".profession-workshop__guidance")?.textContent || "")
+                    document.querySelector(`${UI3_WORKSHOP} .ui3-recipe.is-guided [data-ui3-craft="tan_beast_hide"]`)
+                    && /Produza Curtir Pele/.test(document.querySelector(`${UI3_WORKSHOP} .ui3-workshop__guidance`)?.textContent || "")
                 );
                 const tanningResult = Aethra.CraftingSystem?.craft?.("tan_beast_hide", {
                     stationId: "tannery",
@@ -2327,10 +1990,10 @@
                     commandId: "integration-focus-tanning"
                 });
                 const skinningContractAfterTan = Aethra.ProfessionSystem?.getFocusTrainingState?.("skinning");
-                Aethra.ProfessionWorkshopUI?.open?.("leatherworking", "tannery", { source: "integration-skinning-contract-equipment" });
-                const guidedLeatherCards = [...document.querySelectorAll(".workshop-recipe.is-guided [data-craft-recipe]")];
+                Aethra.Ui3WorkshopWindow?.refresh?.();
+                const guidedLeatherCards = [...document.querySelectorAll(`${UI3_WORKSHOP} .ui3-recipe.is-guided [data-ui3-craft]`)];
                 const leatherChoiceVisible = guidedLeatherCards.length === 3
-                    && /Botas, Chapéu e Calças de Couro/.test(document.querySelector(".profession-workshop__guidance")?.textContent || "");
+                    && /Botas, Chapéu e Calças de Couro/.test(document.querySelector(`${UI3_WORKSHOP} .ui3-workshop__guidance`)?.textContent || "");
                 checks.push(
                     createCheck(
                         "Curtume conduz do tratamento para três escolhas de equipamento",
@@ -2367,7 +2030,7 @@
                 const herbalismGuaranteeStart = Aethra.ExplorationSystem?.getSnapshot?.().tutorialGuarantee;
                 checks.push(
                     createCheck(
-                        "Foco de Herbalismo ativa rota e contrato atÃ© Alquimia",
+                        "Foco de Herbalismo ativa rota e contrato até Alquimia",
                         herbalismFocus?.disciplineId === "herbalism"
                             && herbalismGuidance?.huntId === "verdant_grove_focus"
                             && herbalismGuidance?.mapMode === "hunts"
@@ -2378,7 +2041,7 @@
                             && herbalismGuaranteeStart?.remaining === 3
                             && herbalismGuaranteeStart?.manual === true
                             && herbalismGuaranteeStart?.minimumQuantity === 2,
-                        `${herbalismGuidance?.name || "sem skill"} â†’ ${herbalismGuidance?.recommendation?.name || "sem rota"} Â· ${herbalismGuaranteeStart?.remaining || 0} colheitas`
+                        `${herbalismGuidance?.name || "sem skill"} â†’ ${herbalismGuidance?.recommendation?.name || "sem rota"} · ${herbalismGuaranteeStart?.remaining || 0} colheitas`
                     )
                 );
 
@@ -2405,7 +2068,7 @@
                             && /colher agora ou ignorar/.test(skippedHerbalismEvent?.description || "")
                             && skippedHerbalismResult?.status === "skipped"
                             && herbalismGuaranteeAfterSkip?.remaining === 3,
-                        skippedHerbalismResult ? `ignorada Â· ${herbalismGuaranteeAfterSkip?.remaining || 0} colheitas restantes` : "decisÃ£o manual ausente"
+                        skippedHerbalismResult ? `ignorada · ${herbalismGuaranteeAfterSkip?.remaining || 0} colheitas restantes` : "decisão manual ausente"
                     )
                 );
 
@@ -2425,7 +2088,7 @@
                 const herbalismXPFromEvents = gatheredFocusEvents.reduce((sum, event) => sum + Number(event?.xpGain || 0), 0);
                 checks.push(
                     createCheck(
-                        "Herbalismo manual entrega XP, seis ervas e avanÃ§a ao LaboratÃ³rio",
+                        "Herbalismo manual entrega XP, seis ervas e avança ao Laboratório",
                         gatheredFocusEvents.length === 3
                             && gatheredFocusEvents.every((event) => event?.status === "resolved" && event?.manual === true)
                             && herbsAfterFocusLoop - herbsBeforeFocusLoop === 6
@@ -2433,16 +2096,16 @@
                             && herbalismContractAfterHerbs?.guidance?.objective?.id === "distill_focus_extracts"
                             && herbalismContractAfterHerbs?.guidance?.professionId === "alchemy"
                             && Aethra.ExplorationSystem?.getSnapshot?.().tutorialGuarantee === null,
-                        `${gatheredFocusEvents.length}/3 canteiros Â· +${herbsAfterFocusLoop - herbsBeforeFocusLoop} ervas Â· +${herbalismXPAfterFocusLoop - herbalismXPBeforeFocusLoop} XP`
+                        `${gatheredFocusEvents.length}/3 canteiros · +${herbsAfterFocusLoop - herbsBeforeFocusLoop} ervas · +${herbalismXPAfterFocusLoop - herbalismXPBeforeFocusLoop} XP`
                     )
                 );
 
                 Aethra.GameState.hunt.isActive = false;
                 Aethra.UIManager?.setPrimaryView?.("city", { emit: false, source: "integration-herbalism-contract" });
-                Aethra.ProfessionWorkshopUI?.open?.("alchemy", "laboratory", { source: "integration-herbalism-contract" });
+                Aethra.Ui3Navigation.openWorkshop("alchemy", { stationId: "laboratory", source: "integration-herbalism-contract" });
                 const guidedDistillationVisible = Boolean(
-                    document.querySelector('.workshop-recipe.is-guided [data-craft-recipe="distill_wild_herb"]')
-                    && /Produza Destilar Ervas/.test(document.querySelector(".profession-workshop__guidance")?.textContent || "")
+                    document.querySelector(`${UI3_WORKSHOP} .ui3-recipe.is-guided [data-ui3-craft="distill_wild_herb"]`)
+                    && /Produza Destilar Ervas/.test(document.querySelector(`${UI3_WORKSHOP} .ui3-workshop__guidance`)?.textContent || "")
                 );
                 const distillationResult = Aethra.CraftingSystem?.craft?.("distill_wild_herb", {
                     stationId: "laboratory",
@@ -2451,21 +2114,21 @@
                     commandId: "integration-focus-distillation"
                 });
                 const herbalismContractAfterDistill = Aethra.ProfessionSystem?.getFocusTrainingState?.("herbalism");
-                Aethra.ProfessionWorkshopUI?.open?.("alchemy", "laboratory", { source: "integration-herbalism-contract-supply" });
-                const guidedSupplyCards = [...document.querySelectorAll(".workshop-recipe.is-guided [data-craft-recipe]")];
-                const guidedSupplyIds = guidedSupplyCards.map((card) => card.dataset.craftRecipe).sort();
+                Aethra.Ui3WorkshopWindow?.refresh?.();
+                const guidedSupplyCards = [...document.querySelectorAll(`${UI3_WORKSHOP} .ui3-recipe.is-guided [data-ui3-craft]`)];
+                const guidedSupplyIds = guidedSupplyCards.map((card) => card.dataset.ui3Craft).sort();
                 const supplyChoiceVisible = guidedSupplyCards.length === 3
                     && ["brew_health_potion", "brew_mana_potion", "brew_vigor_tonic"].every((recipeId) => guidedSupplyIds.includes(recipeId))
-                    && /Escolha seu primeiro supply/.test(document.querySelector(".profession-workshop__guidance")?.textContent || "")
-                    && !document.querySelector('[data-workshop-tab="maintenance"]');
+                    && /Escolha seu primeiro suprimento/.test(document.querySelector(`${UI3_WORKSHOP} .ui3-workshop__guidance`)?.textContent || "")
+                    && !document.querySelector(`${UI3_WORKSHOP} [data-ui3-tab="maintenance"]`);
                 checks.push(
                     createCheck(
-                        "LaboratÃ³rio conduz da destilaÃ§Ã£o para trÃªs escolhas de supply",
+                        "Laboratório conduz da destilação para três escolhas de supply",
                         guidedDistillationVisible
                             && distillationResult?.accepted === true
                             && herbalismContractAfterDistill?.guidance?.objective?.id === "brew_focus_supply"
                             && supplyChoiceVisible,
-                        `destilaÃ§Ã£o ${guidedDistillationVisible ? "guiada" : "ausente"} Â· ${guidedSupplyCards.length}/3 supplies destacados`
+                        `destilação ${guidedDistillationVisible ? "guiada" : "ausente"} · ${guidedSupplyCards.length}/3 supplies destacados`
                     )
                 );
 
@@ -2487,7 +2150,7 @@
                             && Aethra.QuestSystem?.getQuest?.("focus_training_herbalism")?.status === "completed"
                             && vigorAfterAlchemy - vigorBeforeAlchemy === 3
                             && Number(vigorTemplate?.energyAmount) === 18,
-                        `${craftedSupply?.recipe?.name || "sem supply"} Â· +${vigorAfterAlchemy - vigorBeforeAlchemy} no estoque Â· contrato ${completedHerbalismContract?.status || "ausente"}`
+                        `${craftedSupply?.recipe?.name || "sem supply"} · +${vigorAfterAlchemy - vigorBeforeAlchemy} no estoque · contrato ${completedHerbalismContract?.status || "ausente"}`
                     )
                 );
                 Aethra.WindowManager?.closeWindow?.("profession-workshop-view", { source: "integration-herbalism-contract" });
@@ -2807,879 +2470,6 @@
                 Aethra.ConsumableSystem?.ensurePolicy?.();
                 Aethra.IdleLoopControls?.render?.();
 
-                Aethra.RenderEngine?.renderEquipment?.();
-                const fullEquipmentSlots = document.querySelectorAll(
-                    "#equipment-grid [data-equipment-slot]"
-                );
-                checks.push(
-                    createCheck(
-                        "Inventário completo usa os mesmos onze slots da Central do Herói",
-                        Aethra.EquipSystem?.validSlots?.length === 11
-                            && Aethra.PlayerHudWorkspace?.slots?.length === 11
-                            && fullEquipmentSlots.length === 11,
-                        `${fullEquipmentSlots.length} slots renderizados · ${Aethra.EquipSystem?.validSlots?.length || 0} slots de domínio`
-                    )
-                );
-
-                Aethra.RenderEngine?.activateBattleMode?.();
-                Aethra.PlayerHudWorkspace?.refresh?.();
-                const heroPanels = [...document.querySelectorAll("[data-hero-panel-view]")];
-                const visibleHeroPanels = heroPanels.filter((panel) => !panel.hidden);
-                const fixedEquipmentPanel = document.querySelector(".player-equipment-matrix");
-                const fixedEquipmentSlots = fixedEquipmentPanel?.querySelectorAll(
-                    "[data-battle-equipment-slot]"
-                ) || [];
-                checks.push(
-                    createCheck(
-                        "Central mantém recursos e set fixos com três áreas exclusivas",
-                        heroPanels.length === 3
-                            && visibleHeroPanels.length === 1
-                            && fixedEquipmentPanel?.hidden === false
-                            && fixedEquipmentSlots.length === 11,
-                        `${visibleHeroPanels.length}/${heroPanels.length} área(s) visível(is) · ${fixedEquipmentSlots.length}/11 slots fixos`
-                    )
-                );
-                const heroNavigationOrder = [...document.querySelectorAll(
-                    "[data-player-hud-target]"
-                )].map((button) => button.dataset.playerHudTarget);
-                checks.push(
-                    createCheck(
-                        "Central 4.0 prioriza atributos sem duplicar números de combate",
-                        document.querySelector(".player-hud-summary")?.dataset.hudGeneration === "4"
-                            && heroNavigationOrder.join(",") === "overview,backpack,skills"
-                            && !document.querySelector(".player-combat-readout"),
-                        `${heroNavigationOrder.join(" → ")} · leitura duplicada ${document.querySelector(".player-combat-readout") ? "presente" : "removida"}`
-                    )
-                );
-
-                const selectedHeroTabBeforeAudit = document.querySelector(
-                    "[data-player-hud-target][aria-selected='true']"
-                )?.dataset.playerHudTarget || "backpack";
-                const heroTabContracts = [
-                    ["backpack", ".player-backpack-slot, .player-backpack-empty", 1],
-                    ["skills", ".player-skill-card-slim", 4],
-                    ["overview", ".hero-attribute", 6]
-                ];
-                const heroTabsHaveRealContent = heroTabContracts.every(([tab, selector, minimum]) => {
-                    document.querySelector(`[data-player-hud-target='${tab}']`)?.click();
-                    const panel = document.querySelector(`[data-hero-panel-view='${tab}']`);
-                    return panel?.hidden === false
-                        && panel.getAttribute("aria-hidden") === "false"
-                        && panel.querySelectorAll(selector).length >= minimum;
-                });
-                checks.push(
-                    createCheck(
-                        "Todas as abas da Central exibem conteúdo funcional",
-                        heroTabsHaveRealContent,
-                        heroTabsHaveRealContent
-                            ? "Itens, skills e build possuem conteúdo real"
-                            : "uma ou mais abas estão vazias ou não ativaram"
-                    )
-                );
-
-                document.querySelector("[data-player-hud-target='skills']")?.click();
-                const activeSkillPanel = document.querySelector("[data-hero-panel-view='skills']");
-                const inactiveHeroPanels = heroPanels.filter((panel) => panel !== activeSkillPanel);
-                const heroWorkspaceRect = document.querySelector(".hero-hub--cockpit .player-hud-workspace")
-                    ?.getBoundingClientRect?.();
-                const activeSkillRect = activeSkillPanel?.getBoundingClientRect?.();
-                const activePanelStartsInView = !heroWorkspaceRect?.height
-                    || (activeSkillRect.top >= heroWorkspaceRect.top - 1
-                        && activeSkillRect.top < heroWorkspaceRect.bottom);
-                checks.push(
-                    createCheck(
-                        "Aba ativa da Central aparece imediatamente e as demais não ocupam espaço",
-                        getComputedStyle(activeSkillPanel).display !== "none"
-                            && inactiveHeroPanels.every((panel) => getComputedStyle(panel).display === "none")
-                            && activePanelStartsInView,
-                        `${inactiveHeroPanels.filter((panel) => getComputedStyle(panel).display === "none").length}/${inactiveHeroPanels.length} ocultas · início ${activePanelStartsInView ? "visível" : "fora da rolagem"}`
-                    )
-                );
-                // Modelo atual: cartas compactas (.player-skill-card-slim) que
-                // já nascem expandidas e alternam entre fixada/minimizada pelo pino.
-                const firstSkillCard = document.querySelector(".player-skill-card-slim");
-                const skillCardExpandedContent = firstSkillCard
-                    ? firstSkillCard.querySelector(".player-skill-card-slim__bar, .player-skill-card-slim__meta")
-                    : null;
-                const skillCardNotClipped = Boolean(firstSkillCard)
-                    && (firstSkillCard.clientHeight === 0
-                        || firstSkillCard.clientHeight >= firstSkillCard.scrollHeight - 1);
-                // O pino re-renderiza toda a lista, então a carta precisa ser
-                // reconsultada pelo data-skill-id após cada alternância.
-                const firstSkillId = firstSkillCard?.dataset.skillId;
-                const startedExpanded = Boolean(firstSkillCard?.classList.contains("is-expanded"));
-                firstSkillCard?.querySelector("[data-toggle-skill-pin]")?.click();
-                const cardAfterCollapse = document.querySelector(`.player-skill-card-slim[data-skill-id='${firstSkillId}']`);
-                const collapsedAfterToggle = Boolean(cardAfterCollapse?.classList.contains("is-minimized"));
-                cardAfterCollapse?.querySelector("[data-toggle-skill-pin]")?.click();
-                const skillCardToggles = Boolean(firstSkillId) && startedExpanded && collapsedAfterToggle;
-                checks.push(
-                    createCheck(
-                        "Categorias e fichas de Skills expandem sem conteúdo cortado",
-                        Boolean(firstSkillCard)
-                            && Boolean(skillCardExpandedContent)
-                            && skillCardNotClipped
-                            && skillCardToggles,
-                        firstSkillCard
-                            ? `carta ${startedExpanded ? "expandida" : "fechada"} · pino ${skillCardToggles ? "alterna" : "estático"}`
-                            : "nenhuma carta de skill renderizada"
-                    )
-                );
-
-                Aethra.UIFluidityPass?.enhance?.();
-                const intelligenceTabBeforeAudit = document.querySelector(
-                    "[data-intelligence-tab][aria-selected='true']"
-                )?.dataset.intelligenceTab || "analyzer";
-                const intelligenceTabsWork = ["analyzer", "loot", "progression"].every((tab) => {
-                    document.querySelector(`[data-intelligence-tab='${tab}']`)?.click();
-                    const visiblePanels = [...document.querySelectorAll("[data-intelligence-panel]")]
-                        .filter((panel) => !panel.hidden);
-                    return document.querySelector(`[data-intelligence-tab='${tab}']`)
-                        ?.getAttribute("aria-selected") === "true"
-                        && visiblePanels.length === 1
-                        && visiblePanels[0].dataset.intelligencePanel === tab;
-                });
-                document.querySelector(`[data-intelligence-tab='${intelligenceTabBeforeAudit}']`)?.click();
-                checks.push(
-                    createCheck(
-                        "Hunt Analyzer alterna todas as abas internas",
-                        intelligenceTabsWork,
-                        intelligenceTabsWork
-                            ? "Análise, Loot e Progresso alternam painéis exclusivos"
-                            : "aba selecionada e painel visível divergiram"
-                    )
-                );
-                document.querySelector("[data-player-hud-target='backpack']")?.click();
-                const styledBackpackPanel = document.querySelector(
-                    "[data-hero-panel-view='backpack'].is-active"
-                );
-                const styledBackpackGrid = styledBackpackPanel?.querySelector(
-                    ".player-backpack-grid"
-                );
-                const styledBackpackFilter = styledBackpackPanel?.querySelector(
-                    ".hero-backpack-filters button"
-                );
-                const styledBackpackPanelStyle = styledBackpackPanel
-                    ? getComputedStyle(styledBackpackPanel)
-                    : null;
-                const backpackContentIsReachable = !styledBackpackPanel
-                    ? false
-                    : styledBackpackPanel.scrollHeight <= styledBackpackPanel.clientHeight + 2
-                        || ["auto", "scroll"].includes(styledBackpackPanelStyle?.overflowY);
-                checks.push(
-                    createCheck(
-                        "Backpack atual usa grade compacta e nunca corta conteúdo",
-                        styledBackpackPanelStyle?.display === "grid"
-                            && Boolean(styledBackpackGrid)
-                            && getComputedStyle(styledBackpackGrid).display === "grid"
-                            && styledBackpackPanel?.querySelectorAll(".player-backpack-slot").length >= 18
-                            && Boolean(styledBackpackFilter)
-                            && parseFloat(getComputedStyle(styledBackpackFilter).fontSize) <= 8
-                            && backpackContentIsReachable,
-                        styledBackpackPanel
-                            ? `${styledBackpackPanel.clientHeight}/${styledBackpackPanel.scrollHeight}px · overflow ${styledBackpackPanelStyle?.overflowY}`
-                            : "painel da mochila ausente"
-                    )
-                );
-
-                document.querySelector("[data-intelligence-tab='analyzer']")?.click();
-                const styledAnalyzer = document.querySelector(".hunt-analyzer--ledger");
-                const styledAnalyzerParent = styledAnalyzer?.parentElement;
-                const styledAnalyzerRect = styledAnalyzer?.getBoundingClientRect?.();
-                const styledAnalyzerParentRect = styledAnalyzerParent?.getBoundingClientRect?.();
-                const styledAnalyzerStyle = styledAnalyzer
-                    ? getComputedStyle(styledAnalyzer)
-                    : null;
-                const analyzerStaysInsidePanel = !styledAnalyzerRect?.height
-                    || styledAnalyzerRect.bottom <= styledAnalyzerParentRect.bottom + 2;
-                checks.push(
-                    createCheck(
-                        "Hunt Analyzer atual mantém cards, tipografia e rolagem interna",
-                        styledAnalyzerStyle?.display === "flex"
-                            && styledAnalyzerStyle?.overflowY === "auto"
-                            && parseFloat(styledAnalyzerStyle?.fontSize || "99") <= 10
-                            && styledAnalyzer?.querySelectorAll(".analyzer-ledger-card").length === 6
-                            && analyzerStaysInsidePanel,
-                        styledAnalyzer
-                            ? `${styledAnalyzer.clientHeight}/${styledAnalyzer.scrollHeight}px · 6 cards · ${styledAnalyzerStyle?.fontSize}`
-                            : "ledger do analisador ausente"
-                    )
-                );
-
-                const hudTooltipTrigger = document.querySelector(
-                    "#hunt-panel-hero [data-tooltip-kind='hud']"
-                );
-                let hudTooltipIsCompact = false;
-                let hudTooltipDetail = "tooltip indisponível";
-                if (hudTooltipTrigger && Aethra.TooltipManager?.show?.(hudTooltipTrigger)) {
-                    const tooltipElement = document.getElementById("aethra-ui-tooltip");
-                    const tooltipRect = tooltipElement?.getBoundingClientRect?.();
-                    const heroSidebarRect = document.getElementById("hunt-panel-hero")
-                        ?.getBoundingClientRect?.();
-                    const opensBesideSidebar = window.innerWidth <= 1120
-                        || tooltipRect.left >= heroSidebarRect.right + 5;
-                    hudTooltipIsCompact = tooltipElement?.hidden === false
-                        && tooltipRect.width <= 300
-                        && opensBesideSidebar;
-                    hudTooltipDetail = `${Math.round(tooltipRect.width)}px · x ${Math.round(tooltipRect.left)} · Central ${Math.round(heroSidebarRect.right)}`;
-                    Aethra.TooltipManager.hide();
-                }
-                checks.push(
-                    createCheck(
-                        "Tooltip da Central abre compacto e fora do painel",
-                        hudTooltipIsCompact,
-                        hudTooltipDetail
-                    )
-                );
-
-                const skillTooltipTrigger = document.querySelector(
-                    "[data-tooltip-kind='skill'][data-skill-id]"
-                );
-                let skillTooltipRenders = false;
-                let skillTooltipDetail = "habilidade da ActionBar ausente";
-                if (skillTooltipTrigger) {
-                    try {
-                        const skillTooltipHTML = Aethra.TooltipManager?.buildHTML?.(
-                            skillTooltipTrigger
-                        ) || "";
-                        skillTooltipRenders = skillTooltipHTML.includes(
-                            "aethra-ui-tooltip__skill"
-                        );
-                        skillTooltipDetail = skillTooltipRenders
-                            ? "habilidade renderizada com ordem e automação"
-                            : "HTML da habilidade vazio";
-                    } catch (error) {
-                        skillTooltipDetail = error?.message || String(error);
-                    }
-                }
-                checks.push(
-                    createCheck(
-                        "Tooltip de habilidade renderiza sem erro de prioridade",
-                        skillTooltipRenders,
-                        skillTooltipDetail
-                    )
-                );
-
-                document.querySelector(`[data-intelligence-tab='${intelligenceTabBeforeAudit}']`)?.click();
-                document.querySelector(`[data-player-hud-target='${selectedHeroTabBeforeAudit}']`)?.click();
-
-                const actionBarPreviousPrimaryView = Aethra.UIManager?.primaryView
-                    || Aethra.GameState.ui?.primaryView
-                    || "hunt";
-                Aethra.UIManager?.setPrimaryView?.("hunt", {
-                    emit: false,
-                    source: "integration-actionbar-audit"
-                });
-                const previousBattleMode = Aethra.RenderEngine?.battleMode || "cards";
-                Aethra.RenderEngine?.syncStageMode?.("map2d");
-                const sharedBattleLayout = document.querySelector("[data-battle-mode-layout]");
-                const mapStage = document.getElementById("tilemap-canvas-root");
-                const cardsStage = document.getElementById("battle-card-arena-container");
-                const mapModeSynchronized = Boolean(sharedBattleLayout)
-                    && mapStage?.hidden === false
-                    && cardsStage?.hidden === true;
-                document.getElementById("primary-attack-bar")?.replaceChildren();
-                document.getElementById("skill-action-bar")?.replaceChildren();
-                Aethra.UIManager?.mountActionBarOverlay?.();
-                const actionBarPanel = document.querySelector(
-                    "#battle-actionbar-layer > .battle-panel--actionbar"
-                );
-                const actionBarPanelRect = actionBarPanel?.getBoundingClientRect?.();
-                const actionBarDeckRect = document.querySelector(".combat-action-deck")
-                    ?.getBoundingClientRect?.();
-                const actionBarContentBottom = Math.max(
-                    0,
-                    ...[
-                        document.querySelector("#battle-actionbar-layer .primary-attack-bar"),
-                        document.querySelector("#battle-actionbar-layer #skill-action-bar")
-                    ].map((element) => element?.getBoundingClientRect?.().bottom || 0)
-                );
-                const mapActionBarMounted = Boolean(
-                    actionBarPanel
-                )
-                    && document.querySelectorAll(
-                        "#battle-actionbar-layer .primary-attack-card"
-                    ).length === 2
-                    && document.querySelectorAll(
-                        "#battle-actionbar-layer #skill-action-bar .battle-action-slot"
-                    ).length >= 10
-                    && actionBarContentBottom <= Number(actionBarPanelRect?.bottom || 0) + 1;
-                Aethra.RenderEngine?.syncStageMode?.("cards");
-                const cardsModeSynchronized = mapStage?.hidden === true
-                    && cardsStage?.hidden === false;
-                checks.push(
-                    createCheck(
-                        "Mapa 2D e Cartas compartilham um único estado visual persistível",
-                        mapModeSynchronized && cardsModeSynchronized,
-                        `Mapa ${mapModeSynchronized ? "sincronizado" : "inconsistente"} · Cartas ${cardsModeSynchronized ? "sincronizadas" : "inconsistentes"}`
-                    )
-                );
-                checks.push(
-                    createCheck(
-                        "ActionBar permanece completa no Mapa 2D",
-                        mapActionBarMounted,
-                        mapActionBarMounted
-                            ? "2 ataques primários · 10 slots de habilidade · sem corte"
-                            : "ActionBar ausente, incompleta ou cortada"
-                    )
-                );
-                const actionBarDeckIsFocused = window.innerWidth <= 1120 || (
-                    Number(actionBarDeckRect?.width || 0) <= 1542
-                    && Math.abs(
-                        Number(actionBarDeckRect?.left || 0)
-                            + Number(actionBarDeckRect?.width || 0) / 2
-                            - window.innerWidth / 2
-                    ) <= 2
-                );
-                checks.push(
-                    createCheck(
-                        "ActionBar desktop concentra as decisões no centro da tela",
-                        Boolean(actionBarDeckRect) && actionBarDeckIsFocused,
-                        `${Math.round(Number(actionBarDeckRect?.width || 0))}px · centro ${Math.round(Number(actionBarDeckRect?.left || 0) + Number(actionBarDeckRect?.width || 0) / 2)}px`
-                    )
-                );
-                const actionBarSlots = [...document.querySelectorAll(
-                    "#battle-actionbar-layer #skill-action-bar > .battle-action-slot"
-                )];
-                const actionBarSlotRects = actionBarSlots.map((slot) => slot.getBoundingClientRect());
-                const actionBarSlotWidths = actionBarSlotRects.map((rect) => Number(rect.width || 0));
-                const actionBarSlotHeights = actionBarSlotRects.map((rect) => Number(rect.height || 0));
-                const actionBarGrid = document.getElementById("skill-action-bar");
-                const actionBarGridRect = actionBarGrid?.getBoundingClientRect?.();
-                const actionBarGridGap = parseFloat(
-                    actionBarGrid ? getComputedStyle(actionBarGrid).columnGap : "0"
-                ) || 0;
-                const expectedActionSlotWidth = (
-                    Number(actionBarGridRect?.width || 0) - actionBarGridGap * 9
-                ) / 10;
-                const hasNeutralScale = (element) => {
-                    const transform = getComputedStyle(element).transform;
-                    if (!transform || transform === "none") return true;
-                    const matrix = new DOMMatrixReadOnly(transform);
-                    const scaleX = Math.hypot(matrix.a, matrix.b);
-                    const scaleY = Math.hypot(matrix.c, matrix.d);
-                    return Math.abs(scaleX - 1) <= 0.01 && Math.abs(scaleY - 1) <= 0.01;
-                };
-                const filledActionBarWidths = actionBarSlots
-                    .filter((slot) => !slot.classList.contains("is-empty"))
-                    .map((slot) => slot.getBoundingClientRect().width);
-                const emptyActionBarWidths = actionBarSlots
-                    .filter((slot) => slot.classList.contains("is-empty"))
-                    .map((slot) => slot.getBoundingClientRect().width);
-                const usesCompactActionGrid = window.innerWidth <= 820;
-                const hotbarLayout = actionBarGrid?.dataset.hotbarLayout || "";
-                const usesClassicIconHotbar = window.innerWidth > 1120
-                    && ["classic-icons", "command-deck"].includes(hotbarLayout);
-                const actionBarHierarchyIsIntentional = usesCompactActionGrid || usesClassicIconHotbar
-                    ? Math.max(...actionBarSlotWidths) - Math.min(...actionBarSlotWidths) <= 2
-                    : filledActionBarWidths.length === 0
-                        || emptyActionBarWidths.length === 0
-                        || Math.min(...filledActionBarWidths) >= Math.max(...emptyActionBarWidths) + 8;
-                const actionBarGridFits = actionBarGrid.scrollWidth <= actionBarGrid.clientWidth + 1;
-                const actionBarSlotContentsFit = actionBarSlots.every((slot) => {
-                        const button = slot.querySelector(".battle-action-slot__skill");
-                        const slotRect = slot.getBoundingClientRect();
-                        const buttonRect = button?.getBoundingClientRect?.();
-                        if (usesClassicIconHotbar) {
-                            return hasNeutralScale(slot)
-                                && Boolean(button)
-                                && hasNeutralScale(button)
-                                && Number(buttonRect?.left || 0) >= slotRect.left - 1
-                                && Number(buttonRect?.right || 0) <= slotRect.right + 1
-                                && Number(buttonRect?.top || 0) >= slotRect.top - 1
-                                && Number(buttonRect?.bottom || 0) <= slotRect.bottom + 1
-                                && getComputedStyle(button).overflow === "hidden";
-                        }
-                        return hasNeutralScale(slot)
-                            && Boolean(button)
-                            && hasNeutralScale(button)
-                            && slot.scrollWidth <= slot.clientWidth + 1
-                            && slot.scrollHeight <= slot.clientHeight + 1
-                            && button.scrollWidth <= button.clientWidth + 1
-                            && button.scrollHeight <= button.clientHeight + 1;
-                    });
-                const actionBarSlotsAligned = actionBarSlots.length >= 10
-                    && Math.max(...actionBarSlotHeights) - Math.min(...actionBarSlotHeights) <= 1
-                    && actionBarHierarchyIsIntentional
-                    && actionBarGridFits
-                    && actionBarSlotContentsFit;
-                checks.push(
-                    createCheck(
-                        "ActionBar usa uma grade consistente sem cortar slots equipados ou vazios",
-                        actionBarSlotsAligned,
-                        actionBarSlotsAligned
-                            ? `${filledActionBarWidths.length} equipados · ${emptyActionBarWidths.length} vazios · ${usesClassicIconHotbar ? "hotbar clássica" : "grade adaptativa"}`
-                            : `hierarquia ${actionBarHierarchyIsIntentional} · grade ${actionBarGridFits} · conteúdo ${actionBarSlotContentsFit} · larguras ${actionBarSlotWidths.map((value) => value.toFixed(1)).join("/")} · alturas ${actionBarSlotHeights.map((value) => value.toFixed(1)).join("/")}`
-                    )
-                );
-                const actionBarOccupiedLeft = actionBarSlotRects.length > 0
-                    ? Math.min(...actionBarSlotRects.map((rect) => rect.left))
-                    : 0;
-                const actionBarOccupiedRight = actionBarSlotRects.length > 0
-                    ? Math.max(...actionBarSlotRects.map((rect) => rect.right))
-                    : 0;
-                const actionBarOccupiedCenter = (actionBarOccupiedLeft + actionBarOccupiedRight) / 2;
-                const actionBarGridCenter = (
-                    Number(actionBarGridRect?.left || 0) + Number(actionBarGridRect?.right || 0)
-                ) / 2;
-                const actionBarGroupIsCentered = window.innerWidth <= 1120 || (
-                    actionBarSlotRects.length >= 10
-                    && Math.abs(actionBarOccupiedCenter - actionBarGridCenter) <= 2
-                );
-                checks.push(
-                    createCheck(
-                        "ActionBar centraliza o conjunto de slots quando há espaço livre",
-                        actionBarGroupIsCentered,
-                        `${Math.round(actionBarOccupiedLeft)}–${Math.round(actionBarOccupiedRight)} · centro da grade ${Math.round(actionBarGridCenter)}`
-                    )
-                );
-                const filledActionSlots = actionBarSlots.filter((slot) => !slot.classList.contains("is-empty"));
-                const actionBarInteractiveContentFits = window.innerWidth <= 1120 || filledActionSlots.every((slot) => {
-                    const slotRect = slot.getBoundingClientRect();
-                    const button = slot.querySelector(".battle-action-slot__skill");
-                    const controls = slot.querySelector(".battle-action-slot__controls");
-                    const name = slot.querySelector(".battle-action-slot__name");
-                    const icon = slot.querySelector(".battle-action-slot__icon");
-                    const buttonRect = button?.getBoundingClientRect?.();
-                    const controlsRect = controls?.getBoundingClientRect?.();
-                    const nameRect = name?.getBoundingClientRect?.();
-                    const iconRect = icon?.getBoundingClientRect?.();
-                    const nameReadable = Number(nameRect?.width || 0) >= 48;
-                    return Boolean(button && controls && name)
-                        && Number(buttonRect?.top || 0) >= slotRect.top - 1
-                        && Number(controlsRect?.bottom || 0) <= slotRect.bottom + 1
-                        && (usesClassicIconHotbar
-                            ? getComputedStyle(controls).overflow === "hidden"
-                            : controls.scrollWidth <= controls.clientWidth + 1
-                                && controls.scrollHeight <= controls.clientHeight + 1)
-                        && (usesClassicIconHotbar
-                            ? Number(iconRect?.width || 0) >= 30
-                                && Number(iconRect?.height || 0) >= 30
-                                && Boolean(button.getAttribute("aria-label"))
-                            : nameReadable);
-                });
-                checks.push(
-                    createCheck(
-                        usesClassicIconHotbar
-                            ? "Hotbar clássica mantém ícones, atalhos e automação íntegros"
-                            : "ActionBar desktop mantém nomes, controles e automação totalmente visíveis",
-                        filledActionSlots.length > 0 && actionBarInteractiveContentFits,
-                        `${filledActionSlots.length} habilidades equipadas · conteúdo ${actionBarInteractiveContentFits ? "íntegro" : "cortado"}`
-                    )
-                );
-                const actionBarHeader = document.querySelector(
-                    "#battle-actionbar-layer .battle-panel__header"
-                );
-                const actionBarHeaderRect = actionBarHeader?.getBoundingClientRect?.();
-                const speedButtons = [...document.querySelectorAll(
-                    "#battle-actionbar-layer .battle-speed-controls button"
-                )];
-                const speedButtonRects = speedButtons.map((button) => button.getBoundingClientRect());
-                const speedControlsStayInline = window.innerWidth <= 1120 || (
-                    speedButtonRects.length === 3
-                    && Math.max(...speedButtonRects.map((rect) => rect.top))
-                        - Math.min(...speedButtonRects.map((rect) => rect.top)) <= 1
-                    && speedButtonRects.every((rect) => (
-                        rect.top >= Number(actionBarHeaderRect?.top || 0) - 1
-                        && rect.bottom <= Number(actionBarHeaderRect?.bottom || 0) + 1
-                    ))
-                    && Number(actionBarHeader?.scrollWidth || 0)
-                        <= Number(actionBarHeader?.clientWidth || 0) + 1
-                );
-                checks.push(
-                    createCheck(
-                        "Controles de velocidade permanecem em uma única linha",
-                        Boolean(actionBarHeader) && speedControlsStayInline,
-                        `${speedButtons.length} controles · ${speedControlsStayInline ? "alinhados" : "quebrados"}`
-                    )
-                );
-                const usesCommandDeck = window.innerWidth >= 1280
-                    && hotbarLayout === "command-deck";
-                const commandDeckToolbar = document.querySelector(
-                    "#battle-actionbar-layer .actionbar-workspace__toolbar"
-                );
-                const commandDeckToolbarRect = commandDeckToolbar?.getBoundingClientRect?.();
-                const commandDeckTitle = document.querySelector(
-                    "#battle-actionbar-layer .battle-panel__header > div:first-child"
-                );
-                const commandDeckVitals = document.querySelector(
-                    "#battle-actionbar-layer .actionbar-vital-strip-root"
-                );
-                const commandDeckGlyphs = document.querySelectorAll(
-                    "#battle-actionbar-layer .battle-action-slot.is-filled .skill-glyph svg"
-                );
-                const commandDeckIsReadable = !usesCommandDeck || (
-                    actionBarSlotRects.every((rect) => rect.width >= 63 && rect.height >= 75)
-                    && Number(commandDeckToolbarRect?.width || 0) >= 96
-                    && Number(commandDeckToolbarRect?.height || 0) >= 74
-                    && getComputedStyle(commandDeckTitle).display === "none"
-                    && getComputedStyle(commandDeckVitals).display === "none"
-                    && commandDeckGlyphs.length === filledActionSlots.length
-                );
-                checks.push(
-                    createCheck(
-                        "Command Deck mantém escala de jogo e remove informações duplicadas",
-                        Boolean(commandDeckToolbar) && commandDeckIsReadable,
-                        usesCommandDeck
-                            ? `${Math.round(actionBarSlotWidths[0] || 0)}×${Math.round(actionBarSlotHeights[0] || 0)}px · ${commandDeckGlyphs.length} glifos vetoriais`
-                            : `layout ${hotbarLayout || "adaptativo"}`
-                    )
-                );
-                Aethra.UIManager?.setPrimaryView?.(actionBarPreviousPrimaryView, {
-                    emit: false,
-                    source: "integration-actionbar-audit-restore"
-                });
-                const visualAuditPreviousPrimaryView = Aethra.UIManager?.primaryView
-                    || Aethra.GameState.ui?.primaryView
-                    || "hunt";
-                Aethra.UIManager?.setPrimaryView?.("hunt", {
-                    emit: false,
-                    source: "integration-visual-audit"
-                });
-
-                const summaryEquipmentMatrix = document.getElementById("battle-equipment-summary");
-                const summaryEquipmentSlots = [...document.querySelectorAll(
-                    "#battle-equipment-summary > [data-battle-equipment-slot]"
-                )];
-                const summaryEquipmentRect = summaryEquipmentMatrix?.getBoundingClientRect?.();
-                const summaryEquipmentSlotRects = summaryEquipmentSlots.map((slot) => slot.getBoundingClientRect());
-                const summaryEquipmentSlotsVisible = window.innerWidth <= 1120
-                    || summaryEquipmentSlots.every((slot, index) => {
-                        const rect = summaryEquipmentSlotRects[index];
-                        return rect.width >= 24
-                            && rect.height >= 24
-                            && rect.top >= Number(summaryEquipmentRect?.top || 0) - 1
-                            && rect.bottom <= Number(summaryEquipmentRect?.bottom || 0) + 1
-                            && slot.scrollWidth <= slot.clientWidth + 1
-                            && slot.scrollHeight <= slot.clientHeight + 1;
-                    });
-                const summaryEquipmentMatrixReadable = Boolean(summaryEquipmentMatrix)
-                    && summaryEquipmentSlots.length === 11
-                    && (window.innerWidth <= 1120 || Number(summaryEquipmentRect?.height || 0) >= 64)
-                    && summaryEquipmentSlotsVisible;
-                checks.push(
-                    createCheck(
-                        "Central do Herói mantém o paperdoll completo e sem corte",
-                        summaryEquipmentMatrixReadable,
-                        `${summaryEquipmentSlots.length} slots · matriz ${Math.round(Number(summaryEquipmentRect?.width || 0))}×${Math.round(Number(summaryEquipmentRect?.height || 0))}px`
-                    )
-                );
-                const paperdollColumns = new Set(summaryEquipmentSlots.map((slot) => Math.round(slot.getBoundingClientRect().left)));
-                const paperdollRows = new Set(summaryEquipmentSlots.map((slot) => Math.round(slot.getBoundingClientRect().top)));
-                const paperdollAvatarRect = summaryEquipmentMatrix?.querySelector(".player-paperdoll-avatar")
-                    ?.getBoundingClientRect?.();
-                const rectsOverlap = (left, right) => Boolean(left && right)
-                    && Math.min(left.right, right.right) - Math.max(left.left, right.left) > 1
-                    && Math.min(left.bottom, right.bottom) - Math.max(left.top, right.top) > 1;
-                const paperdollSlotsDoNotCollide = summaryEquipmentSlotRects.every((rect, index) => (
-                    !rectsOverlap(rect, paperdollAvatarRect)
-                    && summaryEquipmentSlotRects.slice(index + 1).every((other) => !rectsOverlap(rect, other))
-                ));
-                const paperdollAvatarCenter = (
-                    Number(paperdollAvatarRect?.left || 0) + Number(paperdollAvatarRect?.right || 0)
-                ) / 2;
-                const paperdollSlotsLeftOfHero = summaryEquipmentSlotRects.filter(
-                    (rect) => rect.right <= paperdollAvatarCenter
-                ).length;
-                const paperdollSlotsRightOfHero = summaryEquipmentSlotRects.filter(
-                    (rect) => rect.left >= paperdollAvatarCenter
-                ).length;
-                const paperdollHasRpgComposition = window.innerWidth <= 1120 || (
-                    Boolean(summaryEquipmentMatrix?.querySelector(".player-paperdoll-avatar img"))
-                    && summaryEquipmentMatrix?.dataset.paperdollLayout === "body"
-                    && paperdollColumns.size >= 4
-                    && paperdollRows.size >= 4
-                    && paperdollSlotsLeftOfHero >= 5
-                    && paperdollSlotsRightOfHero >= 5
-                    && paperdollSlotsDoNotCollide
-                );
-                checks.push(
-                    createCheck(
-                        "Central do Herói posiciona equipamentos ao redor do corpo",
-                        paperdollHasRpgComposition,
-                        `${paperdollSlotsLeftOfHero} esquerda · ${paperdollSlotsRightOfHero} direita · ${paperdollRows.size} níveis · colisões ${paperdollSlotsDoNotCollide ? "0" : "detectadas"}`
-                    )
-                );
-
-                const paperdollSpriteViewport = summaryEquipmentMatrix?.querySelector(".player-paperdoll-sprite");
-                const paperdollSpriteImage = paperdollSpriteViewport?.querySelector("img");
-                const paperdollSpriteViewportRect = paperdollSpriteViewport?.getBoundingClientRect?.();
-                const paperdollSpriteImageRect = paperdollSpriteImage?.getBoundingClientRect?.();
-                const paperdollSpriteIsReadable = window.innerWidth <= 1120 || (
-                    Number(paperdollSpriteViewportRect?.height || 0) >= 52
-                    && Number(paperdollSpriteImageRect?.height || 0) >= 48
-                    && Number(paperdollSpriteImageRect?.top || 0) >= Number(summaryEquipmentRect?.top || 0) - 1
-                    && Number(paperdollSpriteImageRect?.bottom || 0) <= Number(summaryEquipmentRect?.bottom || 0) + 1
-                );
-                checks.push(
-                    createCheck(
-                        "Paperdoll mantém o herói legível dentro da área reservada",
-                        Boolean(paperdollSpriteViewport && paperdollSpriteImage) && paperdollSpriteIsReadable,
-                        `recorte ${Math.round(Number(paperdollSpriteViewportRect?.width || 0))}×${Math.round(Number(paperdollSpriteViewportRect?.height || 0))} · imagem ${Math.round(Number(paperdollSpriteImageRect?.width || 0))}×${Math.round(Number(paperdollSpriteImageRect?.height || 0))}`
-                    )
-                );
-
-                const topbar = document.querySelector(".topbar");
-                const topbarVisibleChildren = topbar
-                    ? [...topbar.children]
-                        .filter((element) => getComputedStyle(element).display !== "none")
-                        .map((element) => element.getBoundingClientRect())
-                        .filter((rect) => rect.width > 0)
-                        .sort((left, right) => left.left - right.left)
-                    : [];
-                const topbarHasNoCollisions = topbarVisibleChildren.length >= 2
-                    && topbarVisibleChildren.every((rect, index) => (
-                        rect.left >= -1
-                        && rect.right <= window.innerWidth + 1
-                        && (index === 0 || topbarVisibleChildren[index - 1].right <= rect.left + 1)
-                    ));
-                checks.push(
-                    createCheck(
-                        "Topbar adapta seus grupos sem colisão horizontal",
-                        topbarHasNoCollisions,
-                        topbarVisibleChildren.map((rect) => `${Math.round(rect.left)}–${Math.round(rect.right)}`).join(" · ")
-                    )
-                );
-                const topbarBrand = topbar?.querySelector(".aethra-brand");
-                const topbarHero = document.getElementById("topbar-hero");
-                const topbarTabs = topbar?.querySelector(".window-tabs");
-                const topbarBrandRect = topbarBrand?.getBoundingClientRect?.();
-                const topbarHeroRect = topbarHero?.getBoundingClientRect?.();
-                const topbarTabsRect = topbarTabs?.getBoundingClientRect?.();
-                const topbarWideGroupsBounded = window.innerWidth < 1600 || (
-                    getComputedStyle(topbarHero).display === "none"
-                    && Number(topbarBrandRect?.width || 0) >= 225
-                    && Number(topbarTabsRect?.width || 0) >= 390
-                    && Number(topbarBrand?.scrollWidth || 0) <= Number(topbarBrand?.clientWidth || 0) + 1
-                    && Number(topbarTabs?.scrollWidth || 0) <= Number(topbarTabs?.clientWidth || 0) + 1
-                );
-                checks.push(
-                    createCheck(
-                        "Topbar clássica remove o herói duplicado e preserva marca e navegação",
-                        topbarWideGroupsBounded,
-                        `${Math.round(Number(topbarBrandRect?.width || 0))}px marca · herói ${getComputedStyle(topbarHero).display} · ${Math.round(Number(topbarTabsRect?.width || 0))}px navegação`
-                    )
-                );
-
-                const heroPanelRect = document.getElementById("hunt-panel-hero")
-                    ?.getBoundingClientRect?.();
-                const analyzerPanelRect = document.getElementById("hunt-panel-analysis")
-                    ?.getBoundingClientRect?.();
-                const stagePanelRect = document.getElementById("hunt-panel-combat")
-                    ?.getBoundingClientRect?.();
-                const layoutPanelRect = document.querySelector(".battle-hunt-layout")
-                    ?.getBoundingClientRect?.();
-                const stageShare = Number(stagePanelRect?.width || 0)
-                    / Math.max(1, Number(layoutPanelRect?.width || 0));
-                const wideColumnsReadable = window.innerWidth < 1441 || (
-                    Number(heroPanelRect?.width || 0) >= 280
-                    && Number(analyzerPanelRect?.width || 0) >= 295
-                    && stageShare >= 0.61
-                );
-                checks.push(
-                    createCheck(
-                        "Cockpit amplo mantém laterais legíveis e devolve foco ao palco",
-                        wideColumnsReadable,
-                        `${Math.round(Number(heroPanelRect?.width || 0))}px herói · ${Math.round(Number(stagePanelRect?.width || 0))}px palco (${Math.round(stageShare * 100)}%) · ${Math.round(Number(analyzerPanelRect?.width || 0))}px Analyzer`
-                    )
-                );
-                const classicTopbarRect = document.querySelector(".topbar")?.getBoundingClientRect?.();
-                const classicActionBarRect = document.getElementById("battle-actionbar-layer")
-                    ?.getBoundingClientRect?.();
-                const classicRpgCompositionIsCompact = window.innerWidth <= 1120 || (
-                    Number(classicTopbarRect?.height || 0) <= 54
-                    && Number(classicActionBarRect?.height || 0) <= 126
-                    && (window.innerWidth < 1800 || stageShare >= 0.67)
-                );
-                checks.push(
-                    createCheck(
-                        "HUD de cliente RPG prioriza o mundo e mantém docks compactos",
-                        classicRpgCompositionIsCompact,
-                        `${Math.round(Number(classicTopbarRect?.height || 0))}px topo · ${Math.round(stageShare * 100)}% mundo · ${Math.round(Number(classicActionBarRect?.height || 0))}px hotbar`
-                    )
-                );
-
-                const densityTabBeforeAudit = document.querySelector(
-                    "[data-player-hud-target][aria-selected='true']"
-                )?.dataset.playerHudTarget || "overview";
-                document.querySelector("[data-player-hud-target='overview']")?.click();
-                const densityWorkspace = document.querySelector(".player-hud-workspace");
-                const densityOverview = document.querySelector("[data-hero-panel-view='overview']");
-                const densityLastAttribute = densityOverview?.querySelector(".hero-attribute:last-child");
-                const densityWorkspaceRect = densityWorkspace?.getBoundingClientRect?.();
-                const densityLastAttributeRect = densityLastAttribute?.getBoundingClientRect?.();
-                const lowDesktop = window.innerWidth > 1120 && window.innerHeight <= 760;
-                const lowDesktopSummaryRect = document.getElementById("stats-display")
-                    ?.getBoundingClientRect?.();
-                const lowDesktopContentReachable = !lowDesktop || (
-                    Number(lowDesktopSummaryRect?.height || 0) <= 272
-                    && Number(densityOverview?.clientHeight || 0) >= Number(densityOverview?.scrollHeight || 0) - 1
-                    && Number(densityLastAttributeRect?.bottom || 0)
-                        - Number(densityWorkspaceRect?.top || 0)
-                        <= Number(densityWorkspace?.scrollHeight || 0) + 1
-                    && Number(densityWorkspace?.scrollHeight || 0) > Number(densityWorkspace?.clientHeight || 0)
-                );
-                checks.push(
-                    createCheck(
-                        "Central baixa mantém todos os atributos alcançáveis por rolagem",
-                        Boolean(densityWorkspace && densityOverview && densityLastAttribute)
-                            && lowDesktopContentReachable,
-                        lowDesktop
-                            ? `resumo ${Math.round(Number(lowDesktopSummaryRect?.height || 0))}px · área ${densityWorkspace?.clientHeight}/${densityWorkspace?.scrollHeight}px`
-                            : `${window.innerHeight}px de altura · composição padrão`
-                    )
-                );
-                document.querySelector(`[data-player-hud-target='${densityTabBeforeAudit}']`)?.click();
-
-                const filledActionName = document.querySelector(
-                    "#battle-actionbar-layer .battle-action-slot.is-filled .battle-action-slot__name"
-                );
-                const analyzerMetricLabel = document.querySelector(
-                    "#hunt-panel-analysis .analyzer-ledger-card small, #hunt-panel-analysis .analyzer-objective-card > div strong"
-                );
-                const filledActionIcon = document.querySelector(
-                    "#battle-actionbar-layer .battle-action-slot.is-filled .battle-action-slot__icon"
-                );
-                const filledActionButton = document.querySelector(
-                    "#battle-actionbar-layer .battle-action-slot.is-filled .battle-action-slot__skill"
-                );
-                const filledActionIconRect = filledActionIcon?.getBoundingClientRect?.();
-                const readableHudType = window.innerWidth <= 1120 || (
-                    (usesClassicIconHotbar
-                        ? Number(filledActionIconRect?.width || 0) >= 30
-                            && Boolean(filledActionButton?.getAttribute("aria-label"))
-                        : parseFloat(filledActionName ? getComputedStyle(filledActionName).fontSize : "0") >= 10)
-                    && parseFloat(analyzerMetricLabel ? getComputedStyle(analyzerMetricLabel).fontSize : "0") >= 8
-                );
-                checks.push(
-                    createCheck(
-                        usesClassicIconHotbar
-                            ? "Hotbar e Analyzer preservam leitura e acessibilidade no desktop"
-                            : "ActionBar e Analyzer usam tipografia legível no desktop",
-                        Boolean(filledActionName) && Boolean(analyzerMetricLabel) && readableHudType,
-                        `${usesClassicIconHotbar ? `${Math.round(Number(filledActionIconRect?.width || 0))}px ícone` : `${filledActionName ? getComputedStyle(filledActionName).fontSize : "?"} ActionBar`} · ${analyzerMetricLabel ? getComputedStyle(analyzerMetricLabel).fontSize : "?"} Analyzer`
-                    )
-                );
-                Aethra.UIManager?.setPrimaryView?.(visualAuditPreviousPrimaryView, {
-                    emit: false,
-                    source: "integration-visual-audit-restore"
-                });
-                Aethra.RenderEngine?.syncStageMode?.(previousBattleMode);
-
-                Aethra.HuntAnalyzerWorkspace?.render?.();
-                const analyzerDetails = document.querySelector("[data-analyzer-extended]");
-                const analyzerPreparationMode = document.querySelector(".analyzer-preparation");
-                const analyzerModeIsComplete = analyzerPreparationMode
-                    ? Boolean(
-                        analyzerPreparationMode.querySelector(".analyzer-objective-card")
-                        && analyzerPreparationMode.querySelectorAll(".analyzer-readiness__grid > span").length === 4
-                        && analyzerPreparationMode.querySelector("[data-analyzer-open-map]")
-                    )
-                    : Boolean(analyzerDetails)
-                        && document.querySelectorAll(".analyzer-ledger-card").length === 6;
-                checks.push(
-                    createCheck(
-                        "Hunt Analyzer mostra preparação parado e telemetria durante a Hunt",
-                        analyzerModeIsComplete,
-                        analyzerPreparationMode
-                            ? "objetivo, prontidão e acesso ao mapa disponíveis"
-                            : `${document.querySelectorAll(".analyzer-ledger-card").length} métricas rápidas · detalhe ${analyzerDetails ? "disponível" : "ausente"}`
-                    )
-                );
-
-                const analyzerPreparationActions = analyzerPreparationMode?.querySelector(".analyzer-preparation__actions");
-                const analyzerPreparationRect = analyzerPreparationMode?.getBoundingClientRect?.();
-                const analyzerPreparationActionsRect = analyzerPreparationActions?.getBoundingClientRect?.();
-                const analyzerPrimaryActionsReachable = !analyzerPreparationMode || (
-                    Boolean(analyzerPreparationActions)
-                    && Number(analyzerPreparationActionsRect?.top || 0) >= Number(analyzerPreparationRect?.top || 0) - 1
-                    && Number(analyzerPreparationActionsRect?.bottom || 0) <= Number(analyzerPreparationRect?.bottom || 0) + 1
-                );
-                const analyzerPreparationBlocks = analyzerPreparationMode
-                    ? [
-                        ".analyzer-preparation__hero",
-                        ".analyzer-objective-card",
-                        ".analyzer-readiness",
-                        ".analyzer-last-session",
-                        ".analyzer-preparation__actions"
-                    ]
-                        .map((selector) => analyzerPreparationMode.querySelector(selector))
-                        .filter((element) => element && getComputedStyle(element).display !== "none")
-                        .map((element) => element.getBoundingClientRect())
-                        .sort((left, right) => left.top - right.top)
-                    : [];
-                const analyzerPreparationBlocksDoNotOverlap = !analyzerPreparationMode
-                    || analyzerPreparationBlocks.every((rect, index) => (
-                        index === 0 || analyzerPreparationBlocks[index - 1].bottom <= rect.top + 1
-                    ));
-                const sharedSaveBanner = document.getElementById("aethra-shared-save-banner");
-                const sharedSaveBannerWasHidden = sharedSaveBanner?.hidden === true;
-                if (sharedSaveBanner && window.innerWidth > 1120) sharedSaveBanner.hidden = false;
-                const sharedSaveBannerRect = sharedSaveBanner?.getBoundingClientRect?.();
-                const analyzerDesktopRect = document.getElementById("hunt-panel-analysis")?.getBoundingClientRect?.();
-                const sharedSaveAvoidsAnalyzer = window.innerWidth <= 1120
-                    || !sharedSaveBanner
-                    || Number(sharedSaveBannerRect?.right || 0) <= Number(analyzerDesktopRect?.left || 0) + 1
-                    || Number(sharedSaveBannerRect?.left || 0) >= Number(analyzerDesktopRect?.right || 0) - 1;
-                if (sharedSaveBanner) sharedSaveBanner.hidden = sharedSaveBannerWasHidden;
-                checks.push(
-                    createCheck(
-                        "Analyzer mantém ações alcançáveis e notificações fora do painel",
-                        analyzerPrimaryActionsReachable
-                            && analyzerPreparationBlocksDoNotOverlap
-                            && sharedSaveAvoidsAnalyzer,
-                        `ações ${analyzerPrimaryActionsReachable ? "visíveis" : "fora da área"} · blocos ${analyzerPreparationBlocksDoNotOverlap ? "separados" : "sobrepostos"} · aviso ${sharedSaveAvoidsAnalyzer ? "seguro" : "sobreposto"}`
-                    )
-                );
-                const analyzerSidebar = document.getElementById("hunt-panel-analysis");
-                const analyzerIdleContextIsClean = !analyzerPreparationMode || (
-                    analyzerSidebar?.classList.contains("is-preparing")
-                    && getComputedStyle(analyzerSidebar.querySelector(".battle-panel--log")).display === "none"
-                    && getComputedStyle(analyzerSidebar.querySelector(".hunt-session-summary")).display === "none"
-                    && (!lowDesktop
-                        || getComputedStyle(analyzerSidebar.querySelector(".analyzer-last-session")).display === "none")
-                );
-                checks.push(
-                    createCheck(
-                        "Analyzer parado mostra direção sem telemetria vazia",
-                        analyzerIdleContextIsClean,
-                        analyzerPreparationMode
-                            ? `modo preparação · log ${getComputedStyle(analyzerSidebar.querySelector(".battle-panel--log")).display}`
-                            : "Hunt ativa · telemetria contextual preservada"
-                    )
-                );
-
-                const analyzerUIState = Aethra.GameState.ui = Aethra.GameState.ui || {};
-                const analyzerHadPreference = Object.prototype.hasOwnProperty.call(
-                    analyzerUIState,
-                    "huntAnalyzerExpanded"
-                );
-                const analyzerPreviousPreference = analyzerUIState.huntAnalyzerExpanded;
-                delete analyzerUIState.huntAnalyzerExpanded;
-                Aethra.HuntAnalyzerWorkspace?.render?.();
-                const analyzerDefaultDetails = document.querySelector("[data-analyzer-extended]");
-                const analyzerSupplyDetails = document.querySelector(".analyzer-disclosure");
-                const analyzerDefaultPreparation = document.querySelector(".analyzer-preparation");
-                const analyzerDefaultsCompact = analyzerDefaultPreparation
-                    ? !analyzerDefaultPreparation.querySelector(".analyzer-ledger-grid")
-                    : analyzerDefaultDetails?.open === false
-                        && analyzerSupplyDetails?.open === false;
-                if (analyzerHadPreference) {
-                    analyzerUIState.huntAnalyzerExpanded = analyzerPreviousPreference;
-                } else {
-                    delete analyzerUIState.huntAnalyzerExpanded;
-                }
-                Aethra.HuntAnalyzerWorkspace?.render?.();
-                checks.push(
-                    createCheck(
-                        "Hunt Analyzer inicia compacto e deixa relatórios sob demanda",
-                        analyzerDefaultsCompact,
-                        analyzerDefaultsCompact
-                            ? "resumo visível · análise e supplies recolhidos"
-                            : "algum relatório abriu sozinho"
-                    )
-                );
-
                 Aethra.WindowManager?.openWindow?.("inventory-view", {
                     source: "integration-hud-exclusive"
                 });
@@ -3756,255 +2546,6 @@
                     source: "integration-overlay-cleanup",
                     silent: true
                 });
-
-                Aethra.WindowManager?.openWindow?.("npc-shop-view", {
-                    source: "integration-responsive-shop"
-                });
-                const npcShopWindow = document.getElementById("npc-shop-view");
-                const npcShopResponsive = Boolean(npcShopWindow)
-                    && npcShopWindow.scrollWidth <= npcShopWindow.clientWidth + 4;
-                const npcShopTabsWork = ["buy", "sell"].every((tab) => {
-                    npcShopWindow?.querySelector(`[data-npc-tab='${tab}']`)?.click();
-                    return npcShopWindow?.querySelector(`[data-npc-tab='${tab}']`)
-                        ?.classList.contains("is-active") === true;
-                });
-                checks.push(
-                    createCheck(
-                        "Loja NPC respeita a largura da janela responsiva",
-                        npcShopResponsive && npcShopTabsWork,
-                        `conteúdo ${npcShopResponsive ? "ajustado" : "com overflow"} · abas ${npcShopTabsWork ? "ativas" : "inertes"}`
-                    )
-                );
-                Aethra.WindowManager?.closeAll?.({ modalOnly: true, silent: true });
-
-                checks.push(
-                    createCheck(
-                        "Camada moderna do HUD inicializa com preferências persistentes",
-                        Aethra.HudModernization?.initialized === true
-                            && typeof Aethra.HudModernization?.getPreferences === "function",
-                        Aethra.HudModernization?.initialized ? "inicializada" : "não inicializada"
-                    )
-                );
-
-                const responsiveProfiles = [
-                    [640, 720, "narrow"],
-                    [1024, 768, "narrow"],
-                    [1280, 720, "compact"],
-                    [1366, 768, "compact"],
-                    [1600, 900, "standard"],
-                    [1920, 1080, "standard"],
-                    [2560, 1440, "wide"],
-                    [3440, 1440, "ultrawide"],
-                    [3840, 2160, "wide"]
-                ];
-                const responsiveProfileMatches = responsiveProfiles.every(([width, height, expected]) => {
-                    return Aethra.HudModernization?.getResponsiveProfile?.(width, height) === expected;
-                });
-                const currentResponsiveProfile = Aethra.HudModernization?.syncResponsiveProfile?.();
-                checks.push(
-                    createCheck(
-                        "HUD classifica automaticamente monitores estreitos, compactos, padrão, amplos e ultrawide",
-                        responsiveProfileMatches
-                            && document.body.dataset.hudViewport === currentResponsiveProfile?.profile,
-                        responsiveProfileMatches
-                            ? `perfil atual ${currentResponsiveProfile?.profile || "ausente"}`
-                            : "matriz de perfis responsivos inconsistente"
-                    )
-                );
-
-                const responsiveAuditPreviousPrimaryView = Aethra.UIManager?.primaryView
-                    || Aethra.GameState.ui?.primaryView
-                    || "hunt";
-                Aethra.UIManager?.setPrimaryView?.("hunt", {
-                    emit: false,
-                    source: "integration-responsive-audit"
-                });
-                const responsiveBattleLayout = document.querySelector(".battle-hunt-layout");
-                const responsiveMainColumn = responsiveBattleLayout?.querySelector(".battle-main-column");
-                const responsiveHeroColumn = responsiveBattleLayout?.querySelector(".battle-sidebar--hero");
-                const responsiveCombatColumn = responsiveBattleLayout?.querySelector(".battle-sidebar--combat");
-                const responsiveLayoutStyle = responsiveBattleLayout
-                    ? getComputedStyle(responsiveBattleLayout)
-                    : null;
-                const measuredViewport = window.innerWidth > 0;
-                const narrowViewport = measuredViewport && window.innerWidth <= 1119;
-                const responsiveColumnCount = responsiveLayoutStyle?.gridTemplateColumns
-                    ?.trim()
-                    .split(/\s+/)
-                    .filter(Boolean)
-                    .length || 0;
-                const responsiveLayoutRect = responsiveBattleLayout?.getBoundingClientRect?.();
-                const responsivePanelRects = [
-                    responsiveMainColumn,
-                    responsiveHeroColumn,
-                    responsiveCombatColumn
-                ].map((panel) => panel?.getBoundingClientRect?.());
-                const responsiveLayoutVisible = Number(responsiveLayoutRect?.width || 0) > 0
-                    && Number(responsiveLayoutRect?.height || 0) > 0;
-                const shellFitsViewport = !measuredViewport || (
-                    document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1
-                    && document.body.scrollWidth <= document.body.clientWidth + 1
-                );
-                const narrowPanelsShareColumn = !responsiveLayoutVisible || responsivePanelRects.every((rect) => {
-                    return Number(rect?.width || 0) >= Number(responsiveLayoutRect?.width || 0) - 24;
-                }) && Math.max(...responsivePanelRects.map((rect) => Number(rect?.left || 0)))
-                    - Math.min(...responsivePanelRects.map((rect) => Number(rect?.left || 0))) <= 1;
-                const narrowStackScrollable = !responsiveLayoutVisible
-                    || responsiveBattleLayout.scrollHeight > responsiveBattleLayout.clientHeight;
-                const narrowStackIsOrdered = !narrowViewport || (
-                    narrowPanelsShareColumn
-                    && getComputedStyle(responsiveMainColumn).order === "1"
-                    && getComputedStyle(responsiveHeroColumn).order === "2"
-                    && getComputedStyle(responsiveCombatColumn).order === "3"
-                    && Number(responsivePanelRects[0]?.top || 0)
-                        < Number(responsivePanelRects[1]?.top || 0)
-                    && Number(responsivePanelRects[1]?.top || 0)
-                        < Number(responsivePanelRects[2]?.top || 0)
-                    && narrowStackScrollable
-                );
-                const compactActionBar = document.getElementById("battle-actionbar-layer");
-                const compactActionBarRect = compactActionBar?.getBoundingClientRect?.();
-                const compactActionContentBottom = Math.max(
-                    0,
-                    document.querySelector("#battle-actionbar-layer .primary-attack-bar")
-                        ?.getBoundingClientRect?.().bottom || 0,
-                    document.querySelector("#battle-actionbar-layer #skill-action-bar")
-                        ?.getBoundingClientRect?.().bottom || 0
-                );
-                const compactActionBarFits = !narrowViewport
-                    || compactActionContentBottom <= Number(compactActionBarRect?.bottom || 0) + 1;
-                checks.push(
-                    createCheck(
-                        "HUD compacta elimina overflow e empilha palco, herói e análise",
-                        Boolean(responsiveBattleLayout)
-                            && shellFitsViewport
-                            && narrowStackIsOrdered
-                            && compactActionBarFits,
-                        narrowViewport
-                            ? `${window.innerWidth}px · pilha ${narrowPanelsShareColumn ? "alinhada" : "desalinhada"} · ordem ${getComputedStyle(responsiveMainColumn).order}/${getComputedStyle(responsiveHeroColumn).order}/${getComputedStyle(responsiveCombatColumn).order} · shell ${document.documentElement.scrollWidth}/${document.documentElement.clientWidth} · ActionBar ${Math.round(compactActionContentBottom)}/${Math.round(Number(compactActionBarRect?.bottom || 0))}`
-                            : `${window.innerWidth || "?"}px · cockpit de ${responsiveColumnCount} colunas sem overflow`
-                    )
-                );
-
-                const compactHuntNav = document.querySelector("[data-compact-hunt-nav]");
-                const compactHuntButtons = compactHuntNav
-                    ? [...compactHuntNav.querySelectorAll("[data-compact-hunt-target]")]
-                    : [];
-                const compactHuntTargets = compactHuntButtons.map((button) => (
-                    button.dataset.compactHuntTarget
-                ));
-                const compactHuntControlsExist = compactHuntButtons.every((button) => (
-                    Boolean(document.getElementById(button.getAttribute("aria-controls")))
-                ));
-                const compactHeroButton = compactHuntButtons.find((button) => (
-                    button.dataset.compactHuntTarget === "hero"
-                ));
-                const compactCombatButton = compactHuntButtons.find((button) => (
-                    button.dataset.compactHuntTarget === "combat"
-                ));
-                compactHeroButton?.click();
-                const compactHeroSelectionWorks = compactHeroButton?.getAttribute("aria-pressed") === "true"
-                    && compactHuntNav?.dataset.activePanel === "hero";
-                const compactHeroRect = responsiveHeroColumn?.getBoundingClientRect?.();
-                const compactHeroAlignsBelowNav = !narrowViewport
-                    || Math.abs(
-                        Number(compactHeroRect?.top || 0)
-                            - Number(responsiveLayoutRect?.top || 0)
-                    ) <= 4;
-                compactCombatButton?.click();
-                const compactNavDisplay = compactHuntNav
-                    ? getComputedStyle(compactHuntNav).display
-                    : "none";
-                checks.push(
-                    createCheck(
-                        "Navegação compacta salta entre combate, herói e análise com estado acessível",
-                        Boolean(compactHuntNav)
-                            && compactHuntNav.dataset.compactHuntBound === "true"
-                            && compactHuntTargets.join(",") === "combat,hero,analysis"
-                            && compactHuntControlsExist
-                            && compactHeroSelectionWorks
-                            && compactHeroAlignsBelowNav
-                            && compactCombatButton?.getAttribute("aria-pressed") === "true"
-                            && (narrowViewport
-                                ? compactNavDisplay === "grid"
-                                : compactNavDisplay === "none"),
-                        `${compactHuntButtons.length}/3 atalhos · painel ${compactHuntNav?.dataset.activePanel || "ausente"} · display ${compactNavDisplay}`
-                    )
-                );
-
-                Aethra.UIManager?.setPrimaryView?.(responsiveAuditPreviousPrimaryView, {
-                    emit: false,
-                    source: "integration-responsive-audit-restore"
-                });
-
-                const cityView = document.getElementById("city-view");
-                const activeWindowsBeforeResize = [...(Aethra.WindowManager?.activeWindows || [])];
-                if (cityView && Aethra.WindowManager) {
-                    Aethra.WindowManager.activeWindows = [
-                        ...new Set([...activeWindowsBeforeResize, "city-view"])
-                    ];
-                    window.dispatchEvent(new Event("resize"));
-                }
-                const cityViewRect = cityView?.getBoundingClientRect?.();
-                const cityViewHasFloatingConstraint = [
-                    "width",
-                    "height",
-                    "max-height",
-                    "left",
-                    "top",
-                    "right",
-                    "bottom",
-                    "inset",
-                    "transform"
-                ].some((property) => Boolean(cityView?.style?.getPropertyValue?.(property)));
-                if (Aethra.WindowManager) {
-                    Aethra.WindowManager.activeWindows = activeWindowsBeforeResize;
-                }
-                // O ponto central é: o mundo nunca recebe dimensões inline de
-                // janela flutuante ao redimensionar. A conferência de largura
-                // total só é significativa quando o viewport é mensurável e o
-                // city-view está de fato exibido (largura > 0); em execução
-                // headless (innerWidth === 0) ou fora do modo Cidade ela é
-                // ignorada para não gerar falso negativo.
-                const viewportMeasurable = window.innerWidth > 0 && Number(cityViewRect?.width || 0) > 0;
-                const cityViewFullBleed = !viewportMeasurable
-                    || Math.abs(Number(cityViewRect?.width || 0) - window.innerWidth) <= 1;
-                checks.push(
-                    createCheck(
-                        "Redimensionar a tela não transforma o mundo em janela flutuante fixa",
-                        Boolean(cityViewRect)
-                            && !cityViewHasFloatingConstraint
-                            && cityViewFullBleed,
-                        cityViewHasFloatingConstraint
-                            ? "city-view recebeu dimensões inline indevidas"
-                            : `mundo fluido em ${Math.round(cityViewRect?.width || 0)}×${Math.round(cityViewRect?.height || 0)} px`
-                    )
-                );
-
-                const previousPrimaryView = Aethra.GameState.ui?.primaryView || "hunt";
-                Aethra.UIManager?.setPrimaryView?.("city", { emit: false, source: "integration-layout" });
-                Aethra.RenderEngine?.renderCityGuidance?.();
-                const cityServiceCards = [...document.querySelectorAll(".city-service-card")];
-                const cityActionsVisible = cityServiceCards.length >= 6 && cityServiceCards.every((card) => {
-                    const action = card.querySelector("button");
-                    if (!action) return false;
-                    const cardRect = card.getBoundingClientRect();
-                    const actionRect = action.getBoundingClientRect();
-                    return actionRect.height >= 30
-                        && actionRect.top >= cardRect.top
-                        && actionRect.bottom <= cardRect.bottom + 1;
-                });
-                const bodyFillsViewport = document.body.getBoundingClientRect().height >= window.innerHeight - 2;
-                const cityViewportAuthority = getComputedStyle(cityView).bottom === "0px"
-                    && cityView?.classList?.contains("is-primary-city");
-                Aethra.UIManager?.setPrimaryView?.(previousPrimaryView, { emit: false, source: "integration-layout-restore" });
-                checks.push(
-                    createCheck(
-                        "Hub da Cidade mantém todas as ações visíveis no viewport",
-                        cityViewportAuthority && (!bodyFillsViewport || cityActionsVisible),
-                        `${cityServiceCards.length} serviços · autoridade inferior ${cityViewportAuthority ? "liberada" : "reservada"} · ${bodyFillsViewport ? `botões ${cityActionsVisible ? "inteiros" : "cortados"}` : "harness com altura reduzida"}`
-                    )
-                );
 
                 const visualGoldBefore = Number(Aethra.GameState.hero?.gold || 0);
                 const visualXpBefore = Number(Aethra.GameState.hero?.xpTotal || 0);
@@ -4365,6 +2906,39 @@
                     )
                 );
 
+                /*
+                 * Escada entre andares: a expedição pausa ao limpar o andar e só
+                 * segue quando o jogador desce. A Hunt 3.0 mostra o cartão e desce
+                 * pelo HuntSystem (sem ele a 3.0 parava no primeiro andar).
+                 */
+                const stairsHuntBefore = JSON.parse(JSON.stringify(Aethra.GameState.hunt || {}));
+                const nextRoomOriginal = Aethra.HuntSystem.nextRoom;
+                let nextRoomCalls = 0;
+                Aethra.HuntSystem.nextRoom = () => {
+                    nextRoomCalls += 1;
+                    return true;
+                };
+                let stairsWorks = false;
+                let stairsDetail = "";
+                try {
+                    Object.assign(Aethra.GameState.hunt, { isActive: true, isAtStairs: true, huntId: "whispering_forest", currentRoom: 1, currentEnemy: null });
+                    Aethra.Ui3HuntScreen?.render?.();
+                    const stairsState = Aethra.HuntSystem.getStairsState();
+                    const stairsButton = huntScreen?.querySelector(".ui3-hunt__target [data-ui3-next-room]");
+                    const stairsShown = Boolean(stairsButton) && /Andar 1 de 10 limpo/.test(huntScreen?.querySelector(".ui3-hunt__target")?.textContent || "");
+                    stairsButton?.click();
+                    stairsWorks = stairsState.atStairs === true && stairsState.maxRooms === 10 && stairsShown && nextRoomCalls === 1;
+                    stairsDetail = `${stairsShown ? "cartão da escada" : "sem cartão"} · descer ${nextRoomCalls === 1 ? "pelo HuntSystem" : "não encaminhado"}`;
+                } finally {
+                    Aethra.HuntSystem.nextRoom = nextRoomOriginal;
+                    Object.keys(Aethra.GameState.hunt).forEach((key) => {
+                        if (!(key in stairsHuntBefore)) delete Aethra.GameState.hunt[key];
+                    });
+                    Object.assign(Aethra.GameState.hunt, stairsHuntBefore);
+                    Aethra.Ui3HuntScreen?.render?.();
+                }
+                checks.push(createCheck("UI 3.0 Hunt mostra a escada entre andares e desce pelo HuntSystem", stairsWorks, stairsDetail));
+
                 Aethra.UIManager?.setPrimaryView?.("city", { source: "integration-ui3-hunt" });
                 const cityReleasesCanvas = Aethra.Ui3HuntScreen?.isVisible?.() === false
                     && Aethra.TileMapCanvas?.isHosted?.() === false
@@ -4500,7 +3074,7 @@
                 windowManager.openWindow("skills-view", { source: "integration-ui3-skills" });
                 const skillsLayer = document.querySelector("#ui3-root [data-ui3-window='skills-view']");
                 const journalRows = skillsLayer?.querySelectorAll("[data-ui3-skill-entry]").length || 0;
-                const journalSize = Aethra.ProgressionJournalUI?.getViewModel?.().entries.length || 0;
+                const journalSize = Aethra.ProgressionJournal?.getViewModel?.().entries.length || 0;
                 skillsLayer?.querySelector("[data-ui3-tab='actionbar']")?.click();
                 const originalSlots = [...(Aethra.SkillSystem.getActiveBar()?.slots || [])];
                 const placedSkillId = originalSlots.find(Boolean)
@@ -5206,15 +3780,13 @@
                 /*
                  * UI 3.0 — fase 4 (Criação). Última verificação da suíte: criar
                  * um herói reinicia a progressão. A tela nova assume
-                 * CharacterCreationUI.show(), recusa nome curto e cria pelo
+                 * a criação quando não há herói, recusa nome curto e cria pelo
                  * CharacterBuildSystem.
                  */
                 Aethra.GameState.hero.characterCreated = false;
-                Aethra.CharacterCreationUI?.show?.();
+                Aethra.Ui3CreationScreen?.sync?.();
                 const creationScreen = document.querySelector("#ui3-root [data-ui3-screen='creation']");
-                const classicCreationLayer = document.getElementById("character-creation-layer");
-                const creationShown = Aethra.Ui3CreationScreen?.isVisible?.() === true
-                    && (!classicCreationLayer || classicCreationLayer.children.length === 0);
+                const creationShown = Aethra.Ui3CreationScreen?.isVisible?.() === true;
                 const nameInput = creationScreen?.querySelector("[data-ui3-hero-name]");
                 const typeName = (value) => {
                     if (!nameInput) return;

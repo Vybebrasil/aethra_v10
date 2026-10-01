@@ -10,6 +10,7 @@
 
     const clone = (value) => JSON.parse(JSON.stringify(value));
     const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+    const BASE_ROUND_MS = 1800;
 
     function number(value, fallback = 0) {
         const parsed = Number(value);
@@ -29,8 +30,8 @@
         randomSource: Math.random,
 
         config: {
-            // Rodada canônica de 1800ms em 1×; EncounterCombatHUD ajusta via
-            // setTickSpeed(1800 / velocidade). Intro fixa, não escala.
+            // Rodada canônica de 1800ms em 1×; a velocidade escolhida nas
+            // preferências divide a rodada (applyCombatSpeed). Intro fixa, não escala.
             tickMs: 1800,
             roundMs: 1800,
             introMs: 1200,
@@ -55,6 +56,7 @@
 
             this.ensureState();
             this.bindEvents();
+            this.applyCombatSpeed();
             /*
              * O SaveManager carrega o save antes deste módulo registrar o
              * listener de save:loaded. Um save gravado no meio de uma luta traz
@@ -260,6 +262,7 @@
                 });
             });
 
+            Aethra.EventBus.on("settings:combat-speed-changed", (payload = {}) => this.applyCombatSpeed(payload.combatSpeed));
             Aethra.EventBus.on("save:loaded", () => this.resetInterruptedBattle());
             Aethra.EventBus.on("state:restored", () => this.resetInterruptedBattle());
         },
@@ -1804,6 +1807,12 @@
             if (typeof fn !== "function") return false;
             this.randomSource = fn;
             return true;
+        },
+
+        // Velocidade 1×, 2× ou 4× das preferências: só a rodada fica mais curta.
+        applyCombatSpeed(speed = Aethra.SettingsManager?.getCombatSpeed?.()) {
+            const factor = [1, 2, 4].includes(Number(speed)) ? Number(speed) : 1;
+            return this.setTickSpeed(BASE_ROUND_MS / factor);
         },
 
         setTickSpeed(milliseconds) {

@@ -47,6 +47,31 @@
         return allowedRecipeIds.length === 0 || allowedRecipeIds.includes(recipe.id);
     }
 
+    // Título e explicação do passo de contrato, para qualquer oficina mostrar.
+    function describe(guidance) {
+        if (!guidance) return null;
+        const type = guidance.objective?.type;
+        const recipe = type === "CraftRecipe" ? Aethra.CraftingSystem?.getRecipe?.(guidance.target) : null;
+        if (type === "CraftEquipment") {
+            return {
+                title: "Escolha seu primeiro equipamento",
+                detail: guidance.professionId === "leatherworking"
+                    ? "Botas, Chapéu e Calças de Couro concluem o contrato. Compare as opções destacadas e escolha a que combina com seu estilo."
+                    : "Espada, Machado e Maça de Ferro concluem o contrato. Compare as opções destacadas e escolha a que combina com seu estilo."
+            };
+        }
+        if (type === "CraftSupply") {
+            return {
+                title: "Escolha seu primeiro suprimento",
+                detail: "Poção de Vida, Poção de Mana ou Tônico de Vigor concluem o contrato. A escolha produz 3 unidades e entra no estoque da Hunt."
+            };
+        }
+        return {
+            title: recipe ? `Produza ${recipe.name}` : guidance.objective?.label || "Passo da missão",
+            detail: "A receita necessária foi trazida para o topo. Confira os materiais e conclua esta etapa do contrato."
+        };
+    }
+
     // Só se produz na estação da Cidade; na Hunt a oficina é apenas catálogo.
     function stationFor(professionId, { inCity = false } = {}) {
         return inCity ? PROFESSIONS[professionId]?.stationId || null : null;
@@ -57,6 +82,7 @@
         getGuidance,
         guidedRecipeId,
         isGuidedRecipe,
+        describe,
         isEquipmentRecipe,
         stationFor
     });

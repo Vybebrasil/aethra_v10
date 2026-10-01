@@ -734,6 +734,24 @@
             return clone(encounter);
         },
 
+        /*
+         * Escada entre andares: a expedição pausa ao limpar um andar e só
+         * segue quando o jogador desce (nextRoom). O último andar tem o chefe.
+         */
+        getStairsState() {
+            this.ensureState();
+            const state = Aethra.GameState.hunt;
+            const maxRooms = Math.max(1, Math.floor(number(this.hunts[state.huntId]?.maxRooms, 10)));
+            const room = Math.max(1, Math.floor(number(state.currentRoom, 1)));
+            return {
+                atStairs: Boolean(state.isActive && state.isAtStairs),
+                room,
+                maxRooms,
+                bossNext: room === maxRooms - 1,
+                finalRoom: room >= maxRooms
+            };
+        },
+
         nextRoom() {
             this.ensureState();
             const state = Aethra.GameState.hunt;

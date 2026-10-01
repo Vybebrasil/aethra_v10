@@ -171,13 +171,12 @@
 
     function guidanceHTML(guidance) {
         const K = kit();
-        if (!guidance) return "";
-        const type = guidance.objective?.type;
-        const recipe = type === "CraftRecipe" ? crafting()?.getRecipe?.(guidance.target) : null;
-        const title = type === "CraftEquipment" ? "Escolha seu primeiro equipamento"
-            : type === "CraftSupply" ? "Escolha seu primeiro suprimento"
-                : recipe ? `Produza ${recipe.name}` : guidance.objective?.label || "Passo da missão";
-        return `<div class="ui3-note ui3-workshop__guidance" role="status"><span>Passo da missão</span><strong>${K.esc(title)}</strong></div>`;
+        const copy = Aethra.CraftingGuidance.describe(guidance);
+        if (!copy) return "";
+        return `<div class="ui3-workshop__guidance" role="status">
+                <div class="ui3-row-between"><span class="ui3-eyebrow">Passo do contrato</span><strong>${K.esc(copy.title)}</strong></div>
+                <p class="ui3-caption">${K.esc(copy.detail)}</p>
+            </div>`;
     }
 
     function controlsHTML() {

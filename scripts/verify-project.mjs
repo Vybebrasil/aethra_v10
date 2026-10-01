@@ -158,20 +158,22 @@ check(
         && /getProfessionModifiers\(/.test(professionSource),
     "ProfessionSystem deve possuir escolha exclusiva e maestria infinita com retorno decrescente"
 );
+const ui3SpecializationSource = read("js/ui3/Ui3SpecializationWindow.js");
 check(
-    indexSource.includes("css/profession-specialization.css")
-        && indexSource.includes("js/ui/ProfessionSpecializationUI.js")
-        && /chooseSpecialization\?\.\(/.test(professionSpecializationUiSource)
-        && !/professionPerks\s*\[/.test(professionSpecializationUiSource),
+    indexSource.includes("js/ui3/Ui3SpecializationWindow.js")
+        && /chooseSpecialization\?\.\(/.test(ui3SpecializationSource)
+        && !/professionPerks\s*\[/.test(ui3SpecializationSource),
     "Árvore de profissão deve estar indexada e enviar comandos sem mutar perks na UI"
 );
+const progressionJournalSource = read("js/progression/ProgressionJournal.js");
+const ui3SkillsSource = read("js/ui3/Ui3SkillsWindow.js");
 check(
-    indexSource.includes("css/progression-journal.css")
-        && indexSource.includes("js/ui/ProgressionJournalUI.js")
-        && /getTrainingGuide\(/.test(disciplineSource)
-        && /getDisciplineMilestones/.test(renderEngineSource)
-        && /DisciplineSystem\.setTrainingMode\?\.\(/.test(progressionJournalUiSource)
-        && /ProfessionSystem\?\.setCollectionPolicy\?\.\(/.test(progressionJournalUiSource),
+    indexSource.includes("js/progression/ProgressionJournal.js")
+        && indexSource.includes("js/ui3/Ui3SkillsWindow.js")
+        && /getTrainingGuide\?\.\(/.test(progressionJournalSource)
+        && /DisciplineMilestones\?\.get\?\.\(/.test(progressionJournalSource)
+        && /DisciplineSystem\?\.setTrainingMode\?\.\(/.test(ui3SkillsSource)
+        && /ProfessionSystem\?\.setCollectionPolicy\?\.\(/.test(ui3SkillsSource),
     "Diário de Progressão deve consumir guias e marcos oficiais e enviar comandos aos sistemas donos"
 );
 check(

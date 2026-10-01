@@ -119,6 +119,9 @@ Já fora das telas clássicas (5.3a–c e correções):
 | Ofícios, estações e receita pedida pelo contrato | `js/items/CraftingGuidance.js`; receitas iniciais em `CraftingSystem.ensureStarterRecipes` |
 | Sessão, pico de DPS e recordes da Hunt | `js/world/HuntAnalyzer.js` |
 | Bloqueio por nível, fim da luta, `targetCreatureId` | `HuntSystem.startHunt/stopHunt` (antes injetados pelo `HudWorldMapAndDrops`) |
+| Velocidade do combate (1×/2×/4×) | `BattleSystem.applyCombatSpeed` (antes aplicada pelo `EncounterCombatHUD`) |
+| Escada entre andares | `HuntSystem.getStairsState` + cartão "Descer escadas" na Hunt 3.0 (antes só a HUD clássica chamava `nextRoom`: a 3.0 parava no primeiro andar) |
+| Vista principal Hunt/Cidade | `UIManager` reescrito só com `primaryView`/`setPrimaryView` |
 | Registro do loot da expedição (pilhas, ouro, especiais) | `js/world/HuntLootLedger.js` (antes ouvido só pelo `HudWorldMapAndDrops`; a aba de loot da 3.0 dependia dele) |
 | Escolha de eventos de exploração | `ExplorationSystem.getEventPreview` + cartão na Hunt 3.0 (antes só na HUD clássica: a 3.0 travava na Mineração do tutorial) |
 
@@ -137,8 +140,11 @@ Ainda falta, antes de apagar arquivos:
 4. **TooltipManager** — a 3.0 não usa; sair também do `GameLoader`.
 5. ~~Opção "clássica"~~ — removida (Opções, menu Mais, tela inicial,
    `?ui=classic`, `SettingsManager`, `window.AETHRA_INTERFACE_DEFAULT`).
-6. Descarregar os módulos clássicos, depois tirar CSS e marcação, depois
-   apagar os arquivos.
+6. ~~Descarregar os módulos clássicos~~ — feito: `index.html` carrega de
+   `js/ui/` só `WindowManager`, `UIManager`, `DeathModalUI` e
+   `SaveStatusBanner`; testes que mediam a clássica saíram, os de regra
+   foram convertidos para a 3.0.
+7. Tirar o CSS e a marcação clássicos; depois apagar os arquivos.
 
 Decisões de produto em aberto: pontos de habilidade (`XPSystem` dá 1 por
 nível, mas nenhuma tela abre a distribuição) e a "Lâmina do Fundador"

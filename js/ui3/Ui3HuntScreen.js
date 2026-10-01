@@ -298,12 +298,33 @@
             </div>`;
     }
 
+    // Andar limpo: a expedição espera o jogador descer a escada.
+    function stairsHTML(stairs) {
+        const K = kit();
+        const detail = stairs.finalRoom
+            ? "Último andar vencido. Conclua para fechar a expedição."
+            : stairs.bossNext ? "O chefe espera no próximo andar. Prepare-se antes de descer." : "Descanse e desça quando estiver pronto.";
+        return `<div class="ui3-portrait ui3-portrait--target ui3-event__icon" aria-hidden="true">⇣</div>
+            <div class="ui3-unit__body ui3-event">
+                <div class="ui3-unit__head">
+                    <strong class="ui3-unit__name">Andar ${K.formatNumber(stairs.room)} de ${K.formatNumber(stairs.maxRooms)} limpo</strong>
+                    <span class="ui3-unit__meta">Escadaria</span>
+                </div>
+                <p class="ui3-caption">${K.esc(detail)}</p>
+                <div class="ui3-expedition__row">
+                    ${K.button({ label: stairs.finalRoom ? "Concluir expedição" : "Descer escadas", variant: "primary", attributes: { "data-ui3-next-room": "" } })}
+                </div>
+            </div>`;
+    }
+
     function targetHTML(snapshot) {
         const K = kit();
         const enemy = snapshot?.active ? snapshot.enemy : null;
         if (!enemy) {
             const preview = Aethra.ExplorationSystem?.getEventPreview?.();
-            return preview ? eventHTML(preview) : "";
+            if (preview) return eventHTML(preview);
+            const stairs = Aethra.HuntSystem?.getStairsState?.();
+            return stairs?.atStairs ? stairsHTML(stairs) : "";
         }
         const hp = enemy.resources?.hp || { current: enemy.hp, maximum: enemy.maxHp };
         const type = enemy.type ? K.creatureType(enemy.type) : "";
@@ -551,7 +572,7 @@
         patch(parts.hero, heroHTML(snapshot));
         const target = targetHTML(snapshot);
         parts.target.hidden = !target;
-        parts.target.classList.toggle("is-event", target.includes("data-ui3-event-resolve"));
+        parts.target.classList.toggle("is-event", target.includes("data-ui3-event-resolve") || target.includes("data-ui3-next-room"));
         patch(parts.target, target);
         screen.classList.toggle("is-running", isHuntRunning());
         patch(parts.expeditionHead, expeditionHeadHTML());
@@ -672,6 +693,10 @@
         if (primary) return usePrimary(primary.dataset.ui3Primary);
         const slot = target.closest("[data-ui3-skill-slot]");
         if (slot) return useSlot(Number(slot.dataset.ui3SkillSlot));
+        if (target.closest("[data-ui3-next-room]")) {
+            Aethra.HuntSystem?.nextRoom?.();
+            return render();
+        }
         const resolveEvent = target.closest("[data-ui3-event-resolve]");
         if (resolveEvent) {
             Aethra.ExplorationSystem?.resolveEvent?.(resolveEvent.dataset.ui3EventResolve, { manual: true });
@@ -837,6 +862,14 @@
     });
     Aethra.EventBus.on("exploration:updated", () => scheduleRender());
     Aethra.EventBus.on("hunt:loot-ledger-updated", () => scheduleRender());
+    Aethra.EventBus.on("hunt:stairs-reached", (payload = {}) => {
+        pushLog(`Andar ${payload.room || 1} limpo: desça a escada para continuar.`, "system");
+        scheduleRender();
+    });
+    Aethra.EventBus.on("hunt:room-entered", (payload = {}) => {
+        pushLog(`Andar ${payload.room || 1}.`, "system");
+        scheduleRender();
+    });
     Aethra.EventBus.on("BattleLog", (payload = {}) => {
         if (payload.type === "system") pushLog(payload.message, "system");
     });
