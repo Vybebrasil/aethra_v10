@@ -9,12 +9,18 @@
             const combat = Aethra.CreatureBalanceConfig.getEncounterStats(raw);
             const type = String(raw.type || "unknown").toLowerCase();
             const rank = Aethra.CreatureBalanceConfig.getRank(raw);
-            const abilities = Aethra.MonsterAbilityParser.parseMonster(raw);
+            // Nomes em português (MonsterNamesPt); o original fica em sourceName.
+            const names = Aethra.MonsterNamesPt;
+            const abilities = Aethra.MonsterAbilityParser.parseMonster(raw).map((ability) => ({
+                ...ability,
+                sourceName: ability.name,
+                name: names?.ability?.(ability.name) || ability.name
+            }));
             const monster = {
                 id: raw.id,
                 sourceId: raw.id,
                 slug: raw.slug,
-                name: raw.name,
+                name: names?.creature?.(raw.name) || raw.name,
                 sourceName: raw.name,
                 catalogSource: "pocketdm-srd",
                 source: raw.source,

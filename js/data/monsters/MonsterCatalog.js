@@ -35,8 +35,16 @@
                 const response = await fetch("data/monsters.json");
                 const data = await response.json();
 
+                const names = Aethra.MonsterNamesPt;
                 data.forEach((record) => {
                     const monster = clone(record);
+                    // Nomes em português; o original continua em sourceName.
+                    monster.name = names?.creature?.(monster.sourceName) || monster.name;
+                    monster.abilities = (monster.abilities || []).map((ability) => ({
+                        ...ability,
+                        sourceName: ability.sourceName || ability.name,
+                        name: names?.ability?.(ability.sourceName || ability.name) || ability.name
+                    }));
                     monster.lootTable = Aethra.LootProfileRegistry?.buildLootTable?.(monster) || monster.lootTable || [];
                     this.entries.set(monster.id, monster);
                     if (monster.slug) this.aliases[monster.slug] = monster.id;

@@ -4044,6 +4044,24 @@
                 }
                 checks.push(createCheck("Poções acabando são avisadas no registro", stockWorks, stockDetail));
 
+                /*
+                 * Criaturas e ataques do catálogo SRD em português ("O Orc usou
+                 * Greataxe" aparecia no registro). Todo nome do catálogo precisa
+                 * de tradução na tabela; anotação de regra ("(Recharge 6)") sai.
+                 */
+                const srdCreatures = Object.values(Aethra.GameData.creatures || {}).filter((creature) => creature?.catalogSource === "pocketdm-srd");
+                const namesPt = Aethra.MonsterNamesPt;
+                const untranslatedCreatures = [...new Set(srdCreatures.filter((creature) => !namesPt.creature(creature.sourceName) || creature.name !== namesPt.creature(creature.sourceName)).map((creature) => creature.sourceName))];
+                const untranslatedAbilities = [...new Set(srdCreatures.flatMap((creature) => creature.abilities || [])
+                    .filter((ability) => !namesPt.ability(ability.sourceName || ability.name) || /\(|Recharge|\/Day/.test(ability.name))
+                    .map((ability) => ability.sourceName || ability.name))];
+                const orcAxe = (srdCreatures.find((creature) => creature.sourceName === "Orc")?.abilities || []).map((ability) => ability.name);
+                checks.push(createCheck(
+                    "Criaturas e ataques do catálogo em português",
+                    srdCreatures.length > 300 && untranslatedCreatures.length === 0 && untranslatedAbilities.length === 0 && orcAxe.includes("Machado Grande"),
+                    `${srdCreatures.length} criaturas · sem tradução: ${[...untranslatedCreatures, ...untranslatedAbilities].slice(0, 6).join(", ") || "nenhuma"} · Orc: ${orcAxe.join(", ")}`
+                ));
+
                 // Registro em português e no andar final a escada conclui a expedição.
                 const rewardText = Aethra.BattleLogger.formatRewardMessage("Lobo", { xp: 5, gold: 0, lootCount: 2 });
                 const finalHunt = Aethra.GameState.hunt;
