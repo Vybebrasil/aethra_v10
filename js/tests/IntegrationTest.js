@@ -3814,6 +3814,27 @@
                 }
                 checks.push(createCheck("Derrota contra chefe libera o Mural", bossReleaseWorks, bossReleaseDetail));
 
+                /*
+                 * Habilidade física rola o dano da arma. SkillController passa
+                 * baseDamage: null fora da magia, e Number(null) é 0: desde julho
+                 * todo Corte Preciso batia com base 1 (o Lobo Alfa ficava imbatível).
+                 */
+                const damageSystem = Aethra.BattleSystem;
+                const profileBefore = damageSystem.getWeaponDamageProfile;
+                let skillBaseWorks = false;
+                let skillBaseDetail = "";
+                try {
+                    damageSystem.getWeaponDamageProfile = () => ({ weapon: null, weaponId: null, weaponName: "Teste", baseMin: 8, baseMax: 8, multiplier: 1, individualMin: 1, individualMax: 1, affixMin: 0, affixMax: 0 });
+                    const dummy = { stats: { defense: 0 } };
+                    const physical = damageSystem.calculateDamage(dummy, { baseDamage: null, isCrit: false, details: true });
+                    const fixed = damageSystem.calculateDamage(dummy, { baseDamage: 3, isCrit: false, details: true });
+                    skillBaseWorks = physical.baseDamage === 8 && fixed.baseDamage === 3;
+                    skillBaseDetail = `sem base fixa ${physical.baseDamage} (arma 8) · base fixa ${fixed.baseDamage} (3)`;
+                } finally {
+                    damageSystem.getWeaponDamageProfile = profileBefore;
+                }
+                checks.push(createCheck("Habilidade física usa o dano da arma", skillBaseWorks, skillBaseDetail));
+
                 // Registro em português e no andar final a escada conclui a expedição.
                 const rewardText = Aethra.BattleLogger.formatRewardMessage("Lobo", { xp: 5, gold: 0, lootCount: 2 });
                 const finalHunt = Aethra.GameState.hunt;

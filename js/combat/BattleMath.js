@@ -27,12 +27,15 @@
                 options.weapon || this.getEquippedWeapon()
             );
 
-            const baseDamage = Number.isFinite(
-                Number(options.baseDamage)
-            )
+            // null/undefined = sem base fixa: rola a arma. Number(null) é 0, e
+            // toda habilidade física (baseDamage: null) batia com base 1.
+            const fixedBase = options.baseDamage == null || options.baseDamage === ""
+                ? NaN
+                : Number(options.baseDamage);
+            const baseDamage = Number.isFinite(fixedBase)
                 ? Math.max(
                     1,
-                    integer(options.baseDamage, profile.baseMin)
+                    integer(fixedBase, profile.baseMin)
                 )
                 : this.randomInt(
                     profile.baseMin,
