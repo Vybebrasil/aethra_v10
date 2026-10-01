@@ -28,7 +28,7 @@
     const MORE_ITEMS = Object.freeze([
         { window: "npc-shop-view", label: "Loja", hint: "Comprar e vender com mercadores" },
         { window: "quests-view", label: "Missões", hint: "Objetivos e recompensas" },
-        { window: "automation-view", label: "Automação", hint: "Auto-venda, suprimentos e poções" },
+        { window: "automation-view", label: "Poções em combate", hint: "Quando cada poção é usada sozinha" },
         { window: "player-market-view", label: "Mercado", hint: "Comprar e anunciar" },
         { window: "premium-shop-view", label: "Cash", hint: "Itens de diamantes" },
         { window: "coliseum-view", label: "Coliseu", hint: "PvP e ranking" },

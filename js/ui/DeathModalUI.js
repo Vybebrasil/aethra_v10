@@ -52,7 +52,7 @@
                     <div>
                         <span><b>${fmt(equippedCount)}/${fmt(Math.max(equippedCount, Object.keys(equipment).length))}</b> espaços equipados</span>
                         <span><b>${fmt(supplyCount)}</b> consumíveis na mochila</span>
-                        <span><b>Automação</b> ajuste quando as poções são usadas</span>
+                        <span><b>Poções</b> ajuste quando são usadas em combate</span>
                     </div>
                 </div>
 

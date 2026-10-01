@@ -3244,10 +3244,6 @@
     outline: none;
 }
 
-#ui3-root .ui3-automation__setting {
-    align-items: center;
-}
-
 #ui3-root .ui3-automation__supplies {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));

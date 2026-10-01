@@ -441,7 +441,7 @@
                     ? `${K.formatNumber(supplies.used)} ${supplies.used === 1 ? "item" : "itens"} · −${K.formatNumber(supplies.spent)} o`
                     : "Nenhum"}</strong>
             </div>
-            ${K.button({ label: "Automação e suprimentos", variant: "ghost", attributes: { "data-ui3-open-window": "automation-view" } })}`;
+            ${K.button({ label: "Poções em combate", variant: "ghost", attributes: { "data-ui3-open-window": "automation-view" } })}`;
     }
 
     function lootTabHTML() {

@@ -57,7 +57,7 @@ todo o CSS clássico carregado, sai idêntica ao protótipo.
 | Mercado | `js/ui3/Ui3MarketWindow.js` | Assume `player-market-view` no layout da Loja: comprar (busca por item ou vendedor), anunciar com a cotação de `MarketplaceSystem.getListingQuote`, meus anúncios com cancelamento e resgate de saldo |
 | Loja de Diamantes | `js/ui3/Ui3PremiumShopWindow.js` | Assume `premium-shop-view` no layout da Loja: vitrine de `MarketplaceSystem.getPremiumCatalog`; diamantes são moeda paga, então comprar pede um segundo clique |
 | Social | `js/ui3/Ui3SocialWindow.js` | Assume `social-view`: sessão local, mercador (abre a Loja) e grupo/guilda indicados como indisponíveis offline |
-| Automação | `js/ui3/Ui3AutomationWindow.js` | Janela `automation-view`: continuidade, auto-venda e uso automático de poções em combate; cada ajuste vai ao `IdleLoopSystem` na hora. Sem reposição nem compra à distância (decisão de 2026-10-01): suprimento se compra no mercador ou se fabrica |
+| Automação | `js/ui3/Ui3AutomationWindow.js` | Janela `automation-view` ("Poções em combate"): só o uso automático de poções na luta; cada ajuste vai ao `IdleLoopSystem` na hora. Sem reposição, compra à distância nem venda automática (decisão de 2026-10-01, estilo velha guarda): suprimento se compra no mercador ou se fabrica, loot se vende na Loja |
 | Habilidades | `js/ui3/Ui3SkillsWindow.js` | Assume `skills-view`: Progressão (maestrias, foco, treino) e Barra e automação |
 | Preferência | `SettingsManager.interfaceVersion` | `"classic"` (padrão) ou `"v3"` |
 

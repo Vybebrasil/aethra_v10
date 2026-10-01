@@ -1,11 +1,12 @@
 /*
  * Ui3AutomationWindow.js — Automação na UI 3.0 (fase 5.3).
  *
- * Janela "automation-view": continuidade da caçada, auto-venda de loot e uso
- * automático de poções em combate. Não há reposição nem compra por aqui:
- * suprimento se compra no mercador (ou se fabrica na Alquimia).
+ * Janela "automation-view" (Poções em combate): quando cada poção é usada
+ * sozinha na luta, gastando só o que o herói carrega. Nada é comprado nem
+ * vendido por aqui: suprimento se compra no mercador ou se fabrica, e o loot
+ * se vende na Loja.
  *   leitura   IdleLoopSystem.getSupplyOverview
- *   comandos  IdleLoopSystem.updateSetting, configureAutoUse
+ *   comandos  IdleLoopSystem.configureAutoUse
  * Cada ajuste vale na hora; não há "salvar".
  */
 (function initUi3AutomationWindow(Aethra) {
@@ -49,24 +50,6 @@
         return `<input type="number" class="ui3-number" inputmode="numeric" min="${min}" max="${max}" step="${step}" value="${K.esc(value)}" aria-label="${K.esc(label)}"${attrs}>`;
     }
 
-    function settingsHTML(config) {
-        const K = kit();
-        const row = (title, caption, key, checked) => `<div class="ui3-row-between ui3-automation__setting">
-                <span class="ui3-list-row__text"><strong>${K.esc(title)}</strong><small>${K.esc(caption)}</small></span>
-                ${K.toggle({ checked, label: title, onText: "Ligado", offText: "Desligado", attributes: { "data-ui3-auto-setting": key } })}
-            </div>`;
-        return `<section class="ui3-options__section">
-                <span class="ui3-eyebrow">Ciclo da caçada</span>
-                ${row("Continuidade", "Ao fim de cada andar ou caçada, vende o loot.", "enabled", config.enabled)}
-                ${row("Auto-venda", "Vende só materiais e loot; equipamento fica na mochila.", "autoSell", config.autoSell)}
-                ${row("Guardar materiais de ofício", "Minério, couro, ervas e lingotes que as Oficinas usam não são vendidos.", "keepCraftingMaterials", config.keepCraftingMaterials)}
-                <div class="ui3-kpi-grid">
-                    ${K.kpi({ label: "Ciclos", value: K.formatNumber(config.cyclesCompleted) })}
-                    ${K.kpi({ label: "Auto-venda", value: `${config.totalProfit > 0 ? "+" : ""}${K.formatNumber(config.totalProfit)} o`, tone: config.totalProfit > 0 ? "positive" : "" })}
-                </div>
-            </section>`;
-    }
-
     function supplyHTML(supply) {
         const K = kit();
         const range = idle().autoUseRange || { min: 5, max: 95 };
@@ -101,11 +84,10 @@
             return;
         }
         state.deferred = false;
-        const { config, supplies } = idle().getSupplyOverview();
-        patch(parts.body, `${settingsHTML(config)}
-            <section class="ui3-options__section">
+        const { supplies } = idle().getSupplyOverview();
+        patch(parts.body, `<section class="ui3-options__section">
                 <span class="ui3-eyebrow">Suprimentos na mochila</span>
-                <p class="ui3-caption">Nada é comprado sozinho: quando acabar, volte ao mercador, venda o loot ou fabrique.</p>
+                <p class="ui3-caption">Nada é comprado nem vendido sozinho: quando acabar, volte ao mercador, venda o loot ou fabrique.</p>
                 <div class="ui3-automation__supplies">${supplies.map(supplyHTML).join("")}</div>
                 ${K.button({ label: "Abrir loja", attributes: { "data-ui3-open-window": "npc-shop-view" } })}
             </section>`);
@@ -113,12 +95,6 @@
 
     function onClick(event) {
         const target = event.target;
-        const setting = target.closest("[data-ui3-auto-setting]");
-        if (setting) {
-            const key = setting.dataset.ui3AutoSetting;
-            idle().updateSetting(key, !idle().config[key]);
-            return render();
-        }
         const autoUse = target.closest("[data-ui3-auto-use]");
         if (autoUse) {
             idle().configureAutoUse({ [autoUse.dataset.ui3AutoUse]: { enabled: autoUse.getAttribute("aria-checked") !== "true" } });
@@ -155,11 +131,11 @@
     if (Aethra.Ui3Window?.define) {
         Aethra.Ui3AutomationWindow = Aethra.Ui3Window.define({
             id: WINDOW_ID,
-            title: "Automação",
+            title: "Poções em combate",
             className: "ui3-dialog--medium",
             setup,
             render,
-            getSubtitle: () => "Auto-venda e uso de poções",
+            getSubtitle: () => "Quando cada poção é usada sozinha",
             getHeaderExtra: () => `<span class="ui3-currency"><span class="ui3-currency__coin" aria-hidden="true"></span><strong>${kit().formatNumber(gold())}</strong><small>ouro</small></span>`,
             events: ["idle-loop:updated", "consumable:used", "consumable:policy-changed", "goldChanged", "inventory:changed", "bag:changed"]
         });

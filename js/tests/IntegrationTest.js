@@ -2413,32 +2413,36 @@
                     )
                 );
 
-                const idleGoldBefore = Number(Aethra.GameState.hero?.gold || 0);
-                const idleLoot = Aethra.ItemSystem?.generateItem?.("wolf_hide", {
+                /*
+                 * Sem venda automática (estilo velha guarda, 2026-10-01): o loot fica
+                 * na mochila ao cair, ao limpar o andar e ao encerrar a caçada; só
+                 * a venda na Loja vira ouro, pelo preço oficial.
+                 */
+                const lootGoldBefore = Number(Aethra.GameState.hero?.gold || 0);
+                const keptLoot = Aethra.ItemSystem?.generateItem?.("wolf_hide", {
                     source: "hunt-system",
                     quantity: 2,
                     rarity: "common",
                     affixes: []
                 });
-                if (idleLoot) Aethra.BagSystem?.addItems?.([idleLoot], "integration-idle-loot");
-                const idleLootStillStored = idleLoot?.instanceId
-                    ? Aethra.BagSystem?.hasItem?.(idleLoot.instanceId)
-                    : true;
+                if (keptLoot) Aethra.BagSystem?.addItems?.([keptLoot], "integration-kept-loot");
+                Aethra.EventBus.emit("hunt:stairs-reached", { huntId: "integration_loot", room: 1 });
+                Aethra.EventBus.emit("hunt:ended", { reason: "manual" });
+                const lootKept = Boolean(keptLoot?.instanceId && Aethra.BagSystem?.hasItem?.(keptLoot.instanceId))
+                    && Number(Aethra.GameState.hero?.gold || 0) === lootGoldBefore;
+                const manualSale = keptLoot?.instanceId ? Aethra.MarketplaceSystem?.sellLoot?.(keptLoot.instanceId) : null;
+                const soldByHand = Boolean(manualSale)
+                    && Number(Aethra.GameState.hero?.gold || 0) === lootGoldBefore + Number(keptLoot.price || 0) * 2;
                 checks.push(
                     createCheck(
-                        "Loop idle vende somente loot oficial sem gerar ouro aleatório",
-                        Boolean(idleLoot)
-                            && idleLootStillStored === false
-                            && Number(Aethra.GameState.hero?.gold || 0) === idleGoldBefore + Number(idleLoot.price || 0) * 2,
-                        idleLoot
-                            ? `pilha ×${idleLoot.quantity} removida · +${Number(Aethra.GameState.hero?.gold || 0) - idleGoldBefore} G`
-                            : "loot de teste não gerado"
+                        "Loot fica na mochila e só vira ouro vendido na Loja",
+                        lootKept && soldByHand,
+                        `loot ${lootKept ? "guardado após andar e fim de caçada" : "sumiu sozinho"} · venda na Loja ${soldByHand ? `+${Number(Aethra.GameState.hero?.gold || 0) - lootGoldBefore} o` : "falhou"}`
                     )
                 );
 
                 const supplyManagerBefore = {
-                    hero: JSON.parse(JSON.stringify(Aethra.GameState.hero || {})),
-                    idleLoop: JSON.parse(JSON.stringify(Aethra.GameState.idleLoop || {}))
+                    hero: JSON.parse(JSON.stringify(Aethra.GameState.hero || {}))
                 };
                 const managedSupplyIds = new Set([
                     "potion_health",
@@ -2458,13 +2462,14 @@
                  */
                 Aethra.GameState.hero.gold = 500;
                 Aethra.GameState.idleLoop = {
-                    ...JSON.parse(JSON.stringify(Aethra.GameState.idleLoop || {})),
                     enabled: true,
+                    autoSell: true,
                     autoRestock: true,
                     goldReserve: 20,
                     supplyPlan: { potion_health: { enabled: true, reorderAt: 4, target: 4, priority: 1 } }
                 };
-                const legacyIdle = Aethra.IdleLoopSystem.getSnapshot();
+                Aethra.IdleLoopSystem.retireLegacyState();
+                const legacyRetired = !("idleLoop" in Aethra.GameState);
                 Aethra.EventBus.emit("hunt:started", { huntId: "integration_depart", hunt: { name: "Teste" } });
                 Aethra.EventBus.emit("hunt:stairs-reached", { huntId: "integration_depart", room: 1 });
                 const potionsAfterDepart = Aethra.IdleLoopSystem.inventoryQuantity("potion_health");
@@ -2475,12 +2480,11 @@
                             && Number(Aethra.GameState.hero.gold) === 500
                             && typeof Aethra.IdleLoopSystem.restockSupplies !== "function"
                             && typeof Aethra.IdleLoopSystem.purchaseSupplies !== "function"
-                            && !("autoRestock" in legacyIdle) && !("supplyPlan" in legacyIdle) && !("goldReserve" in legacyIdle),
-                        `${potionsAfterDepart} poção(ões) após partir · ${Aethra.GameState.hero.gold} o · save antigo ${"supplyPlan" in legacyIdle ? "mantém" : "sem"} plano de reposição`
+                            && legacyRetired,
+                        `${potionsAfterDepart} poção(ões) após partir · ${Aethra.GameState.hero.gold} o · save antigo ${legacyRetired ? "sem" : "mantém"} reposição/auto-venda`
                     )
                 );
                 restoreEnumerableState(Aethra.GameState.hero, supplyManagerBefore.hero);
-                Aethra.GameState.idleLoop = JSON.parse(JSON.stringify(supplyManagerBefore.idleLoop));
                 Aethra.ConsumableSystem?.ensurePolicy?.();
 
                 Aethra.WindowManager?.openWindow?.("inventory-view", {
@@ -3540,7 +3544,6 @@
                  * hora; o uso automático vira política do ConsumableSystem.
                  */
                 const idleSystem = Aethra.IdleLoopSystem;
-                const idleBefore = JSON.parse(JSON.stringify(Aethra.GameState.idleLoop || {}));
                 const policyBefore = JSON.parse(JSON.stringify(Aethra.ConsumableSystem?.ensurePolicy?.() || {}));
                 let automationWorks = false;
                 let automationDetail = "";
@@ -3548,28 +3551,24 @@
                     windowManager.openWindow("automation-view", { source: "integration-ui3-automation" });
                     const autoLayer = document.querySelector("#ui3-root [data-ui3-window='automation-view']");
                     const autoOpen = Aethra.Ui3AutomationWindow?.isOpen?.() === true;
-                    const autoSellBefore = idleSystem.config.autoSell;
-                    autoLayer?.querySelector("[data-ui3-auto-setting='autoSell']")?.click();
-                    const autoSellToggled = idleSystem.config.autoSell === !autoSellBefore;
                     const useToggle = autoLayer?.querySelector("[data-ui3-auto-use='potion_mana']");
                     const manaUseBefore = idleSystem.getSupplyOverview().supplies.find((supply) => supply.id === "potion_mana").autoUse.enabled;
                     useToggle?.click();
                     const policyAfter = Aethra.ConsumableSystem.ensurePolicy();
                     const manaUseToggled = (policyAfter.manaItemId === "potion_mana" && policyAfter.enabled !== false) === !manaUseBefore;
-                    const noRestockControls = !autoLayer?.querySelector("[data-ui3-auto-order], [data-ui3-auto-buy], [data-ui3-auto-rule], [data-ui3-auto-budget], [data-ui3-auto-setting='autoRestock']")
-                        && !/Reposição/.test(autoLayer?.textContent || "");
+                    const noRestockControls = !autoLayer?.querySelector("[data-ui3-auto-order], [data-ui3-auto-buy], [data-ui3-auto-rule], [data-ui3-auto-budget], [data-ui3-auto-setting]")
+                        && !/Reposição|Auto-venda/.test(autoLayer?.textContent || "");
                     const shopLink = Boolean(autoLayer?.querySelector("[data-ui3-open-window='npc-shop-view']"));
                     const overview = idleSystem.getSupplyOverview();
                     const overviewOk = overview.supplies.length === idleSystem.supplies.length
                         && overview.supplies.every((supply) => Number.isFinite(supply.current) && !("rule" in supply));
-                    automationWorks = autoOpen && autoSellToggled && manaUseToggled && noRestockControls && shopLink && overviewOk;
-                    automationDetail = `${autoOpen ? "janela nova" : "janela errada"} · auto-venda ${autoSellToggled ? "alternou" : "parada"} · uso de mana ${manaUseToggled ? "alternou" : "parado"} · reposição ${noRestockControls ? "ausente" : "ainda na tela"} · loja ${shopLink ? "a um clique" : "sem atalho"} · leitura ${overviewOk ? "coerente" : "incoerente"}`;
+                    automationWorks = autoOpen && manaUseToggled && noRestockControls && shopLink && overviewOk;
+                    automationDetail = `${autoOpen ? "janela nova" : "janela errada"} · uso de mana ${manaUseToggled ? "alternou" : "parado"} · reposição e auto-venda ${noRestockControls ? "ausentes" : "ainda na tela"} · loja ${shopLink ? "a um clique" : "sem atalho"} · leitura ${overviewOk ? "coerente" : "incoerente"}`;
                 } finally {
-                    Aethra.GameState.idleLoop = idleBefore;
                     Aethra.ConsumableSystem?.configure?.(policyBefore);
                     windowManager.closeWindow("automation-view", { source: "integration-restore" });
                 }
-                checks.push(createCheck("UI 3.0 Automação ajusta o IdleLoopSystem e a política de consumíveis", automationWorks, automationDetail));
+                checks.push(createCheck("UI 3.0 Poções em combate ajusta a política de consumíveis", automationWorks, automationDetail));
 
                 /*
                  * UI 3.0 — fase 5.3 (save compartilhado). Indicador na carteira e
@@ -3607,50 +3606,6 @@
                     Aethra.Ui3SaveStatus?.hide?.();
                 }
                 checks.push(createCheck("UI 3.0 mostra o save compartilhado e publica pelo SaveManager", saveStatusWorks, saveStatusDetail));
-
-                /*
-                 * A Automação roda ao fim de cada andar: o evento real é
-                 * hunt:stairs-reached (o antigo tilemap:floor-cleared não existia mais).
-                 */
-                const cycleIdle = Aethra.IdleLoopSystem;
-                const cycleBefore = JSON.parse(JSON.stringify(Aethra.GameState.idleLoop || {}));
-                // Sem vender: só o ciclo conta.
-                Object.assign(cycleIdle.config, { enabled: true, autoSell: false });
-                const cyclesBefore = cycleIdle.config.cyclesCompleted;
-                Aethra.EventBus.emit("hunt:stairs-reached", { huntId: "whispering_forest", room: 1 });
-                const floorCycles = cycleIdle.config.cyclesCompleted - cyclesBefore;
-                Aethra.GameState.idleLoop = cycleBefore;
-                checks.push(createCheck(
-                    "Automação roda o ciclo ao fim de cada andar",
-                    floorCycles === 1,
-                    `${floorCycles} ciclo(s) ao limpar o andar`
-                ));
-
-                /*
-                 * A auto-venda guarda insumo das Oficinas (a armadura vem da Forja e
-                 * do Curtume): minério de loot fica, retalho de pano é vendido. A
-                 * janela de Automação desliga a regra.
-                 */
-                const keepIdle = Aethra.IdleLoopSystem;
-                const keepBefore = JSON.parse(JSON.stringify(Aethra.GameState.idleLoop || {}));
-                let keepWorks = false;
-                let keepDetail = "";
-                try {
-                    Object.assign(keepIdle.config, { enabled: true, autoSell: true, keepCraftingMaterials: true });
-                    const oreLoot = { templateId: "iron_ore", type: "material", source: "hunt-loot" };
-                    const scrapLoot = { templateId: "cloth_scrap", type: "material", source: "hunt-loot" };
-                    const oreKept = keepIdle.isAutoSellEligible(oreLoot) === false;
-                    const scrapSold = keepIdle.isAutoSellEligible(scrapLoot) === true;
-                    windowManager.openWindow("automation-view", { source: "integration-keep-materials" });
-                    document.querySelector("#ui3-root [data-ui3-window='automation-view'] [data-ui3-auto-setting='keepCraftingMaterials']")?.click();
-                    const toggledOff = keepIdle.config.keepCraftingMaterials === false && keepIdle.isAutoSellEligible(oreLoot) === true;
-                    windowManager.closeWindow("automation-view", { source: "integration-restore" });
-                    keepWorks = oreKept && scrapSold && toggledOff;
-                    keepDetail = `minério ${oreKept ? "guardado" : "vendido"} · retalho ${scrapSold ? "vendido" : "guardado"} · opção ${toggledOff ? "desliga pela janela" : "sem efeito"}`;
-                } finally {
-                    Aethra.GameState.idleLoop = keepBefore;
-                }
-                checks.push(createCheck("Auto-venda guarda materiais das Oficinas", keepWorks, keepDetail));
 
                 /*
                  * Com a expedição parada, o painel da Hunt mostra o próximo passo da
@@ -3962,10 +3917,8 @@
                 const rewardText = Aethra.BattleLogger.formatRewardMessage("Lobo", { xp: 5, gold: 0, lootCount: 2 });
                 const finalHunt = Aethra.GameState.hunt;
                 const finalBackup = { isActive: finalHunt.isActive, currentRoom: finalHunt.currentRoom, huntId: finalHunt.huntId };
-                const idleEnabledBefore = Aethra.GameState.idleLoop?.enabled;
                 let finalLog = "";
                 try {
-                    if (Aethra.GameState.idleLoop) Aethra.GameState.idleLoop.enabled = false;
                     finalHunt.isActive = true;
                     finalHunt.huntId = finalHunt.huntId || "whispering_forest";
                     finalHunt.currentRoom = Aethra.HuntSystem.getStairsState().maxRooms;
@@ -3973,7 +3926,6 @@
                     finalLog = Aethra.Ui3HuntScreen?.getLog?.().slice(-1)[0]?.text || "";
                 } finally {
                     Object.assign(finalHunt, finalBackup);
-                    if (Aethra.GameState.idleLoop) Aethra.GameState.idleLoop.enabled = idleEnabledBefore;
                 }
                 checks.push(createCheck(
                     "Registro diz 2 itens e o andar final pede para concluir",
