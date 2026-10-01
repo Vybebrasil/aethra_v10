@@ -642,6 +642,27 @@
             });
         },
 
+        /*
+         * Fase de fúria (chefes): abaixo de enrage.atPercent da vida, o dano da
+         * criatura é multiplicado. Avisa uma vez no registro.
+         */
+        updateCreatureEnrage(creature) {
+            const enrage = creature?.enrage;
+            if (!enrage) return 1;
+            const maxHp = Math.max(1, number(creature.maxHp ?? creature.hp, 1));
+            const enraged = number(creature.hp, maxHp) / maxHp <= clamp(number(enrage.atPercent, 0.5), 0, 1);
+            if (enraged && !creature.enraged) {
+                creature.enraged = true;
+                this.emitBattleLog({
+                    message: `${creature.name} entra em ${enrage.name || "fúria"}! O dano dele aumenta.`,
+                    color: "#ff7a6a",
+                    type: "system",
+                    source: "boss-phase"
+                });
+            }
+            return creature.enraged ? Math.max(1, number(enrage.damageMultiplier, 1)) : 1;
+        },
+
         selectCreatureAbility(creature) {
             const abilities = Array.isArray(creature?.abilities)
                 ? creature.abilities.filter((ability) => Number(ability?.averageDamage || 0) > 0)
@@ -864,6 +885,7 @@
             }
 
             const creatureAbility = this.selectCreatureAbility(creature);
+            const enrageMultiplier = this.updateCreatureEnrage(creature);
             battle.phase = "enemy-action";
             const disciplineEnemyModifier = clamp(number(battle.enemyDamageModifier, 1), 0.1, 1);
             battle.enemyDamageModifier = 1;
@@ -873,7 +895,7 @@
                 "creature",
                 {
                     attackLabel: creatureAbility.name,
-                    damageMultiplier: creatureAbility.damageMultiplier * disciplineEnemyModifier,
+                    damageMultiplier: creatureAbility.damageMultiplier * disciplineEnemyModifier * enrageMultiplier,
                     monsterAbility: creatureAbility.ability
                 }
             );

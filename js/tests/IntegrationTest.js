@@ -4153,6 +4153,46 @@
                 }
                 checks.push(createCheck("Poções em níveis: Loja, Alquimia, nível e uso na luta", tiersWork, tiersDetail));
 
+                /*
+                 * O Lobo Alfa usa as técnicas que o Mural anuncia (antes só "Ataque
+                 * Básico") e entra em Fúria Alfa abaixo de metade da vida.
+                 */
+                const wolfBackup = {
+                    requirement: Aethra.BossSystem.getRequirementStatus, save: Aethra.BossSystem.save,
+                    random: Aethra.BattleSystem.randomSource, bosses: JSON.parse(JSON.stringify(Aethra.GameState.bosses || {}))
+                };
+                const wolfLogs = [];
+                const captureWolf = (payload = {}) => wolfLogs.push(payload.message);
+                Aethra.EventBus.on("BattleLog", captureWolf);
+                let wolfWorks = false;
+                let wolfDetail = "";
+                try {
+                    Aethra.BossSystem.getRequirementStatus = () => ({ allowed: true, reason: "Disponível" });
+                    Aethra.BossSystem.save = () => {};
+                    Aethra.BattleSystem.stopCombat("integration-wolf-setup");
+                    Aethra.BossSystem.challenge("alpha_wolf");
+                    const wolf = Aethra.GameState.battle.creature;
+                    const techniques = (wolf?.abilities || []).map((ability) => ability.name);
+                    Aethra.BattleSystem.randomSource = () => 0;
+                    const special = Aethra.BattleSystem.selectCreatureAbility(wolf);
+                    const calm = Aethra.BattleSystem.updateCreatureEnrage(wolf);
+                    wolf.hp = Math.floor(wolf.maxHp * 0.4);
+                    const furious = Aethra.BattleSystem.updateCreatureEnrage(wolf);
+                    const announced = wolfLogs.some((message) => /Lobo Alfa entra em Fúria Alfa/.test(message || ""));
+                    wolfWorks = techniques.includes("Mordida Dilacerante") && techniques.includes("Uivo da Matilha")
+                        && special.name !== "Ataque Básico" && special.damageMultiplier > 1
+                        && calm === 1 && furious === 1.25 && announced;
+                    wolfDetail = `técnicas ${techniques.join(", ") || "nenhuma"} · sorteio ${special.name} ×${Number(special.damageMultiplier).toFixed(2)} · fúria ${calm}→${furious} ${announced ? "anunciada" : "muda"}`;
+                } finally {
+                    Aethra.EventBus.off("BattleLog", captureWolf);
+                    Aethra.BattleSystem.randomSource = wolfBackup.random;
+                    Aethra.BattleSystem.stopCombat("integration-restore");
+                    Aethra.BossSystem.getRequirementStatus = wolfBackup.requirement;
+                    Aethra.BossSystem.save = wolfBackup.save;
+                    Aethra.GameState.bosses = wolfBackup.bosses;
+                }
+                checks.push(createCheck("Lobo Alfa usa as técnicas do Mural e entra em fúria", wolfWorks, wolfDetail));
+
                 // Registro em português e no andar final a escada conclui a expedição.
                 const rewardText = Aethra.BattleLogger.formatRewardMessage("Lobo", { xp: 5, gold: 0, lootCount: 2 });
                 const finalHunt = Aethra.GameState.hunt;

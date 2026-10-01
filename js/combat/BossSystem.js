@@ -141,7 +141,16 @@
                         blockReduction: 0.25,
                         damageMin: 12,
                         damageMax: 22
-                    }
+                    },
+                    // Técnicas que o Mural anuncia, no formato de ataque de criatura
+                    // (dano médio relativo à Mordida; recarga em 1d6 como no catálogo).
+                    abilities: [
+                        { id: "alpha_bite", name: "Mordida", type: "melee", averageDamage: 17 },
+                        { id: "rending_bite", name: "Mordida Dilacerante", type: "melee", averageDamage: 26, recharge: { min: 5 } },
+                        { id: "pack_howl", name: "Uivo da Matilha", type: "melee", averageDamage: 22, recharge: { min: 6 } }
+                    ],
+                    // Segunda fase: abaixo de metade da vida o dano sobe.
+                    enrage: { atPercent: 0.5, damageMultiplier: 1.25, name: "Fúria Alfa" }
                 }
             },
 
@@ -471,6 +480,8 @@
                 xp: boss.combat.xp,
                 gold: boss.combat.gold,
                 stats: clone(boss.combat.stats),
+                abilities: clone(boss.combat.abilities || []),
+                enrage: boss.combat.enrage ? clone(boss.combat.enrage) : null,
                 phases: boss.phases,
                 techniques: clone(boss.techniques),
                 rewardTable: clone(boss.rewards)
