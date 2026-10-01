@@ -706,8 +706,10 @@ window.Aethra = window.Aethra || {};
                 stackable: Boolean(template.stackable),
                 maxStack: template.maxStack || 1,
                 effect: template.effect ?? null,
+                // "effect" só vale como cura em modelo sem mana/vigor: a Poção de
+                // Mana (efeito 20) curava 20 de vida de brinde.
                 healAmount:
-                    Number(template.healAmount ?? template.effect) || 0,
+                    Number(template.healAmount ?? (template.manaAmount || template.energyAmount ? 0 : template.effect)) || 0,
                 manaAmount:
                     Number(template.manaAmount) || 0,
                 energyAmount:

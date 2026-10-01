@@ -60,10 +60,13 @@
     function effectsFor(item) {
         const template = templateFor(item);
         const effect = item.effect ?? template.effect ?? null;
+        // O modelo manda: itens salvos antigos carregam healAmount errado
+        // (a Poção de Mana guardava +20 de vida).
+        const source = ["healAmount", "manaAmount", "energyAmount"].some((key) => template[key] !== undefined) ? template : item;
         return {
-            hp: integer(item.healAmount ?? template.healAmount, 0),
-            mana: integer(item.manaAmount ?? template.manaAmount, 0),
-            energy: integer(item.energyAmount ?? template.energyAmount, 0),
+            hp: integer(source.healAmount, 0),
+            mana: integer(source.manaAmount, 0),
+            energy: integer(source.energyAmount, 0),
             cleansePoison: effect === "cleanse_poison" || item.cleansePoison === true || template.cleansePoison === true
         };
     }

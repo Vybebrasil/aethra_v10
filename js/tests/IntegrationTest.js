@@ -4231,6 +4231,23 @@
                 }
                 checks.push(createCheck("Mana e vigor regeneram a cada rodada de combate", regenWorks, regenDetail));
 
+                // Poção de Mana não cura vida (nem a nova, nem a salva com healAmount antigo).
+                const manaHero = Aethra.GameState.hero;
+                const manaBackup = { bag: manaHero.bag };
+                let manaOnly = false;
+                let manaDetail = "";
+                try {
+                    const freshMana = Aethra.ItemSystem.generateItem("potion_mana", { quantity: 1, source: "integration-mana" });
+                    const savedMana = { ...Aethra.ItemSystem.generateItem("potion_mana", { quantity: 1, source: "integration-mana" }), instanceId: "integration-old-mana", healAmount: 20 };
+                    manaHero.bag = [savedMana];
+                    const oldPreview = Aethra.ConsumableSystem.preview("integration-old-mana").requested || {};
+                    manaOnly = Number(freshMana.healAmount) === 0 && oldPreview.hp === 0 && oldPreview.mana === 20;
+                    manaDetail = `nova: vida ${freshMana.healAmount} · salva: vida ${oldPreview.hp} / mana ${oldPreview.mana}`;
+                } finally {
+                    manaHero.bag = manaBackup.bag;
+                }
+                checks.push(createCheck("Poção de Mana recupera só mana", manaOnly, manaDetail));
+
                 // Registro em português e no andar final a escada conclui a expedição.
                 const rewardText = Aethra.BattleLogger.formatRewardMessage("Lobo", { xp: 5, gold: 0, lootCount: 2 });
                 const finalHunt = Aethra.GameState.hunt;
