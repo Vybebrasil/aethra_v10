@@ -446,6 +446,12 @@ if (existsSync(join(root, ui3CssPath))) {
 }
 
 check(/<div id="ui3-root"/.test(indexSource), "index.html: #ui3-root ausente");
+// Todo script e folha local leva ?v=: sem isso o navegador segue com a versão
+// antiga depois de uma mudança (o BattleLogger ficou preso no cache).
+const unversionedAssets = [...indexSource.matchAll(/(?:src|href)="((?:js|css)\/[^"]+\.(?:js|css))(\?[^"]*)?"/g)]
+    .filter((match) => !/[?&]v=\d+/.test(match[2] || ""))
+    .map((match) => match[1]);
+check(unversionedAssets.length === 0, `index.html: arquivos sem ?v= (cache): ${unversionedAssets.join(", ")}`);
 // Folhas de estilo do jogo: base da página, UI 3.0 e a tela de derrota.
 const ALLOWED_STYLESHEETS = ["css/aethra-base.css", "css/aethra-ui3.css", "css/death-modal.css"];
 const indexStylesheets = [...indexSource.matchAll(/<link[^>]+rel=["']stylesheet["'][^>]*href=["']([^"']+)["']/g)]
