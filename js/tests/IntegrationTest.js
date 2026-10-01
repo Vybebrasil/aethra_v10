@@ -648,9 +648,17 @@
             const bossWindowFunctional = Boolean(bossWindowProbe.opened && bossWindowProbe.isOpen && bossWindowProbe.alphaEnabled);
             const necklaceBeforeChapter = Aethra.BagSystem?.countItem?.("silver_necklace") || 0;
             const bossChallengeStarted = Aethra.BossSystem?.challenge?.("alpha_wolf") === true;
-            const bossVictory = bossChallengeStarted
-                ? Aethra.BattleSystem?.victory?.(Aethra.GameState.battle?.creature)
-                : null;
+            // O chefe também pode soltar o colar (35%); o sorteio alto deixa só o da missão.
+            const chapterLootRandom = Aethra.LootSystem.randomSource;
+            Aethra.LootSystem.randomSource = () => 0.99;
+            let bossVictory = null;
+            try {
+                bossVictory = bossChallengeStarted
+                    ? Aethra.BattleSystem?.victory?.(Aethra.GameState.battle?.creature)
+                    : null;
+            } finally {
+                Aethra.LootSystem.randomSource = chapterLootRandom;
+            }
             const completedAlphaChapter = Aethra.QuestSystem.getQuest("chapter_one_alpha_wolf");
             const necklaceAfterChapter = Aethra.BagSystem?.countItem?.("silver_necklace") || 0;
             Aethra.WindowManager?.closeWindow?.("bosses-view", { source: "integration-chapter-one" });
@@ -3834,6 +3842,48 @@
                     damageSystem.getWeaponDamageProfile = profileBefore;
                 }
                 checks.push(createCheck("Habilidade física usa o dano da arma", skillBaseWorks, skillBaseDetail));
+
+                /*
+                 * Vitória contra chefe do Mural paga a tabela do chefe. Os chefes
+                 * não estão no catálogo de monstros: o LootSystem devolvia nada e
+                 * zerava até o ouro (o Lobo Alfa dava "nenhum ouro e nenhum loot").
+                 */
+                const rewardHero = Aethra.GameState.hero;
+                const rewardBackup = { gold: rewardHero.gold, bag: JSON.parse(JSON.stringify(rewardHero.bag || [])) };
+                const lootRandom = Aethra.LootSystem.randomSource;
+                const rollRewardsOriginal = Aethra.BossSystem.rollRewards;
+                let bossRewardsWork = false;
+                let bossRewardsDetail = "";
+                try {
+                    Aethra.LootSystem.randomSource = () => 0;
+                    const hideBefore = Aethra.BagSystem.countItem("wolf_hide");
+                    const table = Aethra.BossSystem.rollRewards("alpha_wolf");
+                    const tableOk = table?.gold === 80
+                        && table.items.some((item) => (item.templateId || item.id) === "wolf_hide")
+                        && table.items.some((item) => (item.templateId || item.id) === "silver_necklace")
+                        && Aethra.BagSystem.countItem("wolf_hide") === hideBefore + 1;
+                    Aethra.LootSystem.randomSource = lootRandom;
+                    const asked = [];
+                    Aethra.BossSystem.rollRewards = (bossId) => {
+                        asked.push(bossId);
+                        return { gold: 77, items: [], lootCount: 0, lootValue: 0, profile: null };
+                    };
+                    rewardHero.gold = 0;
+                    Aethra.BattleSystem.stopCombat("integration-boss-reward-setup");
+                    const bossCreature = { id: "integration_boss", bossId: "integration_boss", isBoss: true, name: "Chefe de Teste", hp: 1, maxHp: 1, xp: 0, stats: {} };
+                    Aethra.BattleSystem.startCombat(bossCreature, { source: "boss" });
+                    const victory = Aethra.BattleSystem.victory(Aethra.GameState.battle.creature);
+                    const battleOk = asked[0] === "integration_boss" && rewardHero.gold === 77 && /\+77 de ouro/.test(victory?.message || "");
+                    bossRewardsWork = tableOk && battleOk;
+                    bossRewardsDetail = `tabela ${tableOk ? `${table.gold} o + ${table.items.length} itens na mochila` : "não paga"} · vitória ${battleOk ? "credita 77 o" : `${rewardHero.gold} o (${victory?.message || "sem mensagem"})`}`;
+                } finally {
+                    Aethra.LootSystem.randomSource = lootRandom;
+                    Aethra.BossSystem.rollRewards = rollRewardsOriginal;
+                    Aethra.BattleSystem.stopCombat("integration-restore");
+                    rewardHero.gold = rewardBackup.gold;
+                    rewardHero.bag = rewardBackup.bag;
+                }
+                checks.push(createCheck("Vitória contra chefe paga a tabela do chefe", bossRewardsWork, bossRewardsDetail));
 
                 // Registro em português e no andar final a escada conclui a expedição.
                 const rewardText = Aethra.BattleLogger.formatRewardMessage("Lobo", { xp: 5, gold: 0, lootCount: 2 });

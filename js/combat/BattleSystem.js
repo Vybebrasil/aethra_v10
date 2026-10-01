@@ -1380,9 +1380,13 @@
                     Object.assign(rewards, clone(huntRewards));
                 }
             } else {
-                let economyResult = null;
+                // Chefe do Mural: a tabela de recompensas é do BossSystem.
+                let economyResult = creature.isBoss && typeof Aethra.BossSystem?.rollRewards === "function"
+                    ? Aethra.BossSystem.rollRewards(creature.bossId || creature.id, { battleId: battle.battleId })
+                    : null;
 
                 if (
+                    !economyResult &&
                     Aethra.LootSystem &&
                     typeof Aethra.LootSystem.processMonsterDefeat === "function"
                 ) {
@@ -1395,6 +1399,7 @@
                         }
                     );
                 } else if (
+                    !economyResult &&
                     Aethra.LootSystem &&
                     typeof Aethra.LootSystem.generateLoot === "function"
                 ) {
@@ -1408,7 +1413,7 @@
                         items,
                         ...this.summarizeLoot(items)
                     };
-                } else {
+                } else if (!economyResult) {
                     Aethra.EventBus.emit("LootFound", {
                         enemyId: creature.id,
                         battleId: battle.battleId,

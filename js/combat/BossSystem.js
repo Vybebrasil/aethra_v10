@@ -506,6 +506,36 @@
             return true;
         },
 
+        /*
+         * Recompensa da vitória pela tabela do chefe (ouro e itens com chance).
+         * Os chefes do Mural não estão no catálogo de monstros, então o
+         * LootSystem não os conhece. Mesmo formato de processMonsterDefeat: o
+         * BattleSystem credita o ouro; os itens vão à mochila por itemObtained.
+         */
+        rollRewards(bossId, context = {}) {
+            const boss = this.bosses[bossId];
+            if (!boss || !Array.isArray(boss.rewards)) return null;
+            const random = typeof Aethra.LootSystem?.randomSource === "function" ? Aethra.LootSystem.randomSource : Math.random;
+            let gold = 0;
+            const items = [];
+            boss.rewards.forEach((reward) => {
+                if (reward.type === "gold") {
+                    const min = Math.max(0, Math.floor(Number(reward.min) || 0));
+                    const max = Math.max(min, Math.floor(Number(reward.max) || min));
+                    gold += min + Math.floor(random() * (max - min + 1));
+                    return;
+                }
+                if (reward.type !== "item" || random() >= Math.min(1, Math.max(0, Number(reward.chance ?? 1)))) return;
+                const item = Aethra.LootSystem?.createInstance?.(reward.templateId, { source: "boss-reward" });
+                if (item) items.push(item);
+            });
+            if (items.length > 0) Aethra.EventBus.emit("itemObtained", items);
+            const summary = Aethra.LootSystem?.summarizeItems?.(items) || { lootCount: items.length, lootValue: 0 };
+            const result = { enemyId: bossId, battleId: context.battleId || null, gold, items, ...summary, profile: null };
+            Aethra.EventBus.emit("boss:rewards-granted", clone(result));
+            return result;
+        },
+
         releaseActiveBoss(reason = "ended") {
             const state = ensureBossState();
             const bossId = state.activeBossId;
@@ -537,11 +567,10 @@
             };
 
             const defeatedAt = now();
+            // A luta vive no BattleSystem (startedAt em ISO); o espelho antigo
+            // GameState.combat não tem início, e o melhor tempo ficava 0.
             const combatStartedAt =
-                Number(
-                    Aethra.GameState.combat &&
-                    Aethra.GameState.combat.startedAt
-                ) || defeatedAt;
+                Date.parse(Aethra.GameState.battle?.startedAt || "") || defeatedAt;
 
             const durationMs = Math.max(0, defeatedAt - combatStartedAt);
 
