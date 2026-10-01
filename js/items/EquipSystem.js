@@ -754,6 +754,11 @@
                 nextStats.defense = (nextStats.defense || 0) * (1 + (plateLevel - 1) * 0.01);
                 nextStats.maxHp = (nextStats.maxHp || 0) * (1 + (plateLevel - 1) * 0.01);
             }
+            // Vida e mana são pontos inteiros (as passivas dão frações: 64 × 1,01).
+            nextStats.maxHp = Math.max(1, Math.round(nextStats.maxHp));
+            nextStats.maxMana = Math.max(0, Math.round(nextStats.maxMana || 0));
+            nextStats.hp = Math.min(nextStats.maxHp, nextStats.hp);
+            nextStats.mana = Math.min(nextStats.maxMana, nextStats.mana);
 
             return { stats: nextStats, baseStats, equipmentBonuses };
         },

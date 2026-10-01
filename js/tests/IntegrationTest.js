@@ -3974,6 +3974,14 @@
                 }
                 checks.push(createCheck("Voltar à cidade pela missão encerra a expedição", returnWorks, returnDetail));
 
+                // Passiva de placa multiplica a vida (64 × 1,01): o resultado volta inteiro.
+                const roundedStats = Aethra.EquipSystem.composeStats({ maxHp: 64, hp: 64, maxMana: 27, mana: 27, defense: 5 }, {}, { armorLevels: { plate: 2, cloth: 3 } }).stats;
+                checks.push(createCheck(
+                    "Vida e mana máximas ficam inteiras com as passivas de armadura",
+                    Number.isInteger(roundedStats.maxHp) && Number.isInteger(roundedStats.maxMana) && roundedStats.maxHp === 65,
+                    `vida ${roundedStats.maxHp} · mana ${roundedStats.maxMana}`
+                ));
+
                 // Registro em português e no andar final a escada conclui a expedição.
                 const rewardText = Aethra.BattleLogger.formatRewardMessage("Lobo", { xp: 5, gold: 0, lootCount: 2 });
                 const finalHunt = Aethra.GameState.hunt;
