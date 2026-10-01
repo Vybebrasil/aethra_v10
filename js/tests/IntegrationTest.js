@@ -4193,6 +4193,44 @@
                 }
                 checks.push(createCheck("Lobo Alfa usa as técnicas do Mural e entra em fúria", wolfWorks, wolfDetail));
 
+                // Regeneração por rodada: mana 2 + 1 a cada 5 de Magia, vigor 2 (sem passar do máximo).
+                const regenHero = Aethra.GameState.hero;
+                const regenBackup = { mana: regenHero.stats.mana, energy: regenHero.stats.energy, mag: regenHero.stats.mag, heroMana: regenHero.mana, heroEnergy: regenHero.energy };
+                let regenWorks = false;
+                let regenDetail = "";
+                try {
+                    regenHero.stats.mag = 10;
+                    Aethra.SkillSystem.setResource("mana", 0, "integration-regen");
+                    Aethra.SkillSystem.setResource("energy", 0, "integration-regen");
+                    Aethra.BattleSystem.regenerateHeroResources();
+                    const manaAfter = Aethra.SkillSystem.getResource("mana");
+                    const energyAfter = Aethra.SkillSystem.getResource("energy");
+                    Aethra.SkillSystem.setResource("mana", regenHero.stats.maxMana, "integration-regen");
+                    Aethra.BattleSystem.regenerateHeroResources();
+                    const capped = Aethra.SkillSystem.getResource("mana") === regenHero.stats.maxMana;
+                    // E a rodada de combate de verdade chama a regeneração.
+                    const regenOriginal = Aethra.BattleSystem.regenerateHeroResources;
+                    let roundRegens = 0;
+                    Aethra.BattleSystem.regenerateHeroResources = function () { roundRegens += 1; return regenOriginal.apply(this, arguments); };
+                    try {
+                        Aethra.BattleSystem.stopCombat("integration-regen-setup");
+                        Aethra.BattleSystem.startCombat({ id: "integration_dummy", name: "Boneco", hp: 999, maxHp: 999, xp: 0, stats: { defense: 0 } }, { source: "integration-test", noRewards: true });
+                        Aethra.BattleSystem.tick(Aethra.BattleSystem.battleToken);
+                    } finally {
+                        Aethra.BattleSystem.regenerateHeroResources = regenOriginal;
+                        Aethra.BattleSystem.stopCombat("integration-restore");
+                    }
+                    regenWorks = manaAfter === 4 && energyAfter === 2 && capped && roundRegens >= 1;
+                    regenDetail = `mana +${manaAfter} (Magia 10) · vigor +${energyAfter} · teto ${capped ? "respeitado" : "ultrapassado"} · rodada ${roundRegens ? "regenera" : "não regenera"}`;
+                } finally {
+                    regenHero.stats.mag = regenBackup.mag;
+                    regenHero.stats.mana = regenBackup.mana;
+                    regenHero.stats.energy = regenBackup.energy;
+                    regenHero.mana = regenBackup.heroMana;
+                    regenHero.energy = regenBackup.heroEnergy;
+                }
+                checks.push(createCheck("Mana e vigor regeneram a cada rodada de combate", regenWorks, regenDetail));
+
                 // Registro em português e no andar final a escada conclui a expedição.
                 const rewardText = Aethra.BattleLogger.formatRewardMessage("Lobo", { xp: 5, gold: 0, lootCount: 2 });
                 const finalHunt = Aethra.GameState.hunt;
