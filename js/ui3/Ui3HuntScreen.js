@@ -913,6 +913,12 @@
         pushLog(`Andar ${payload.room || 1}.`, "system");
         scheduleRender();
     });
+    // A janela do Coliseu fecha ao começar a partida; o resultado aparece aqui.
+    Aethra.EventBus.on("coliseum:match-resolved", ({ match = {} } = {}) => {
+        const delta = Math.round(number(match.ratingDelta));
+        const rating = match.mode === "open" ? "partida livre, sem rating" : `${delta > 0 ? "+" : ""}${delta} de rating`;
+        pushLog(`Coliseu: ${match.result === "win" ? "vitória" : "derrota"} contra ${match.opponentName || "o adversário"} (${rating}).`, "system");
+    });
     Aethra.EventBus.on("BattleLog", (payload = {}) => {
         if (payload.type === "system") pushLog(payload.message, "system");
     });

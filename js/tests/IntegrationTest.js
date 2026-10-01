@@ -3885,6 +3885,17 @@
                 }
                 checks.push(createCheck("Vitória contra chefe paga a tabela do chefe", bossRewardsWork, bossRewardsDetail));
 
+                // A janela do Coliseu fecha na partida: o resultado precisa chegar ao registro da Hunt.
+                Aethra.EventBus.emit("coliseum:match-resolved", { match: { result: "loss", opponentName: "Ravenna 2", ratingDelta: -12, mode: "ranked" } });
+                const coliseumLoss = Aethra.Ui3HuntScreen?.getLog?.().slice(-1)[0]?.text || "";
+                Aethra.EventBus.emit("coliseum:match-resolved", { match: { result: "win", opponentName: "Brakus", ratingDelta: 0, mode: "open" } });
+                const coliseumWin = Aethra.Ui3HuntScreen?.getLog?.().slice(-1)[0]?.text || "";
+                checks.push(createCheck(
+                    "Resultado do Coliseu aparece no registro",
+                    /derrota contra Ravenna 2 \(-12 de rating\)/.test(coliseumLoss) && /vitória contra Brakus \(partida livre/.test(coliseumWin),
+                    `${coliseumLoss || "sem registro"} · ${coliseumWin || "sem registro"}`
+                ));
+
                 // Registro em português e no andar final a escada conclui a expedição.
                 const rewardText = Aethra.BattleLogger.formatRewardMessage("Lobo", { xp: 5, gold: 0, lootCount: 2 });
                 const finalHunt = Aethra.GameState.hunt;
