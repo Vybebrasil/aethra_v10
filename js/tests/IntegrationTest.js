@@ -3118,6 +3118,54 @@
                 windowManager.closeWindow("skills-view", { source: "integration-restore" });
 
                 /*
+                 * Pontos de habilidade: 1 por nível do herói; cada ponto sobe 1
+                 * nível da habilidade escolhida (CharacterBuildSystem), respeitando
+                 * XP pausado. A janela de Habilidades usa o ponto e a barra do
+                 * topo mostra quantos estão livres.
+                 */
+                const pointHero = Aethra.GameState.hero;
+                const pointBackup = {
+                    skillPoints: pointHero.skillPoints,
+                    disciplines: JSON.parse(JSON.stringify(pointHero.disciplines || {})),
+                    investment: JSON.parse(JSON.stringify(pointHero.masteryInvestment || {}))
+                };
+                let skillPointWorks = false;
+                let skillPointDetail = "";
+                try {
+                    const build = Aethra.CharacterBuildSystem;
+                    pointHero.skillPoints = 0;
+                    const noPoints = build.canAllocateSkillPoint("sword").reason === "no-points"
+                        && build.allocateSkillPoint("sword") === false;
+                    pointHero.skillPoints = 2;
+                    Aethra.Ui3TopBar?.render?.();
+                    const badgeShown = /2/.test(document.querySelector("#ui3-root [data-ui3-nav='skills'] .ui3-topbar__badge")?.textContent || "");
+                    const axeSkill = Aethra.XPSystem.getSkillState("axe");
+                    const axeModeBefore = axeSkill.trainingMode;
+                    axeSkill.trainingMode = "locked";
+                    const lockedRespected = build.canAllocateSkillPoint("axe").reason === "training-locked"
+                        && build.allocateSkillPoint("axe") === false
+                        && pointHero.skillPoints === 2;
+                    axeSkill.trainingMode = axeModeBefore;
+                    const swordLevelBefore = Aethra.XPSystem.getSkillState("sword").level;
+                    windowManager.openWindow("skills-view", { source: "integration-skill-points" });
+                    const skillsLayer = document.querySelector("#ui3-root [data-ui3-window='skills-view']");
+                    skillsLayer?.querySelector("[data-ui3-tab='journal'], [data-ui3-skills-tab='journal']")?.click();
+                    skillsLayer?.querySelector("[data-ui3-skill-entry='sword']")?.click();
+                    skillsLayer?.querySelector("[data-ui3-skill-point='sword']")?.click();
+                    const swordAfter = Aethra.XPSystem.getSkillState("sword");
+                    const spentByUi = swordAfter.level === swordLevelBefore + 1 && pointHero.skillPoints === 1;
+                    windowManager.closeWindow("skills-view", { source: "integration-restore" });
+                    skillPointWorks = noPoints && badgeShown && lockedRespected && spentByUi;
+                    skillPointDetail = `sem pontos ${noPoints ? "recusa" : "aceita"} · contador ${badgeShown ? "na barra" : "ausente"} · XP pausado ${lockedRespected ? "respeitado" : "ignorado"} · espada Nv ${swordLevelBefore} → ${swordAfter.level} (${pointHero.skillPoints} restante)`;
+                } finally {
+                    pointHero.skillPoints = pointBackup.skillPoints;
+                    pointHero.disciplines = pointBackup.disciplines;
+                    pointHero.masteryInvestment = pointBackup.investment;
+                    Aethra.Ui3TopBar?.render?.();
+                }
+                checks.push(createCheck("Ponto de habilidade sobe 1 nível pela janela de Habilidades", skillPointWorks, skillPointDetail));
+
+                /*
                  * UI 3.0 — fase 5.2 (Oficinas). Ui3Navigation.openWorkshop abre a
                  * janela nova, que produz pelo CraftingSystem.
                  */

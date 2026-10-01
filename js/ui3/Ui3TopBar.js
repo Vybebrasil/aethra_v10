@@ -60,9 +60,12 @@
         };
     }
 
-    function navButton({ id, label, icon, key = "", current = false }) {
+    function navButton({ id, label, icon, key = "", current = false, badge = 0 }) {
         const K = kit();
-        return `<button type="button" class="ui3-topbar__nav-item" data-ui3-nav="${K.esc(id)}"${current ? ' aria-current="page"' : ""}${key ? ` aria-keyshortcuts="${K.esc(key)}"` : ""}>${icon}<span>${K.esc(label)}</span>${key ? `<kbd class="ui3-kbd">${K.esc(key)}</kbd>` : ""}</button>`;
+        const badgeHTML = badge > 0
+            ? `<span class="ui3-topbar__badge" aria-label="${K.esc(`${badge} ${badge === 1 ? "ponto livre" : "pontos livres"}`)}">${K.formatNumber(badge)}</span>`
+            : "";
+        return `<button type="button" class="ui3-topbar__nav-item" data-ui3-nav="${K.esc(id)}"${current ? ' aria-current="page"' : ""}${key ? ` aria-keyshortcuts="${K.esc(key)}"` : ""}>${icon}<span>${K.esc(label)}</span>${badgeHTML}${key ? `<kbd class="ui3-kbd">${K.esc(key)}</kbd>` : ""}</button>`;
     }
 
     function menuHTML() {
@@ -88,7 +91,7 @@
                 ${navButton({ id: "hunt", label: "Hunt", icon: ICONS.hunt, current: view === "hunt" })}
                 ${navButton({ id: "city", label: "Cidade", icon: ICONS.city, current: view === "city" })}
                 ${navButton({ id: "bag", label: "Mochila", icon: ICONS.bag, key: "B" })}
-                ${navButton({ id: "skills", label: "Habilidades", icon: ICONS.skills, key: "K" })}
+                ${navButton({ id: "skills", label: "Habilidades", icon: ICONS.skills, key: "K", badge: Math.max(0, Math.floor(Number(Aethra.GameState?.hero?.skillPoints) || 0)) })}
                 ${navButton({ id: "map", label: "Mapa", icon: ICONS.map, key: "M" })}
                 <div class="ui3-topbar__more">
                     <button type="button" class="ui3-topbar__nav-item" data-ui3-more aria-haspopup="menu" aria-expanded="${menuOpen ? "true" : "false"}"><span>Mais</span>${ICONS.chevron}</button>
@@ -254,7 +257,7 @@
             sync();
             window.setTimeout(sync, 0);
         }));
-    ["goldChanged", "hunt:updated", "battle:rewards-granted", "window:opened"]
+    ["goldChanged", "hunt:updated", "battle:rewards-granted", "window:opened", "levelUp", "skill-point:spent"]
         .forEach((eventName) => Aethra.EventBus.on(eventName, scheduleRender));
 
     Aethra.Ui3TopBar = {

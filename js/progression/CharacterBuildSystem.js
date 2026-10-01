@@ -357,17 +357,42 @@
             return Boolean(Aethra.DisciplineSystem?.investPoint?.(masteryId, points));
         },
 
+        /*
+         * Pontos de habilidade: o herói ganha 1 por nível (XPSystem) e cada
+         * ponto sobe 1 nível da disciplina escolhida, entregue como o XP que
+         * falta para o próximo nível. Disciplina com XP travado não recebe.
+         */
+        canAllocateSkillPoint(masteryId) {
+            const hero = this.ensureState();
+            if (!MASTERIES[masteryId]) return { allowed: false, reason: "unknown-mastery" };
+            if (integer(hero.skillPoints, 0) <= 0) return { allowed: false, reason: "no-points" };
+            const skill = Aethra.XPSystem?.getSkillState?.(masteryId);
+            if (!skill) return { allowed: false, reason: "unknown-mastery" };
+            if (skill.trainingMode === "locked") return { allowed: false, reason: "training-locked" };
+            return { allowed: true, reason: null, xpToNextLevel: Math.max(1, integer(skill.xpNext, 1) - integer(skill.xpCurrent, 0)) };
+        },
+
         allocateSkillPoint(masteryId) {
             const hero = this.ensureState();
-            if (hero.skillPoints <= 0 || !MASTERIES[masteryId]) return false;
-            if (!this.raiseMastery(masteryId, 1)) return false;
+            const check = this.canAllocateSkillPoint(masteryId);
+            if (!check.allowed) return false;
+            const levelBefore = integer(Aethra.XPSystem.getSkillState(masteryId)?.level, 1);
+            const grant = Aethra.XPSystem.grantSkillXP(masteryId, check.xpToNextLevel, {
+                source: "skill-point",
+                difficulty: levelBefore,
+                multiplier: 1
+            });
+            if (!grant?.accepted || grant.levelsGained < 1) return false;
+            this.raiseMastery(masteryId, 1);
             hero.skillPoints -= 1;
 
             const payload = {
                 masteryId,
                 mastery: clone(MASTERIES[masteryId]),
                 remaining: hero.skillPoints,
-                investment: hero.masteryInvestment[masteryId]
+                investment: hero.masteryInvestment[masteryId],
+                levelBefore,
+                levelAfter: grant.state.level
             };
             Aethra.EventBus.emit("skill-point:spent", clone(payload));
             Aethra.EventBus.emit("mastery:updated", clone(payload));

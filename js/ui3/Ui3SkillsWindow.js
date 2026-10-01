@@ -108,13 +108,41 @@
         return `<div class="ui3-progress" role="meter" aria-label="Experiência de ${K.esc(entry.name)}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percent.toFixed(0)}"><div style="width:${percent.toFixed(1)}%"></div></div>`;
     }
 
+    function skillPoints() {
+        return Math.max(0, Math.floor(number(Aethra.GameState?.hero?.skillPoints)));
+    }
+
+    // Cada ponto livre sobe 1 nível da habilidade (CharacterBuildSystem).
+    function skillPointHTML(entry) {
+        const K = kit();
+        const points = skillPoints();
+        if (points <= 0) {
+            return `<section class="ui3-section">
+                    <span class="ui3-eyebrow">Pontos de habilidade</span>
+                    <p class="ui3-caption">Nenhum ponto livre. Você ganha 1 a cada nível do herói; cada ponto sobe 1 nível de uma habilidade.</p>
+                </section>`;
+        }
+        const check = Aethra.CharacterBuildSystem?.canAllocateSkillPoint?.(entry.id) || { allowed: false };
+        const blocked = check.reason === "training-locked" ? "O XP desta habilidade está pausado. Retome o XP para investir um ponto." : "";
+        return `<section class="ui3-section ui3-skill-points">
+                <div class="ui3-row-between"><span class="ui3-eyebrow">Pontos de habilidade</span><strong>${K.formatNumber(points)} ${points === 1 ? "livre" : "livres"}</strong></div>
+                <p class="ui3-caption">${K.esc(blocked || "Cada ponto sobe 1 nível desta habilidade na hora.")}</p>
+                ${K.button({
+                    label: `Usar 1 ponto: Nv ${K.formatNumber(entry.level)} → ${K.formatNumber(number(entry.level) + 1)}`,
+                    variant: "primary",
+                    disabled: !check.allowed,
+                    attributes: { "data-ui3-skill-point": entry.id }
+                })}
+            </section>`;
+    }
+
     function journalSummaryHTML(model) {
         const K = kit();
         const summary = model.summary || {};
         return `<div class="ui3-kpi-grid ui3-kpi-grid--4">
                 ${K.kpi({ label: "Foco atual", value: model.focused ? `${model.focused.name} · Nv ${K.formatNumber(model.focused.level)}` : "Nenhum" })}
                 ${K.kpi({ label: "Descobertas", value: `${K.formatNumber(summary.discovered)}/${K.formatNumber(summary.total)}` })}
-                ${K.kpi({ label: "Treinando", value: K.formatNumber(summary.training) })}
+                ${K.kpi({ label: "Pontos livres", value: K.formatNumber(skillPoints()), tone: skillPoints() > 0 ? "positive" : "" })}
                 ${K.kpi({ label: "Pausadas", value: K.formatNumber(summary.paused), tone: number(summary.paused) > 0 ? "negative" : "" })}
             </div>`;
     }
@@ -194,6 +222,7 @@
                     ? `<ul class="ui3-plain-list">${recent.map((item) => `<li><strong>+${K.formatNumber(item.amount)} XP</strong> <span>${K.esc(item.sourceLabel)} · ${K.esc(item.time)}</span></li>`).join("")}</ul>`
                     : `<p class="ui3-empty">A próxima ação que treinar esta habilidade aparece aqui.</p>`}
             </section>
+            ${skillPointHTML(entry)}
             <div class="ui3-item-actions">
                 ${noticeHTML()}
                 ${K.button({ label: entry.focused ? "Habilidade em foco" : "Definir como foco", variant: "primary", disabled: entry.focused, attributes: { "data-ui3-skill-focus": entry.id } })}
@@ -444,6 +473,14 @@
             state.notice = null;
             return render();
         }
+        const point = target.closest("[data-ui3-skill-point]");
+        if (point && !point.disabled) {
+            const result = Aethra.CharacterBuildSystem?.allocateSkillPoint?.(point.dataset.ui3SkillPoint);
+            notify(result
+                ? `${result.mastery?.name || "Habilidade"} subiu para o nível ${kit().formatNumber(result.levelAfter)}.`
+                : "Não foi possível usar o ponto agora.", result ? "ok" : "error");
+            return render();
+        }
         const focus = target.closest("[data-ui3-skill-focus]");
         if (focus) {
             Aethra.DisciplineSystem?.setFocus?.(focus.dataset.ui3SkillFocus, "ui3-skills");
@@ -601,6 +638,8 @@
                 "skill-controller:settings-changed",
                 "primary-attack:settings-changed",
                 "skill:xp-changed",
+                "skill-point:spent",
+                "levelUp",
                 "skill:training-mode-changed",
                 "discipline:focus-changed",
                 "profession:policy-changed",

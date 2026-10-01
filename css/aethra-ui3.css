@@ -3351,6 +3351,28 @@
     white-space: normal;
 }
 
+/* Pontos de habilidade */
+#ui3-root .ui3-topbar__badge {
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: var(--ui3-gold);
+    color: var(--ui3-bg-0);
+    font-size: var(--ui3-fs-xs);
+    font-weight: 700;
+}
+
+#ui3-root .ui3-skill-points {
+    padding: var(--ui3-space-3);
+    border: 1px solid var(--ui3-gold-3);
+    border-radius: var(--ui3-radius-lg);
+}
+
 /* Social */
 #ui3-root .ui3-social__list {
     display: grid;
