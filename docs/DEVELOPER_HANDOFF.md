@@ -20,7 +20,7 @@ paralelos que leem e escrevem o mesmo estado.
   recomendada para combate/coleta/mundo.
 - Mineração agora fecha o primeiro contrato vertical de foco: o jogador escolhe
   Minerar ou Ignorar nos veios das `Galerias do Aprendiz`, coleta 6 minérios,
-  funde 3 lingotes e escolhe entre Espada, Machado ou Maça de Ferro. Ignorar não
+  funde 3 lingotes e escolhe entre Espada, Machado ou Maça de Recruta. Ignorar não
   consome a garantia e nenhuma etapa escolhe ou fabrica automaticamente.
 - O Diário apresenta os quatro objetivos dependentes e seu progresso; a oficina
   destaca a receita de fundição e depois as três opções válidas de equipamento.
@@ -153,7 +153,7 @@ paralelos que leem e escrevem o mesmo estado.
   Mundi ocupa o viewport, fica acima de toda a HUD e captura o ponteiro; janelas
   comuns respeitam topbar e ActionBar sem ficarem cortadas.
 - Requisitos de arma das técnicas consultam `EquipSystem.getEquipped(slot)` e os
-  campos oficiais `weaponFamily`/`weaponType`. A Espada de Recruta libera
+  campos oficiais `weaponFamily`/`weaponType`. A Espada de Treino libera
   `precise_strike` desde a criação.
 - Retratos HTML usam sprites individuais de `assets/entities`; spritesheets de
   animação 384x128 não podem ser renderizadas diretamente em `<img>`.

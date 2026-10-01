@@ -2026,7 +2026,7 @@
                 Aethra.Ui3WorkshopWindow?.refresh?.();
                 const guidedLeatherCards = [...document.querySelectorAll(`${UI3_WORKSHOP} .ui3-recipe.is-guided [data-ui3-craft]`)];
                 const leatherChoiceVisible = guidedLeatherCards.length === 3
-                    && /Botas, Chapéu e Calças de Couro/.test(document.querySelector(`${UI3_WORKSHOP} .ui3-workshop__guidance`)?.textContent || "");
+                    && /Botas, Capuz e Calças de Couro/.test(document.querySelector(`${UI3_WORKSHOP} .ui3-workshop__guidance`)?.textContent || "");
                 checks.push(
                     createCheck(
                         "Curtume conduz do tratamento para três escolhas de equipamento",
@@ -3917,6 +3917,45 @@
                     "Loja vende a armadura inicial em qualquer nível",
                     armorAtLevel1 && armorAtLevel6 && armorInShop,
                     `nível 1 ${armorAtLevel1 ? "completo" : "faltando"} · nível 6 ${armorAtLevel6 ? "só a inicial" : "errado"} · aba Armaduras ${armorInShop ? "lista as 5 peças" : "incompleta"}`
+                ));
+
+                /*
+                 * Nomes de itens e receitas (2026-10-01): a receita tem o nome do
+                 * item que produz; a faixa concorda com a peça ("Espada Rúnica",
+                 * "Botas de Recruta"); adjetivo de afixo vem depois do substantivo e
+                 * concorda; nenhum equipamento repete o nome de outro.
+                 */
+                const itemData = Aethra.GameData.items;
+                const PROCESS_ACTIONS = ["smelt", "tan", "distill"];
+                const recipeNameDrift = Aethra.RecipeCatalog.all()
+                    .filter((recipe) => !PROCESS_ACTIONS.includes(recipe.action))
+                    .filter((recipe) => recipe.name !== itemData[recipe.outputs?.[0]?.itemId]?.name)
+                    .map((recipe) => `${recipe.name} → ${itemData[recipe.outputs?.[0]?.itemId]?.name}`);
+                const equipmentNames = Object.values(Aethra.ItemTemplates).filter((template) => template?.slot).map((template) => template.name);
+                const repeatedNames = equipmentNames.filter((name, index) => equipmentNames.indexOf(name) !== index);
+                const agreement = itemData.eg_sword_l10?.name === "Espada Aetheriana"
+                    && itemData.eg_feet_l9?.name === "Botas Rúnicas"
+                    && itemData.eg_head_l1?.name === "Elmo de Recruta"
+                    && itemData.training_sword?.name === "Espada de Treino"
+                    && !equipmentNames.some((name) => /^(Adaga|Espada|Maça|Botas|Luvas|Perneiras) .*(Rúnico|Aetheriano)$/.test(name));
+                const namesHero = Aethra.GameState.hero;
+                const namesBagBefore = namesHero.bag;
+                const legacyAxe = { instanceId: "integration-legacy-axe", templateId: "eg_axe_l1", name: "Temperada Machado Recruta", baseName: "Machado Recruta", affixes: [{ id: "tempered", kind: "prefix", name: "Temperada" }] };
+                const legacyBoots = { instanceId: "integration-legacy-boots", templateId: "eg_feet_l9", name: "Reforçada Botas Rúnico da Guarda", baseName: "Botas Rúnico", affixes: [{ id: "reinforced", kind: "prefix", name: "Reforçada" }, { id: "of_guarding", kind: "suffix", name: "da Guarda" }] };
+                const customBoots = { instanceId: "integration-custom-boots", templateId: "eg_feet_l9", name: "Botas do Paulo", baseName: "Botas Rúnico", affixes: [] };
+                try {
+                    namesHero.bag = [legacyAxe, legacyBoots, customBoots];
+                    Aethra.ItemSystem.refreshInstanceNames("integration");
+                } finally {
+                    namesHero.bag = namesBagBefore;
+                }
+                const savedRenamed = legacyAxe.name === "Machado Temperado de Recruta"
+                    && legacyBoots.name === "Botas Reforçadas Rúnicas do Guardião"
+                    && customBoots.name === "Botas do Paulo";
+                checks.push(createCheck(
+                    "Nomes de itens e receitas concordam e não se repetem",
+                    recipeNameDrift.length === 0 && repeatedNames.length === 0 && agreement && savedRenamed,
+                    `receitas ${recipeNameDrift.length ? recipeNameDrift.join(", ") : "iguais ao item"} · repetidos ${repeatedNames.length ? [...new Set(repeatedNames)].join(", ") : "nenhum"} · concordância ${agreement ? "ok" : "errada"} · save antigo: ${legacyAxe.name} / ${legacyBoots.name} / ${customBoots.name}`
                 ));
 
                 // Registro em português e no andar final a escada conclui a expedição.

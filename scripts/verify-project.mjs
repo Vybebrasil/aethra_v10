@@ -301,7 +301,7 @@ check(
     ["craft_leather_boots", "craft_leather_helm", "craft_leather_legs"].every((recipeId) => (
         new RegExp(`id:\\s*["']${recipeId}["'][\\s\\S]{0,250}requiredLevel:\\s*1`).test(recipeCatalogSource)
     ))
-        && /Botas, Chapéu e Calças de Couro/.test(craftingGuidanceSource),
+        && /Botas, Capuz e Calças de Couro/.test(craftingGuidanceSource),
     "Curtume inicial deve oferecer três escolhas de equipamento acessíveis no nível 1"
 );
 check(

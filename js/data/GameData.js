@@ -347,31 +347,31 @@
             },
 
             training_sword: {
-                id: "training_sword", name: "Espada de Recruta", image: "assets/organized/items/weapons/all/weapons_011.png",
+                id: "training_sword", name: "Espada de Treino", image: "assets/organized/items/weapons/all/weapons_011.png",
                 type: "weapon", slot: "weapon", weaponFamily: "sword", tier: 1, levelReq: 1,
                 damage: 4, damageMin: 3, damageMax: 5, price: 5, rarity: "Comum", stackable: false,
                 description: "Uma lâmina simples para aprender os fundamentos de Espadas."
             },
             training_axe: {
-                id: "training_axe", name: "Machado de Recruta", image: "assets/organized/items/weapons/axes/axe_l01.png",
+                id: "training_axe", name: "Machado de Treino", image: "assets/organized/items/weapons/axes/axe_l01.png",
                 type: "weapon", slot: "weapon", weaponFamily: "axe", tier: 1, levelReq: 1,
                 damage: 4, damageMin: 3, damageMax: 5, price: 5, rarity: "Comum", stackable: false,
                 description: "Pesado o bastante para ensinar que todo impacto cobra um risco."
             },
             training_mace: {
-                id: "training_mace", name: "Maça de Recruta", image: "assets/organized/items/weapons/maces/mace_l01.png",
+                id: "training_mace", name: "Maça de Treino", image: "assets/organized/items/weapons/maces/mace_l01.png",
                 type: "weapon", slot: "weapon", weaponFamily: "mace", tier: 1, levelReq: 1,
                 damage: 4, damageMin: 3, damageMax: 5, price: 5, rarity: "Comum", stackable: false,
                 description: "Uma arma contundente feita para aprender a quebrar defesas."
             },
             training_dagger: {
-                id: "training_dagger", name: "Adaga de Recruta", image: "assets/organized/items/weapons/daggers/dagger_l01.png",
+                id: "training_dagger", name: "Adaga de Treino", image: "assets/organized/items/weapons/daggers/dagger_l01.png",
                 type: "weapon", slot: "weapon", weaponFamily: "dagger", tier: 1, levelReq: 1,
                 damage: 4, damageMin: 3, damageMax: 5, price: 5, rarity: "Comum", stackable: false,
                 description: "Lâmina leve para explorar velocidade, abertura e oportunismo."
             },
             training_bow: {
-                id: "training_bow", name: "Arco de Recruta", image: "assets/organized/items/weapons/bows/Icon1_no_effect.png",
+                id: "training_bow", name: "Arco de Treino", image: "assets/organized/items/weapons/bows/Icon1_no_effect.png",
                 type: "weapon", slot: "weapon", weaponFamily: "bow", tier: 1, levelReq: 1,
                 damage: 4, damageMin: 3, damageMax: 5, price: 5, rarity: "Comum", stackable: false,
                 description: "Um arco curto para dominar distância e precisão."

@@ -33,7 +33,7 @@
         },
         {
             id: "forge_iron_sword",
-            name: "Espada de Ferro",
+            name: "Espada de Recruta",
             icon: "⚔",
             professionId: "blacksmithing",
             action: "forge",
@@ -48,7 +48,7 @@
         },
         {
             id: "forge_iron_axe",
-            name: "Machado de Ferro",
+            name: "Machado de Recruta",
             icon: "◩",
             professionId: "blacksmithing",
             action: "forge",
@@ -63,7 +63,7 @@
         },
         {
             id: "forge_iron_mace",
-            name: "Maça de Ferro",
+            name: "Maça de Recruta",
             icon: "✣",
             professionId: "blacksmithing",
             action: "forge",
@@ -78,7 +78,7 @@
         },
         {
             id: "forge_iron_helm",
-            name: "Elmo de Ferro",
+            name: "Elmo de Recruta",
             icon: "⌃",
             professionId: "blacksmithing",
             action: "forge",
@@ -93,7 +93,7 @@
         },
         {
             id: "forge_iron_legs",
-            name: "Perneiras de Ferro",
+            name: "Perneiras de Recruta",
             icon: "Ⅱ",
             professionId: "blacksmithing",
             action: "forge",
@@ -108,7 +108,7 @@
         },
         {
             id: "forge_plate_chest",
-            name: "Peitoral de Placa",
+            name: "Peitoral de Recruta",
             icon: "▣",
             professionId: "blacksmithing",
             action: "forge",
@@ -140,7 +140,7 @@
         },
         {
             id: "forge_steel_sword",
-            name: "Espada de Aço",
+            name: "Espada de Aventureiro",
             icon: "⚔",
             professionId: "blacksmithing",
             action: "forge",
@@ -155,7 +155,7 @@
         },
         {
             id: "forge_steel_axe",
-            name: "Machado de Aço",
+            name: "Machado de Aventureiro",
             icon: "◩",
             professionId: "blacksmithing",
             action: "forge",
@@ -170,7 +170,7 @@
         },
         {
             id: "forge_steel_chest",
-            name: "Peitoral de Aço",
+            name: "Peitoral de Aventureiro",
             icon: "▣",
             professionId: "blacksmithing",
             action: "forge",
@@ -185,7 +185,7 @@
         },
         {
             id: "forge_steel_helm",
-            name: "Elmo de Aço",
+            name: "Elmo de Aventureiro",
             icon: "⌃",
             professionId: "blacksmithing",
             action: "forge",
@@ -232,7 +232,7 @@
         },
         {
             id: "craft_leather_helm",
-            name: "Chapéu de Couro",
+            name: "Capuz de Couro",
             icon: "⌃",
             professionId: "leatherworking",
             action: "craft-leather",
@@ -324,7 +324,7 @@
         },
         {
             id: "craft_reinforced_helm",
-            name: "Capacete Reforçado",
+            name: "Capuz Reforçado",
             icon: "⌃",
             professionId: "leatherworking",
             action: "craft-leather",

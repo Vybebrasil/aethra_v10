@@ -135,18 +135,37 @@ window.Aethra = window.Aethra || {};
         return slotMatch && typeMatch;
     }
 
+    // Gênero e número do substantivo que abre o nome do item.
+    const FEMININE_NOUNS = new Set(["Adaga", "Armadura", "Espada", "Lâmina", "Maça", "Botas", "Calças", "Luvas", "Perneiras"]);
+    const PLURAL_NOUNS = new Set(["Botas", "Calças", "Luvas", "Perneiras"]);
+
+    function nounForm(noun) {
+        return `${FEMININE_NOUNS.has(noun) ? "f" : "m"}${PLURAL_NOUNS.has(noun) ? "p" : ""}`;
+    }
+
+    // Adjetivo concorda com o item; a definição atual do pool vale sobre a cópia salva.
+    function affixWord(affix, form) {
+        const definition = Aethra.ItemSystem?.affixPool?.[affix.id] || affix;
+        return definition.forms?.[form] || definition.name || affix.name || "";
+    }
+
+    /*
+     * Como em português: substantivo, adjetivos concordando com ele, o resto
+     * do nome e os sufixos ("Machado Temperado de Recruta do Poder").
+     */
     function buildDisplayName(template, affixes) {
-        const prefixes = affixes.filter((affix) => affix.kind === "prefix");
-        const suffixes = affixes.filter((affix) => affix.kind === "suffix");
+        const [noun = "", ...rest] = String(template.name || "").split(" ");
+        const form = nounForm(noun);
+        const adjectives = affixes.filter((affix) => affix.kind === "prefix").map((affix) => affixWord(affix, form));
+        const suffixes = affixes.filter((affix) => affix.kind === "suffix").map((affix) => affixWord(affix, form));
+        return [noun, ...adjectives, rest.join(" "), ...suffixes].filter(Boolean).join(" ").trim();
+    }
 
-        const prefixText = prefixes.length > 0
-            ? `${prefixes.map((affix) => affix.name).join(" ")} `
-            : "";
-        const suffixText = suffixes.length > 0
-            ? ` ${suffixes.map((affix) => affix.name).join(" ")}`
-            : "";
-
-        return `${prefixText}${template.name}${suffixText}`.trim();
+    // Formato antigo (prefixo antes do nome, com o nome salvo do afixo).
+    function legacyDisplayName(baseName, affixes) {
+        const prefixes = affixes.filter((affix) => affix.kind === "prefix").map((affix) => affix.name);
+        const suffixes = affixes.filter((affix) => affix.kind === "suffix").map((affix) => affix.name);
+        return [...prefixes, baseName, ...suffixes].filter(Boolean).join(" ").trim();
     }
 
     Aethra.ItemTemplates = Aethra.ItemTemplates || {};
@@ -243,7 +262,8 @@ window.Aethra = window.Aethra || {};
         affixPool: {
             tempered: {
                 id: "tempered",
-                name: "Temperada",
+                name: "Temperado",
+                forms: { m: "Temperado", f: "Temperada", mp: "Temperados", fp: "Temperadas" },
                 kind: "prefix",
                 slots: ["weapon"],
                 types: ["weapon"],
@@ -253,7 +273,8 @@ window.Aethra = window.Aethra || {};
             },
             precise: {
                 id: "precise",
-                name: "Precisa",
+                name: "Preciso",
+                forms: { m: "Preciso", f: "Precisa", mp: "Precisos", fp: "Precisas" },
                 kind: "prefix",
                 slots: ["weapon"],
                 types: ["weapon"],
@@ -264,6 +285,7 @@ window.Aethra = window.Aethra || {};
             brutal: {
                 id: "brutal",
                 name: "Brutal",
+                forms: { m: "Brutal", f: "Brutal", mp: "Brutais", fp: "Brutais" },
                 kind: "prefix",
                 slots: ["weapon"],
                 types: ["weapon"],
@@ -294,7 +316,8 @@ window.Aethra = window.Aethra || {};
             },
             reinforced: {
                 id: "reinforced",
-                name: "Reforçada",
+                name: "Reforçado",
+                forms: { m: "Reforçado", f: "Reforçada", mp: "Reforçados", fp: "Reforçadas" },
                 kind: "prefix",
                 slots: ["chest", "head", "hands", "legs", "feet", "offhand"],
                 types: ["armor", "shield"],
@@ -305,6 +328,7 @@ window.Aethra = window.Aethra || {};
             agile: {
                 id: "agile",
                 name: "Ágil",
+                forms: { m: "Ágil", f: "Ágil", mp: "Ágeis", fp: "Ágeis" },
                 kind: "prefix",
                 slots: ["chest", "head", "hands", "legs", "feet", "ring1", "ring2"],
                 types: ["armor", "accessory"],
@@ -315,7 +339,7 @@ window.Aethra = window.Aethra || {};
             },
             of_guarding: {
                 id: "of_guarding",
-                name: "da Guarda",
+                name: "do Guardião",
                 kind: "suffix",
                 slots: ["chest", "offhand", "head", "hands", "legs", "feet"],
                 types: ["armor", "shield"],
@@ -326,7 +350,8 @@ window.Aethra = window.Aethra || {};
             },
             arcane: {
                 id: "arcane",
-                name: "Arcana",
+                name: "Arcano",
+                forms: { m: "Arcano", f: "Arcana", mp: "Arcanos", fp: "Arcanas" },
                 kind: "prefix",
                 slots: ["weapon", "offhand", "ring1", "ring2", "relic"],
                 types: ["weapon", "accessory", "focus"],
@@ -999,6 +1024,44 @@ window.Aethra = window.Aethra || {};
             };
         },
 
+        /*
+         * Nomes revisados (2026-10-01: "Espada Rúnica", "Botas de Recruta",
+         * "Machado Temperado"): itens já criados guardam name/baseName do modelo
+         * antigo e o formato antigo de afixo. Ao carregar, quem segue o padrão
+         * (antigo ou novo) ganha o nome novo; nome fora do padrão fica como está.
+         */
+        refreshInstanceNames(source = "load") {
+            const state = Aethra.GameState || {};
+            const lists = [
+                state.hero?.bag,
+                Object.values(state.playerEquipment || {}),
+                Object.values(state.hero?.equipment || {}),
+                (state.playerMarket?.listings || []).map((listing) => listing?.item)
+            ];
+            let renamed = 0;
+            lists.forEach((list) => (Array.isArray(list) ? list : []).forEach((item) => {
+                if (!item || typeof item !== "object" || !item.templateId) return;
+                const template = Aethra.ItemTemplates?.[item.templateId];
+                if (!template?.name) return;
+                const affixes = Array.isArray(item.affixes) ? item.affixes : [];
+                const expected = buildDisplayName(template, affixes);
+                if (item.baseName === template.name && item.name === expected) return;
+                const standard = item.baseName
+                    ? [legacyDisplayName(item.baseName, affixes), buildDisplayName({ name: item.baseName }, affixes)].includes(item.name)
+                    : affixes.length === 0;
+                if (!standard) return;
+                affixes.forEach((affix) => {
+                    const definition = this.affixPool?.[affix.id];
+                    if (definition?.name) affix.name = definition.name;
+                });
+                item.baseName = template.name;
+                item.name = expected;
+                renamed += 1;
+            }));
+            if (renamed > 0) Aethra.EventBus.emit("item:names-refreshed", { renamed, source });
+            return renamed;
+        },
+
         // Alias para compatibilidade com o nome utilizado nos sistemas anteriores.
         generateInstance(templateId, options = {}) {
             return this.generateItem(templateId, options);
@@ -1032,6 +1095,10 @@ window.Aethra = window.Aethra || {};
 
     Aethra.EventBus.on("gamedata:item-registered", () => {
         Aethra.ItemSystem.syncFromGameData();
+    });
+
+    ["save:loaded", "state:restored", "engine:ready"].forEach((eventName) => {
+        Aethra.EventBus.on(eventName, () => Aethra.ItemSystem.refreshInstanceNames(eventName));
     });
 
     Aethra.EventBus.emit("item-system:ready", {

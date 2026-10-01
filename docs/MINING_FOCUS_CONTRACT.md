@@ -18,7 +18,7 @@ os sistemas canônicos de profissão, exploração, quests ou crafting.
 5. Cada veio minerado entrega no mínimo 2 Minérios de Ferro e XP real de
    Mineração. Com 6 minérios, o próximo passo muda para a Forja da Cidade.
 6. O jogador funde 3 Lingotes de Ferro com `smelt_iron`.
-7. A oficina destaca Espada, Machado e Maça de Ferro. Qualquer uma das três
+7. A oficina destaca Espada, Machado e Maça de Recruta. Qualquer uma das três
    escolhas conclui o contrato; a UI não escolhe nem fabrica pelo jogador.
 
 ## Proprietários e eventos

@@ -9,7 +9,7 @@ e encerre a faixa derrotando um chefe real no nível 10.
 | Etapa | Requisito | Objetivo | Destino | Recompensa principal |
 | --- | ---: | --- | --- | --- |
 | Primeiros Passos | 1 | iniciar o Bosque e derrotar 3 criaturas | Bosque dos Sussurros | 50 XP, 50 G, 3 Poções de Vida |
-| Conheça sua Rota | 1 | derrotar mais 5 criaturas | Bosque dos Sussurros | 100 XP, 100 G, Anel Recruta |
+| Conheça sua Rota | 1 | derrotar mais 5 criaturas | Bosque dos Sussurros | 100 XP, 100 G, Anel de Recruta |
 | Mestra dos Ofícios | 1 | conversar com Ilyra | Hub da Cidade | 25 XP, 25 G |
 | Ofício inicial | 1 | descobrir a atividade escolhida na criação | Hunt ou oficina indicada | 75 XP, 40 G e benefício permanente |
 | Chamado da Fronteira | 1–5 | derrotar 12 criaturas e alcançar o nível 5 | Bosque dos Sussurros | 75 XP, 100 G e supplies |

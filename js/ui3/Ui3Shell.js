@@ -139,7 +139,7 @@
         const slots = `<div class="ui3-row">
             ${K.slot({ empty: true, hotkey: "6" })}
             ${K.slot({ icon: itemIcon("eg_sword_l1"), label: "Espada de Recruta", rarity: "common" })}
-            ${K.slot({ icon: itemIcon("eg_ring_l1"), label: "Anel Recruta", rarity: "uncommon" })}
+            ${K.slot({ icon: itemIcon("eg_ring_l1"), label: "Anel de Recruta", rarity: "uncommon" })}
             ${K.slot({ icon: itemIcon("eg_axe_l5"), label: "Machado", rarity: "rare", selected: true })}
             ${K.slot({ icon: itemIcon("eg_focus_l6"), label: "Foco", rarity: "epic" })}
             ${K.slot({ icon: itemIcon("eg_bow_l10"), label: "Arco", rarity: "legendary" })}

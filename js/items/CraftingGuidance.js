@@ -56,8 +56,8 @@
             return {
                 title: "Escolha seu primeiro equipamento",
                 detail: guidance.professionId === "leatherworking"
-                    ? "Botas, Chapéu e Calças de Couro concluem o contrato. Compare as opções destacadas e escolha a que combina com seu estilo."
-                    : "Espada, Machado e Maça de Ferro concluem o contrato. Compare as opções destacadas e escolha a que combina com seu estilo."
+                    ? "Botas, Capuz e Calças de Couro concluem o contrato. Compare as opções destacadas e escolha a que combina com seu estilo."
+                    : "Espada, Machado e Maça de Recruta concluem o contrato. Compare as opções destacadas e escolha a que combina com seu estilo."
             };
         }
         if (type === "CraftSupply") {
