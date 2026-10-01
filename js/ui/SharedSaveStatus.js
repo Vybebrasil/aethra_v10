@@ -10,7 +10,13 @@
     let dismissedEmptyPrompt = false;
     let transientTimer = null;
 
+    // Com a UI 3.0 ligada quem mostra o save compartilhado é o Ui3SaveStatus.
+    function ui3Active() {
+        return Boolean(Aethra.Ui3Shell?.isActive?.());
+    }
+
     function ensureIndicator() {
+        if (ui3Active()) return null;
         if (indicator && document.body.contains(indicator)) return indicator;
         const host = document.querySelector(".wallet") || document.querySelector(".topbar");
         if (!host) return null;
@@ -110,6 +116,7 @@
     }
 
     function setBannerContent(title, detail, options = {}) {
+        if (ui3Active()) return null;
         const element = ensureBanner();
         const titleNode = element.querySelector("[data-shared-save-title]");
         const detailNode = element.querySelector("[data-shared-save-detail]");
@@ -123,7 +130,7 @@
     }
 
     function showEmptyPrompt(status = {}) {
-        if (dismissedEmptyPrompt) return;
+        if (dismissedEmptyPrompt || ui3Active()) return;
         window.clearTimeout(transientTimer);
         setBannerContent(
             "Escolha o personagem principal",
@@ -135,6 +142,7 @@
     function showMessage(title, detail, options = {}) {
         window.clearTimeout(transientTimer);
         const element = setBannerContent(title, detail, options);
+        if (!element) return;
         transientTimer = window.setTimeout(() => {
             if (element && !element.querySelector("[data-shared-save-publish]:not([hidden])")) {
                 element.hidden = true;
@@ -181,6 +189,16 @@
             status.lastError || "O save local continua protegido neste navegador.",
             { warning: true, duration: 5200 }
         );
+    });
+
+    Aethra.EventBus.on("ui3:version-applied", ({ active } = {}) => {
+        if (active) {
+            if (banner) banner.hidden = true;
+            indicator?.remove();
+            indicator = null;
+        } else {
+            renderCurrentStatus();
+        }
     });
 
     if (document.readyState === "loading") {

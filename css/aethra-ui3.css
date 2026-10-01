@@ -3261,6 +3261,85 @@
     padding-top: var(--ui3-space-2);
 }
 
+/* Save compartilhado: indicador na carteira e aviso flutuante */
+#ui3-root .ui3-save-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 10px;
+    background: transparent;
+    border: 1px solid var(--ui3-line);
+    border-radius: 999px;
+    color: var(--ui3-text-2);
+    font-family: var(--ui3-font-ui);
+    font-size: var(--ui3-fs-sm);
+    cursor: pointer;
+}
+
+#ui3-root .ui3-save-chip:hover {
+    border-color: var(--ui3-line-strong);
+    color: var(--ui3-text-1);
+}
+
+#ui3-root .ui3-save-chip small {
+    font-size: var(--ui3-fs-xs);
+    color: var(--ui3-text-3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+#ui3-root .ui3-save-chip__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--ui3-text-3);
+}
+
+#ui3-root .ui3-save-chip.is-synced .ui3-save-chip__dot { background: var(--ui3-ok); }
+#ui3-root .ui3-save-chip.is-pending .ui3-save-chip__dot { background: var(--ui3-warn); }
+#ui3-root .ui3-save-chip.is-syncing .ui3-save-chip__dot { background: var(--ui3-gold); }
+
+#ui3-root .ui3-toast {
+    position: absolute;
+    z-index: 30;
+    left: 50%;
+    bottom: calc(var(--ui3-slot) + 56px);
+    transform: translateX(-50%);
+    box-sizing: border-box;
+    width: min(calc(100% - 48px), 620px);
+    padding: var(--ui3-space-3) var(--ui3-space-4);
+    display: flex;
+    align-items: center;
+    gap: var(--ui3-space-3);
+    background: var(--ui3-bg-1);
+    border: 1px solid var(--ui3-line-strong);
+    border-radius: var(--ui3-radius-lg);
+    box-shadow: 0 14px 38px rgba(0, 0, 0, 0.5);
+    pointer-events: auto;
+}
+
+#ui3-root .ui3-toast[hidden] {
+    display: none;
+}
+
+#ui3-root .ui3-toast.is-warning {
+    border-color: var(--ui3-gold);
+}
+
+#ui3-root .ui3-toast__icon {
+    font-size: 20px;
+    color: var(--ui3-gold-1);
+}
+
+#ui3-root .ui3-toast .ui3-list-row__text {
+    flex: 1 1 auto;
+}
+
+#ui3-root .ui3-toast .ui3-list-row__text small {
+    white-space: normal;
+}
+
 /* Social */
 #ui3-root .ui3-social__list {
     display: grid;

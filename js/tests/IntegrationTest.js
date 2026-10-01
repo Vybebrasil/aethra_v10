@@ -4114,15 +4114,14 @@
                     )
                 );
 
-                const sharedSaveIndicator = document.querySelector(
-                    "[data-shared-save-indicator]"
-                );
+                Aethra.Ui3TopBar?.render?.();
+                const sharedSaveIndicator = document.querySelector("#ui3-root [data-ui3-save-chip]");
                 checks.push(
                     createCheck(
                         "HUD informa se o progresso é local ou compartilhado",
-                        Boolean(Aethra.SharedSaveStatus)
+                        Boolean(Aethra.Ui3SaveStatus)
                             && Boolean(sharedSaveIndicator)
-                            && Boolean(sharedSaveIndicator.querySelector("[data-shared-save-label]")),
+                            && /Local|Compartilhado|Escolher|Sincronizando/.test(sharedSaveIndicator.textContent || ""),
                         sharedSaveIndicator?.textContent?.trim().replace(/\s+/g, " ") || "indicador ausente"
                     )
                 );
@@ -4962,6 +4961,43 @@
                     windowManager.closeWindow("automation-view", { source: "integration-restore" });
                 }
                 checks.push(createCheck("UI 3.0 Automação ajusta o IdleLoopSystem e a política de consumíveis", automationWorks, automationDetail));
+
+                /*
+                 * UI 3.0 — fase 5.3 (save compartilhado). Indicador na carteira e
+                 * aviso na raiz 3.0; a versão clássica fica muda. Publicar passa
+                 * pelo SaveManager.
+                 */
+                const saveManager = Aethra.SaveManager;
+                const publishOriginal = saveManager.publishShared;
+                const publishCalls = [];
+                saveManager.publishShared = async (reason) => {
+                    publishCalls.push(reason);
+                    return true;
+                };
+                let saveStatusWorks = false;
+                let saveStatusDetail = "";
+                try {
+                    Aethra.Ui3TopBar?.render?.();
+                    const chip = document.querySelector("#ui3-root .ui3-topbar [data-ui3-save-chip]");
+                    const chipShown = Boolean(chip) && chip.textContent.length > 0;
+                    Aethra.EventBus.emit("save:shared-empty", { profile: "principal", supported: true, exists: false });
+                    const toast = document.querySelector("#ui3-root .ui3-toast");
+                    const publishOffered = Boolean(toast?.querySelector("[data-ui3-save-publish]")) && toast?.hidden === false;
+                    toast?.querySelector("[data-ui3-save-publish]")?.click();
+                    const published = publishOffered && publishCalls.length === 1 && publishCalls[0] === "select-canonical-save";
+                    Aethra.EventBus.emit("save:shared-conflict", {});
+                    const conflictShown = toast?.hidden === false && toast.classList.contains("is-warning");
+                    const classicBanner = document.getElementById("aethra-shared-save-banner");
+                    const classicQuiet = !classicBanner || classicBanner.hidden === true;
+                    toast?.querySelector("[data-ui3-save-dismiss]")?.click();
+                    const dismissed = toast?.hidden === true;
+                    saveStatusWorks = chipShown && conflictShown && classicQuiet && dismissed && published;
+                    saveStatusDetail = `indicador ${chipShown ? `"${chip.textContent.trim()}"` : "ausente"} · conflito ${conflictShown ? "avisado" : "mudo"} · clássica ${classicQuiet ? "muda" : "duplicada"} · fechar ${dismissed ? "ok" : "falhou"} · publicar ${published ? "pelo SaveManager" : "falhou"}`;
+                } finally {
+                    saveManager.publishShared = publishOriginal;
+                    Aethra.Ui3SaveStatus?.hide?.();
+                }
+                checks.push(createCheck("UI 3.0 mostra o save compartilhado e publica pelo SaveManager", saveStatusWorks, saveStatusDetail));
 
                 // UI 3.0 — fase 5.2 (Social): só o mercador está disponível offline e leva à Loja.
                 windowManager.openWindow("social-view", { source: "integration-ui3-social" });

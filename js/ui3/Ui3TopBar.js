@@ -97,6 +97,7 @@
                 </div>
             </nav>
             <div class="ui3-topbar__wallet" aria-label="Carteira">
+                ${Aethra.Ui3SaveStatus?.chipHTML?.() || ""}
                 <span class="ui3-currency"><span class="ui3-currency__coin" aria-hidden="true"></span><strong data-ui3-wallet="gold">${K.formatNumber(money.gold)}</strong><small>ouro</small></span>
                 <span class="ui3-currency"><span class="ui3-currency__gem" aria-hidden="true"></span><strong data-ui3-wallet="diamonds">${K.formatNumber(money.diamonds)}</strong><small>diamantes</small></span>
             </div>`;
@@ -157,6 +158,11 @@
     }
 
     function onClick(event) {
+        if (event.target.closest("[data-ui3-save-chip]")) {
+            setMenuOpen(false);
+            Aethra.Ui3SaveStatus?.onChipClick?.();
+            return;
+        }
         const nav = event.target.closest("[data-ui3-nav]");
         if (nav) {
             setMenuOpen(false);

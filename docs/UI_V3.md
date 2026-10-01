@@ -127,8 +127,10 @@ Ainda falta, antes de apagar arquivos:
    `configureAutoUse`, aviso `idle-loop:updated`); a tela clássica foi para
    `js/ui/IdleLoopControls.js` e a 3.0 tem `Ui3AutomationWindow`
    (`automation-view`, menu Mais e atalho na Hunt).
-2. **Avisos de save** — `SaveStatusBanner` (falha de gravação) e
-   `SharedSaveStatus` (save compartilhado) usam estilos do `aethra-ui-v2.css`.
+2. ~~Avisos de save~~ — feitos: `SaveStatusBanner` (falha de gravação)
+   injeta o próprio estilo e fica; o save compartilhado na 3.0 é o
+   `Ui3SaveStatus` (indicador na carteira + aviso flutuante acima da barra de
+   ações), e o `SharedSaveStatus` clássico fica mudo com a 3.0 ligada.
 3. **Tela de derrota** — `DeathModalUI` tem CSS próprio (`death-modal.css`) e
    já aparece por cima da 3.0; fica.
 4. **TooltipManager** — a 3.0 não usa; sair também do `GameLoader`.
