@@ -695,7 +695,8 @@
         getNpcCatalog(heroLevel = ensureHeroState().level) {
             const level = Math.min(10, Math.max(1, Math.floor(Number(heroLevel) || 1)));
             const levels = [...new Set([Math.max(1, level - 1), level])];
-            const ids = ["potion_health", "potion_mana", "minor_vigor_tonic", "field_antidote"];
+            // Poções Fortes também na Loja; Grandes e o Tônico Concentrado só na Alquimia.
+            const ids = ["potion_health", "potion_mana", "minor_vigor_tonic", "field_antidote", "potion_health_strong", "potion_mana_strong"];
             levels.forEach((currentLevel) => {
                 ["sword", "axe", "mace", "dagger", "bow", "focus"].forEach((family) => {
                     ids.push(`eg_${family}_l${currentLevel}`);

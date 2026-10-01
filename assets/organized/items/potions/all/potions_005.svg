@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" role="img" aria-label="Poção de Mana Forte">
+  <defs>
+    <linearGradient id="mpStrong" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5ab8ff"/>
+      <stop offset="1" stop-color="#2241b8"/>
+    </linearGradient>
+  </defs>
+  <path fill="#c7d2d8" d="M18 5h12v5l-2 3v4c7 2 11 8 11 15 0 7-6 11-15 11S9 39 9 32c0-7 4-13 11-15v-4l-2-3z"/>
+  <path fill="#26343d" d="M17 8h14v5H17z"/>
+  <path fill="url(#mpStrong)" d="M11 25c4 2 8 1 12-1 5-2 9-2 14 1v8c0 5-5 7-13 7s-13-2-13-7z"/>
+  <path fill="#c9ecff" d="M17 29c2 0 3 1 3 3s-1 3-3 3-3-1-3-3 1-3 3-3z" opacity=".85"/>
+</svg>

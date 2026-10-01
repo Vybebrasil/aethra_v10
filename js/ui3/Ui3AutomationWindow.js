@@ -53,9 +53,10 @@
     function supplyHTML(supply) {
         const K = kit();
         const range = idle().autoUseRange || { min: 5, max: 95 };
-        const where = supply.unitPrice > 0
+        const where = supply.soldByMerchant
             ? `Mercador: ${K.formatNumber(supply.unitPrice)} o cada${supply.craftRecipeId ? " · ou fabrique na Alquimia" : ""}`
-            : `O mercador não vende${supply.craftRecipeId ? "; fabrique na Alquimia" : ""}.`;
+            : supply.craftRecipeId ? "Só a Alquimia prepara; o mercador não vende." : "O mercador não vende.";
+        const level = supply.levelReq > 1 ? ` · exige nível ${K.formatNumber(supply.levelReq)}` : "";
         return `<article class="ui3-city-card ui3-automation__supply">
                 <header class="ui3-row-between">
                     <span class="ui3-row"><span class="ui3-glyph-box" aria-hidden="true">${K.esc(supply.icon)}</span>
@@ -65,7 +66,7 @@
                 <div class="ui3-automation__controls">
                     ${supply.autoUse ? `<div class="ui3-row-between"><span>Usar em combate abaixo de</span><span class="ui3-row">${numberInput({ value: supply.autoUse.thresholdPercent, min: range.min, max: range.max, step: 5, label: `Limite de uso de ${supply.label}`, attributes: { "data-ui3-auto-threshold": supply.id } })}<span>%</span>${K.toggle({ checked: supply.autoUse.enabled, label: `Usar ${supply.label} automaticamente`, onText: "Usar", offText: "Manual", attributes: { "data-ui3-auto-use": supply.id } })}</span></div>`
                         : `<p class="ui3-caption">Uso manual, quando o herói estiver envenenado.</p>`}
-                    <p class="ui3-caption">${K.esc(where)}</p>
+                    <p class="ui3-caption">${K.esc(where + level)}</p>
                 </div>
             </article>`;
     }
@@ -87,7 +88,7 @@
         const { supplies } = idle().getSupplyOverview();
         patch(parts.body, `<section class="ui3-options__section">
                 <span class="ui3-eyebrow">Suprimentos na mochila</span>
-                <p class="ui3-caption">Nada é comprado nem vendido sozinho: quando acabar, volte ao mercador, venda o loot ou fabrique.</p>
+                <p class="ui3-caption">Nada é comprado nem vendido sozinho: quando acabar, volte ao mercador, venda o loot ou fabrique. Em cada tipo (Vida, Mana, Vigor) a luta usa a poção marcada; se ela acabar, usa outra do mesmo tipo.</p>
                 <div class="ui3-automation__supplies">${supplies.map(supplyHTML).join("")}</div>
                 ${K.button({ label: "Abrir loja", attributes: { "data-ui3-open-window": "npc-shop-view" } })}
             </section>`);

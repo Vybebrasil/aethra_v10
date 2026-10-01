@@ -53,6 +53,7 @@
     });
     const USE_ERRORS = Object.freeze({
         NO_EFFECT_NEEDED: "Recursos já estão cheios",
+        LEVEL_TOO_LOW: "Seu herói ainda não tem nível para esta poção",
         ITEM_NOT_CONSUMABLE: "Este item não é consumível",
         ITEM_NOT_FOUND: "Item não encontrado"
     });

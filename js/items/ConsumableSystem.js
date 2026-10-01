@@ -24,6 +24,14 @@
         energyItemId: "minor_vigor_tonic"
     });
 
+    // Famílias de poção, da mais forte à mais fraca. O uso automático tenta a
+    // escolhida e, se ela acabar ou exigir nível maior, outra da mesma família.
+    const SUPPLY_FAMILIES = Object.freeze({
+        healthItemId: Object.freeze(["potion_health_great", "potion_health_strong", "potion_health"]),
+        manaItemId: Object.freeze(["potion_mana_great", "potion_mana_strong", "potion_mana"]),
+        energyItemId: Object.freeze(["vigor_tonic_concentrated", "minor_vigor_tonic"])
+    });
+
     const runtime = {
         initialized: false,
         sequence: 0,
@@ -85,6 +93,11 @@
         if (!item) return { usable: false, reason: "ITEM_NOT_FOUND" };
         const type = String(item.itemType || item.type || "").toLowerCase();
         if (type !== "consumable") return { usable: false, reason: "ITEM_NOT_CONSUMABLE", item: clone(item) };
+        // Poções fortes exigem o nível do herói, como no Tibia.
+        const levelReq = Math.max(1, integer(item.levelReq ?? templateFor(item).levelReq, 1));
+        if (integer(Aethra.GameState.hero?.level, 1) < levelReq) {
+            return { usable: false, reason: "LEVEL_TOO_LOW", levelReq, item: clone(item) };
+        }
 
         const requested = effectsFor(item);
         const resources = currentResources();
@@ -127,6 +140,7 @@
     Aethra.ConsumableSystem = {
         initialized: false,
         defaults: DEFAULT_POLICY,
+        families: SUPPLY_FAMILIES,
 
         init() {
             if (runtime.initialized) return this.getSnapshot();
@@ -274,14 +288,17 @@
             if (runtime.lastAutoKey === autoKey) return false;
 
             const resources = projection.hero.resources;
+            // Primeiro a poção escolhida; se faltar, as outras da família (mais forte primeiro).
+            const family = (key) => (policy[key] ? [policy[key], ...SUPPLY_FAMILIES[key].filter((id) => id !== policy[key])] : []);
             const candidates = [
-                resources.hp.maximum > 0 && resources.hp.percent <= policy.healthThreshold ? policy.healthItemId : null,
-                resources.mana.maximum > 0 && resources.mana.percent <= policy.manaThreshold ? policy.manaItemId : null,
-                resources.energy.maximum > 0 && resources.energy.percent <= policy.energyThreshold ? policy.energyItemId : null
-            ].filter(Boolean);
+                ...(resources.hp.maximum > 0 && resources.hp.percent <= policy.healthThreshold ? family("healthItemId") : []),
+                ...(resources.mana.maximum > 0 && resources.mana.percent <= policy.manaThreshold ? family("manaItemId") : []),
+                ...(resources.energy.maximum > 0 && resources.energy.percent <= policy.energyThreshold ? family("energyItemId") : [])
+            ];
 
             for (const itemId of candidates) {
                 if (Aethra.BagSystem.countItem(itemId) <= 0) continue;
+                if (!preview(itemId).usable) continue;
                 const result = this.use(itemId, {
                     automatic: true,
                     consumesAction: true,
@@ -301,9 +318,9 @@
                 initialized: runtime.initialized,
                 policy: clone(this.ensurePolicy()),
                 inventory: {
-                    health: Aethra.BagSystem.countItem("potion_health"),
-                    mana: Aethra.BagSystem.countItem("potion_mana"),
-                    energy: Aethra.BagSystem.countItem("minor_vigor_tonic")
+                    health: SUPPLY_FAMILIES.healthItemId.reduce((total, id) => total + Aethra.BagSystem.countItem(id), 0),
+                    mana: SUPPLY_FAMILIES.manaItemId.reduce((total, id) => total + Aethra.BagSystem.countItem(id), 0),
+                    energy: SUPPLY_FAMILIES.energyItemId.reduce((total, id) => total + Aethra.BagSystem.countItem(id), 0)
                 },
                 lastAutoKey: runtime.lastAutoKey
             };

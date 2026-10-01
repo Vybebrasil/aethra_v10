@@ -4107,6 +4107,52 @@
                 }
                 checks.push(createCheck("Ir ao Mural ou desafiar um chefe encerra a expedição", muralWorks, muralDetail));
 
+                /*
+                 * Níveis de poção (2026-10-01): Forte na Loja e na Alquimia; Grande e
+                 * Tônico Concentrado só na Alquimia; exigem o nível do herói. Cada
+                 * família tem UMA poção marcada para a luta e, se ela faltar, a luta
+                 * usa outra da mesma família (antes o herói morria com poção na mochila).
+                 */
+                const tierHero = Aethra.GameState.hero;
+                const tierBackup = { bag: tierHero.bag, level: tierHero.level, hp: tierHero.hp, statsHp: tierHero.stats?.hp, policy: JSON.parse(JSON.stringify(Aethra.ConsumableSystem.ensurePolicy())) };
+                const projectionBefore = Aethra.CombatProjection?.getSnapshot;
+                let tiersWork = false;
+                let tiersDetail = "";
+                try {
+                    const shopIds = Aethra.MarketplaceSystem.getNpcCatalog(10).map((item) => item.id || item.templateId);
+                    const shopOk = ["potion_health_strong", "potion_mana_strong"].every((id) => shopIds.includes(id))
+                        && ["potion_health_great", "potion_mana_great", "vigor_tonic_concentrated"].every((id) => !shopIds.includes(id));
+                    const alchemyOutputs = (Aethra.RecipeCatalog.byProfession("alchemy") || []).flatMap((recipe) => recipe.outputs.map((output) => output.itemId));
+                    const craftOk = ["potion_health_strong", "potion_health_great", "potion_mana_strong", "potion_mana_great", "vigor_tonic_concentrated"].every((id) => alchemyOutputs.includes(id) && Aethra.GameData.items[id]);
+                    tierHero.bag = (tierBackup.bag || []).filter((item) => !/^potion_health/.test(item.templateId || item.id));
+                    Aethra.BagSystem.addItems([Aethra.ItemSystem.generateItem("potion_health_strong", { quantity: 1, source: "integration-tiers" })], "integration-tiers");
+                    tierHero.level = 5;
+                    tierHero.hp = 1;
+                    tierHero.stats.hp = 1;
+                    const lowLevel = Aethra.ConsumableSystem.preview("potion_health_strong").reason === "LEVEL_TOO_LOW";
+                    tierHero.level = 8;
+                    const atLevel = Aethra.ConsumableSystem.preview("potion_health_strong").usable === true;
+                    Aethra.IdleLoopSystem.configureAutoUse({ potion_health_strong: { enabled: true } });
+                    const strongChosen = Aethra.ConsumableSystem.ensurePolicy().healthItemId === "potion_health_strong";
+                    Aethra.IdleLoopSystem.configureAutoUse({ potion_health: { enabled: true } });
+                    const exclusive = Aethra.ConsumableSystem.ensurePolicy().healthItemId === "potion_health"
+                        && Aethra.IdleLoopSystem.getSupplyOverview().supplies.filter((supply) => supply.policyItemKey === "healthItemId" && supply.autoUse?.enabled).length === 1;
+                    // Marcada a comum, que o herói não tem: a luta usa a Forte.
+                    Aethra.CombatProjection.getSnapshot = () => ({ active: true, battleId: "integration-tiers", round: 1, hero: { resources: { hp: { current: 1, maximum: 100, percent: 0.01 }, mana: { current: 10, maximum: 10, percent: 1 }, energy: { current: 10, maximum: 10, percent: 1 } } } });
+                    const autoResult = Aethra.ConsumableSystem.tryAutoUse({ source: "integration-tiers" });
+                    const fellBack = autoResult?.itemId === "potion_health_strong";
+                    tiersWork = shopOk && craftOk && lowLevel && atLevel && strongChosen && exclusive && fellBack;
+                    tiersDetail = `loja ${shopOk ? "Fortes sim, Grandes não" : "errada"} · alquimia ${craftOk ? "faz as 5" : "incompleta"} · nível ${lowLevel && atLevel ? "exigido" : "ignorado"} · escolha ${strongChosen && exclusive ? "única por família" : "errada"} · luta ${fellBack ? "usou a Forte na falta da comum" : "não usou nada"}`;
+                } finally {
+                    if (projectionBefore) Aethra.CombatProjection.getSnapshot = projectionBefore;
+                    Aethra.ConsumableSystem.configure(tierBackup.policy);
+                    tierHero.bag = tierBackup.bag;
+                    tierHero.level = tierBackup.level;
+                    tierHero.hp = tierBackup.hp;
+                    if (tierHero.stats) tierHero.stats.hp = tierBackup.statsHp;
+                }
+                checks.push(createCheck("Poções em níveis: Loja, Alquimia, nível e uso na luta", tiersWork, tiersDetail));
+
                 // Registro em português e no andar final a escada conclui a expedição.
                 const rewardText = Aethra.BattleLogger.formatRewardMessage("Lobo", { xp: 5, gold: 0, lootCount: 2 });
                 const finalHunt = Aethra.GameState.hunt;
