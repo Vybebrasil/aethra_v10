@@ -2,7 +2,7 @@
 (function (Aethra) {
     "use strict";
 
-    if (!Aethra?.RenderEngine || !Aethra?.EventBus || !Aethra?.HuntSystem) {
+    if (!Aethra?.RenderEngine || !Aethra?.EventBus || !Aethra?.HuntSystem || !Aethra?.HuntLootLedger) {
         return;
     }
 
@@ -753,41 +753,13 @@
         sortMode: "value"
     };
 
+    // O registro do loot vive no HuntLootLedger; esta tela só o desenha.
     function ensureLootSessionState() {
-        Aethra.GameState.ui = Aethra.GameState.ui || {};
-        const current = Aethra.GameState.ui.lootSession || {};
-        current.stackables = current.stackables && typeof current.stackables === "object"
-            ? current.stackables
-            : {};
-        current.specials = Array.isArray(current.specials)
-            ? current.specials
-            : [];
-        current.seenSpecialIds = current.seenSpecialIds && typeof current.seenSpecialIds === "object"
-            ? current.seenSpecialIds
-            : {};
-        current.activeTab = ["stackables", "specials"].includes(current.activeTab)
-            ? current.activeTab
-            : LOOT_VIEW_DEFAULTS.activeTab;
-        current.specialFilter = ["all", "equipment", "rare"].includes(current.specialFilter)
-            ? current.specialFilter
-            : LOOT_VIEW_DEFAULTS.specialFilter;
-        current.sortMode = ["value", "quantity", "recent"].includes(current.sortMode)
-            ? current.sortMode
-            : LOOT_VIEW_DEFAULTS.sortMode;
-        Aethra.GameState.ui.lootSession = current;
-        return current;
+        return Aethra.HuntLootLedger.ensureState();
     }
 
     function resetLootSession() {
-        Aethra.GameState.ui = Aethra.GameState.ui || {};
-        Aethra.GameState.ui.lootSession = {
-            stackables: {},
-            specials: [],
-            seenSpecialIds: {},
-            ...LOOT_VIEW_DEFAULTS
-        };
-        // Remove o formato antigo para não reaparecer após carregar um save legado.
-        Aethra.GameState.ui.dropLog = [];
+        Aethra.HuntLootLedger.reset();
         renderDropLog();
     }
 
@@ -921,71 +893,15 @@
     }
 
     function registerSpecialDrop(item = {}, context = {}) {
-        const state = ensureLootSessionState();
-        const entry = createSpecialDrop(item, context);
-        if (state.seenSpecialIds[entry.instanceId]) return false;
-        state.seenSpecialIds[entry.instanceId] = true;
-        state.specials.unshift(entry);
-        state.specials = state.specials.slice(0, 100);
-        renderDropLog();
-        return true;
+        return Aethra.HuntLootLedger.registerSpecial(item, context);
     }
 
     function registerStackable(item = {}, context = {}) {
-        const state = ensureLootSessionState();
-        const presentation = itemPresentation(item);
-        const quantity = Math.max(1, Number(context.quantity ?? item.quantity ?? 1));
-        const unitValue = Math.max(0, Number(context.unitValue ?? itemUnitValue(item)));
-        const key = context.key || `item:${normalizeLootKey(item.templateId || item.id || presentation.name)}`;
-        const current = state.stackables[key] || {
-            key,
-            image: presentation.image,
-            icon: item.icon || context.icon || "◆",
-            color: context.color || presentation.color,
-            tone: context.tone || presentation.tone,
-            category: context.category || itemType(item) || "loot",
-            name: context.name || presentation.name,
-            quantity: 0,
-            totalValue: 0,
-            dropCount: 0,
-            firstDropAt: Date.now(),
-            lastDropAt: Date.now(),
-            lastSource: ""
-        };
-        current.quantity += quantity;
-        current.totalValue += Math.max(0, Number(context.totalValue ?? unitValue * quantity));
-        current.dropCount += 1;
-        current.lastDropAt = Date.now();
-        current.lastSource = context.source || "drop";
-        current.image = current.image || presentation.image;
-        state.stackables[key] = current;
-        renderDropLog();
-        return current;
+        return Aethra.HuntLootLedger.registerStackable(item, context);
     }
 
     function registerGold(amount, context = {}) {
-        const quantity = Math.max(0, Number(amount || 0));
-        if (!quantity) return false;
-        return registerStackable({
-            id: "gold",
-            templateId: "gold",
-            name: "Gold",
-            icon: "●",
-            rarity: "Comum",
-            stackable: true,
-            price: 1,
-            quantity
-        }, {
-            key: "currency:gold",
-            name: "Gold",
-            category: "moeda",
-            icon: "●",
-            color: "#e8c76d",
-            tone: "gold",
-            quantity,
-            unitValue: 1,
-            source: context.source || "hunt"
-        });
+        return Aethra.HuntLootLedger.registerGold(amount, context);
     }
 
     // Compatibilidade com patches antigos. Entradas genéricas viram stackables.
@@ -1623,104 +1539,8 @@
         }
     }, true);
 
-    Aethra.EventBus.on("hunt:started", () => {
-        resetLootSession();
-        resetProgressionLog();
-    });
-
-    Aethra.EventBus.on("hunt:loot-generated", (payload = {}) => {
-        const enemyName = Aethra.GameData?.creatures?.[payload.enemyId]?.name || payload.enemyId || "Criatura";
-        (payload.items || []).forEach((item) => {
-            if (isSpecialDrop(item)) {
-                registerSpecialDrop(item, {
-                    source: "creature",
-                    enemyName,
-                    detail: `Drop de ${enemyName}`
-                });
-                return;
-            }
-
-            registerStackable(item, {
-                source: `drop:${enemyName}`,
-                category: itemType(item),
-                quantity: Number(item.quantity || 1),
-                unitValue: itemUnitValue(item)
-            });
-        });
-    });
-
-    Aethra.EventBus.on("hunt:enemy-defeated", (payload = {}) => {
-        registerGold(payload.gold, {
-            source: payload.name || payload.enemy?.name || "criatura"
-        });
-    });
-
-    Aethra.EventBus.on("exploration:resource-collected", (payload = {}) => {
-        const item = payload.item || {};
-        if (!item.name && !item.templateId && !item.id) return;
-        if (isSpecialDrop(item)) {
-            registerSpecialDrop(item, {
-                source: payload.source || "exploration",
-                detail: payload.title || "Recurso individual encontrado"
-            });
-            return;
-        }
-        registerStackable(item, {
-            source: payload.title || payload.source || "exploration",
-            category: itemType(item) || "resource",
-            quantity: Number(item.quantity || 1),
-            unitValue: itemUnitValue(item)
-        });
-    });
-
-    Aethra.EventBus.on("exploration:event-resolved", (event = {}) => {
-        (event.rewards?.items || []).forEach((item) => {
-            if (isSpecialDrop(item)) {
-                registerSpecialDrop(item, {
-                    source: `event:${event.id || "exploration"}`,
-                    detail: event.title || "Evento de exploração"
-                });
-                return;
-            }
-            registerStackable(item, {
-                source: event.title || "evento de exploração",
-                category: itemType(item) || "resource",
-                quantity: Number(item.quantity || 1),
-                unitValue: itemUnitValue(item)
-            });
-        });
-        registerGold(event.rewards?.gold, {
-            source: event.title || "evento de exploração"
-        });
-    });
-
-    Aethra.EventBus.on("exploration:rare-encounter-resolved", (event = {}) => {
-        (event.rewards?.items || []).forEach((item) => {
-            if (isSpecialDrop(item)) {
-                registerSpecialDrop(item, {
-                    source: "encontro-raro",
-                    enemyName: event.enemyName || "",
-                    detail: event.specialItem
-                        ? `Jackpot encontrado após ${event.enemyName || "uma criatura"}`
-                        : "Item individual de encontro raro"
-                });
-                return;
-            }
-
-            registerStackable(item, {
-                source: `encontro raro: ${event.enemyName || "expedição"}`,
-                category: itemType(item) || "resource",
-                quantity: Number(item.quantity || 1),
-                unitValue: itemUnitValue(item),
-                color: "#9f7aea",
-                tone: "rare"
-            });
-        });
-
-        registerGold(event.rewards?.gold, {
-            source: `encontro raro: ${event.enemyName || "expedição"}`
-        });
-    });
+    Aethra.EventBus.on("hunt:started", resetProgressionLog);
+    Aethra.EventBus.on("hunt:loot-ledger-updated", () => renderDropLog());
 
     Aethra.EventBus.on("xpChanged", (payload = {}) => {
         const amount = Math.max(0, Number(payload.amount || 0));

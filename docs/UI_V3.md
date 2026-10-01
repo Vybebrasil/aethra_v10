@@ -119,6 +119,7 @@ Já fora das telas clássicas (5.3a–c e correções):
 | Ofícios, estações e receita pedida pelo contrato | `js/items/CraftingGuidance.js`; receitas iniciais em `CraftingSystem.ensureStarterRecipes` |
 | Sessão, pico de DPS e recordes da Hunt | `js/world/HuntAnalyzer.js` |
 | Bloqueio por nível, fim da luta, `targetCreatureId` | `HuntSystem.startHunt/stopHunt` (antes injetados pelo `HudWorldMapAndDrops`) |
+| Registro do loot da expedição (pilhas, ouro, especiais) | `js/world/HuntLootLedger.js` (antes ouvido só pelo `HudWorldMapAndDrops`; a aba de loot da 3.0 dependia dele) |
 | Escolha de eventos de exploração | `ExplorationSystem.getEventPreview` + cartão na Hunt 3.0 (antes só na HUD clássica: a 3.0 travava na Mineração do tutorial) |
 
 Ainda falta, antes de apagar arquivos:

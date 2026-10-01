@@ -53,6 +53,7 @@
         "UIManager",
         "ActionBarWorkspace",
         "HuntAnalyzer",
+        "HuntLootLedger",
         "HuntAnalyzerWorkspace",
         "CombatHudModernizer",
         "EncounterCombatHUD",
@@ -4285,6 +4286,40 @@
                         `velocidade ${speedFromHud}× · habilidade fora de combate: ${skillWithoutBattle?.reason || "aceita"}`
                     )
                 );
+
+                /*
+                 * O loot da expedição é registrado pelo HuntLootLedger (sem tela) e
+                 * conta uma vez só, mesmo com outras telas ouvindo os mesmos eventos.
+                 */
+                const ledger = Aethra.HuntLootLedger;
+                const ledgerBefore = JSON.parse(JSON.stringify(ledger.ensureState()));
+                let ledgerWorks = false;
+                let ledgerDetail = "";
+                try {
+                    ledger.reset();
+                    Aethra.EventBus.emit("hunt:loot-generated", {
+                        enemyId: "forest_wolf",
+                        items: [{ id: "wolf_pelt", templateId: "wolf_pelt", name: "Pele de Lobo", type: "material", stackable: true, quantity: 2, price: 4 }]
+                    });
+                    Aethra.EventBus.emit("hunt:enemy-defeated", { name: "Lobo", gold: 7 });
+                    const session = ledger.ensureState();
+                    const pelt = session.stackables["item:wolf_pelt"];
+                    const goldEntry = session.stackables["currency:gold"];
+                    // A aba de loot só existe com a expedição em andamento.
+                    const huntActiveBefore = Aethra.GameState.hunt.isActive;
+                    Aethra.GameState.hunt.isActive = true;
+                    Aethra.Ui3HuntScreen?.render?.();
+                    huntScreen?.querySelector("[data-ui3-tab='loot']")?.click();
+                    const lootShown = (huntScreen?.querySelector(".ui3-expedition__body")?.textContent || "").includes("Pele de Lobo");
+                    huntScreen?.querySelector("[data-ui3-tab='resumo']")?.click();
+                    Aethra.GameState.hunt.isActive = huntActiveBefore;
+                    Aethra.Ui3HuntScreen?.render?.();
+                    ledgerWorks = pelt?.quantity === 2 && pelt?.totalValue === 8 && goldEntry?.quantity === 7 && lootShown;
+                    ledgerDetail = `pele ×${pelt?.quantity ?? 0} (${pelt?.totalValue ?? 0} o) · ouro ${goldEntry?.quantity ?? 0} · aba de loot ${lootShown ? "mostra" : "vazia"}`;
+                } finally {
+                    Aethra.GameState.ui.lootSession = ledgerBefore;
+                }
+                checks.push(createCheck("Loot da expedição conta uma vez e aparece na Hunt 3.0", ledgerWorks, ledgerDetail));
 
                 /*
                  * Evento manual de exploração (Minerar, Esfolar): pausa a caçada

@@ -146,7 +146,7 @@
     }
 
     function lootEntries() {
-        const session = Aethra.GameState?.ui?.lootSession || {};
+        const session = Aethra.HuntLootLedger?.ensureState?.() || {};
         const K = kit();
         const stackables = Object.values(session.stackables || {})
             .filter((entry) => entry && entry.key !== "currency:gold")
@@ -836,6 +836,7 @@
         scheduleRender();
     });
     Aethra.EventBus.on("exploration:updated", () => scheduleRender());
+    Aethra.EventBus.on("hunt:loot-ledger-updated", () => scheduleRender());
     Aethra.EventBus.on("BattleLog", (payload = {}) => {
         if (payload.type === "system") pushLog(payload.message, "system");
     });
