@@ -249,7 +249,7 @@ check(
         && /id:\s*["']verdant_grove_focus["'][\s\S]{0,500}minLevel:\s*1/.test(huntCatalogSource)
         && /actionLabel:\s*["']Colher["']/.test(explorationSource)
         && /event\.minimumQuantity/.test(explorationSource),
-    "Herbalismo deve possuir rota inicial e decisÃ£o Colher/Ignorar com rendimento mÃ­nimo"
+    "Herbalismo deve possuir rota inicial e decisão Colher/Ignorar com rendimento mínimo"
 );
 check(
     ["distill_wild_herb", "brew_health_potion", "brew_mana_potion", "brew_vigor_tonic"].every((recipeId) => (
@@ -257,7 +257,7 @@ check(
     ))
         && /botanical_extract/.test(earlyGameItemCatalogSource)
         && /minor_vigor_tonic/.test(lootSystemSource),
-    "CatÃ¡logos oficiais devem conter destilaÃ§Ã£o, trÃªs supplies e seus templates"
+    "Catálogos oficiais devem conter destilação, três supplies e seus templates"
 );
 check(
     /CraftSupply/.test(questSystemSource)
@@ -265,7 +265,7 @@ check(
         && /workshop:\s*["']alchemy["']/.test(ui3CitySource)
         && /craftRecipeId:\s*["']brew_health_potion["']/.test(idleLoopSource)
         && !/BagSystem\?\.(?:addItem|consumeItem)/.test(ui3WorkshopSource),
-    "LaboratÃ³rio deve projetar a escolha de supply e reutilizar o estoque oficial"
+    "Laboratório deve projetar a escolha de supply e reutilizar o estoque oficial"
 );
 check(
     /data-ui3-event-skip/.test(ui3HuntSource)
