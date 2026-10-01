@@ -3694,6 +3694,54 @@
                 }
                 checks.push(createCheck("Auto-venda guarda materiais das Oficinas", keepWorks, keepDetail));
 
+                /*
+                 * Com a expedição parada, o painel da Hunt mostra o próximo passo da
+                 * missão (antes só aparecia durante a caçada, e depois de "A Linha
+                 * Goblin" o jogador só via "Iniciar expedição").
+                 */
+                const questSystem = Aethra.QuestSystem;
+                const questStubs = { tracked: questSystem.getTrackedQuest, guidance: questSystem.getGuidance, follow: Aethra.Ui3Navigation?.followQuestGuidance };
+                const idleHunt = Aethra.GameState.hunt;
+                const idleActiveBefore = idleHunt.isActive;
+                const viewBefore = Aethra.UIManager?.primaryView;
+                const followed = [];
+                let idleQuestShown = false;
+                let idleQuestFollowed = false;
+                let idleQuestHiddenHere = false;
+                try {
+                    const bossGuidance = { action: "open-bosses", actionLabel: "Desafiar Lobo Alfa", target: "alpha_wolf", objective: { label: "Derrote o Lobo Alfa", progress: 0, required: 1 } };
+                    let guidanceNow = bossGuidance;
+                    questSystem.getTrackedQuest = () => ({ id: "integration_idle_quest", title: "O Alfa dos Sussurros" });
+                    questSystem.getGuidance = () => guidanceNow;
+                    if (Aethra.Ui3Navigation) Aethra.Ui3Navigation.followQuestGuidance = (guidance) => { followed.push(guidance); return true; };
+                    idleHunt.isActive = false;
+                    withUi3Game(() => {
+                        Aethra.UIManager?.setPrimaryView?.("hunt");
+                        Aethra.Ui3HuntScreen.sync();
+                        Aethra.Ui3HuntScreen.render();
+                        const button = document.querySelector("#ui3-root .ui3-hunt [data-ui3-hunt-quest]");
+                        idleQuestShown = /Desafiar Lobo Alfa/.test(button?.textContent || "");
+                        button?.click();
+                        idleQuestFollowed = followed[0]?.action === "open-bosses";
+                        guidanceNow = { action: "focus-hunt", actionLabel: "Caçar", objective: { label: "Derrote lobos", progress: 0, required: 5 } };
+                        Aethra.Ui3HuntScreen.render();
+                        idleQuestHiddenHere = !document.querySelector("#ui3-root .ui3-hunt [data-ui3-hunt-quest]")
+                            && /Derrote lobos/.test(document.querySelector("#ui3-root .ui3-hunt-quest")?.textContent || "");
+                    });
+                } finally {
+                    questSystem.getTrackedQuest = questStubs.tracked;
+                    questSystem.getGuidance = questStubs.guidance;
+                    if (Aethra.Ui3Navigation) Aethra.Ui3Navigation.followQuestGuidance = questStubs.follow;
+                    idleHunt.isActive = idleActiveBefore;
+                    if (viewBefore) Aethra.UIManager?.setPrimaryView?.(viewBefore);
+                    Aethra.Ui3HuntScreen?.render?.();
+                }
+                checks.push(createCheck(
+                    "Hunt parada mostra o próximo passo da missão",
+                    idleQuestShown && idleQuestFollowed && idleQuestHiddenHere,
+                    `botão ${idleQuestShown ? "Desafiar Lobo Alfa" : "ausente"} · clique ${idleQuestFollowed ? "segue a orientação" : "perdido"} · passo na própria caçada ${idleQuestHiddenHere ? "sem botão" : "errado"}`
+                ));
+
                 // Registro em português e no andar final a escada conclui a expedição.
                 const rewardText = Aethra.BattleLogger.formatRewardMessage("Lobo", { xp: 5, gold: 0, lootCount: 2 });
                 const finalHunt = Aethra.GameState.hunt;

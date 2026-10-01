@@ -431,7 +431,7 @@
         if (result?.used === false) {
             notify(USE_ERRORS[result.reason] || "Não foi possível usar o item.", "error");
         } else {
-            notify(`${nameOf(item)} usado.`, "ok");
+            notify(`Você usou ${nameOf(item)}.`, "ok");
         }
         render();
         return result?.used !== false;

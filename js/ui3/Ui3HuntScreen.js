@@ -389,7 +389,7 @@
     }
 
     /*
-     * Próximo passo da missão acompanhada, visível durante a caçada. Se o
+     * Próximo passo da missão acompanhada, visível na caçada e antes de partir. Se o
      * passo pede sair dela (Cidade, oficina, mural), oferece o botão.
      */
     function questStripHTML() {
@@ -453,7 +453,9 @@
         const ready = readiness();
         const hasPrevious = number(current.seconds) > 0 || number(current.xp) > 0 || number(current.kills) > 0;
         const tone = (ok) => (ok ? "positive" : "negative");
-        return `<div class="ui3-stack">
+        // Sem isso, depois de uma missão de caçada o painel só oferecia partir
+        // de novo, mesmo quando o passo seguinte é o Mural ou uma oficina.
+        return `${questStripHTML()}<div class="ui3-stack">
                 <span class="ui3-eyebrow">Antes de partir</span>
                 <div class="ui3-kpi-grid ui3-kpi-grid--3">
                     ${K.kpi({ label: "Vida", value: `${ready.hpPercent}%`, tone: tone(ready.hpPercent >= 70) })}
