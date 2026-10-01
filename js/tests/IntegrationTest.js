@@ -541,6 +541,30 @@
                     introRouteResults.map((route) => `${route.professionId}:${route.introCompleted ? "ok" : "falhou"}/oficina:${route.guidedWorkshopVisible ? "ok" : "falhou"}/encontro:${route.guidedEncounterIdentified ? "ok" : "falhou"}`).join(" · ")
                 )
             );
+            /*
+             * A garantia do primeiro recurso vale na caçada para onde a missão
+             * manda (o Bosque); saves com a garantia numa caçada de foco são
+             * corrigidos ao carregar. Antes, quem seguia a missão nunca recebia o veio.
+             */
+            const explorationForIntro = Aethra.ExplorationSystem;
+            const introGuaranteeBefore = JSON.parse(JSON.stringify(explorationForIntro.ensureState().tutorialGuarantee || null));
+            const introHuntsAligned = ["mining", "skinning", "herbalism"].every((professionId) => {
+                const definition = Aethra.ProfessionSystem.getIntroQuestDefinition(professionId);
+                return Aethra.ProfessionSystem.getIntroHuntId(professionId) === definition.objectives[0].huntId;
+            });
+            explorationForIntro.ensureState().tutorialGuarantee = {
+                professionId: "mining", eventId: "mining", huntId: "apprentice_mines_focus",
+                remaining: 1, source: "intro-profession", manual: false, guaranteedSuccess: false, minimumQuantity: 1
+            };
+            const migratedIntroHunt = explorationForIntro.ensureState().tutorialGuarantee.huntId;
+            explorationForIntro.ensureState().tutorialGuarantee = introGuaranteeBefore;
+            checks.push(
+                createCheck(
+                    "Primeiro recurso de ofício aparece na caçada indicada pela missão",
+                    introHuntsAligned && migratedIntroHunt === "whispering_forest",
+                    `missões e garantias ${introHuntsAligned ? "na mesma caçada" : "desalinhadas"} · save antigo → ${migratedIntroHunt}`
+                )
+            );
             const expectedIntroModifiers = {
                 mining: { yieldPercent: 5 },
                 skinning: { yieldPercent: 5 },

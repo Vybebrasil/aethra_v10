@@ -299,6 +299,12 @@
                 ? state.tutorialGuarantee
                 : null;
             if (state.tutorialGuarantee) {
+                // Saves antigos marcaram a garantia da lição inicial numa caçada de
+                // foco que a missão não indica; ela vale onde a missão manda.
+                if (state.tutorialGuarantee.source === "intro-profession") {
+                    state.tutorialGuarantee.huntId = Aethra.ProfessionSystem?.getIntroHuntId?.(state.tutorialGuarantee.professionId)
+                        || state.tutorialGuarantee.huntId;
+                }
                 state.tutorialGuarantee.remaining = Math.max(1, integer(state.tutorialGuarantee.remaining, 1));
                 state.tutorialGuarantee.manual = state.tutorialGuarantee.manual === true;
                 state.tutorialGuarantee.guaranteedSuccess = state.tutorialGuarantee.guaranteedSuccess === true;

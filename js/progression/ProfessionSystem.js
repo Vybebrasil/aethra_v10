@@ -705,6 +705,16 @@
             return unlocked;
         },
 
+        /*
+         * A primeira lição de ofício acontece onde a missão manda: a caçada do
+         * objetivo da missão de introdução (o Bosque dos Sussurros). A garantia
+         * do primeiro recurso precisa valer nessa mesma caçada.
+         */
+        getIntroHuntId(professionId) {
+            const definition = this.getIntroQuestDefinition(professionId);
+            return definition?.objectives?.find((objective) => objective.huntId)?.huntId || "whispering_forest";
+        },
+
         getIntroQuestDefinition(professionId) {
             const path = INTRO_PATHS[professionId];
             if (!path) return null;
@@ -1015,7 +1025,7 @@
                 }
             } else if (["mining", "skinning", "herbalism"].includes(professionId)) {
                 Aethra.ExplorationSystem?.queueIntroGuarantee?.(professionId, {
-                    huntId: path.huntId || "whispering_forest"
+                    huntId: this.getIntroHuntId(professionId)
                 });
             }
 
