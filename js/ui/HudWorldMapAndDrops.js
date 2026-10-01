@@ -93,47 +93,6 @@
         };
     });
 
-    const originalStartHunt = Hunt.startHunt.bind(Hunt);
-    Hunt.startHunt = function (huntId = "whispering_forest", options = {}) {
-        const definition = this.hunts[huntId];
-        const heroLevel = Math.max(1, Number(Aethra.GameState.hero?.level || 1));
-        const requiredLevel = Math.max(1, Number(definition?.minLevel || 1));
-
-        if (definition && heroLevel < requiredLevel) {
-            Aethra.EventBus.emit("BattleLog", {
-                message: `${definition.name} exige nível ${requiredLevel}. Seu herói está no nível ${heroLevel}.`,
-                color: "#ffb36a",
-                type: "system"
-            });
-            Aethra.EventBus.emit("hunt:locked", {
-                huntId,
-                minLevel: requiredLevel,
-                heroLevel
-            });
-            return false;
-        }
-
-        // BattleSystem é a única autoridade de combate.
-        if (Aethra.BattleSystem && typeof Aethra.BattleSystem.stopCombat === "function") {
-            Aethra.BattleSystem.stopCombat("new-hunt-started");
-        }
-
-        const started = originalStartHunt(huntId, options);
-        if (started && Aethra.GameState?.hunt) {
-            Aethra.GameState.hunt.mode = options.mode || definition?.mode || 'expedition';
-            Aethra.GameState.hunt.targetCreatureId = options.targetCreatureId || null;
-        }
-        return started;
-    };
-
-    const originalStopHunt = Hunt.stopHunt.bind(Hunt);
-    Hunt.stopHunt = function (reason = "manual") {
-        if (Aethra.BattleSystem && typeof Aethra.BattleSystem.stopCombat === "function") {
-            Aethra.BattleSystem.stopCombat("hunt-stopped");
-        }
-        return originalStopHunt(reason);
-    };
-
     function getHeroLevel() {
         return Math.max(1, Number(Aethra.GameState.hero?.level || 1));
     }

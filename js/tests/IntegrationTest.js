@@ -4983,6 +4983,38 @@
                 }
                 checks.push(createCheck("Atlas inicia caçada focada e retoma a mesma rota sem reiniciar", atlasWorks, atlasDetail));
 
+                // HuntSystem fecha rotas acima do nível do herói e encerra a luta ao parar.
+                const heroLevelNow = Math.max(1, Number(Aethra.GameState.hero?.level || 1));
+                const lockedHunt = Object.values(Aethra.HuntSystem.hunts || {})
+                    .find((definition) => Number(definition?.minLevel || 1) > heroLevelNow);
+                const lockedEvents = [];
+                const stopLocked = Aethra.EventBus.on("hunt:locked", (payload) => lockedEvents.push(payload));
+                const lockedStart = lockedHunt ? Aethra.HuntSystem.startHunt(lockedHunt.id, { source: "integration-locked" }) : null;
+                if (typeof stopLocked === "function") stopLocked();
+                const combatStopsBefore = [];
+                const originalStopCombat = Aethra.BattleSystem.stopCombat;
+                Aethra.BattleSystem.stopCombat = function (...args) {
+                    combatStopsBefore.push(args[0]);
+                    return originalStopCombat.apply(this, args);
+                };
+                try {
+                    Aethra.HuntSystem.stopHunt("integration-stop-combat");
+                } finally {
+                    Aethra.BattleSystem.stopCombat = originalStopCombat;
+                }
+                const lockWorks = Boolean(lockedHunt)
+                    && lockedStart === false
+                    && lockedEvents.length === 1
+                    && lockedEvents[0].huntId === lockedHunt.id
+                    && lockedEvents[0].heroLevel === heroLevelNow;
+                checks.push(
+                    createCheck(
+                        "HuntSystem fecha rotas acima do nível e encerra a luta ao parar",
+                        lockWorks && combatStopsBefore.includes("hunt-stopped"),
+                        `${lockedHunt ? `${lockedHunt.name} (Nv ${lockedHunt.minLevel})` : "nenhuma rota acima do nível"} ${lockedStart === false ? "recusada" : "aberta"} · parar ${combatStopsBefore.includes("hunt-stopped") ? "encerra a luta" : "não encerra"}`
+                    )
+                );
+
                 /*
                  * UI 3.0 — fase 4 (Mapa-Mundi). Ui3Navigation.openHuntMap abre a
                  * janela nova; a caçada focada começa pelo HuntAtlas.

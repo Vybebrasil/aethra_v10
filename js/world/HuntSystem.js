@@ -354,6 +354,22 @@
                 return false;
             }
 
+            // Rotas acima do nível do herói ficam fechadas.
+            const heroLevel = Math.max(1, Math.floor(number(Aethra.GameState.hero?.level, 1)));
+            const requiredLevel = Math.max(1, Math.floor(number(hunt.minLevel, 1)));
+            if (heroLevel < requiredLevel) {
+                Aethra.EventBus.emit("BattleLog", {
+                    message: `${hunt.name} exige nível ${requiredLevel}. Seu herói está no nível ${heroLevel}.`,
+                    color: "#ffb36a",
+                    type: "system"
+                });
+                Aethra.EventBus.emit("hunt:locked", { huntId, minLevel: requiredLevel, heroLevel });
+                return false;
+            }
+
+            // BattleSystem é a única autoridade de combate: uma rota nova encerra a luta anterior.
+            Aethra.BattleSystem?.stopCombat?.("new-hunt-started");
+
             // O servico automatico da Cidade e executado antes de a expedicao
             // assumir o estado ativo. Falhas de material/orcamento nao bloqueiam
             // a Hunt; itens quebrados simplesmente permanecem inativos.
@@ -388,6 +404,7 @@
                 isPaused: false,
                 huntId,
                 mode: options.mode || hunt.mode || "expedition",
+                targetCreatureId: options.targetCreatureId || null,
                 focusId: hunt.focus?.id || null,
                 focusName: hunt.focus?.name || null,
                 modifiers: clone(hunt.modifiers || {}),
@@ -467,6 +484,7 @@
 
         stopHunt(reason = "manual") {
             this.ensureState();
+            Aethra.BattleSystem?.stopCombat?.("hunt-stopped");
             const wasRunning = this.config.isRunning || Aethra.GameState.hunt.isActive;
 
             this.config.isRunning = false;
