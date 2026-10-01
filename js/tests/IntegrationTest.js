@@ -4315,6 +4315,50 @@
                     )
                 );
 
+                /*
+                 * Evento manual de exploração (Minerar, Esfolar): pausa a caçada
+                 * e precisa de escolha. A Hunt 3.0 mostra a prévia do
+                 * ExplorationSystem e resolve por ele.
+                 */
+                const exploration = Aethra.ExplorationSystem;
+                const explorationState = exploration.ensureState();
+                const pendingBefore = explorationState.pendingEvent;
+                explorationState.pendingEvent = {
+                    id: "mining-vein",
+                    eventId: "ui3_probe_event",
+                    status: "pending",
+                    title: "Veio de teste",
+                    description: "Um veio exposto na parede da caverna.",
+                    icon: "⛏",
+                    category: "gathering",
+                    actionLabel: "Minerar",
+                    professionId: "mining",
+                    requiredLevel: 1,
+                    xp: [4, 8],
+                    requiresManual: true,
+                    guaranteedSuccess: true,
+                    resumeHunt: false
+                };
+                Aethra.Ui3HuntScreen?.render?.();
+                const eventPanel = huntScreen?.querySelector(".ui3-hunt__target");
+                const eventPreview = exploration.getEventPreview();
+                const eventShown = eventPanel?.hidden === false
+                    && Boolean(eventPanel.querySelector("[data-ui3-event-resolve='ui3_probe_event']"))
+                    && /100% de sucesso/.test(eventPanel.textContent)
+                    && eventPreview?.xpMin === Math.round(4 * 1.25 * (Aethra.HuntSystem.getProfessionXPMultiplier?.("mining") ?? 1));
+                eventPanel?.querySelector("[data-ui3-event-skip='ui3_probe_event']")?.click();
+                const eventResolved = exploration.ensureState().pendingEvent === null
+                    && exploration.getEventPreview() === null
+                    && huntScreen?.querySelector(".ui3-hunt__target")?.hidden === true;
+                explorationState.pendingEvent = pendingBefore || null;
+                checks.push(
+                    createCheck(
+                        "UI 3.0 Hunt mostra o evento de exploração e resolve pelo ExplorationSystem",
+                        eventShown && eventResolved,
+                        `${eventShown ? `cartão com ${eventPreview?.actionLabel} · ${eventPreview?.xpMin}–${eventPreview?.xpMax} XP` : "cartão ausente"} · ${eventResolved ? "ignorado pelo dono" : "continuou pendente"}`
+                    )
+                );
+
                 Aethra.UIManager?.setPrimaryView?.("city", { source: "integration-ui3-hunt" });
                 const cityReleasesCanvas = Aethra.Ui3HuntScreen?.isVisible?.() === false
                     && Aethra.TileMapCanvas?.isHosted?.() === false

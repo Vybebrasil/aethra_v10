@@ -13,6 +13,9 @@
         return Number.isFinite(parsed) ? parsed : fallback;
     };
 
+    // Resolver um evento pela própria mão rende 25% a mais de XP de ofício.
+    const MANUAL_XP_MULTIPLIER = 1.25;
+
     const EVENT_DEFINITIONS = {
         chest: {
             id: "chest",
@@ -701,7 +704,7 @@
                 return clone(event);
             }
 
-            const manualMultiplier = options.manual ? 1.25 : 1;
+            const manualMultiplier = options.manual ? MANUAL_XP_MULTIPLIER : 1;
             const xpMin = integer(event.xp?.[0], 5);
             const xpMax = Math.max(xpMin, integer(event.xp?.[1], xpMin));
             const baseXp = Math.max(1, Math.round((xpMin + Math.floor(this.randomSource() * (xpMax - xpMin + 1))) * manualMultiplier));
@@ -1190,6 +1193,49 @@
             state.events = state.events.slice(0, 30);
             Aethra.EventBus.emit("exploration:feed", clone(normalized));
             return clone(normalized);
+        },
+
+        /*
+         * O que o jogador precisa para decidir o evento pendente: ofício,
+         * XP possível (resolvendo à mão), chance de sucesso e risco. Mesmas
+         * regras de resolveEvent; null quando não há evento pendente.
+         */
+        getEventPreview() {
+            const event = this.ensureState().pendingEvent;
+            if (!event) return null;
+            const professionId = event.professionId || "exploration";
+            const professionState = Aethra.ProfessionSystem?.getState?.(professionId) || {};
+            const requiredLevel = Math.max(1, integer(event.requiredLevel, 1));
+            const xpScale = MANUAL_XP_MULTIPLIER * Math.max(0, Number(Aethra.HuntSystem?.getProfessionXPMultiplier?.(professionId) ?? 1));
+            const xpMin = integer(event.xp?.[0] ?? event.xp, 5);
+            const xpMax = Math.max(xpMin, integer(event.xp?.[1], xpMin));
+            const requiresCheck = Boolean(event.requiresManual || requiredLevel > 1);
+            const successChance = event.guaranteedSuccess
+                ? 1
+                : requiresCheck
+                    ? clamp(Aethra.ProfessionSystem?.check?.(professionId, requiredLevel, { randomSource: () => 0 })?.chance ?? 0, 0, 1)
+                    : 1;
+            const risk = event.category === "thievery"
+                ? (integer(professionState.level, 1) < requiredLevel ? "Alto" : "Teste")
+                : event.category === "arcane" ? "Médio" : event.category === "survival" ? "Baixo" : "Seguro";
+            return {
+                eventId: event.eventId,
+                title: event.title || "Descoberta",
+                description: event.description || "Um novo ponto de interesse apareceu durante a caçada.",
+                icon: event.icon || "✦",
+                label: event.tutorialLabel || "Evento",
+                actionLabel: event.actionLabel || "Interagir",
+                category: event.category || "mundo",
+                requiresManual: Boolean(event.requiresManual),
+                professionId,
+                professionName: Aethra.ProfessionSystem?.professions?.[professionId]?.name || "Exploração",
+                professionLevel: integer(professionState.level, 1),
+                requiredLevel,
+                xpMin: Math.round(xpMin * xpScale),
+                xpMax: Math.round(xpMax * xpScale),
+                successChance,
+                risk
+            };
         },
 
         getSnapshot() {

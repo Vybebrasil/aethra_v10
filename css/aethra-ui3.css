@@ -897,6 +897,35 @@
     transform: translateX(-50%);
 }
 
+/* Evento de exploração no lugar do alvo: escolha do jogador. */
+#ui3-root .ui3-hunt__target.is-event {
+    width: clamp(340px, 14vw + 180px, 440px);
+    align-items: flex-start;
+    border-color: var(--ui3-gold);
+}
+
+#ui3-root .ui3-event__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    color: var(--ui3-gold-1);
+}
+
+#ui3-root .ui3-event {
+    gap: 6px;
+}
+
+#ui3-root .ui3-event .ui3-caption {
+    margin: 0;
+}
+
+#ui3-root .ui3-event__odds {
+    margin: 0;
+    font-size: var(--ui3-fs-sm);
+    color: var(--ui3-text-2);
+}
+
 #ui3-root .ui3-unit--target .ui3-portrait {
     width: 44px;
     height: 44px;

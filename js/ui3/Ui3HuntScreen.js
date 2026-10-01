@@ -275,10 +275,36 @@
             </div>`;
     }
 
+    /*
+     * Evento de exploração pendente (Minerar, Esfolar, baú...). Os manuais
+     * pausam a caçada até o jogador escolher; a prévia vem do ExplorationSystem.
+     */
+    function eventHTML(preview) {
+        const K = kit();
+        const xp = preview.xpMin === preview.xpMax ? K.formatNumber(preview.xpMin) : `${K.formatNumber(preview.xpMin)}–${K.formatNumber(preview.xpMax)}`;
+        const odds = preview.requiresManual ? `${Math.round(preview.successChance * 100)}% de sucesso` : `Risco ${preview.risk.toLocaleLowerCase("pt-BR")}`;
+        return `<div class="ui3-portrait ui3-portrait--target ui3-event__icon" aria-hidden="true">${K.esc(preview.icon)}</div>
+            <div class="ui3-unit__body ui3-event">
+                <div class="ui3-unit__head">
+                    <strong class="ui3-unit__name">${K.esc(preview.title)}</strong>
+                    <span class="ui3-unit__meta">${K.esc(preview.label)}</span>
+                </div>
+                <p class="ui3-caption">${K.esc(preview.description)}</p>
+                <p class="ui3-event__odds">${K.esc(preview.professionName)} Nv ${K.formatNumber(preview.professionLevel)}${preview.requiresManual ? ` / ${K.formatNumber(preview.requiredLevel)}` : ""} · ${K.esc(odds)} · ${xp} XP</p>
+                <div class="ui3-expedition__row">
+                    ${K.button({ label: "Ignorar", attributes: { "data-ui3-event-skip": preview.eventId } })}
+                    ${K.button({ label: preview.actionLabel, variant: "primary", attributes: { "data-ui3-event-resolve": preview.eventId } })}
+                </div>
+            </div>`;
+    }
+
     function targetHTML(snapshot) {
         const K = kit();
         const enemy = snapshot?.active ? snapshot.enemy : null;
-        if (!enemy) return "";
+        if (!enemy) {
+            const preview = Aethra.ExplorationSystem?.getEventPreview?.();
+            return preview ? eventHTML(preview) : "";
+        }
         const hp = enemy.resources?.hp || { current: enemy.hp, maximum: enemy.maxHp };
         const type = enemy.type ? K.creatureType(enemy.type) : "";
         const meta = [enemy.level ? `Nv ${enemy.level}` : "", type].filter(Boolean).join(" · ");
@@ -524,6 +550,7 @@
         patch(parts.hero, heroHTML(snapshot));
         const target = targetHTML(snapshot);
         parts.target.hidden = !target;
+        parts.target.classList.toggle("is-event", target.includes("data-ui3-event-resolve"));
         patch(parts.target, target);
         screen.classList.toggle("is-running", isHuntRunning());
         patch(parts.expeditionHead, expeditionHeadHTML());
@@ -644,6 +671,16 @@
         if (primary) return usePrimary(primary.dataset.ui3Primary);
         const slot = target.closest("[data-ui3-skill-slot]");
         if (slot) return useSlot(Number(slot.dataset.ui3SkillSlot));
+        const resolveEvent = target.closest("[data-ui3-event-resolve]");
+        if (resolveEvent) {
+            Aethra.ExplorationSystem?.resolveEvent?.(resolveEvent.dataset.ui3EventResolve, { manual: true });
+            return render();
+        }
+        const skipEvent = target.closest("[data-ui3-event-skip]");
+        if (skipEvent) {
+            Aethra.ExplorationSystem?.resolveEvent?.(skipEvent.dataset.ui3EventSkip, { manual: true, skip: true });
+            return render();
+        }
         const speed = target.closest("[data-ui3-speed]");
         if (speed) {
             Aethra.SettingsManager?.setCombatSpeed?.(Number(speed.dataset.ui3Speed), { source: "ui3-hunt" });
@@ -793,6 +830,11 @@
     Aethra.EventBus.on("battle:player-defeated", (payload = {}) => pushLog(payload.message, "danger"));
     Aethra.EventBus.on("hunt:started", (payload = {}) => pushLog(`Expedição iniciada: ${payload.hunt?.name || huntName()}.`, "system"));
     Aethra.EventBus.on("hunt:ended", () => pushLog("Expedição encerrada.", "system"));
+    Aethra.EventBus.on("exploration:event-found", (event = {}) => {
+        if (event.requiresManual) pushLog(`${event.title || "Evento"}: escolha o que fazer.`, "system");
+        scheduleRender();
+    });
+    Aethra.EventBus.on("exploration:updated", () => scheduleRender());
     Aethra.EventBus.on("BattleLog", (payload = {}) => {
         if (payload.type === "system") pushLog(payload.message, "system");
     });
