@@ -240,7 +240,7 @@
                 automatic: options.automatic === true,
                 supply,
                 source: options.source || "consumable-system",
-                message: `${evaluation.item.name} usado${effectLabels.length ? `: ${effectLabels.join(" · ")}` : ""}.`
+                message: `Você usou ${evaluation.item.name}${effectLabels.length ? `: ${effectLabels.join(" · ")}` : ""}.`
             };
 
             Aethra.EventBus.emit("consumable:used", clone(payload));

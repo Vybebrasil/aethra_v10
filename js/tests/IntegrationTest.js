@@ -4008,6 +4008,42 @@
                     `parado: ${idleDefeat?.actionLabel} (${idleDefeat?.huntId}) · caçando: ${activeDefeat?.actionLabel}`
                 ));
 
+                /*
+                 * Sem reposição, o jogador é avisado quando as poções acabam: o uso
+                 * real de uma poção escreve "Você usou…" e, com 2/1/0 restantes,
+                 * o registro avisa (0 = volte à cidade).
+                 */
+                const stockHero = Aethra.GameState.hero;
+                const stockBackup = { bag: stockHero.bag, hp: stockHero.hp, statsHp: stockHero.stats?.hp };
+                const stockLogs = [];
+                const captureStock = (payload = {}) => { if (payload.type === "system" || payload.type === "supply") stockLogs.push(payload.message); };
+                Aethra.EventBus.on("BattleLog", captureStock);
+                let stockWorks = false;
+                let stockDetail = "";
+                try {
+                    stockHero.bag = (stockBackup.bag || []).filter((item) => (item.templateId || item.id) !== "potion_health");
+                    const twoPotions = Aethra.ItemSystem.generateItem("potion_health", { quantity: 2, source: "integration-stock" });
+                    Aethra.BagSystem.addItems([twoPotions], "integration-stock");
+                    stockHero.hp = 1;
+                    stockHero.stats.hp = 1;
+                    Aethra.ConsumableSystem.use("potion_health", { source: "integration-stock" });
+                    const afterFirst = stockLogs.slice();
+                    stockHero.hp = 1;
+                    stockHero.stats.hp = 1;
+                    Aethra.ConsumableSystem.use("potion_health", { source: "integration-stock" });
+                    const usedMessage = afterFirst.find((message) => /^Você usou Poção de Vida/.test(message || ""));
+                    const oneLeft = afterFirst.includes("Resta 1 Poção de Vida.");
+                    const outOfStock = stockLogs.some((message) => /^Acabaram as Poções de Vida\. Volte à cidade/.test(message || ""));
+                    stockWorks = Boolean(usedMessage) && oneLeft && outOfStock;
+                    stockDetail = `${usedMessage || "sem mensagem de uso"} · ${oneLeft ? "avisou 1 restante" : "sem aviso de 1"} · ${outOfStock ? "avisou que acabou" : "sem aviso de fim"}`;
+                } finally {
+                    Aethra.EventBus.off("BattleLog", captureStock);
+                    stockHero.bag = stockBackup.bag;
+                    stockHero.hp = stockBackup.hp;
+                    if (stockHero.stats) stockHero.stats.hp = stockBackup.statsHp;
+                }
+                checks.push(createCheck("Poções acabando são avisadas no registro", stockWorks, stockDetail));
+
                 // Registro em português e no andar final a escada conclui a expedição.
                 const rewardText = Aethra.BattleLogger.formatRewardMessage("Lobo", { xp: 5, gold: 0, lootCount: 2 });
                 const finalHunt = Aethra.GameState.hunt;

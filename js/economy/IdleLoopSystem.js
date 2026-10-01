@@ -11,11 +11,12 @@
     if (!Aethra?.EventBus) return;
 
     const SUPPLIES = Object.freeze([
-        Object.freeze({ id: "potion_health", label: "Poção de Vida", shortLabel: "Vida", icon: "✚", effect: "+20 HP", role: "Sobrevivência", craftRecipeId: "brew_health_potion", tone: "health", policyItemKey: "healthItemId", policyThresholdKey: "healthThreshold" }),
-        Object.freeze({ id: "potion_mana", label: "Poção de Mana", shortLabel: "Mana", icon: "◆", effect: "+20 Mana", role: "Recurso arcano", craftRecipeId: "brew_mana_potion", tone: "mana", policyItemKey: "manaItemId", policyThresholdKey: "manaThreshold" }),
-        Object.freeze({ id: "minor_vigor_tonic", label: "Tônico de Vigor", shortLabel: "Vigor", icon: "ϟ", effect: "+18 Vigor", role: "Recurso físico", craftRecipeId: "brew_vigor_tonic", tone: "vigor", policyItemKey: "energyItemId", policyThresholdKey: "energyThreshold" }),
-        Object.freeze({ id: "field_antidote", label: "Antídoto de Campanha", shortLabel: "Antídoto", icon: "☤", effect: "Remove veneno", role: "Cura de condição", tone: "antidote" })
+        Object.freeze({ id: "potion_health", label: "Poção de Vida", pluralLabel: "Poções de Vida", shortLabel: "Vida", icon: "✚", effect: "+20 HP", role: "Sobrevivência", craftRecipeId: "brew_health_potion", tone: "health", policyItemKey: "healthItemId", policyThresholdKey: "healthThreshold" }),
+        Object.freeze({ id: "potion_mana", label: "Poção de Mana", pluralLabel: "Poções de Mana", shortLabel: "Mana", icon: "◆", effect: "+20 Mana", role: "Recurso arcano", craftRecipeId: "brew_mana_potion", tone: "mana", policyItemKey: "manaItemId", policyThresholdKey: "manaThreshold" }),
+        Object.freeze({ id: "minor_vigor_tonic", label: "Tônico de Vigor", pluralLabel: "Tônicos de Vigor", shortLabel: "Vigor", icon: "ϟ", effect: "+18 Vigor", role: "Recurso físico", craftRecipeId: "brew_vigor_tonic", tone: "vigor", policyItemKey: "energyItemId", policyThresholdKey: "energyThreshold" }),
+        Object.freeze({ id: "field_antidote", label: "Antídoto de Campanha", pluralLabel: "Antídotos de Campanha", shortLabel: "Antídoto", icon: "☤", effect: "Remove veneno", role: "Cura de condição", tone: "antidote" })
     ]);
+    const LOW_STOCK = 2;
     const AUTO_USE_MIN_PERCENT = 5;
     const AUTO_USE_MAX_PERCENT = 95;
 
@@ -96,6 +97,24 @@
         }));
         return { supplies, summary: { current: supplies.reduce((total, supply) => total + supply.current, 0) } };
     }
+
+    /*
+     * Sem reposição, o jogador precisa saber quando o estoque acaba: avisa no
+     * registro com 2, 1 e 0 unidades depois de cada uso.
+     */
+    function warnLowStock(payload = {}) {
+        const supply = SUPPLIES.find((definition) => definition.id === payload.itemId);
+        if (!supply) return null;
+        const left = inventoryQuantity(supply.id);
+        if (left > LOW_STOCK) return null;
+        const message = left === 0
+            ? `Acabaram as ${supply.pluralLabel}. Volte à cidade para comprar ou fabrique na Alquimia.`
+            : `${left === 1 ? "Resta" : "Restam"} ${left} ${left === 1 ? supply.label : supply.pluralLabel}.`;
+        Aethra.EventBus.emit("BattleLog", { message, color: left === 0 ? "#ff7a6a" : "#ffb36a", type: "system" });
+        Aethra.EventBus.emit("supplies:low", { itemId: supply.id, left });
+        return { itemId: supply.id, left, message };
+    }
+    Aethra.EventBus.on("consumable:used", warnLowStock);
 
     ["save:loaded", "state:restored"].forEach((eventName) => {
         Aethra.EventBus.on(eventName, () => {
