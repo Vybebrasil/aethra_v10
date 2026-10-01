@@ -144,7 +144,10 @@ Ainda falta, antes de apagar arquivos:
    `js/ui/` só `WindowManager`, `UIManager`, `DeathModalUI` e
    `SaveStatusBanner`; testes que mediam a clássica saíram, os de regra
    foram convertidos para a 3.0.
-7. Tirar o CSS e a marcação clássicos; depois apagar os arquivos.
+7. ~~CSS e marcação clássicos~~ — fora do `index.html`: a página carrega só
+   `aethra-base.css`, `aethra-ui3.css` e `death-modal.css` (o gate trava a
+   lista) e o `<body>` só tem `#ui3-root`.
+8. Apagar os arquivos clássicos e as regras do gate que os liam.
 
 Decisões de produto em aberto: pontos de habilidade (`XPSystem` dá 1 por
 nível, mas nenhuma tela abre a distribuição) e a "Lâmina do Fundador"

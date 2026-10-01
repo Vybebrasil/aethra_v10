@@ -1,0 +1,11 @@
+/*
+ * aethra-base.css — base da página. Toda a interface vive em #ui3-root
+ * (css/aethra-ui3.css); aqui só o documento que a recebe.
+ */
+html,
+body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: #0B1013;
+}

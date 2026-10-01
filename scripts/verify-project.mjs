@@ -76,8 +76,8 @@ check(
     `UI renderiza spritesheet bruto em <img>: ${uiSpriteSheetLeaks.join(", ")}`
 );
 check(
-    (indexSource.match(/\bid\s*=\s*["']npc-shop-view["']/g) || []).length === 1,
-    "index.html: deve existir exatamente uma janela npc-shop-view"
+    !/\bid\s*=\s*["']game-container["']/.test(indexSource) && !/data-aethra-window/.test(indexSource),
+    "index.html: a casca da interface clássica não pode voltar (a UI 3.0 é a única)"
 );
 
 const tileMapSource = read("js/world/TileMapCanvas.js");
@@ -462,7 +462,16 @@ if (existsSync(join(root, ui3CssPath))) {
 }
 
 check(/<div id="ui3-root"/.test(indexSource), "index.html: #ui3-root ausente");
-check(/#ui3-root/.test(read("css/style.css")), "css/style.css: #ui3-root fora da allowlist de camadas do body");
+// Folhas de estilo do jogo: base da página, UI 3.0 e a tela de derrota.
+const ALLOWED_STYLESHEETS = ["css/aethra-base.css", "css/aethra-ui3.css", "css/death-modal.css"];
+const indexStylesheets = [...indexSource.matchAll(/<link[^>]+rel=["']stylesheet["'][^>]*href=["']([^"']+)["']/g)]
+    .map((match) => match[1].split(/[?#]/)[0])
+    .filter((href) => !/^https?:/.test(href));
+const unexpectedStylesheets = indexStylesheets.filter((href) => !ALLOWED_STYLESHEETS.includes(href));
+check(
+    unexpectedStylesheets.length === 0,
+    `index.html: folhas fora da lista permitida: ${unexpectedStylesheets.join(", ")}`
+);
 
 for (const file of walk(join(root, "js", "ui3"), (entry) => extname(entry) === ".js")) {
     const source = readFileSync(file, "utf8");

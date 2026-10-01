@@ -5,16 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base href="../">
     <title>Aethra — Integration Test</title>
-    <link rel="stylesheet" href="css/style.css?v=22">
-    <link rel="stylesheet" href="css/profession-workshop.css?v=20">
-    <link rel="stylesheet" href="css/profession-specialization.css?v=1">
-    <link rel="stylesheet" href="css/progression-journal.css?v=8">
-    <link rel="stylesheet" href="css/character-creation.css?v=5">
-    <link rel="stylesheet" href="css/idle-loop.css?v=1008">
-    <link rel="stylesheet" href="css/npc-shop.css?v=3">
-    <link rel="stylesheet" href="css/aethra-ui-v2.css?v=46">
-    <link rel="stylesheet" href="css/aethra-hud-v5.css?v=9">
-    <link rel="stylesheet" href="css/aethra-hud-v6.css?v=7">
+    <link rel="stylesheet" href="css/aethra-base.css?v=1">
     <link rel="stylesheet" href="css/aethra-ui3.css?v=21">
     <style>
         .integration-test-report {
@@ -135,7 +126,7 @@
         }
     </script>
 </head>
-<body class="aethra-ui-v2" data-ui-version="2">
+<body>
     <aside
         id="integration-test-report"
         class="integration-test-report"
@@ -149,48 +140,6 @@
         <p id="integration-test-summary">Inicializando a engine isolada.</p>
         <ul id="integration-test-checks"></ul>
     </aside>
-    <main id="game-container" class="app-shell">
-        <header class="topbar aethra-navbar">
-            <div class="aethra-brand" aria-label="Crônicas de Aethra">
-                <span class="aethra-brand__mark" aria-hidden="true">A</span>
-                <div><h1>Crônicas de Aethra</h1><p>Battle Dashboard</p></div>
-            </div>
-            <section id="topbar-hero" class="topbar-hero" aria-label="Estado do personagem">
-                <span class="topbar-hero__portrait" aria-hidden="true">A</span>
-                <span class="topbar-hero__identity"><strong data-topbar-hero-name>Aethra</strong><small data-topbar-hero-level>Nível 1</small></span>
-                <span class="topbar-hero__resources">
-                    <span class="topbar-resource topbar-resource--hp"><small>HP</small><i><b data-topbar-hp-bar></b></i><strong data-topbar-hp>0/0</strong></span>
-                    <span class="topbar-resource topbar-resource--mana"><small>MP</small><i><b data-topbar-mana-bar></b></i><strong data-topbar-mana>0/0</strong></span>
-                </span>
-            </section>
-            <nav class="window-tabs hud-icon-menu" aria-label="Menu principal">
-                <button type="button" class="primary-view-button is-active" data-primary-view="hunt"><span class="hud-menu-icon" aria-hidden="true">⚔</span><span>Hunt</span></button>
-                <button type="button" class="primary-view-button" data-primary-view="city"><span class="hud-menu-icon" aria-hidden="true">⌂</span><span>Cidade</span></button>
-                <button type="button" data-open-window="inventory-view"><span class="hud-menu-icon" aria-hidden="true">▦</span><span>Mochila</span></button>
-                <button type="button" data-open-window="npc-shop-view"><span class="hud-menu-icon" aria-hidden="true">◇</span><span>Loja</span></button>
-                <button type="button" data-open-window="skills-view"><span class="hud-menu-icon" aria-hidden="true">✦</span><span>Skills</span></button>
-                <div class="hud-more"><button type="button" class="hud-more__toggle"><span class="hud-menu-icon" aria-hidden="true">•••</span><span>Mais</span></button></div>
-            </nav>
-            <div class="wallet" aria-label="Recursos do jogador">
-                <div class="wallet__resource"><span>Gold</span><strong id="gold-display" data-currency="gold">0</strong></div>
-                <div class="wallet__resource"><span>Diamantes</span><strong id="diamonds-display" data-currency="diamonds">0</strong></div>
-                <div class="wallet__engine"><i aria-hidden="true"></i><strong id="engine-status">Carregando</strong></div>
-            </div>
-        </header>
-        <section id="city-view" class="game-window" data-aethra-window><div id="city-grid"></div></section>
-        <section id="inventory-view" class="game-window hidden" data-aethra-window><div id="inventory-grid"></div><div id="equipment-grid"></div></section>
-        <section id="skills-view" class="game-window hidden" data-aethra-window aria-hidden="true">
-            <header class="window-header"><div><small>Treino, ofícios e ActionBar</small><h2>Skills e Progressão</h2></div><button type="button" class="window-close" data-close-window="skills-view">×</button></header>
-            <nav class="skills-workspace-tabs" aria-label="Áreas de Skills"><button type="button" data-skills-workspace-tab="journal" aria-selected="true">Diário de Progressão</button><button type="button" data-skills-workspace-tab="actionbar" aria-selected="false">ActionBar e Automação</button></nav>
-            <section class="skills-workspace-panel" data-skills-workspace-panel="journal"><div id="progression-journal-root"></div></section>
-            <section class="skills-workspace-panel" data-skills-workspace-panel="actionbar" hidden><div class="skills-priority-guide"></div>
-            <div id="skills-priority-status" class="skills-priority-status"></div>
-            <div id="skills-config-list" class="skills-config-list"></div></section>
-        </section>
-        <section id="quests-view" class="game-window hidden" data-aethra-window><div id="quests-list"></div></section>
-        <section id="npc-shop-view" class="game-window hidden" data-aethra-window aria-hidden="true"></section>
-        <div id="stats-display"></div><div id="hunt-display"></div><div id="combat-display"></div><div id="boss-list"></div><div id="boss-weekly-reward"></div><div id="professions-grid"></div><div id="dungeon-list"></div><div id="hero-sprite" hidden></div>
-    </main>
     <div id="ui3-root" class="ui3" hidden></div>
     <script src="js/core/game-core.js?v=5" defer></script>
     <script src="js/data/GameData.js?v=11" defer></script>
