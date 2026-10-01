@@ -725,13 +725,17 @@
                         ? "Confira no mapa onde obter o material necessário."
                         : "Escolha seu destino no mapa de expedições."
             } else if (objective.type === "TalkToNPC") {
-                const alreadyInCity = Aethra.GameState.ui?.primaryView === "city"
-                    && !Aethra.GameState.hunt?.isActive;
+                // Na cidade = sem expedição ativa: olhar a Cidade com a caçada
+                // rodando não conta. Voltar encerra a expedição.
+                const hunting = Boolean(Aethra.GameState.hunt?.isActive);
+                const alreadyInCity = Aethra.GameState.ui?.primaryView === "city" && !hunting;
                 action = alreadyInCity ? "interact-npc" : "go-city";
-                actionLabel = alreadyInCity ? "Falar com Ilyra" : "Ir à cidade";
+                actionLabel = alreadyInCity ? "Falar com Ilyra" : hunting ? "Voltar à cidade" : "Ir à cidade";
                 detail = alreadyInCity
                     ? "Mestra Ilyra está destacada entre os serviços do Hub da Cidade."
-                    : "Volte à cidade para encontrar Mestra Ilyra e receber sua orientação."
+                    : hunting
+                        ? "Encerre a expedição e volte à cidade para encontrar Mestra Ilyra."
+                        : "Volte à cidade para encontrar Mestra Ilyra e receber sua orientação."
             } else if (objective.type === "PracticeSkill" && profession?.category === "crafting") {
                 action = "open-workshop";
                 actionLabel = "Abrir oficina";

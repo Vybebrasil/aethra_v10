@@ -75,6 +75,8 @@
                     setView("hunt", source);
                     return Navigation.openHuntMap({ source, huntId: guidance.huntId || null });
                 case "go-city":
+                    // Voltar à cidade é sair da caçada (olhar a Cidade não basta).
+                    if (Aethra.GameState?.hunt?.isActive) Aethra.HuntSystem?.stopHunt?.("returned-to-city");
                     setView("city", source);
                     return true;
                 case "interact-npc":

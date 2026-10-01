@@ -3939,6 +3939,41 @@
                     `receitas ${recipeNameDrift.length ? recipeNameDrift.join(", ") : "iguais ao item"} · repetidos ${repeatedNames.length ? [...new Set(repeatedNames)].join(", ") : "nenhum"} · concordância ${agreement ? "ok" : "errada"} · save antigo: ${legacyAxe.name} / ${legacyBoots.name} / ${customBoots.name}`
                 ));
 
+                /*
+                 * "Ir à cidade" com a expedição ativa trocava só a vista: a caçada
+                 * seguia, o herói não contava como na cidade e a orientação mandava
+                 * ir à cidade de novo. Agora diz "Voltar à cidade" e encerra a
+                 * expedição pelo HuntSystem.
+                 */
+                const talkQuest = { id: "integration_talk", title: "Teste", objectives: [{ id: "talk", type: "TalkToNPC", target: "profession_mentor", label: "Converse com Mestra Ilyra", required: 1, progress: 0, completed: false, dependsOn: [] }] };
+                const returnHunt = Aethra.GameState.hunt;
+                const returnBackup = { active: returnHunt.isActive, view: Aethra.UIManager.primaryView, stop: Aethra.HuntSystem.stopHunt };
+                const stopReasons = [];
+                let returnWorks = false;
+                let returnDetail = "";
+                try {
+                    Aethra.HuntSystem.stopHunt = (reason) => {
+                        stopReasons.push(reason);
+                        returnHunt.isActive = false;
+                        return true;
+                    };
+                    returnHunt.isActive = true;
+                    Aethra.UIManager.setPrimaryView("hunt", { source: "integration-return" });
+                    const huntingGuidance = Aethra.QuestSystem.getGuidance(talkQuest);
+                    Aethra.Ui3Navigation.followQuestGuidance(huntingGuidance, { source: "integration-return" });
+                    const inCityGuidance = Aethra.QuestSystem.getGuidance(talkQuest);
+                    returnWorks = huntingGuidance?.actionLabel === "Voltar à cidade"
+                        && stopReasons[0] === "returned-to-city"
+                        && Aethra.UIManager.primaryView === "city"
+                        && inCityGuidance?.action === "interact-npc";
+                    returnDetail = `${huntingGuidance?.actionLabel || "sem orientação"} · expedição ${stopReasons.length ? "encerrada" : "seguiu rodando"} · depois: ${inCityGuidance?.actionLabel || "nada"}`;
+                } finally {
+                    Aethra.HuntSystem.stopHunt = returnBackup.stop;
+                    returnHunt.isActive = returnBackup.active;
+                    Aethra.UIManager.setPrimaryView(returnBackup.view, { source: "integration-restore" });
+                }
+                checks.push(createCheck("Voltar à cidade pela missão encerra a expedição", returnWorks, returnDetail));
+
                 // Registro em português e no andar final a escada conclui a expedição.
                 const rewardText = Aethra.BattleLogger.formatRewardMessage("Lobo", { xp: 5, gold: 0, lootCount: 2 });
                 const finalHunt = Aethra.GameState.hunt;
