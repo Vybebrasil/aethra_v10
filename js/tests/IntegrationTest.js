@@ -2451,51 +2451,32 @@
                 Aethra.GameState.hero.bag = (Aethra.GameState.hero.bag || []).filter((item) => {
                     return !managedSupplyIds.has(item.templateId || item.id);
                 });
-                const manualSupplies = Aethra.IdleLoopSystem?.purchaseSupplies?.({
-                    potion_health: 2,
-                    potion_mana: 1
-                }, { source: "integration-manual-supplies" });
-                checks.push(
-                    createCheck(
-                        "Gerenciador compra as quantidades de supplies escolhidas pelo jogador",
-                        manualSupplies?.purchased === 3
-                            && manualSupplies?.cost === 32
-                            && Aethra.IdleLoopSystem?.inventoryQuantity?.("potion_health") === 2
-                            && Aethra.IdleLoopSystem?.inventoryQuantity?.("potion_mana") === 1
-                            && Number(Aethra.GameState.hero.gold) === 68,
-                        `${manualSupplies?.purchased || 0} unidade(s) · ${manualSupplies?.cost || 0} G · saldo ${Aethra.GameState.hero.gold} G`
-                    )
-                );
-
-                Aethra.GameState.hero.gold = 60;
-                Aethra.GameState.hero.bag = (Aethra.GameState.hero.bag || []).filter((item) => {
-                    return !managedSupplyIds.has(item.templateId || item.id);
-                });
-                Aethra.IdleLoopSystem?.updateSetting?.("enabled", true);
-                Aethra.IdleLoopSystem?.configureRestock?.({
+                /*
+                 * Sem reposição automática (decisão de 2026-10-01): poção acabou,
+                 * o jogador volta ao mercador. Partir e limpar andar não compram
+                 * nada, e o save antigo perde os campos da reposição.
+                 */
+                Aethra.GameState.hero.gold = 500;
+                Aethra.GameState.idleLoop = {
+                    ...JSON.parse(JSON.stringify(Aethra.GameState.idleLoop || {})),
+                    enabled: true,
                     autoRestock: true,
                     goldReserve: 20,
-                    maxRestockSpend: 50,
-                    allowPartialRestock: true,
-                    supplyPlan: {
-                        potion_health: { enabled: true, reorderAt: 4, target: 4, priority: 1 },
-                        potion_mana: { enabled: true, reorderAt: 5, target: 5, priority: 2 },
-                        minor_vigor_tonic: { enabled: false, reorderAt: 2, target: 3, priority: 3 },
-                        field_antidote: { enabled: false, reorderAt: 1, target: 2, priority: 4 }
-                    }
-                });
-                const automaticSupplies = Aethra.IdleLoopSystem?.restockSupplies?.();
-                const configuredSupplyCount = Object.keys(Aethra.IdleLoopSystem?.getSnapshot?.().supplyPlan || {}).length;
+                    supplyPlan: { potion_health: { enabled: true, reorderAt: 4, target: 4, priority: 1 } }
+                };
+                const legacyIdle = Aethra.IdleLoopSystem.getSnapshot();
+                Aethra.EventBus.emit("hunt:started", { huntId: "integration_depart", hunt: { name: "Teste" } });
+                Aethra.EventBus.emit("hunt:stairs-reached", { huntId: "integration_depart", room: 1 });
+                const potionsAfterDepart = Aethra.IdleLoopSystem.inventoryQuantity("potion_health");
                 checks.push(
                     createCheck(
-                        "Auto-reposição respeita seleção, prioridade, limite e reserva de ouro",
-                        automaticSupplies?.purchased === 4
-                            && automaticSupplies?.cost === 40
-                            && Aethra.IdleLoopSystem?.inventoryQuantity?.("potion_health") === 4
-                            && Aethra.IdleLoopSystem?.inventoryQuantity?.("potion_mana") === 0
-                            && Number(Aethra.GameState.hero.gold) === 20
-                            && configuredSupplyCount === 4,
-                        `${automaticSupplies?.purchased || 0} Vida · ${automaticSupplies?.cost || 0} G gastos · ${Aethra.GameState.hero.gold} G reservados`
+                        "Sem reposição automática: poção só se compra no mercador",
+                        potionsAfterDepart === 0
+                            && Number(Aethra.GameState.hero.gold) === 500
+                            && typeof Aethra.IdleLoopSystem.restockSupplies !== "function"
+                            && typeof Aethra.IdleLoopSystem.purchaseSupplies !== "function"
+                            && !("autoRestock" in legacyIdle) && !("supplyPlan" in legacyIdle) && !("goldReserve" in legacyIdle),
+                        `${potionsAfterDepart} poção(ões) após partir · ${Aethra.GameState.hero.gold} o · save antigo ${"supplyPlan" in legacyIdle ? "mantém" : "sem"} plano de reposição`
                     )
                 );
                 restoreEnumerableState(Aethra.GameState.hero, supplyManagerBefore.hero);
@@ -3561,12 +3542,6 @@
                 const idleSystem = Aethra.IdleLoopSystem;
                 const idleBefore = JSON.parse(JSON.stringify(Aethra.GameState.idleLoop || {}));
                 const policyBefore = JSON.parse(JSON.stringify(Aethra.ConsumableSystem?.ensurePolicy?.() || {}));
-                const idlePurchaseOriginal = idleSystem.purchaseSupplies;
-                const idlePurchases = [];
-                idleSystem.purchaseSupplies = (requests, options) => {
-                    idlePurchases.push({ requests: { ...requests }, options });
-                    return { purchased: 0, cost: 0, items: [], reason: "INSUFFICIENT_BUDGET" };
-                };
                 let automationWorks = false;
                 let automationDetail = "";
                 try {
@@ -3576,31 +3551,20 @@
                     const autoSellBefore = idleSystem.config.autoSell;
                     autoLayer?.querySelector("[data-ui3-auto-setting='autoSell']")?.click();
                     const autoSellToggled = idleSystem.config.autoSell === !autoSellBefore;
-                    const targetInput = autoLayer?.querySelector("[data-ui3-auto-rule='target'][data-supply='potion_health']");
-                    if (targetInput) {
-                        targetInput.value = "9";
-                        targetInput.dispatchEvent(new Event("change", { bubbles: true }));
-                    }
-                    const targetSaved = idleSystem.getSnapshot().supplyPlan.potion_health.target === 9;
                     const useToggle = autoLayer?.querySelector("[data-ui3-auto-use='potion_mana']");
                     const manaUseBefore = idleSystem.getSupplyOverview().supplies.find((supply) => supply.id === "potion_mana").autoUse.enabled;
                     useToggle?.click();
                     const policyAfter = Aethra.ConsumableSystem.ensurePolicy();
                     const manaUseToggled = (policyAfter.manaItemId === "potion_mana" && policyAfter.enabled !== false) === !manaUseBefore;
-                    autoLayer?.querySelector("[data-ui3-auto-order='potion_health'][data-delta='1']")?.click();
-                    autoLayer?.querySelector("[data-ui3-auto-order='potion_health'][data-delta='1']")?.click();
-                    const buyButton = autoLayer?.querySelector("[data-ui3-auto-buy]");
-                    if (buyButton) buyButton.disabled = false;
-                    buyButton?.click();
-                    const orderRouted = idlePurchases.length === 1 && idlePurchases[0].requests.potion_health === 2;
+                    const noRestockControls = !autoLayer?.querySelector("[data-ui3-auto-order], [data-ui3-auto-buy], [data-ui3-auto-rule], [data-ui3-auto-budget], [data-ui3-auto-setting='autoRestock']")
+                        && !/Reposição/.test(autoLayer?.textContent || "");
+                    const shopLink = Boolean(autoLayer?.querySelector("[data-ui3-open-window='npc-shop-view']"));
                     const overview = idleSystem.getSupplyOverview();
                     const overviewOk = overview.supplies.length === idleSystem.supplies.length
-                        && overview.supplies.find((supply) => supply.id === "potion_health").rule.target === 9
-                        && typeof overview.summary.restockReady === "boolean";
-                    automationWorks = autoOpen && autoSellToggled && targetSaved && manaUseToggled && orderRouted && overviewOk;
-                    automationDetail = `${autoOpen ? "janela nova" : "janela errada"} · auto-venda ${autoSellToggled ? "alternou" : "parada"} · meta ${targetSaved ? "salva" : "ignorada"} · uso de mana ${manaUseToggled ? "alternou" : "parado"} · pedido ${orderRouted ? "encaminhado" : "perdido"} · leitura ${overviewOk ? "coerente" : "incoerente"}`;
+                        && overview.supplies.every((supply) => Number.isFinite(supply.current) && !("rule" in supply));
+                    automationWorks = autoOpen && autoSellToggled && manaUseToggled && noRestockControls && shopLink && overviewOk;
+                    automationDetail = `${autoOpen ? "janela nova" : "janela errada"} · auto-venda ${autoSellToggled ? "alternou" : "parada"} · uso de mana ${manaUseToggled ? "alternou" : "parado"} · reposição ${noRestockControls ? "ausente" : "ainda na tela"} · loja ${shopLink ? "a um clique" : "sem atalho"} · leitura ${overviewOk ? "coerente" : "incoerente"}`;
                 } finally {
-                    idleSystem.purchaseSupplies = idlePurchaseOriginal;
                     Aethra.GameState.idleLoop = idleBefore;
                     Aethra.ConsumableSystem?.configure?.(policyBefore);
                     windowManager.closeWindow("automation-view", { source: "integration-restore" });
@@ -3646,35 +3610,20 @@
 
                 /*
                  * A Automação roda ao fim de cada andar: o evento real é
-                 * hunt:stairs-reached (o antigo tilemap:floor-cleared não existia mais,
-                 * e as poções só eram repostas ao encerrar a caçada).
+                 * hunt:stairs-reached (o antigo tilemap:floor-cleared não existia mais).
                  */
                 const cycleIdle = Aethra.IdleLoopSystem;
                 const cycleBefore = JSON.parse(JSON.stringify(Aethra.GameState.idleLoop || {}));
-                // Sem vender nem comprar: só o ciclo conta.
-                Object.assign(cycleIdle.config, { enabled: true, autoSell: false, autoRestock: false });
+                // Sem vender: só o ciclo conta.
+                Object.assign(cycleIdle.config, { enabled: true, autoSell: false });
                 const cyclesBefore = cycleIdle.config.cyclesCompleted;
                 Aethra.EventBus.emit("hunt:stairs-reached", { huntId: "whispering_forest", room: 1 });
                 const floorCycles = cycleIdle.config.cyclesCompleted - cyclesBefore;
-                // Ao partir, a reposição roda (o herói não sai sem poções depois de morrer).
-                Aethra.GameState.idleLoop = cycleBefore;
-                const restockSpy = [];
-                Aethra.EventBus.on("idle-loop:restocked", (payload) => restockSpy.push(payload));
-                const departHero = Aethra.GameState.hero;
-                const departBag = departHero.bag;
-                const departGold = departHero.gold;
-                departHero.bag = departBag.filter((item) => (item?.templateId || item?.id) !== "potion_health");
-                departHero.gold = 500;
-                Object.assign(cycleIdle.config, { enabled: true, autoRestock: true, goldReserve: 0, maxRestockSpend: 0 });
-                Aethra.EventBus.emit("hunt:started", { huntId: "integration_depart", hunt: { name: "Teste" } });
-                const restockedOnDepart = restockSpy.some((payload) => payload.items?.some((line) => line.itemId === "potion_health"));
-                departHero.bag = departBag;
-                departHero.gold = departGold;
                 Aethra.GameState.idleLoop = cycleBefore;
                 checks.push(createCheck(
-                    "Automação repõe suprimentos ao fim de cada andar e ao partir",
-                    floorCycles === 1 && restockedOnDepart,
-                    `${floorCycles} ciclo(s) ao limpar o andar · ao partir ${restockedOnDepart ? "repôs Poção de Vida" : "não repôs"}`
+                    "Automação roda o ciclo ao fim de cada andar",
+                    floorCycles === 1,
+                    `${floorCycles} ciclo(s) ao limpar o andar`
                 ));
 
                 /*

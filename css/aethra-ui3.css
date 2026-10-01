@@ -3269,17 +3269,6 @@
     text-align: right;
 }
 
-#ui3-root .ui3-automation__order {
-    min-width: 24px;
-    text-align: center;
-    font-variant-numeric: tabular-nums;
-}
-
-#ui3-root .ui3-automation__order-bar {
-    align-items: center;
-    padding-top: var(--ui3-space-2);
-}
-
 /* Save compartilhado: indicador na carteira e aviso flutuante */
 #ui3-root .ui3-save-chip {
     display: inline-flex;
