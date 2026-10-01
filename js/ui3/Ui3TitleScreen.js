@@ -103,10 +103,7 @@
         }
         return `${failure ? `<p class="ui3-notice ui3-notice--error" role="alert">${K.esc(failure)}</p>` : ""}
             ${K.button({ label: "Continuar", variant: "primary", attributes: { "data-ui3-title-continue": "", "data-ui3-autofocus": "" } })}
-            <div class="ui3-expedition__row">
-                ${K.button({ label: "Novo herói", variant: "ghost", attributes: { "data-ui3-title-new": "" } })}
-                ${K.button({ label: "Interface clássica", variant: "ghost", attributes: { "data-ui3-title-classic": "" } })}
-            </div>`;
+            ${K.button({ label: "Novo herói", variant: "ghost", attributes: { "data-ui3-title-new": "" } })}`;
     }
 
     function render() {
@@ -153,10 +150,6 @@
             failure = done ? null : "Não foi possível apagar o save. Nada foi alterado.";
             render();
             return done;
-        }
-        if (target.closest("[data-ui3-title-classic]")) {
-            open = false;
-            return Aethra.SettingsManager?.setInterfaceVersion?.("classic", { source: "ui3-title" });
         }
         return undefined;
     }

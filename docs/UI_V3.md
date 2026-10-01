@@ -103,8 +103,8 @@ de fonte valem exatamente 11/12/13/14/16/20/28px em 1280px e crescem até
 ## Desenvolvimento
 
 - `?ui3=galeria` abre a galeria de componentes sobre o jogo.
-- A UI 3.0 é o padrão. `?ui=classic` (ou "Mais > Interface clássica") escolhe a clássica, e a escolha fica salva; `?ui=3` volta.
-- A suíte de testes roda na UI 3.0, como o jogo (`window.AETHRA_INTERFACE_DEFAULT` em `tests/integration.html`); só as verificações de volta à clássica trocam de interface.
+- A UI 3.0 é a única interface (a escolha da clássica saiu na fase 5.3; preferências antigas de interface são descartadas ao carregar).
+- A suíte de testes roda na UI 3.0, como o jogo.
 - Uma tela da UI 3.0 é um elemento com `data-ui3-screen` dentro de
   `#ui3-root`; a raiz só aparece quando há uma tela ou a galeria.
 
@@ -134,9 +134,10 @@ Ainda falta, antes de apagar arquivos:
 3. **Tela de derrota** — `DeathModalUI` tem CSS próprio (`death-modal.css`) e
    já aparece por cima da 3.0; fica.
 4. **TooltipManager** — a 3.0 não usa; sair também do `GameLoader`.
-5. Remover a opção "clássica" (Opções, menu Mais, `?ui=classic`,
-   `SettingsManager`), os módulos e o CSS clássicos, e as verificações que
-   medem a clássica (`window.AETHRA_INTERFACE_DEFAULT` deixa de existir).
+5. ~~Opção "clássica"~~ — removida (Opções, menu Mais, tela inicial,
+   `?ui=classic`, `SettingsManager`, `window.AETHRA_INTERFACE_DEFAULT`).
+6. Descarregar os módulos clássicos, depois tirar CSS e marcação, depois
+   apagar os arquivos.
 
 Decisões de produto em aberto: pontos de habilidade (`XPSystem` dá 1 por
 nível, mas nenhuma tela abre a distribuição) e a "Lâmina do Fundador"

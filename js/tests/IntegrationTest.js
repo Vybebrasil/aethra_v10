@@ -4178,50 +4178,23 @@
                 );
 
                 const settings = Aethra.SettingsManager;
-                const interfaceBefore = settings?.getInterfaceVersion?.();
-                const interfaceEvents = [];
-                const stopInterfaceListener = Aethra.EventBus.on("settings:interface-changed", (payload) => interfaceEvents.push(payload?.interfaceVersion));
-                const invalidInterface = settings?.setInterfaceVersion?.("v99", { source: "integration" });
-                const toClassic = settings?.setInterfaceVersion?.("classic", { source: "integration" });
-                const bodyLeftV3 = !document.body.classList.contains("ui3-active");
-                const toV3 = settings?.setInterfaceVersion?.("v3", { source: "integration" });
-                const bodyMarkedV3 = document.body.classList.contains("ui3-active");
-                settings?.setInterfaceVersion?.(interfaceBefore || "v3", { source: "integration-restore" });
-                if (typeof stopInterfaceListener === "function") stopInterfaceListener();
-                checks.push(
-                    createCheck(
-                        "Preferência de interface valida versões e avisa a UI 3.0",
-                        interfaceBefore === "v3"
-                            && invalidInterface === false
-                            && toClassic === "classic"
-                            && bodyLeftV3
-                            && toV3 === "v3"
-                            && bodyMarkedV3
-                            && interfaceEvents.includes("classic")
-                            && interfaceEvents.includes("v3")
-                            && settings.getInterfaceVersion() === "v3",
-                        `padrão ${interfaceBefore} · inválida ${invalidInterface === false ? "recusada" : "aceita"} · v3 ${bodyMarkedV3 ? "aplicada" : "ignorada"}`
-                    )
-                );
-
                 /*
-                 * UI 3.0 é o padrão do produto. Um "classic" gravado sem escolha
-                 * (as preferências eram salvas no carregamento) migra; quem
-                 * escolheu a clássica continua nela.
+                 * A UI 3.0 é a única interface: as preferências antigas de escolha
+                 * de interface são descartadas e não podem ser regravadas.
                  */
-                const resolveInterface = settings?.resolveInterfaceVersion;
-                const migratesUnchosen = resolveInterface?.({ interfaceVersion: "classic" }, "v3") === "v3";
-                const keepsChosen = resolveInterface?.({ interfaceVersion: "classic", interfaceVersionChosen: true }, "v3") === "classic";
-                const emptyGetsDefault = resolveInterface?.({}, "v3") === "v3";
+                const retiredBefore = settings.get("interfaceVersion");
+                const retiredRefused = settings.set("interfaceVersion", "classic", { source: "integration" }) === false
+                    && settings.get("interfaceVersion") === undefined
+                    && settings.get("interfaceVersionChosen") === undefined;
                 checks.push(
                     createCheck(
-                        "UI 3.0 é o padrão e a clássica só fica para quem a escolheu",
-                        settings?.getDefaultInterfaceVersion?.() === "v3"
-                            && migratesUnchosen
-                            && keepsChosen
-                            && emptyGetsDefault
-                            && settings.get("interfaceVersionChosen") === true,
-                        `padrão ${settings?.getDefaultInterfaceVersion?.()} · sem escolha ${migratesUnchosen ? "migra" : "fica"} · escolhida ${keepsChosen ? "respeitada" : "ignorada"}`
+                        "UI 3.0 é a única interface e a escolha antiga foi aposentada",
+                        retiredBefore === undefined
+                            && retiredRefused
+                            && Aethra.Ui3Shell?.isActive?.() === true
+                            && document.body.classList.contains("ui3-active")
+                            && typeof settings.setInterfaceVersion !== "function",
+                        `preferência antiga ${retiredBefore === undefined ? "ausente" : "presente"} · regravar ${retiredRefused ? "recusado" : "aceito"}`
                     )
                 );
 
@@ -4262,7 +4235,6 @@
                 const createdBefore = Aethra.GameState.hero.characterCreated;
                 const speedBefore = settings?.getCombatSpeed?.() || 1;
                 Aethra.GameState.hero.characterCreated = true;
-                settings?.setInterfaceVersion?.("v3", { source: "integration-ui3-hunt" });
                 Aethra.UIManager?.setPrimaryView?.("hunt", { source: "integration-ui3-hunt" });
                 Aethra.Ui3TopBar?.sync?.();
                 Aethra.Ui3HuntScreen?.sync?.();
@@ -4365,12 +4337,7 @@
                     // A Cidade nova (fase 4) cobre a clássica: a camada continua inerte.
                     && Aethra.Ui3CityScreen?.isVisible?.() === true
                     && (!worldLayer || worldLayer.inert === true);
-                settings?.setInterfaceVersion?.("classic", { source: "integration-ui3-classic-restore" });
                 Aethra.UIManager?.setPrimaryView?.(huntViewBefore, { source: "integration-restore" });
-                const classicRestored = document.getElementById("ui3-root")?.hidden === true
-                    && ![...document.querySelectorAll("#world-layer, #hud-layer, #hud-layer > .topbar")].some((element) => element.inert)
-                    && Aethra.TileMapCanvas?.isHosted?.() === false;
-                settings?.setInterfaceVersion?.(interfaceBefore || "v3", { source: "integration-restore" });
                 Aethra.GameState.hero.characterCreated = createdBefore;
                 /*
                  * UI 3.0 — fase 3 (Mochila). A janela nova assume "inventory-view"
@@ -4378,7 +4345,6 @@
                  * e equipar passa pelo EquipSystem.
                  */
                 Aethra.GameState.hero.characterCreated = true;
-                settings?.setInterfaceVersion?.("v3", { source: "integration-ui3-bag" });
                 const windowManager = Aethra.WindowManager;
                 windowManager?.openWindow?.("inventory-view", { source: "integration-ui3-bag" });
                 const bagLayer = document.querySelector("#ui3-root [data-ui3-window='inventory-view']");
@@ -4427,24 +4393,17 @@
                 document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", code: "Escape", bubbles: true, cancelable: true }));
                 const escClosed = Aethra.Ui3BagWindow?.isOpen?.() === false
                     && !windowManager.activeWindows.includes("inventory-view");
-                settings?.setInterfaceVersion?.("classic", { source: "integration-ui3-bag" });
-                windowManager.openWindow("inventory-view", { source: "integration-ui3-bag" });
-                const classicBagOpens = Boolean(legacyBag && !legacyBag.classList.contains("hidden"))
-                    && Aethra.Ui3BagWindow?.isOpen?.() === false;
-                windowManager.closeWindow("inventory-view", { source: "integration-restore" });
-                settings?.setInterfaceVersion?.(interfaceBefore || "v3", { source: "integration-restore" });
                 checks.push(
                     createCheck(
-                        "UI 3.0 Mochila fecha com Esc e a clássica volta na interface clássica",
-                        escClosed && classicBagOpens,
-                        `Esc ${escClosed ? "fechou" : "não fechou"} · clássica ${classicBagOpens ? "abriu" : "não abriu"}`
+                        "UI 3.0 Mochila fecha com Esc",
+                        escClosed,
+                        `Esc ${escClosed ? "fechou" : "não fechou"}`
                     )
                 );
                 /*
                  * UI 3.0 — fase 3 (Loja). Compra e venda passam pelo
                  * MarketplaceSystem; o preço mostrado é o da cotação do dono.
                  */
-                settings?.setInterfaceVersion?.("v3", { source: "integration-ui3-shop" });
                 const shopGoldOriginal = Aethra.GameState.hero.gold;
                 const shopBagOriginal = [...(Aethra.GameState.hero.bag || [])];
                 Aethra.GameState.hero.bag = shopBagOriginal.filter((item) => (item.templateId || item.id) !== "potion_health");
@@ -4618,16 +4577,13 @@
                     const resetAsked = optionsResetCalls === 0 && Boolean(optionsLayer?.querySelector("[data-ui3-option-reset-confirm]"));
                     optionsLayer?.querySelector("[data-ui3-option-reset-cancel]")?.click();
                     const resetCancelled = optionsResetCalls === 0 && Boolean(optionsLayer?.querySelector("[data-ui3-option-reset]"));
-                    optionsLayer?.querySelector("[data-ui3-option-interface='classic']")?.click();
-                    const switchedToClassic = settings.getInterfaceVersion() === "classic"
-                        && Aethra.Ui3OptionsWindow?.isOpen?.() === false;
-                    optionsWorks = optionsOpen && speedSet && motionToggled && resetAsked && resetCancelled && switchedToClassic;
-                    optionsDetail = `${optionsOpen ? "abriu" : "não abriu"} · velocidade ${speedSet ? "4×" : "inalterada"} · animações ${motionToggled ? "alternadas" : "iguais"} · apagar ${resetAsked && resetCancelled ? "pediu confirmação" : "sem confirmação"} · interface ${switchedToClassic ? "trocou" : "não trocou"}`;
+                    const noInterfaceChoice = !optionsLayer?.querySelector("[data-ui3-option-interface]");
+                    optionsWorks = optionsOpen && speedSet && motionToggled && resetAsked && resetCancelled && noInterfaceChoice;
+                    optionsDetail = `${optionsOpen ? "abriu" : "não abriu"} · velocidade ${speedSet ? "4×" : "inalterada"} · animações ${motionToggled ? "alternadas" : "iguais"} · apagar ${resetAsked && resetCancelled ? "pediu confirmação" : "sem confirmação"} · escolha de interface ${noInterfaceChoice ? "ausente" : "presente"}`;
                 } finally {
                     Aethra.SaveManager.reset = optionsResetOriginal;
                     settings.setCombatSpeed(optionsSpeedBefore, { source: "integration-restore" });
                     settings.set("hud", optionsHudBefore, { source: "integration-restore" });
-                    settings.setInterfaceVersion("v3", { source: "integration-restore" });
                 }
                 checks.push(createCheck("UI 3.0 Opções mudam preferências pelo dono e só apagam com confirmação", optionsWorks, optionsDetail));
 
@@ -5168,14 +5124,13 @@
                     )
                 );
 
-                settings?.setInterfaceVersion?.(interfaceBefore || "v3", { source: "integration-restore" });
                 Aethra.GameState.hero.characterCreated = createdBefore;
 
                 checks.push(
                     createCheck(
-                        "UI 3.0 devolve mapa e camadas clássicas ao sair da Hunt",
-                        cityReleasesCanvas && classicRestored,
-                        `cidade ${cityReleasesCanvas ? "liberou o mapa" : "prendeu o mapa"} · clássica ${classicRestored ? "restaurada" : "com resíduos"}`
+                        "UI 3.0 Cidade devolve o mapa ao sair da Hunt",
+                        cityReleasesCanvas,
+                        `cidade ${cityReleasesCanvas ? "liberou o mapa" : "prendeu o mapa"}`
                     )
                 );
 
@@ -5184,7 +5139,6 @@
                  * "Novo herói" só apaga depois da confirmação e "Continuar"
                  * devolve o jogo.
                  */
-                settings?.setInterfaceVersion?.("v3", { source: "integration-ui3-title" });
                 Aethra.GameState.hero.characterCreated = true;
                 const originalReset = Aethra.SaveManager.reset;
                 let resetCalls = 0;
@@ -5213,7 +5167,6 @@
                     Aethra.SaveManager.reset = originalReset;
                 }
                 checks.push(createCheck("UI 3.0 Tela de título segura o jogo e só apaga o herói com confirmação", titleWorks, titleDetail));
-                settings?.setInterfaceVersion?.(interfaceBefore || "v3", { source: "integration-restore" });
 
                 /*
                  * UI 3.0 — fase 4 (Criação). Última verificação da suíte: criar
@@ -5221,7 +5174,6 @@
                  * CharacterCreationUI.show(), recusa nome curto e cria pelo
                  * CharacterBuildSystem.
                  */
-                settings?.setInterfaceVersion?.("v3", { source: "integration-ui3-creation" });
                 Aethra.GameState.hero.characterCreated = false;
                 Aethra.CharacterCreationUI?.show?.();
                 const creationScreen = document.querySelector("#ui3-root [data-ui3-screen='creation']");
@@ -5248,7 +5200,6 @@
                     && ui3CreatedHero.introProfessionId === firstProfession
                     && Aethra.Ui3CreationScreen?.isVisible?.() === false
                     && Aethra.Ui3CityScreen?.isVisible?.() === true;
-                settings?.setInterfaceVersion?.(interfaceBefore || "v3", { source: "integration-restore" });
                 checks.push(
                     createCheck(
                         "UI 3.0 Criação assume a tela, recusa nome curto e cria pelo CharacterBuildSystem",

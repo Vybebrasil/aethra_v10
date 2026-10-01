@@ -1,13 +1,9 @@
 /*
  * Ui3Shell.js — raiz e ciclo de vida da UI 3.0.
  *
- * A UI 3.0 é construída em #ui3-root, fora das camadas legadas, e substitui a
- * interface clássica tela a tela. A escolha fica em
- * SettingsManager.interfaceVersion ("classic" | "v3"); este módulo só
- * apresenta e reage a ela.
+ * A UI 3.0 é a interface do jogo e vive em #ui3-root.
  *
  * Desenvolvimento:
- *   ?ui=3 ou ?ui=classic  troca a interface (persistido nas preferências)
  *   ?ui3=galeria          abre a galeria de componentes sobre o jogo
  */
 (function initUi3Shell(Aethra) {
@@ -35,10 +31,6 @@
         return root;
     }
 
-    function currentVersion() {
-        return Aethra.SettingsManager?.getInterfaceVersion?.() || "classic";
-    }
-
     // "Reduzir animações" das Opções (SettingsManager.hud.reduceMotion).
     function applyMotionPreference() {
         const hud = Aethra.SettingsManager?.get?.("hud", {}) || {};
@@ -46,12 +38,11 @@
     }
 
     function applyVersion() {
-        const active = currentVersion() === "v3";
         applyMotionPreference();
-        document.body.classList.toggle("ui3-active", active);
+        document.body.classList.add("ui3-active");
         syncRootVisibility();
-        Aethra.EventBus.emit("ui3:version-applied", { active, version: currentVersion() });
-        return active;
+        Aethra.EventBus.emit("ui3:version-applied", { active: true, version: "v3" });
+        return true;
     }
 
     /*
@@ -104,7 +95,6 @@
     }
 
     function canShowGame() {
-        if (currentVersion() !== "v3") return false;
         if (gameHolds.size > 0) return false;
         if (document.body.classList.contains("is-creating-character")) return false;
         return Aethra.GameState?.hero?.characterCreated === true;
@@ -116,11 +106,6 @@
             params = new URLSearchParams(window.location.search);
         } catch (error) {
             return;
-        }
-        const requested = String(params.get("ui") || "").trim().toLowerCase();
-        const version = requested === "3" ? "v3" : requested;
-        if (version && Aethra.SettingsManager?.isValidInterfaceVersion?.(version)) {
-            Aethra.SettingsManager.setInterfaceVersion(version, { source: "url" });
         }
         if (String(params.get("ui3") || "").toLowerCase() === "galeria") {
             showGallery();
@@ -244,7 +229,7 @@
             return ensureRoot();
         },
         init,
-        isActive: () => currentVersion() === "v3",
+        isActive: () => true,
         canShowGame,
         holdGame,
         refresh: syncRootVisibility,
@@ -255,7 +240,6 @@
 
     // Inscrito no carregamento: uma troca de interface feita antes do
     // engine:ready (por outro módulo ou teste) não pode se perder.
-    Aethra.EventBus.on("settings:interface-changed", applyVersion);
     Aethra.EventBus.on("settings:changed", applyMotionPreference);
     Aethra.EventBus.on("engine:ready", init);
 })(window.Aethra = window.Aethra || {});

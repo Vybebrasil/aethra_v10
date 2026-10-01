@@ -17,24 +17,12 @@
         : "aethra.battleMode";
     const VALID_BATTLE_MODES = Object.freeze(["cards", "map2d"]);
     const VALID_COMBAT_SPEEDS = Object.freeze([1, 2, 4]);
-    /*
-     * Interface: "v3" (UI 3.0, padrão) ou "classic" (reserva até a remoção).
-     * A clássica só vale para quem a escolheu (interfaceVersionChosen): as
-     * preferências eram gravadas no carregamento, então um "classic" salvo
-     * sem escolha é só o padrão antigo e migra para a UI 3.0.
-     * A página de testes declara a clássica como base com
-     * window.AETHRA_INTERFACE_DEFAULT, e liga a UI 3.0 onde testa.
-     */
-    const VALID_INTERFACE_VERSIONS = Object.freeze(["classic", "v3"]);
-    const PRODUCT_DEFAULT_INTERFACE = "v3";
-    const requestedDefaultInterface = String(window.AETHRA_INTERFACE_DEFAULT || "").trim().toLowerCase();
+    // Preferências que existiam enquanto a interface clássica convivia com a
+    // UI 3.0; são descartadas ao carregar.
+    const RETIRED_SETTINGS = Object.freeze(["interfaceVersion", "interfaceVersionChosen"]);
     const DEFAULT_SETTINGS = Object.freeze({
         battleMode: "cards",
-        combatSpeed: 1,
-        interfaceVersion: VALID_INTERFACE_VERSIONS.includes(requestedDefaultInterface)
-            ? requestedDefaultInterface
-            : PRODUCT_DEFAULT_INTERFACE,
-        interfaceVersionChosen: false
+        combatSpeed: 1
     });
 
     function clone(value) {
@@ -76,21 +64,6 @@
         return VALID_COMBAT_SPEEDS.includes(speed)
             ? speed
             : DEFAULT_SETTINGS.combatSpeed;
-    }
-
-    function normalizeInterfaceVersion(value) {
-        const version = String(value || "").trim().toLowerCase();
-        return VALID_INTERFACE_VERSIONS.includes(version)
-            ? version
-            : DEFAULT_SETTINGS.interfaceVersion;
-    }
-
-    // Versão efetiva a partir das preferências gravadas.
-    function resolveInterfaceVersion(stored = {}, defaultVersion = DEFAULT_SETTINGS.interfaceVersion) {
-        const fallback = VALID_INTERFACE_VERSIONS.includes(defaultVersion) ? defaultVersion : PRODUCT_DEFAULT_INTERFACE;
-        if (stored?.interfaceVersionChosen !== true) return fallback;
-        const version = String(stored.interfaceVersion || "").trim().toLowerCase();
-        return VALID_INTERFACE_VERSIONS.includes(version) ? version : fallback;
     }
 
     Aethra.SettingsManager = {
@@ -144,15 +117,13 @@
                 storedSettings.battleMode ?? legacyBattleMode
             );
             const combatSpeed = normalizeCombatSpeed(storedSettings.combatSpeed);
-            const interfaceVersion = resolveInterfaceVersion(storedSettings);
+            RETIRED_SETTINGS.forEach((key) => delete storedSettings[key]);
 
             this.settings = {
                 ...DEFAULT_SETTINGS,
                 ...storedSettings,
                 battleMode,
-                combatSpeed,
-                interfaceVersion,
-                interfaceVersionChosen: storedSettings.interfaceVersionChosen === true
+                combatSpeed
             };
 
             this.syncGameState();
@@ -196,9 +167,7 @@
             if (settingKey === "combatSpeed") {
                 return this.setCombatSpeed(value, options);
             }
-            if (settingKey === "interfaceVersion") {
-                return this.setInterfaceVersion(value, options);
-            }
+            if (RETIRED_SETTINGS.includes(settingKey)) return false;
 
             const previousValue = clone(this.settings[settingKey]);
             this.settings[settingKey] = clone(value);
@@ -222,53 +191,6 @@
 
         getCombatSpeed() {
             return normalizeCombatSpeed(this.settings.combatSpeed);
-        },
-
-        getInterfaceVersion() {
-            return normalizeInterfaceVersion(this.settings.interfaceVersion);
-        },
-
-        getDefaultInterfaceVersion() {
-            return PRODUCT_DEFAULT_INTERFACE;
-        },
-
-        resolveInterfaceVersion,
-
-        isValidInterfaceVersion(version) {
-            return VALID_INTERFACE_VERSIONS.includes(
-                String(version || "").trim().toLowerCase()
-            );
-        },
-
-        setInterfaceVersion(version, options = {}) {
-            if (!this.isValidInterfaceVersion(version)) {
-                console.warn(
-                    `SettingsManager: versão de interface inválida: ${String(version)}`
-                );
-                return false;
-            }
-
-            const nextVersion = normalizeInterfaceVersion(version);
-            const previousVersion = this.getInterfaceVersion();
-
-            this.settings.interfaceVersion = nextVersion;
-            this.settings.interfaceVersionChosen = true;
-            this.syncGameState();
-            this.save();
-
-            const payload = {
-                key: "interfaceVersion",
-                value: nextVersion,
-                interfaceVersion: nextVersion,
-                previousValue: previousVersion,
-                changed: previousVersion !== nextVersion,
-                source: options.source || "settings-ui",
-                timestamp: Date.now()
-            };
-
-            Aethra.EventBus.emit("settings:changed", clone(payload));
-            Aethra.EventBus.emit("settings:interface-changed", clone(payload));
-            return nextVersion;
         },
 
         isValidBattleMode(mode) {

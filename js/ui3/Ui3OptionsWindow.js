@@ -4,7 +4,7 @@
  * Assume "options-view" pelo Ui3Window/WindowManager.
  *   leitura   SettingsManager (interface, velocidade, hud.reduceMotion),
  *             SaveManager.getSharedStatus
- *   comandos  SettingsManager.setInterfaceVersion / setCombatSpeed / set,
+ *   comandos  SettingsManager.setCombatSpeed / set,
  *             SaveManager.save / reset (reset só depois de confirmar)
  * O modo de batalha (cartas ou mapa) e a HUD compacta são da interface
  * clássica: a Hunt da UI 3.0 é sempre o mapa.
@@ -72,16 +72,11 @@
 
     function render() {
         const K = kit();
-        const version = settings()?.getInterfaceVersion?.() || "v3";
         const speed = settings()?.getCombatSpeed?.() || 1;
         const reduceMotion = hudPreferences().reduceMotion === true;
         const notice = state.notice
             ? `<p class="ui3-notice ui3-notice--${K.esc(state.notice.tone)}" role="status">${K.esc(state.notice.text)}</p>`
             : "";
-        const interfaceChips = [
-            K.chip({ label: "UI 3.0", pressed: version === "v3", attributes: { "data-ui3-option-interface": "v3" } }),
-            K.chip({ label: "Clássica", pressed: version === "classic", attributes: { "data-ui3-option-interface": "classic" } })
-        ].join("");
         const speedChips = SPEEDS.map((value) => K.chip({ label: `${value}×`, pressed: value === speed, attributes: { "data-ui3-option-speed": value } })).join("");
         const reset = state.confirmingReset
             ? `<div class="ui3-title-confirm" role="alertdialog" aria-labelledby="ui3-options-reset-text">
@@ -94,7 +89,6 @@
             : K.button({ label: "Apagar save e começar do zero", variant: "danger", attributes: { "data-ui3-option-reset": "" } });
 
         patch(parts.body, `${notice}
-            ${sectionHTML("Interface", "A clássica continua disponível enquanto as últimas janelas migram.", `<div class="ui3-row" role="group" aria-label="Interface">${interfaceChips}</div>`)}
             ${sectionHTML("Combate", "Velocidade das rodadas ao entrar em combate.", `<div class="ui3-row" role="group" aria-label="Velocidade do combate">${speedChips}</div>`)}
             ${sectionHTML("Acessibilidade", "", `<div class="ui3-row-between"><span>Reduzir animações</span>${K.toggle({ checked: reduceMotion, label: "Reduzir animações", onText: "Ligado", offText: "Desligado", attributes: { "data-ui3-option-motion": "" } })}</div>`)}
             ${sectionHTML("Save", sharedStatusText(), `<div class="ui3-expedition__row">
@@ -106,10 +100,6 @@
 
     function onClick(event) {
         const target = event.target;
-        const interfaceChip = target.closest("[data-ui3-option-interface]");
-        if (interfaceChip) {
-            return settings()?.setInterfaceVersion?.(interfaceChip.dataset.ui3OptionInterface, { source: "ui3-options" });
-        }
         const speedChip = target.closest("[data-ui3-option-speed]");
         if (speedChip) {
             settings()?.setCombatSpeed?.(Number(speedChip.dataset.ui3OptionSpeed), { source: "ui3-options" });
