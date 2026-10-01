@@ -3668,6 +3668,55 @@
                     `${floorCycles} ciclo(s) ao limpar o andar · ao partir ${restockedOnDepart ? "repôs Poção de Vida" : "não repôs"}`
                 ));
 
+                /*
+                 * A auto-venda guarda insumo das Oficinas (a armadura vem da Forja e
+                 * do Curtume): minério de loot fica, retalho de pano é vendido. A
+                 * janela de Automação desliga a regra.
+                 */
+                const keepIdle = Aethra.IdleLoopSystem;
+                const keepBefore = JSON.parse(JSON.stringify(Aethra.GameState.idleLoop || {}));
+                let keepWorks = false;
+                let keepDetail = "";
+                try {
+                    Object.assign(keepIdle.config, { enabled: true, autoSell: true, keepCraftingMaterials: true });
+                    const oreLoot = { templateId: "iron_ore", type: "material", source: "hunt-loot" };
+                    const scrapLoot = { templateId: "cloth_scrap", type: "material", source: "hunt-loot" };
+                    const oreKept = keepIdle.isAutoSellEligible(oreLoot) === false;
+                    const scrapSold = keepIdle.isAutoSellEligible(scrapLoot) === true;
+                    windowManager.openWindow("automation-view", { source: "integration-keep-materials" });
+                    document.querySelector("#ui3-root [data-ui3-window='automation-view'] [data-ui3-auto-setting='keepCraftingMaterials']")?.click();
+                    const toggledOff = keepIdle.config.keepCraftingMaterials === false && keepIdle.isAutoSellEligible(oreLoot) === true;
+                    windowManager.closeWindow("automation-view", { source: "integration-restore" });
+                    keepWorks = oreKept && scrapSold && toggledOff;
+                    keepDetail = `minério ${oreKept ? "guardado" : "vendido"} · retalho ${scrapSold ? "vendido" : "guardado"} · opção ${toggledOff ? "desliga pela janela" : "sem efeito"}`;
+                } finally {
+                    Aethra.GameState.idleLoop = keepBefore;
+                }
+                checks.push(createCheck("Auto-venda guarda materiais das Oficinas", keepWorks, keepDetail));
+
+                // Registro em português e no andar final a escada conclui a expedição.
+                const rewardText = Aethra.BattleLogger.formatRewardMessage("Lobo", { xp: 5, gold: 0, lootCount: 2 });
+                const finalHunt = Aethra.GameState.hunt;
+                const finalBackup = { isActive: finalHunt.isActive, currentRoom: finalHunt.currentRoom, huntId: finalHunt.huntId };
+                const idleEnabledBefore = Aethra.GameState.idleLoop?.enabled;
+                let finalLog = "";
+                try {
+                    if (Aethra.GameState.idleLoop) Aethra.GameState.idleLoop.enabled = false;
+                    finalHunt.isActive = true;
+                    finalHunt.huntId = finalHunt.huntId || "whispering_forest";
+                    finalHunt.currentRoom = Aethra.HuntSystem.getStairsState().maxRooms;
+                    Aethra.EventBus.emit("hunt:stairs-reached", { huntId: finalHunt.huntId, room: finalHunt.currentRoom });
+                    finalLog = Aethra.Ui3HuntScreen?.getLog?.().slice(-1)[0]?.text || "";
+                } finally {
+                    Object.assign(finalHunt, finalBackup);
+                    if (Aethra.GameState.idleLoop) Aethra.GameState.idleLoop.enabled = idleEnabledBefore;
+                }
+                checks.push(createCheck(
+                    "Registro diz 2 itens e o andar final pede para concluir",
+                    /2 itens de loot/.test(rewardText) && /conclua a expedição/.test(finalLog),
+                    `${rewardText} · ${finalLog || "sem registro"}`
+                ));
+
                 // UI 3.0 — fase 5.2 (Social): só o mercador está disponível offline e leva à Loja.
                 windowManager.openWindow("social-view", { source: "integration-ui3-social" });
                 const socialLayer = document.querySelector("#ui3-root [data-ui3-window='social-view']");

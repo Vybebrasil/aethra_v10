@@ -19,6 +19,7 @@
         autoSell: true,
         autoRestock: true,
         keepEquipment: true,
+        keepCraftingMaterials: true,
         healthTarget: 5,
         manaTarget: 5,
         goldReserve: 0,
@@ -68,6 +69,7 @@
             autoSell: stored.autoSell !== false,
             autoRestock: stored.autoRestock !== false,
             keepEquipment: stored.keepEquipment !== false,
+            keepCraftingMaterials: stored.keepCraftingMaterials !== false,
             allowPartialRestock: stored.allowPartialRestock !== false,
             goldReserve: integer(stored.goldReserve, DEFAULTS.goldReserve),
             maxRestockSpend: integer(stored.maxRestockSpend, DEFAULTS.maxRestockSpend),
@@ -103,12 +105,21 @@
         return item.market?.purchaseOrigin || item.origin?.source || item.source || "unknown";
     }
 
+    // Insumos de alguma receita das Oficinas (minério, couro, ervas, lingotes).
+    function isCraftingMaterial(itemId) {
+        if (!itemId) return false;
+        return (Aethra.CraftingSystem?.getRecipes?.() || [])
+            .some((recipe) => (recipe.inputs || []).some((input) => input.itemId === itemId));
+    }
+
     function isAutoSellEligible(item = {}) {
         const config = ensureState();
         const type = String(item.type || item.itemType || "").toLowerCase();
         const origin = originOf(item);
         if (item.ownership?.bound || origin === "character-created" || origin === "npc-shop") return false;
         if (config.keepEquipment && item.slot) return false;
+        // A armadura vem das Oficinas: vender o insumo trava a Forja e o Curtume.
+        if (config.keepCraftingMaterials && isCraftingMaterial(item.templateId || item.itemId || item.id)) return false;
         return ["material", "loot"].includes(type) && [
             "loot", "enemy-drop", "hunt-loot", "hunt-system",
             "monster-economy", "battle-hunt", "battle-loot"
@@ -253,7 +264,7 @@
     }
 
     function updateSetting(key, value) {
-        if (!["enabled", "autoSell", "autoRestock"].includes(key)) return false;
+        if (!["enabled", "autoSell", "autoRestock", "keepCraftingMaterials"].includes(key)) return false;
         const config = ensureState();
         config[key] = Boolean(value);
         Aethra.EventBus.emit("idle-loop:setting-changed", { key, value: config[key], config: clone(config) });
@@ -378,6 +389,7 @@
         inventoryQuantity,
         unitPriceFor,
         isAutoSellEligible,
+        isCraftingMaterial,
         getSupplyOverview,
         getSnapshot: () => clone(ensureState())
     };

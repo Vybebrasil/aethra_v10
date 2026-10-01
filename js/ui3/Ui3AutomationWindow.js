@@ -78,6 +78,7 @@
                 <span class="ui3-eyebrow">Ciclo da caçada</span>
                 ${row("Continuidade", "Ao fim de cada andar ou caçada, vende o loot e repõe suprimentos.", "enabled", config.enabled)}
                 ${row("Auto-venda", "Vende só materiais e loot; equipamento fica na mochila.", "autoSell", config.autoSell)}
+                ${row("Guardar materiais de ofício", "Minério, couro, ervas e lingotes que as Oficinas usam não são vendidos.", "keepCraftingMaterials", config.keepCraftingMaterials)}
                 ${row("Reposição automática", "Compra suprimentos que ficarem abaixo do gatilho.", "autoRestock", config.autoRestock)}
                 <div class="ui3-kpi-grid ui3-kpi-grid--3">
                     ${K.kpi({ label: "Ciclos", value: K.formatNumber(config.cyclesCompleted) })}

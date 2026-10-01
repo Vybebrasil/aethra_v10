@@ -440,7 +440,7 @@
 
             const lootText =
                 lootCount > 0
-                    ? `${lootCount} item${lootCount === 1 ? "" : "s"} de loot`
+                    ? `${lootCount} ${lootCount === 1 ? "item" : "itens"} de loot`
                     : "nenhum loot";
 
             return `Vitória contra ${creatureName}! +${xp} XP, ${goldText} e ${lootText}.`;

@@ -891,7 +891,8 @@
     ["quest:objective-updated", "quest:accepted", "quest:finished", "quest:tracking-changed"]
         .forEach((eventName) => Aethra.EventBus.on(eventName, () => scheduleRender()));
     Aethra.EventBus.on("hunt:stairs-reached", (payload = {}) => {
-        pushLog(`Andar ${payload.room || 1} limpo: desça a escada para continuar.`, "system");
+        const finalRoom = Aethra.HuntSystem?.getStairsState?.().finalRoom === true;
+        pushLog(`Andar ${payload.room || 1} limpo: ${finalRoom ? "conclua a expedição." : "desça a escada para continuar."}`, "system");
         scheduleRender();
     });
     Aethra.EventBus.on("hunt:room-entered", (payload = {}) => {
