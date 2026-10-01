@@ -416,7 +416,6 @@
         if (!skill) return false;
         const placed = Aethra.SkillSystem?.placeSkill?.(state.slot, skillId);
         if (placed) {
-            Aethra.RenderEngine?.renderActionBar?.();
             notify(`${skill.name} na tecla ${hotkeyLabel(state.slot)}.`);
             state.slot = Math.min(9, state.slot + 1);
         } else {
@@ -484,7 +483,6 @@
         }
         if (target.closest("[data-ui3-loadout-clear]")) {
             Aethra.SkillSystem?.placeSkill?.(state.slot, null);
-            Aethra.RenderEngine?.renderActionBar?.();
             return render();
         }
         const library = target.closest("[data-ui3-library-skill]");
@@ -492,19 +490,16 @@
         const primary = target.closest("[data-ui3-primary-auto]");
         if (primary) {
             Aethra.SkillSystem?.setPrimaryAuto?.(primary.dataset.ui3PrimaryAuto, primary.getAttribute("aria-checked") !== "true");
-            Aethra.RenderEngine?.renderActionBar?.();
             return render();
         }
         const move = target.closest("[data-ui3-rule-move]");
         if (move) {
             Aethra.SkillController?.moveSkill?.(move.dataset.skill, move.dataset.ui3RuleMove);
-            Aethra.RenderEngine?.renderActionBar?.();
             return render();
         }
         const auto = target.closest("[data-ui3-rule-auto]");
         if (auto) {
             Aethra.SkillController?.setAuto?.(auto.dataset.ui3RuleAuto, auto.getAttribute("aria-checked") !== "true");
-            Aethra.RenderEngine?.renderActionBar?.();
             return render();
         }
         const use = target.closest("[data-ui3-rule-use]");

@@ -755,6 +755,15 @@
             return { sellable: false, mode: null, salePrice: 0, quantity: 0, reason: terms.reason || "item-is-not-loot" };
         },
 
+        // O que o mercador aceita agora, com a cotação de cada peça da mochila.
+        getSellableItems() {
+            const bag = ensureHeroState().bag;
+            return bag
+                .map((item, index) => (item ? { item, index, quote: this.getSaleQuote(item) } : null))
+                .filter((entry) => entry?.quote?.sellable)
+                .map((entry) => ({ ...entry, mode: entry.quote.mode }));
+        },
+
         sellToNpc(itemId) {
             const quote = this.getSaleQuote(itemId);
             if (quote.mode === "sellback") return this.sellBack(itemId);

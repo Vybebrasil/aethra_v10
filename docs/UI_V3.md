@@ -79,22 +79,16 @@ Criadas nos módulos donos (regra 9 do `AGENTS.md`), sem sobrescrever métodos:
 | `TileMapCanvas.setStageInsets({top,right,bottom,left})` | idem | Faixas cobertas por painéis; atores e marcadores ficam na área livre |
 | `SkillController.requestManualSkill(id)` | `js/combat/SkillController.js` | Comando do jogador com validação de combate e recarga no dono |
 | `SpriteLoader.getCreatureSource(criatura)` | `js/world/SpriteLoader.js` | Mesmo sprite no retrato do alvo e no mapa |
-| evento `lobby:exited` | `js/ui/LobbyUI.js` | Avisa quando o lobby sai da tela |
 
-### Convivência com a UI clássica (até a fase 5)
+### Fora de `#ui3-root`
 
-- `#ui3-root` fica em z-index 90: acima do jogo clássico e abaixo de
-  `#modal-layer` (100). Mochila, Loja, Habilidades e demais janelas clássicas
-  abrem por cima da UI nova até migrarem na fase 3.
-- Uma tela declara `data-ui3-covers="world"` ou `"topbar"`; o `Ui3Shell` marca
-  as camadas clássicas cobertas como `inert` (sem foco nem clique escondido)
-  e desfaz ao sair.
-- A barra nova mede a barra clássica (`--ui3-topbar-h`) para a cidade e as
-  janelas continuarem alinhadas embaixo dela.
-- Os atalhos 1–0 são tratados pela tela de Hunt em captura e bloqueados para
-  o atalho clássico (`defaultPrevented`), evitando disparo duplo.
-- O lobby é considerado pelo que está na tela, não só por `LobbyUI.active`
-  (hoje ele fica ativo dentro de um contêiner oculto).
+A interface clássica saiu na fase 5.3. Fora da raiz da 3.0 ficam só
+`js/ui/WindowManager.js` (abre e fecha janelas, Esc, exclusividade; as
+janelas são os apresentadores do `Ui3Window`), `js/ui/UIManager.js` (vista
+principal Hunt/Cidade), `js/ui/DeathModalUI.js` (tela de derrota, com
+`css/death-modal.css`) e `js/ui/SaveStatusBanner.js` (falha de gravação, com
+estilo próprio). A página carrega só `css/aethra-base.css`,
+`css/aethra-ui3.css` e `css/death-modal.css`; o gate trava essa lista.
 
 Tipografia: Cinzel (títulos) + Barlow (interface), números tabulares. Os tokens
 de fonte valem exatamente 11/12/13/14/16/20/28px em 1280px e crescem até
@@ -125,7 +119,7 @@ Já fora das telas clássicas (5.3a–c e correções):
 | Registro do loot da expedição (pilhas, ouro, especiais) | `js/world/HuntLootLedger.js` (antes ouvido só pelo `HudWorldMapAndDrops`; a aba de loot da 3.0 dependia dele) |
 | Escolha de eventos de exploração | `ExplorationSystem.getEventPreview` + cartão na Hunt 3.0 (antes só na HUD clássica: a 3.0 travava na Mineração do tutorial) |
 
-Ainda falta, antes de apagar arquivos:
+Antes de apagar arquivos (todos feitos):
 
 1. ~~Automação~~ — feita: `IdleLoopSystem` só regra (`getSupplyOverview`,
    `configureAutoUse`, aviso `idle-loop:updated`); a tela clássica foi para
@@ -147,7 +141,9 @@ Ainda falta, antes de apagar arquivos:
 7. ~~CSS e marcação clássicos~~ — fora do `index.html`: a página carrega só
    `aethra-base.css`, `aethra-ui3.css` e `death-modal.css` (o gate trava a
    lista) e o `<body>` só tem `#ui3-root`.
-8. Apagar os arquivos clássicos e as regras do gate que os liam.
+8. ~~Arquivos~~ — apagados 22 módulos de `js/ui/` e 11 folhas de `css/`;
+   as regras do gate que liam esses arquivos passaram a ler as peças da 3.0.
+   A lista do que o mercador aceita virou `MarketplaceSystem.getSellableItems`.
 
 Decisões de produto em aberto: pontos de habilidade (`XPSystem` dá 1 por
 nível, mas nenhuma tela abre a distribuição) e a "Lâmina do Fundador"
@@ -171,11 +167,6 @@ persistido só pelo `SaveManager`. A tela de título aparece na abertura do
 jogo quando a UI 3.0 está ligada e há herói; sem herói, a criação assume.
 O `LobbyUI` sai na fase 5.
 
-### Por que o `style.css` ainda não saiu
-
-Ainda há recursos vivos que só a HUD clássica mostra (Automação e avisos de
-save, acima). O CSS sai junto com os módulos, depois deles.
-
 ## Migração por fases (branch `ui-v3`)
 
 | Fase | Escopo | Estado |
@@ -186,7 +177,7 @@ save, acima). O CSS sai junto com os módulos, depois deles.
 | 4. Demais telas | Cidade, Missões, Mapa-Mundi, Criação e Tela de título (no lugar do lobby) | concluída |
 | 5.1 Padrão e código morto | UI 3.0 como padrão (clássica só por escolha); 19 arquivos que nada carregava e o lobby removidos | concluída |
 | 5.2 Janelas restantes | Oficinas, Opções, Mural de Chefes, Especialização, Mentora, Coliseu, Mercado, Loja de Diamantes e Social. Masmorra, Log de combate e Inspeção não têm abertura na UI 3.0 (mortas ou só clássicas) e saem na 5.3 | concluída |
-| 5.3 Remoção da clássica | Extrações (diário, navegação, oficina, medição da Hunt, regras do HuntSystem), testes na 3.0 e eventos de exploração feitos; faltam Automação, avisos de save e a remoção em si (ver "Remoção da clássica") | em andamento |
+| 5.3 Remoção da clássica | Regras escondidas em telas clássicas foram para os donos, Automação e save compartilhado ganharam versão 3.0, a escolha de interface saiu, e os 22 módulos e 11 folhas clássicos foram apagados (ver "Remoção da clássica") | concluída |
 
 Cada fase termina com a suíte verde, o gate verde e validação em 1280×720 e
 1920×1080. Ao substituir uma tela, migre também os testes dela para os

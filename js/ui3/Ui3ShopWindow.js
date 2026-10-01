@@ -88,11 +88,7 @@
     }
 
     function sellables() {
-        const bag = Array.isArray(hero().bag) ? hero().bag : [];
-        return bag
-            .filter(Boolean)
-            .map((item) => ({ item, quote: market()?.getSaleQuote?.(item) || { sellable: false } }))
-            .filter((entry) => entry.quote.sellable);
+        return market()?.getSellableItems?.() || [];
     }
 
     function isStackable(item) {

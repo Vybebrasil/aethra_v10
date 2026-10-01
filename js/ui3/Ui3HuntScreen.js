@@ -645,7 +645,6 @@
         const state = Aethra.BattleSystem?.getPrimaryAttackState?.(slot);
         if (!state || state.available === false) return false;
         Aethra.SkillSystem?.setPrimaryAuto?.(slot, state.auto !== true);
-        Aethra.RenderEngine?.renderActionBar?.();
         renderActions();
         return true;
     }
@@ -667,7 +666,6 @@
         if (!skillId || !Aethra.SkillController?.setAuto) return false;
         const current = Aethra.SkillController.getSettings?.()?.[skillId]?.auto === true;
         Aethra.SkillController.setAuto(skillId, !current);
-        Aethra.RenderEngine?.renderActionBar?.();
         renderActions();
         return true;
     }

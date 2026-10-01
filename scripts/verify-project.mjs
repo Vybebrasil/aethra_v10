@@ -115,22 +115,23 @@ check(
 
 const questSystemSource = read("js/progression/QuestSystem.js");
 const gameCoreSource = read("js/core/game-core.js");
-const characterCreationSource = read("js/ui/CharacterCreationUI.js");
+const ui3CreationSource = read("js/ui3/Ui3CreationScreen.js");
+const craftingGuidanceSource = read("js/items/CraftingGuidance.js");
+const progressionJournalSource = read("js/progression/ProgressionJournal.js");
+const ui3SkillsSource = read("js/ui3/Ui3SkillsWindow.js");
 const characterBuildSource = read("js/progression/CharacterBuildSystem.js");
 const professionSource = read("js/progression/ProfessionSystem.js");
 const xpSystemSource = read("js/progression/XPSystem.js");
 const recipeCatalogSource = read("js/data/recipes/RecipeCatalog.js");
-const professionSpecializationUiSource = read("js/ui/ProfessionSpecializationUI.js");
-const professionWorkshopUiSource = read("js/ui/ProfessionWorkshopUI.js");
-const craftingGuidanceSource = read("js/items/CraftingGuidance.js");
-const progressionJournalUiSource = read("js/ui/ProgressionJournalUI.js");
+const ui3WorkshopSource = read("js/ui3/Ui3WorkshopWindow.js");
 const disciplineSource = read("js/progression/DisciplineSystem.js");
 const huntCatalogSource = read("js/data/hunts/HuntCatalog.js");
-const worldMapSource = read("js/ui/HudWorldMapAndDrops.js");
-const playerHudSource = read("js/ui/PlayerHudWorkspace.js");
+const ui3NavigationSource = read("js/ui3/Ui3Navigation.js");
+const ui3AtlasSource = read("js/ui3/Ui3AtlasWindow.js");
+const ui3CitySource = read("js/ui3/Ui3CityScreen.js");
 const saveManagerSource = read("js/infrastructure/SaveManager.js");
 const maintenanceSource = read("js/items/EquipmentMaintenanceSystem.js");
-const renderEngineSource = read("js/ui/RenderEngine.js");
+const ui3HuntSource = read("js/ui3/Ui3HuntScreen.js");
 const explorationSource = read("js/world/ExplorationSystem.js");
 const lootSystemSource = read("js/items/LootSystem.js");
 const earlyGameItemCatalogSource = read("js/data/items/EarlyGameItemCatalog.js");
@@ -138,8 +139,8 @@ const idleLoopSource = read("js/economy/IdleLoopSystem.js");
 const devServerSource = read("scripts/dev-server.ps1");
 const gameLauncherSource = read("INICIAR_JOGO.cmd");
 check(
-    !/registerQuest\(["']tutorial_first_steps["']/.test(characterCreationSource)
-        && !/acceptQuest\(["']tutorial_first_steps["']/.test(characterCreationSource)
+    !/registerQuest\(["']tutorial_first_steps["']/.test(ui3CreationSource)
+        && !/acceptQuest\(["']tutorial_first_steps["']/.test(ui3CreationSource)
         && /acceptQuest\?\.\(["']tutorial_first_steps["']/.test(characterBuildSource),
     "CharacterBuildSystem deve iniciar a missão oficial sem lógica de quest na UI"
 );
@@ -165,8 +166,6 @@ check(
         && !/professionPerks\s*\[/.test(ui3SpecializationSource),
     "Árvore de profissão deve estar indexada e enviar comandos sem mutar perks na UI"
 );
-const progressionJournalSource = read("js/progression/ProgressionJournal.js");
-const ui3SkillsSource = read("js/ui3/Ui3SkillsWindow.js");
 check(
     indexSource.includes("js/progression/ProgressionJournal.js")
         && indexSource.includes("js/ui3/Ui3SkillsWindow.js")
@@ -177,12 +176,12 @@ check(
     "Diário de Progressão deve consumir guias e marcos oficiais e enviar comandos aos sistemas donos"
 );
 check(
-    !/grantSkillXP|addUseXP|xpCurrent\s*(?:\+?=|-?=)/.test(progressionJournalUiSource),
+    !/grantSkillXP|addUseXP|xpCurrent\s*(?:\+?=|-?=)/.test(progressionJournalSource + ui3SkillsSource),
     "Diário de Progressão não pode conceder ou alterar XP diretamente"
 );
 check(
-    /DisciplineSystem\.setFocus\?\.\(/.test(progressionJournalUiSource)
-        && !/SettingsManager\?\.set\?\.\([^\n]*progressionJournalFocus/.test(progressionJournalUiSource)
+    /DisciplineSystem\?\.setFocus\?\.\(/.test(ui3SkillsSource)
+        && !/SettingsManager\?\.set\?\.\([^\n]*progressionJournalFocus/.test(ui3SkillsSource)
         && /discipline:focus-changed/.test(disciplineSource)
         && /getFocusedGuidance\(/.test(disciplineSource),
     "Foco de skill deve ser comandado pelo DisciplineSystem e publicado como evento oficial"
@@ -190,16 +189,15 @@ check(
 check(
     /apprentice_mines_focus:\s*\{/.test(huntCatalogSource)
         && /id:\s*["']apprentice_mines_focus["'][\s\S]{0,500}minLevel:\s*1/.test(huntCatalogSource)
-        && /focusSkillId/.test(worldMapSource)
-        && /data-hunt-atlas-view=["']focus["']/.test(worldMapSource),
+        && /focusSkillId/.test(ui3NavigationSource)
+        && /options\.view === ["']focus["']/.test(ui3AtlasSource),
     "Mineração deve ter rota inicial acessível e o mapa deve abrir a recomendação da skill"
 );
 check(
-    /data-focus-discipline/.test(playerHudSource)
-        && /discipline:focus-changed/.test(playerHudSource)
-        && /data-focus-skill-next-action/.test(renderEngineSource)
-        && /handleDisciplineGuidance/.test(renderEngineSource),
-    "Central do Herói e Próximo passo devem refletir e executar o foco oficial"
+    /discipline:focus-changed/.test(ui3CitySource)
+        && /data-ui3-city-focus-action/.test(ui3CitySource)
+        && /followDisciplineGuidance/.test(ui3NavigationSource),
+    "Cidade e navegação devem refletir e executar o foco oficial"
 );
 check(
     /CONTRACT_VERSION\s*=\s*4/.test(questSystemSource)
@@ -263,15 +261,15 @@ check(
 );
 check(
     /CraftSupply/.test(questSystemSource)
-        && /Escolha seu primeiro supply/.test(professionWorkshopUiSource)
-        && /data-open-profession-workshop=["']alchemy["']/.test(renderEngineSource)
+        && /Escolha seu primeiro suprimento/.test(craftingGuidanceSource)
+        && /workshop:\s*["']alchemy["']/.test(ui3CitySource)
         && /craftRecipeId:\s*["']brew_health_potion["']/.test(idleLoopSource)
-        && !/BagSystem\?\.(?:addItem|consumeItem)/.test(professionWorkshopUiSource),
+        && !/BagSystem\?\.(?:addItem|consumeItem)/.test(ui3WorkshopSource),
     "LaboratÃ³rio deve projetar a escolha de supply e reutilizar o estoque oficial"
 );
 check(
-    /data-skip-exploration/.test(renderEngineSource)
-        && /skip:\s*true/.test(renderEngineSource)
+    /data-ui3-event-skip/.test(ui3HuntSource)
+        && /skip:\s*true/.test(ui3HuntSource)
         && /remaining/.test(explorationSource)
         && /guaranteedSuccess/.test(explorationSource)
         && /minimumQuantity/.test(explorationSource),
@@ -294,8 +292,8 @@ check(
 check(
     /CraftEquipment/.test(craftingGuidanceSource)
         && /isEquipmentRecipe/.test(craftingGuidanceSource)
-        && /Escolha seu primeiro equipamento/.test(professionWorkshopUiSource)
-        && !/BagSystem\?\.(?:addItem|consumeItem)/.test(professionWorkshopUiSource)
+        && /Escolha seu primeiro equipamento/.test(craftingGuidanceSource)
+        && !/BagSystem\?\.(?:addItem|consumeItem)/.test(ui3WorkshopSource)
         && /id:\s*["']forge_iron_sword["'][\s\S]{0,250}requiredLevel:\s*1/.test(recipeCatalogSource),
     "Oficina deve projetar a escolha de equipamento sem mutar a economia na UI"
 );
@@ -303,7 +301,7 @@ check(
     ["craft_leather_boots", "craft_leather_helm", "craft_leather_legs"].every((recipeId) => (
         new RegExp(`id:\\s*["']${recipeId}["'][\\s\\S]{0,250}requiredLevel:\\s*1`).test(recipeCatalogSource)
     ))
-        && /Botas, Chapéu e Calças de Couro/.test(professionWorkshopUiSource),
+        && /Botas, Chapéu e Calças de Couro/.test(craftingGuidanceSource),
     "Curtume inicial deve oferecer três escolhas de equipamento acessíveis no nível 1"
 );
 check(
@@ -313,15 +311,6 @@ check(
         && /ProfessionSystem\?\.grantActionXP/.test(maintenanceSource)
         && /maintenance:policy-changed/.test(maintenanceSource),
     "EquipmentMaintenanceSystem deve ser a autoridade de desgaste, reparo e automação"
-);
-check(
-    /data-compact-hunt-nav/.test(renderEngineSource)
-        && ["combat", "hero", "analysis"].every((panel) => (
-            renderEngineSource.includes(`data-compact-hunt-target="${panel}"`)
-        ))
-        && /bindCompactHuntNavigation\(\)/.test(renderEngineSource)
-        && /syncActivePanel/.test(renderEngineSource),
-    "HUD estreita deve oferecer navegação única entre combate, herói e análise"
 );
 check(
     /Test-AethraServer/.test(devServerSource)
@@ -377,11 +366,6 @@ const localStorageAllowlist = new Set([
     "js/core/game-core.js",
     "js/infrastructure/SaveManager.js",
     "js/infrastructure/SettingsManager.js",
-    "js/ui/EncounterInteractionPass.js",
-    "js/ui/HudExperience.js",
-    "js/ui/HudWorldMapAndDrops.js",
-    "js/ui/RenderEngine.js",
-    "js/ui/UIFluidityPass.js",
     "js/ui/WindowManager.js"
 ]);
 

@@ -226,7 +226,7 @@
                 )
             );
 
-            // A projeção do diário vive fora da tela: marcos vêm dos dados, não do RenderEngine.
+            // A projeção do diário vive fora da tela; os marcos vêm dos dados.
             const swordMilestone = (Aethra.DisciplineMilestones?.get?.("sword") || []).find((entry) => entry.level > 1);
             const swordNext = Aethra.ProgressionJournal?.nextMilestone?.({ id: "sword", level: 1 });
             const neutralJournal = Aethra.ProgressionJournal?.getViewModel?.();
@@ -2291,7 +2291,7 @@
                  */
                 const isStarterKitItem = (item = {}) => item.source === "character-created"
                     || item.origin?.source === "character-created";
-                const protectedSellables = (Aethra.NpcShopUI?.getSellableItems?.() || []).filter((entry) => {
+                const protectedSellables = (Aethra.MarketplaceSystem.getSellableItems()).filter((entry) => {
                     if (!isStarterKitItem(entry.item)) return false;
                     if (entry.mode !== "sellback") return true;
                     const refundable = Number(entry.item?.market?.sellBackQuantity);
@@ -2367,7 +2367,7 @@
                 // (crédito de compra zerado) não pode aparecer com preço de devolução.
                 const leftoverStack = (Aethra.GameState.hero.bag || []).find((item) => (item.templateId || item.id) === "potion_health");
                 const leftoverQuote = leftoverStack ? Aethra.MarketplaceSystem?.getSaleQuote?.(leftoverStack) : null;
-                const leftoverListed = (Aethra.NpcShopUI?.getSellableItems?.() || []).some((entry) => entry.item === leftoverStack);
+                const leftoverListed = (Aethra.MarketplaceSystem.getSellableItems()).some((entry) => entry.item === leftoverStack);
                 const leftoverSellback = leftoverStack ? Aethra.MarketplaceSystem?.sellBack?.(leftoverStack.instanceId) : null;
                 checks.push(
                     createCheck(
@@ -2468,7 +2468,6 @@
                 restoreEnumerableState(Aethra.GameState.hero, supplyManagerBefore.hero);
                 Aethra.GameState.idleLoop = JSON.parse(JSON.stringify(supplyManagerBefore.idleLoop));
                 Aethra.ConsumableSystem?.ensurePolicy?.();
-                Aethra.IdleLoopControls?.render?.();
 
                 Aethra.WindowManager?.openWindow?.("inventory-view", {
                     source: "integration-hud-exclusive"

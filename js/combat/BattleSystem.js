@@ -1559,7 +1559,6 @@
                 battle.lastMessage = payload.message;
                 Aethra.EventBus.emit("coliseum:battle-defeat", clone(payload));
                 this.endBattle("defeat", payload);
-                Aethra.RenderEngine?.renderAll?.();
                 return payload;
             }
             const currentGold = Math.max(0, integer(hero.gold, 0));
@@ -1630,7 +1629,6 @@
             Aethra.UIManager?.setPrimaryView?.("city", {
                 source: "hero-defeated"
             });
-            Aethra.RenderEngine?.renderAll?.();
             return payload;
         },
 

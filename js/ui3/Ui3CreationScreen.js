@@ -1,9 +1,8 @@
 /*
  * Ui3CreationScreen.js — Criação de personagem na UI 3.0 (fase 4).
  *
- * Aparece quando a UI 3.0 está ligada e o herói ainda não foi criado.
- * Assume CharacterCreationUI.show() pelo registerPresenter, então quem já
- * abria a criação (início do jogo, novo slot) abre esta versão.
+ * Aparece enquanto o herói ainda não foi criado (início do jogo ou depois
+ * de apagar o save).
  *   leitura   CharacterBuildSystem (arquétipos, atributos, ofícios,
  *             previewAttributes, validateCreation), DisciplineSystem
  *             (técnicas iniciais), GameData (arma inicial)
@@ -267,7 +266,6 @@
         errors = [];
         draft = null;
         Aethra.UIManager?.setPrimaryView?.("city", { source: "character-created" });
-        Aethra.RenderEngine?.renderAll?.();
         sync();
         return true;
     }
@@ -394,16 +392,6 @@
         Aethra.Ui3Shell?.refresh?.();
         return visible;
     }
-
-    const presenter = {
-        isActive: () => Boolean(Aethra.Ui3Shell?.isActive?.()),
-        show: () => sync(),
-        close: () => {
-            if (screen) screen.hidden = true;
-            Aethra.Ui3Shell?.refresh?.();
-        }
-    };
-    Aethra.CharacterCreationUI?.registerPresenter?.(presenter);
 
     ["ui3:version-applied", "character:created", "state:restored", "save:loaded", "save:reset", "engine:ready"]
         .forEach((eventName) => Aethra.EventBus.on(eventName, () => {
