@@ -146,14 +146,17 @@
      * Progressão por vocação (decisão do Paulo, 2026-10-01): cada nível dá
      * vida, mana e vigor conforme o arquétipo; a cada 5 níveis, o atributo da
      * vocação sobe. Quem luta na linha de frente ganha vida; quem conjura, mana.
+     * "attack" soma ao Ataque mínimo e máximo (inteiro, arredondado para
+     * baixo): quem vive de dano físico bate mais forte a cada nível, o
+     * Arcanista cresce em Magia (dano das magias) e o couro ganha esquiva.
      */
     const VOCATION_GROWTH = Object.freeze({
-        vanguard: Object.freeze({ perLevel: { maxHp: 7, maxMana: 2, maxEnergy: 2 }, everyFive: { str: 1, defense: 1 } }),
-        berserker: Object.freeze({ perLevel: { maxHp: 6, maxMana: 1, maxEnergy: 3 }, everyFive: { str: 2 } }),
-        arcanist: Object.freeze({ perLevel: { maxHp: 2, maxMana: 8, maxEnergy: 1 }, everyFive: { mag: 2 } }),
-        ranger: Object.freeze({ perLevel: { maxHp: 4, maxMana: 3, maxEnergy: 3 }, everyFive: { precision: 1, str: 1 } }),
-        nightblade: Object.freeze({ perLevel: { maxHp: 4, maxMana: 4, maxEnergy: 2 }, everyFive: { precision: 1, mag: 1 } }),
-        templar: Object.freeze({ perLevel: { maxHp: 6, maxMana: 4, maxEnergy: 1 }, everyFive: { str: 1, mag: 1 } })
+        vanguard: Object.freeze({ perLevel: { maxHp: 7, maxMana: 2, maxEnergy: 2, attack: 0.3 }, everyFive: { str: 1, defense: 1 } }),
+        berserker: Object.freeze({ perLevel: { maxHp: 6, maxMana: 1, maxEnergy: 3, attack: 0.5 }, everyFive: { str: 2 } }),
+        arcanist: Object.freeze({ perLevel: { maxHp: 2, maxMana: 8, maxEnergy: 1, mag: 0.6, attack: 0.1 }, everyFive: {} }),
+        ranger: Object.freeze({ perLevel: { maxHp: 4, maxMana: 3, maxEnergy: 3, attack: 0.4, evasion: 0.003 }, everyFive: { precision: 1, str: 1 } }),
+        nightblade: Object.freeze({ perLevel: { maxHp: 4, maxMana: 4, maxEnergy: 2, attack: 0.45, evasion: 0.004, critical: 0.003 }, everyFive: { precision: 1, mag: 1 } }),
+        templar: Object.freeze({ perLevel: { maxHp: 6, maxMana: 4, maxEnergy: 1, attack: 0.3 }, everyFive: { str: 1, mag: 1 } })
     });
 
     function emptyAllocation(definitions) {
@@ -317,6 +320,17 @@
             const milestones = Math.floor(integer(level, 1) / 5);
             Object.entries(growth.everyFive).forEach(([stat, value]) => {
                 bonus[stat] = (bonus[stat] || 0) + value * milestones;
+            });
+            if (bonus.attack !== undefined) {
+                const attack = Math.floor(bonus.attack + 1e-9);
+                delete bonus.attack;
+                if (attack > 0) {
+                    bonus.damageMin = (bonus.damageMin || 0) + attack;
+                    bonus.damageMax = (bonus.damageMax || 0) + attack;
+                }
+            }
+            ["mag", "evasion", "critical"].forEach((stat) => {
+                if (bonus[stat] !== undefined) bonus[stat] = Number(bonus[stat].toFixed(4));
             });
             return bonus;
         },

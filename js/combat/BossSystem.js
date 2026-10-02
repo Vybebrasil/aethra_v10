@@ -128,7 +128,7 @@
                     { type: "item", templateId: "wolf_hide", chance: 1 }
                 ],
                 combat: {
-                    hp: 260,
+                    hp: 320,
                     xp: 120,
                     gold: 90,
                     stats: {

@@ -4263,6 +4263,68 @@
                 }
                 checks.push(createCheck("Mana e vigor regeneram a cada rodada de combate", regenWorks, regenDetail));
 
+                /*
+                 * Regras de combate que fazem sentido:
+                 * - a armadura absorve no máximo metade do golpe (herói e monstro);
+                 * - a técnica do monstro multiplica antes da armadura;
+                 * - a esquiva sai depois do teto de 98% de acerto.
+                 */
+                const rulesHero = Aethra.GameState.hero;
+                const rulesBackup = { stats: JSON.parse(JSON.stringify(rulesHero.stats || {})), random: Aethra.BattleSystem.randomSource, update: Aethra.EquipSystem.updatePlayerStats };
+                let rulesWorks = false;
+                let rulesDetail = "";
+                try {
+                    rulesHero.stats.damageMin = 20;
+                    rulesHero.stats.damageMax = 20;
+                    Aethra.EquipSystem.updatePlayerStats = () => rulesHero.stats;
+                    Aethra.BattleSystem.randomSource = () => 0.5;
+                    const heroVsWall = Aethra.BattleSystem.calculateDamage({ stats: { defense: 50 } }, { heroAttack: true, isCrit: false, details: true });
+                    const heroVsLight = Aethra.BattleSystem.calculateDamage({ stats: { defense: 4 } }, { heroAttack: true, isCrit: false, details: true });
+                    const wolf = { id: "integration_wolf", name: "Lobo", stats: { damageMin: 20, damageMax: 20, precision: 0, critical: 0 } };
+                    const knight = { id: "hero", name: "Você", stats: { defense: 100, evasion: 0, blockChance: 0 } };
+                    Aethra.BattleSystem.randomSource = () => 0.01;
+                    const technique = Aethra.BattleSystem.resolveAttack(wolf, knight, "creature", { damageMultiplier: 1.5, attackLabel: "Mordida Dilacerante" });
+                    const sharpEye = { id: "integration_eye", name: "Olho", stats: { precision: 50, damageMin: 5, damageMax: 5, critical: 0 } };
+                    const dodger = { id: "hero", name: "Você", stats: { evasion: 0.2, defense: 0, blockChance: 0 } };
+                    Aethra.BattleSystem.randomSource = () => 0.99;
+                    const dodged = Aethra.BattleSystem.resolveAttack(sharpEye, dodger, "creature", {});
+                    rulesWorks = heroVsWall.amount === 10 && heroVsLight.amount === 16
+                        && technique.hit && technique.amount === 15 && technique.damageBreakdown.damageBeforeDefense === 30
+                        && Math.abs(dodged.hitChance - 0.78) < 0.0001;
+                    rulesDetail = `golpe 20 × DEF 50: ${heroVsWall.amount} · × DEF 4: ${heroVsLight.amount} · técnica 20×1,5 em DEF 100: ${technique.amount} (antes da armadura ${technique.damageBreakdown?.damageBeforeDefense}) · acerto com precisão 50 contra esquiva 20%: ${Math.round(dodged.hitChance * 100)}%`;
+                } finally {
+                    rulesHero.stats = rulesBackup.stats;
+                    Aethra.BattleSystem.randomSource = rulesBackup.random;
+                    Aethra.EquipSystem.updatePlayerStats = rulesBackup.update;
+                }
+                checks.push(createCheck("Armadura absorve até metade do golpe e a esquiva sempre conta", rulesWorks, rulesDetail));
+
+                // Beber poção (uma por rodada) não toma o golpe da rodada, como no Tibia.
+                const sipBackup = { tryAutoUse: Aethra.ConsumableSystem.tryAutoUse, random: Aethra.BattleSystem.randomSource };
+                let sipWorks = false;
+                let sipDetail = "";
+                let sipCalls = 0;
+                let sipRound = null;
+                const captureSip = (payload = {}) => { sipRound = sipRound || payload; };
+                Aethra.EventBus.on("battle:round-resolved", captureSip);
+                try {
+                    Aethra.ConsumableSystem.tryAutoUse = () => { sipCalls += 1; return { used: true, item: { name: "Poção de Teste" }, effects: { hp: 5 }, message: "Você usou Poção de Teste." }; };
+                    Aethra.BattleSystem.randomSource = () => 0.5;
+                    Aethra.BattleSystem.stopCombat("integration-sip-setup");
+                    Aethra.BattleSystem.startCombat({ id: "integration_dummy", name: "Boneco", hp: 999, maxHp: 999, xp: 0, stats: { defense: 0 } }, { source: "integration-test", noRewards: true });
+                    Aethra.BattleSystem.tick(Aethra.BattleSystem.battleToken);
+                    const heroAction = sipRound?.heroAction || {};
+                    const swings = (heroAction.primaryAttacks || []).length + (heroAction.skillAction ? 1 : 0);
+                    sipWorks = sipCalls === 1 && swings >= 1 && sipRound?.creatureHp < 999;
+                    sipDetail = `poção ${sipCalls}× · ações de ataque na mesma rodada: ${swings} · boneco ${sipRound?.creatureHp}/999`;
+                } finally {
+                    Aethra.EventBus.off("battle:round-resolved", captureSip);
+                    Aethra.ConsumableSystem.tryAutoUse = sipBackup.tryAutoUse;
+                    Aethra.BattleSystem.randomSource = sipBackup.random;
+                    Aethra.BattleSystem.stopCombat("integration-restore");
+                }
+                checks.push(createCheck("Beber poção não toma o golpe da rodada", sipWorks, sipDetail));
+
                 // Poção de Mana não cura vida (nem a nova, nem a salva com healAmount antigo).
                 const manaHero = Aethra.GameState.hero;
                 const manaBackup = { bag: manaHero.bag };
@@ -4295,8 +4357,11 @@
                     const build = Aethra.CharacterBuildSystem;
                     const arcanistGrowth = build.getLevelGrowth("arcanist", 11);
                     const vanguardGrowth = build.getLevelGrowth("vanguard", 11);
-                    const growthOk = arcanistGrowth.maxMana === 80 && arcanistGrowth.maxHp === 20 && arcanistGrowth.mag === 4
-                        && vanguardGrowth.maxHp === 70 && vanguardGrowth.maxMana === 20 && Object.keys(build.getLevelGrowth("vanguard", 1)).length === 0;
+                    const growthOk = arcanistGrowth.maxMana === 80 && arcanistGrowth.maxHp === 20 && arcanistGrowth.mag === 6
+                        && vanguardGrowth.maxHp === 70 && vanguardGrowth.maxMana === 20 && Object.keys(build.getLevelGrowth("vanguard", 1)).length === 0
+                        // Ataque por nível (inteiro): Vanguarda 0,3 × 10 = +3; Lâmina 0,45 × 10 = +4 e esquiva.
+                        && vanguardGrowth.damageMin === 3 && vanguardGrowth.damageMax === 3 && vanguardGrowth.attack === undefined
+                        && build.getLevelGrowth("nightblade", 11).damageMin === 4 && build.getLevelGrowth("nightblade", 11).evasion === 0.04;
                     vocationHero.characterCreated = true;
                     vocationHero.archetypeId = "arcanist";
                     vocationHero.attributeAllocation = build.archetypes.arcanist.attributes;

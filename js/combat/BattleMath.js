@@ -14,6 +14,13 @@
         return Math.floor(number(value, fallback));
     }
 
+    // Ver BattleMath.absorbByArmor: chamado também via BattleSystem (apply), sem depender de this.
+    function absorbByArmor(damage, armor, config) {
+        const raw = Math.max(1, number(damage, 1));
+        const absorbed = Math.min(Math.max(0, number(armor, 0)), raw * clamp(number(config?.armorMaxAbsorb, 0.5), 0, 0.9));
+        return Math.max(1, Math.round(raw - absorbed));
+    }
+
     Aethra.BattleMath = {
 
         calculateDamage(defender, options = {}) {
@@ -132,12 +139,7 @@
             const defenseMultiplier = clamp(number(options.defenseMultiplier, 1), 0, 1);
             const enemyDefense = rawEnemyDefense * defenseMultiplier;
 
-            let finalDamage = Math.max(
-                1,
-                Math.round(
-                    damageBeforeDefense - enemyDefense
-                )
-            );
+            let finalDamage = absorbByArmor(damageBeforeDefense, enemyDefense, this.config);
 
             const blockReduction =
                 options.isBlocked === true
@@ -190,6 +192,15 @@
 
 
 
+        /*
+         * Armadura desconta pontos fixos do golpe, mas absorve no máximo metade
+         * dele: o tanque continua tanque sem ficar imune, e golpe fraco contra
+         * couro grosso ainda tira algo (antes caía para 1).
+         */
+        absorbByArmor(damage, armor) {
+            return absorbByArmor(damage, armor, this.config);
+        },
+
         resolveAttack(attacker, defender, side, options = {}) {
             const attackerStats = attacker.stats || {};
             const defenderStats = defender.stats || {};
@@ -212,8 +223,10 @@
                 ? evasion
                 : evasion * 0.005;
 
+            // A esquiva sai depois do teto de 98%: antes, atacante com muita
+            // precisão (o Lobo Alfa) passava de 100% e engolia a esquiva inteira.
             const hitChance = clamp(
-                0.85 + precision * 0.01 - normalizedEvasion + number(disciplineProfile?.hitBonus, 0),
+                Math.min(0.98, 0.85 + precision * 0.01 + number(disciplineProfile?.hitBonus, 0)) - normalizedEvasion,
                 0.10,
                 0.98
             );
@@ -333,9 +346,10 @@
                         Math.round(damageBreakdown.damageBeforeDefense * attackMultiplier)
                     );
                     damageBreakdown.attackMultiplier = attackMultiplier;
-                    damageBreakdown.amount = Math.max(
-                        1,
-                        Math.round(damageBreakdown.damageBeforeDefense - damageBreakdown.enemyDefense)
+                    damageBreakdown.amount = absorbByArmor(
+                        damageBreakdown.damageBeforeDefense,
+                        damageBreakdown.enemyDefense,
+                        this.config
                     );
                     if (blockReduction > 0) {
                         damageBreakdown.amount = Math.max(
@@ -378,6 +392,8 @@
                     maxDamage
                 );
 
+                const rolledDamage = amount;
+
                 if (isCrit) {
                     amount = Math.max(
                         1,
@@ -385,15 +401,23 @@
                     );
                 }
 
+                // A técnica do monstro (Mordida Dilacerante 1,5×…) pesa antes da
+                // armadura; antes multiplicava depois e passava por cima da DEF.
+                const creatureAttackMultiplier = Math.max(
+                    0.05,
+                    number(options.damageMultiplier, 1)
+                );
+                if (Math.abs(creatureAttackMultiplier - 1) > 0.0001) {
+                    amount = Math.max(1, Math.round(amount * creatureAttackMultiplier));
+                }
+
+                const damageBeforeDefense = amount;
                 const defense = Math.max(
                     0,
                     number(defenderStats.defense, 0)
                 );
 
-                amount = Math.max(
-                    1,
-                    Math.round(amount - defense * 0.5)
-                );
+                amount = absorbByArmor(amount, defense * 0.5, this.config);
 
                 if (isBlocked) {
                     amount = Math.max(
@@ -404,31 +428,20 @@
                     );
                 }
 
-                const creatureAttackMultiplier = Math.max(
-                    0.05,
-                    number(options.damageMultiplier, 1)
-                );
-                if (Math.abs(creatureAttackMultiplier - 1) > 0.0001) {
-                    amount = Math.max(1, Math.round(amount * creatureAttackMultiplier));
-                }
-
                 damageBreakdown = {
-                    baseDamage: amount,
+                    baseDamage: rolledDamage,
                     multiplier: creatureAttackMultiplier,
                     individualMultiplier: 1,
                     affixBonus: 0,
-                    scaledWeaponDamage: amount,
+                    scaledWeaponDamage: rolledDamage,
                     isCrit,
                     criticalChance,
                     criticalMultiplier:
                         isCrit
                             ? this.config.defaultCriticalMultiplier
                             : 1,
-                    damageBeforeDefense: amount,
-                    enemyDefense: Math.max(
-                        0,
-                        number(defenderStats.defense, 0)
-                    ),
+                    damageBeforeDefense,
+                    enemyDefense: defense * 0.5,
                     blockReduction
                 };
             }

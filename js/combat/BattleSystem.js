@@ -41,7 +41,9 @@
             hardcoreXPPenalty: 0.10,
             autoStartOnEnemyEncountered: false,
             mirrorCombatState: true,
-            defaultCriticalMultiplier: 1.75
+            defaultCriticalMultiplier: 1.75,
+            // Fração máxima de um golpe que a armadura absorve (ver BattleMath.absorbByArmor).
+            armorMaxAbsorb: 0.5
         },
 
         init(options = {}) {
@@ -774,14 +776,18 @@
                 token
             });
 
+            /*
+             * Poção tem recarga própria (no máximo uma por rodada) e não toma o
+             * golpe, como no Tibia. Antes beber custava a ação inteira: contra
+             * chefe, a Poção de Vida (+20) curava menos que a mordida da rodada
+             * e o herói entrava numa espiral de beber sem nunca atacar.
+             */
             if (autoConsumable?.used === true) {
-                controllerAction = {
-                    executed: true,
-                    priority: 0,
-                    action: "consumable",
-                    source: "auto-supply",
+                this.recordHeroAction({
+                    name: autoConsumable.item?.name || "Consumível",
                     skillId: null,
-                    skill: { name: autoConsumable.item?.name || "Consumível" },
+                    type: "consumable",
+                    source: "auto-supply",
                     result: {
                         ...autoConsumable,
                         skillName: autoConsumable.item?.name || "Consumível",
@@ -791,10 +797,11 @@
                             autoConsumable.effects?.energy,
                             0
                         )
-                    },
-                    message: autoConsumable.message
-                };
-            } else if (skillController && typeof skillController.update === "function") {
+                    }
+                });
+            }
+
+            if (skillController && typeof skillController.update === "function") {
                 controllerAction = skillController.update(deltaTime, {
                     battle,
                     hero,
