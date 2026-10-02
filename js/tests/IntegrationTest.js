@@ -4361,6 +4361,26 @@
                 }
                 checks.push(createCheck("Eventos de exploração dão recompensa que faz sentido", eventWorks, eventDetail));
 
+                // Coliseu mede o herói pelos atributos do painel (EquipSystem), não por uma soma própria.
+                let arenaWorks = false;
+                let arenaDetail = "";
+                {
+                    const arenaHero = Aethra.GameState.hero;
+                    const arenaStrBackup = arenaHero.baseStats?.str;
+                    try {
+                        arenaHero.baseStats.str = 20;
+                        Aethra.EquipSystem.updatePlayerStats({ emit: false, save: false, source: "integration-arena" });
+                        const official = Aethra.ColiseumSystem.calculateCombatPower();
+                        const panel = Aethra.ColiseumSystem.calculateCombatPower({ ...arenaHero, stats: { ...arenaHero.stats } });
+                        arenaWorks = official === panel && arenaHero.stats.damageMin >= 4;
+                        arenaDetail = `poder no Coliseu ${official} · pelo painel ${panel} (Ataque ${arenaHero.stats.damageMin}–${arenaHero.stats.damageMax})`;
+                    } finally {
+                        arenaHero.baseStats.str = arenaStrBackup;
+                        Aethra.EquipSystem.updatePlayerStats({ emit: false, save: false, source: "integration-restore" });
+                    }
+                }
+                checks.push(createCheck("Coliseu usa os atributos do painel", arenaWorks, arenaDetail));
+
                 // Poção de Mana não cura vida (nem a nova, nem a salva com healAmount antigo).
                 const manaHero = Aethra.GameState.hero;
                 const manaBackup = { bag: manaHero.bag };

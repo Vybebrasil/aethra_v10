@@ -49,19 +49,16 @@
         return `#${rank}`;
     }
 
+    /*
+     * Atributos do herói no Coliseu = os do painel (EquipSystem). Antes havia
+     * uma soma própria (base + itens crus) que ignorava Força, passivas de
+     * armadura e desgaste: o poder de combate e o espelho do rival mentiam.
+     */
     function heroStats(hero = Aethra.GameState.hero || {}) {
-        const stats = { ...(hero.baseStats || hero.stats || {}) };
-        const equipment = Aethra.GameState.playerEquipment || hero.equipment || {};
-        Object.values(equipment).filter(Boolean).forEach((item) => {
-            const bonuses = Aethra.GameData?.calculateItemStats?.(item) || item.stats || {};
-            Object.entries(bonuses).forEach(([stat, rawValue]) => {
-                const value = Number(rawValue);
-                if (!Number.isFinite(value)) return;
-                const target = stat === "hpMax" ? "maxHp" : stat === "manaMax" ? "maxMana" : stat;
-                stats[target] = Number(stats[target] || 0) + value;
-            });
-        });
-        return stats;
+        if (hero === Aethra.GameState.hero) {
+            Aethra.EquipSystem?.updatePlayerStats?.({ emit: false, save: false, source: "coliseum-stats" });
+        }
+        return { ...(hero.stats || {}) };
     }
 
     Aethra.ColiseumSystem = {
