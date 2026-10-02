@@ -172,6 +172,18 @@
         return Object.values(allocation || {}).reduce((sum, value) => sum + Math.max(0, integer(value, 0)), 0);
     }
 
+    // Peitoral inicial pela classe de armadura do arquétipo.
+    const STARTER_CHEST = Object.freeze({ plate: "eg_chest_l1", leather: "eg_chest_leather_l1", cloth: "eg_chest_cloth_l1" });
+    // Suprimentos pelo que cada vocação gasta (vida, mana da Cura/magias, vigor das técnicas).
+    const STARTER_SUPPLIES = Object.freeze({
+        vanguard: { potion_health: 5, minor_vigor_tonic: 3 },
+        berserker: { potion_health: 5, minor_vigor_tonic: 4 },
+        arcanist: { potion_health: 3, potion_mana: 8 },
+        ranger: { potion_health: 5, minor_vigor_tonic: 4 },
+        nightblade: { potion_health: 4, potion_mana: 3, minor_vigor_tonic: 2 },
+        templar: { potion_health: 4, potion_mana: 5 }
+    });
+
     // Itens do kit inicial: iguais para todo herói (sorteios fixos) e vinculados.
     const STARTER_ITEM_OPTIONS = Object.freeze({
         fixedRolls: true,
@@ -269,9 +281,13 @@
             if (!archetype) return [];
             return [
                 { slot: "weapon", templateId: archetype.starterItemId },
-                { slot: "chest", templateId: "eg_chest_l1" },
+                { slot: "chest", templateId: STARTER_CHEST[archetype.starterArmorClass] || STARTER_CHEST.plate },
                 archetype.starterShield ? { slot: "offhand", templateId: "eg_shield_l1" } : null
             ].filter((entry) => entry?.templateId);
+        },
+
+        getStarterSupplies(archetypeId) {
+            return { ...(STARTER_SUPPLIES[archetypeId] || { potion_health: 5, potion_mana: 5 }) };
         },
 
         /*
@@ -528,10 +544,9 @@
             const starterEquipment = this.getStarterEquipment(validation.archetypeId)
                 .map(({ slot, templateId }) => ({ slot, item: generateStarter(templateId) }))
                 .filter((entry) => entry.item);
-            const starterSupplies = [
-                generateStarter("potion_health", { quantity: 5 }),
-                generateStarter("potion_mana", { quantity: 5 })
-            ].filter(Boolean);
+            const starterSupplies = Object.entries(this.getStarterSupplies(validation.archetypeId))
+                .map(([templateId, quantity]) => generateStarter(templateId, { quantity }))
+                .filter(Boolean);
 
             Aethra.BagSystem?.addItems?.(
                 [...starterEquipment.map((entry) => entry.item), ...starterSupplies],

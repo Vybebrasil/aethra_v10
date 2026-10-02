@@ -120,6 +120,36 @@
         });
     });
 
+
+    /*
+     * Linhas iniciais de tecido ("de Aprendiz") e couro ("Couro Cru"),
+     * vendidas na Loja ao lado da placa de Recruta. Tecido: pouca defesa,
+     * mana e poder mágico. Couro: esquiva e crítico. Placa: defesa e vida.
+     */
+    const STARTER_ARMOR_LINES = [
+        ["eg_head_cloth_l1", "Capuz de Aprendiz", "⌃", "HEAD", "head", "cloth", 18, { defense: 1, manaMax: 3, mag: 0.5 }],
+        ["eg_chest_cloth_l1", "Túnica de Aprendiz", "▣", "CHEST", "chest", "cloth", 26, { defense: 1, hpMax: 2, manaMax: 6, mag: 1 }],
+        ["eg_hands_cloth_l1", "Luvas de Aprendiz", "✥", "HANDS", "hands", "cloth", 15, { manaMax: 2, mag: 0.5 }],
+        ["eg_legs_cloth_l1", "Calças de Aprendiz", "Ⅱ", "LEGS", "legs", "cloth", 20, { defense: 1, hpMax: 1, manaMax: 4 }],
+        ["eg_feet_cloth_l1", "Sandálias de Aprendiz", "⌄", "FEET", "feet", "cloth", 14, { manaMax: 2, evasion: 0.004 }],
+        ["eg_head_leather_l1", "Gorro de Couro Cru", "⌃", "HEAD", "head", "leather", 18, { defense: 1, hpMax: 1, evasion: 0.004 }],
+        ["eg_chest_leather_l1", "Gibão de Couro Cru", "▣", "CHEST", "chest", "leather", 26, { defense: 2, hpMax: 2, evasion: 0.005, critical: 0.003 }],
+        ["eg_hands_leather_l1", "Luvas de Couro Cru", "✥", "HANDS", "hands", "leather", 15, { defense: 1, hpMax: 1, precision: 1, critical: 0.005 }],
+        ["eg_legs_leather_l1", "Calças de Couro Cru", "Ⅱ", "LEGS", "legs", "leather", 22, { defense: 1, hpMax: 2, evasion: 0.004 }],
+        ["eg_feet_leather_l1", "Botas de Couro Cru", "⌄", "FEET", "feet", "leather", 15, { defense: 1, hpMax: 1, evasion: 0.007 }]
+    ];
+
+    STARTER_ARMOR_LINES.forEach(([id, name, icon, itemType, slot, armorType, price, stats]) => {
+        item(id, {
+            name, icon, price, value: price,
+            rarity: "Comum", type: "armor", itemType, slot, equipmentClass: "armor", armorType, levelReq: 1, tier: 1,
+            baseStats: { ...stats }, stats: { ...stats }, stackable: false, maxStack: 1,
+            description: armorType === "cloth"
+                ? "Roupa leve de quem estuda as escolas arcanas: mana e poder mágico, pouca proteção."
+                : "Couro curtido às pressas: mobilidade e esquiva, menos proteção que a placa."
+        });
+    });
+
     // ── Armaduras e Armas baseadas nos Assets Curados (Nível 1 a 10) ──
 
     // Set Recruta (Nível 1)

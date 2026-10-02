@@ -319,6 +319,20 @@
         return bonuses;
     }
 
+    const ARMOR_SLOTS = Object.freeze(["head", "chest", "hands", "legs", "feet"]);
+
+    // Quantas peças de cada classe (tecido, couro, placa) o herói veste.
+    function armorComposition(equipment = {}) {
+        const counts = { cloth: 0, leather: 0, plate: 0 };
+        ARMOR_SLOTS.forEach((slot) => {
+            const item = equipment?.[slot];
+            if (!item) return;
+            const type = item.armorType || Aethra.ItemTemplates?.[item.templateId || item.id]?.armorType;
+            if (counts[type] !== undefined) counts[type] += 1;
+        });
+        return counts;
+    }
+
     Aethra.EquipSystem = {
         initialized: false,
         validSlots: [...VALID_SLOTS],
@@ -738,21 +752,29 @@
                 }
             });
 
-            // Passivas das disciplinas de armadura.
+            // Passivas das disciplinas de armadura, na proporção das peças daquela
+            // classe vestidas (conjunto completo = passiva inteira).
+            const composition = armorComposition(equipment);
+            const share = (type) => composition[type] / ARMOR_SLOTS.length;
             const clothLevel = Math.max(1, Number(armorLevels.cloth || 1));
             const leatherLevel = Math.max(1, Number(armorLevels.leather || 1));
             const plateLevel = Math.max(1, Number(armorLevels.plate || 1));
-            if (clothLevel > 1) {
-                nextStats.mag = (nextStats.mag || 0) * (1 + (clothLevel - 1) * 0.01);
-                nextStats.maxMana = (nextStats.maxMana || 0) * (1 + (clothLevel - 1) * 0.005);
+            if (clothLevel > 1 && composition.cloth > 0) {
+                nextStats.mag = (nextStats.mag || 0) * (1 + (clothLevel - 1) * 0.01 * share("cloth"));
+                nextStats.maxMana = (nextStats.maxMana || 0) * (1 + (clothLevel - 1) * 0.005 * share("cloth"));
             }
-            if (leatherLevel > 1) {
-                nextStats.evasion = (nextStats.evasion || 0) + (leatherLevel - 1) * 0.005;
-                nextStats.critical = (nextStats.critical || 0) + (leatherLevel - 1) * 0.002;
+            if (leatherLevel > 1 && composition.leather > 0) {
+                nextStats.evasion = (nextStats.evasion || 0) + (leatherLevel - 1) * 0.005 * share("leather");
+                nextStats.critical = (nextStats.critical || 0) + (leatherLevel - 1) * 0.002 * share("leather");
             }
-            if (plateLevel > 1) {
-                nextStats.defense = (nextStats.defense || 0) * (1 + (plateLevel - 1) * 0.01);
-                nextStats.maxHp = (nextStats.maxHp || 0) * (1 + (plateLevel - 1) * 0.01);
+            if (plateLevel > 1 && composition.plate > 0) {
+                nextStats.defense = (nextStats.defense || 0) * (1 + (plateLevel - 1) * 0.01 * share("plate"));
+                nextStats.maxHp = (nextStats.maxHp || 0) * (1 + (plateLevel - 1) * 0.01 * share("plate"));
+            }
+            // Peso da placa: cada peça tira esquiva e 5% do poder mágico.
+            if (composition.plate > 0) {
+                nextStats.evasion = Math.max(0, (nextStats.evasion || 0) - 0.004 * composition.plate);
+                nextStats.mag = (nextStats.mag || 0) * (1 - 0.05 * composition.plate);
             }
             // Vida e mana são pontos inteiros (as passivas dão frações: 64 × 1,01).
             nextStats.maxHp = Math.max(1, Math.round(nextStats.maxHp));
@@ -761,6 +783,10 @@
             nextStats.mana = Math.min(nextStats.maxMana, nextStats.mana);
 
             return { stats: nextStats, baseStats, equipmentBonuses };
+        },
+
+        getArmorComposition(equipment = Aethra.GameState?.playerEquipment || {}) {
+            return armorComposition(equipment);
         },
 
         updatePlayerStats(options = {}) {

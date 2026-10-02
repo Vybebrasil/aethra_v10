@@ -1764,6 +1764,8 @@
                     })
                     : null;
                 const equippedStarter = Aethra.GameState.playerEquipment?.weapon;
+                // Suprimentos logo depois de criar (outros testes mexem na mochila em seguida).
+                const suppliesAtCreation = JSON.parse(JSON.stringify((Aethra.GameState.hero?.bag || []).filter((item) => item.type === "consumable" || item.itemType === "CONSUMABLE")));
                 const starterBar = Aethra.SkillSystem?.getActionBars?.()[0];
                 const PREVIEW_KEYS = ["maxHp", "maxMana", "maxEnergy", "damageMin", "damageMax", "defense", "precision", "critical", "evasion"];
                 const createdStats = Aethra.GameState.hero?.stats || {};
@@ -2245,18 +2247,20 @@
                 const starterOffhand = Aethra.GameState.playerEquipment?.offhand;
                 const starterSupplies = Aethra.GameState.hero?.bag || [];
                 const healthStarter = starterSupplies.find((item) => item.templateId === "potion_health");
-                const manaStarter = starterSupplies.find((item) => item.templateId === "potion_mana");
+                // Suprimentos pela vocação (Vanguarda: vida e vigor), todos vinculados.
+                const expectedSupplies = Aethra.CharacterBuildSystem.getStarterSupplies(Aethra.GameState.hero?.archetypeId);
+                const suppliesMatch = Object.entries(expectedSupplies).every(([templateId, quantity]) => {
+                    const stack = suppliesAtCreation.find((item) => item.templateId === templateId);
+                    return stack?.quantity === quantity && stack?.ownership?.bound === true;
+                });
                 checks.push(
                     createCheck(
                         "Kit inicial usa instâncias oficiais e vinculadas",
                         Boolean(equippedStarter?.instanceId)
                             && Boolean(starterChest?.instanceId)
                             && Boolean(starterOffhand?.instanceId)
-                            && healthStarter?.quantity === 5
-                            && manaStarter?.quantity === 5
-                            && healthStarter?.ownership?.bound === true
-                            && manaStarter?.ownership?.bound === true,
-                        `${equippedStarter?.name || "sem arma"} · ${starterChest?.name || "sem armadura"} · ${starterOffhand?.name || "sem escudo"} · ${starterSupplies.length} pilhas`
+                            && suppliesMatch,
+                        `${equippedStarter?.name || "sem arma"} · ${starterChest?.name || "sem armadura"} · ${starterOffhand?.name || "sem escudo"} · ${starterSupplies.length} pilhas · ${suppliesAtCreation.map((item) => `${item.templateId}×${item.quantity}`).join(", ")}`
                     )
                 );
 
@@ -3980,7 +3984,8 @@
                 checks.push(createCheck("Voltar à cidade pela missão encerra a expedição", returnWorks, returnDetail));
 
                 // Passiva de placa multiplica a vida (64 × 1,01): o resultado volta inteiro.
-                const roundedStats = Aethra.EquipSystem.composeStats({ maxHp: 64, hp: 64, maxMana: 27, mana: 27, defense: 5 }, {}, { armorLevels: { plate: 2, cloth: 3 } }).stats;
+                const fullPlate = Object.fromEntries(["head", "chest", "hands", "legs", "feet"].map((slot) => [slot, { templateId: `integration_${slot}`, armorType: "plate", stats: {} }]));
+                const roundedStats = Aethra.EquipSystem.composeStats({ maxHp: 64, hp: 64, maxMana: 27, mana: 27, defense: 5 }, fullPlate, { armorLevels: { plate: 2, cloth: 3 } }).stats;
                 checks.push(createCheck(
                     "Vida e mana máximas ficam inteiras com as passivas de armadura",
                     Number.isInteger(roundedStats.maxHp) && Number.isInteger(roundedStats.maxMana) && roundedStats.maxHp === 65,
@@ -4287,6 +4292,37 @@
                     Aethra.EquipSystem?.recalculateStats?.({ emit: false, save: false, source: "integration-restore" });
                 }
                 checks.push(createCheck("Cada nível dá vida e mana conforme a vocação", vocationWorks, vocationDetail));
+
+                /*
+                 * Kit e armadura com lógica: cada arquétipo nasce com o peitoral da sua
+                 * classe (Arcanista tecido, Batedor couro, Vanguarda placa), escudo só
+                 * para quem usa, Cura só para quem estudou Restauração. A Loja vende as
+                 * três linhas iniciais. A placa pesa (menos esquiva e poder mágico) e
+                 * a passiva de cada classe vale na proporção das peças vestidas.
+                 */
+                const kitBuild = Aethra.CharacterBuildSystem;
+                const chestOf = (archetypeId) => kitBuild.getStarterEquipment(archetypeId).find((entry) => entry.slot === "chest")?.templateId;
+                const shieldOf = (archetypeId) => kitBuild.getStarterEquipment(archetypeId).some((entry) => entry.slot === "offhand");
+                const kitOk = chestOf("arcanist") === "eg_chest_cloth_l1" && chestOf("ranger") === "eg_chest_leather_l1"
+                    && chestOf("nightblade") === "eg_chest_leather_l1" && chestOf("vanguard") === "eg_chest_l1"
+                    && shieldOf("vanguard") && shieldOf("templar") && !shieldOf("berserker") && !shieldOf("arcanist");
+                const barOf = (archetypeId) => Aethra.DisciplineSystem.getStarterSkills(kitBuild.archetypes[archetypeId].masteries);
+                const suppliesOf = (archetypeId) => kitBuild.getStarterSupplies(archetypeId);
+                const suppliesOk = suppliesOf("arcanist").potion_mana > 0 && !suppliesOf("vanguard").potion_mana && !suppliesOf("berserker").potion_mana
+                    && suppliesOf("berserker").minor_vigor_tonic > 0 && suppliesOf("templar").potion_mana > 0;
+                const healOk = barOf("templar").includes("heal") && barOf("arcanist").includes("heal") && !barOf("berserker").includes("heal") && !barOf("ranger").includes("heal");
+                const shopArmor = Aethra.MarketplaceSystem.getNpcCatalog(1).map((item) => item.id || item.templateId);
+                const shopOk = ["eg_chest_l1", "eg_chest_leather_l1", "eg_chest_cloth_l1", "eg_feet_cloth_l1", "eg_hands_leather_l1"].every((id) => shopArmor.includes(id));
+                const pieces = (type) => Object.fromEntries(["head", "chest", "hands", "legs", "feet"].map((slot) => [slot, { templateId: `integration_${slot}`, armorType: type, stats: {} }]));
+                const baseCaster = { mag: 10, evasion: 0.05, maxHp: 60, hp: 60, maxMana: 40, mana: 40, defense: 2 };
+                const inPlate = Aethra.EquipSystem.composeStats(baseCaster, pieces("plate"), { armorLevels: { cloth: 5 } }).stats;
+                const inCloth = Aethra.EquipSystem.composeStats(baseCaster, pieces("cloth"), { armorLevels: { cloth: 5 } }).stats;
+                const weightOk = inPlate.mag < 10 && inPlate.evasion < 0.05 && inCloth.mag > 10;
+                checks.push(createCheck(
+                    "Kit, Cura e armaduras seguem a lógica de cada vocação",
+                    kitOk && suppliesOk && healOk && shopOk && weightOk,
+                    `kit ${kitOk ? "por classe" : "errado"} · poções ${suppliesOk ? "pela vocação" : "iguais para todos"} · Cura ${healOk ? "só com Restauração" : "para todos"} · Loja ${shopOk ? "3 linhas" : "incompleta"} · placa ${inPlate.mag.toFixed(1)} de Magia vs tecido ${inCloth.mag.toFixed(1)}`
+                ));
 
                 // Registro em português e no andar final a escada conclui a expedição.
                 const rewardText = Aethra.BattleLogger.formatRewardMessage("Lobo", { xp: 5, gold: 0, lootCount: 2 });

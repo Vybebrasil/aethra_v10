@@ -625,7 +625,9 @@
                 .filter(([id, value]) => number(value, 0) > 0 && DEFINITIONS[id]?.starterSkill)
                 .sort((a, b) => number(b[1], 0) - number(a[1], 0))
                 .map(([id]) => DEFINITIONS[id].starterSkill);
-            return [...new Set([...selected, "guard", "heal"])].slice(0, 5);
+            // Cura é magia de Restauração: só entra na barra de quem a estudou.
+            const support = number(investments.restoration, 0) > 0 ? ["guard", "heal"] : ["guard"];
+            return [...new Set([...selected, ...support])].slice(0, 5);
         },
 
         configureStarterLoadout(investments = {}) {
