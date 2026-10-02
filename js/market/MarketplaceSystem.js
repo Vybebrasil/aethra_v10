@@ -284,11 +284,16 @@
             Aethra.ItemSystem &&
             typeof Aethra.ItemSystem.generateItem === "function"
         ) {
+            // O mercador vende a peça padrão: comum, sem afixos e sempre igual.
+            // Raridade e afixos vêm de drops, chefes e Oficinas (comprar não é
+            // loteria).
+            const merchantStock = metadata.purchaseOrigin === "npc-shop";
             item = Aethra.ItemSystem.generateItem(templateId, {
                 source: metadata.source || "marketplace",
                 qualityMin: metadata.qualityMin,
                 qualityMax: metadata.qualityMax,
-                quantity: metadata.quantity
+                quantity: metadata.quantity,
+                ...(merchantStock ? { rarity: "common", affixes: [], fixedRolls: true } : {})
             });
         } else if (
             Aethra.ItemSystem &&

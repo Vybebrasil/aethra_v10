@@ -4397,6 +4397,23 @@
                     curveLevels.map((level) => `nv${level}: ${Math.round(killsAt(level))} abates`).join(" · ")
                 ));
 
+                // Mercador vende a peça comum, sem afixos e sempre igual (não é loteria).
+                const stockBuys = inCityForShop(() => {
+                    const heroGold = Aethra.GameState.hero.gold;
+                    const bagBefore = Aethra.GameState.hero.bag;
+                    Aethra.GameState.hero.gold = 5000;
+                    try {
+                        return [1, 2, 3, 4].map(() => Aethra.MarketplaceSystem.buyItem("eg_bow_l6", 1)?.items?.[0]).filter(Boolean);
+                    } finally {
+                        Aethra.GameState.hero.gold = heroGold;
+                        Aethra.GameState.hero.bag = bagBefore;
+                    }
+                });
+                const stockSignature = (item) => JSON.stringify([item.rarityId, item.affixes?.length || 0, Aethra.ItemSystem.getEffectiveItemStats(item)]);
+                const stockOk = stockBuys.length === 4 && stockBuys.every((item) => item.rarityId === "common" && !(item.affixes || []).length)
+                    && new Set(stockBuys.map(stockSignature)).size === 1;
+                checks.push(createCheck("Mercador vende a peça comum e sempre igual", stockOk, `${stockBuys.length} compras · ${[...new Set(stockBuys.map((item) => `${item.name} (${item.rarityId})`))].join(" / ")}`));
+
                 // Registro em português e no andar final a escada conclui a expedição.
                 const rewardText = Aethra.BattleLogger.formatRewardMessage("Lobo", { xp: 5, gold: 0, lootCount: 2 });
                 const finalHunt = Aethra.GameState.hunt;

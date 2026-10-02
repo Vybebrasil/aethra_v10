@@ -225,7 +225,7 @@
             ${description ? `<p class="ui3-item-description">${K.esc(description)}</p>` : ""}
             ${I.rowsHTML(I.statRows(item))}
             ${I.isEquipable(item) ? I.comparisonHTML(item, { baseValues: true }) : ""}
-            ${I.isEquipable(item) ? `<p class="ui3-caption">Cada peça comprada recebe sua própria variação de atributos.</p>` : ""}
+            ${I.isEquipable(item) ? `<p class="ui3-caption">O mercador vende a peça comum, sempre igual. Peças raras e com afixos vêm de drops, chefes e Oficinas.</p>` : ""}
             ${quantityPicker}
             <div class="ui3-row-between ui3-item-value"><span>Preço${quantity > 1 ? ` (${quantity} × ${K.formatNumber(unitPrice(item))})` : ""}</span><strong>${K.formatNumber(total)} o</strong></div>
             <div class="ui3-item-actions">${noticeHTML()}${K.button({
