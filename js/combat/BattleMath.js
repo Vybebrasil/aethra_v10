@@ -23,9 +23,23 @@
                 source: "battle-damage-calculation"
             });
 
-            const profile = this.getWeaponDamageProfile(
-                options.weapon || this.getEquippedWeapon()
-            );
+            /*
+             * Golpe do herói com a arma principal (ou desarmado): rola o Ataque
+             * que o painel mostra (atributos + Força + arma com qualidade e
+             * afixos, já efetivos). Antes usava só a arma e a Força não valia.
+             */
+            const attackStats = Aethra.GameState.hero?.stats || {};
+            const mainWeapon = this.getEquippedWeapon();
+            const attackWeaponRef = options.weapon || mainWeapon;
+            const weaponKey = (weapon) => weapon?.instanceId || weapon?.templateId || weapon?.id || null;
+            const heroMin = integer(attackStats.damageMin, 0);
+            const heroMax = integer(attackStats.damageMax, 0);
+            const usesHeroAttack = options.heroAttack === true
+                && heroMin >= 1 && heroMax >= heroMin
+                && (!attackWeaponRef || !mainWeapon || weaponKey(attackWeaponRef) === weaponKey(mainWeapon));
+            const profile = usesHeroAttack
+                ? { baseMin: heroMin, baseMax: heroMax, multiplier: 1, individualMin: 1, individualMax: 1, affixMin: 0, affixMax: 0 }
+                : this.getWeaponDamageProfile(attackWeaponRef);
 
             // null/undefined = sem base fixa: rola a arma. Number(null) é 0, e
             // toda habilidade física (baseDamage: null) batia com base 1.
@@ -301,6 +315,7 @@
                         isBlocked,
                         blockReduction,
                         weapon: attackWeapon,
+                        heroAttack: true,
                         baseDamage: options.baseDamage,
                         defenseMultiplier: 1 - clamp(number(disciplineProfile?.armorPenetration, 0), 0, 0.9)
                     }

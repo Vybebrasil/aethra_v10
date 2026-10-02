@@ -687,10 +687,12 @@
                     )
                 );
 
-                nextStats.damageMin = damageMin;
-                nextStats.damageMax = damageMax;
+                // Força: cada 5 pontos somam +1 ao Ataque físico.
+                const strengthBonus = Math.floor(Math.max(0, Number(nextStats.str) || 0) / 5);
+                nextStats.damageMin = damageMin + strengthBonus;
+                nextStats.damageMax = damageMax + strengthBonus;
                 nextStats.damage = Math.round(
-                    (damageMin + damageMax) / 2
+                    (nextStats.damageMin + nextStats.damageMax) / 2
                 );
             }
 

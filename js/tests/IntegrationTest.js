@@ -4452,6 +4452,41 @@
                 }
                 checks.push(createCheck("Equipamento desgasta de verdade e avisa", wearWorks, wearDetail));
 
+                /*
+                 * O golpe do herói rola o Ataque do painel (atributos + Força + arma);
+                 * antes só a arma contava e a Força não fazia nada. Força 10 = +2.
+                 */
+                const attackHero = Aethra.GameState.hero;
+                const attackBackup = { stats: JSON.parse(JSON.stringify(attackHero.stats || {})), random: Aethra.BattleSystem.randomSource, update: Aethra.EquipSystem.updatePlayerStats };
+                let attackWorks = false;
+                let attackDetail = "";
+                try {
+                    const strong = Aethra.EquipSystem.composeStats({ damageMin: 3, damageMax: 5, str: 10, maxHp: 50, hp: 50 }, {}).stats;
+                    const weak = Aethra.EquipSystem.composeStats({ damageMin: 3, damageMax: 5, str: 4, maxHp: 50, hp: 50 }, {}).stats;
+                    attackHero.stats.damageMin = 20;
+                    attackHero.stats.damageMax = 20;
+                    Aethra.BattleSystem.randomSource = () => 0.99;
+                    Aethra.EquipSystem.updatePlayerStats = () => attackHero.stats;
+                    const rolled = Aethra.BattleSystem.calculateDamage({ stats: { defense: 0 } }, { heroAttack: true, isCrit: false, details: true });
+                    // E o ataque de verdade do herói pede esse modo.
+                    const calcOriginal = Aethra.BattleSystem.calculateDamage;
+                    let heroAttackFlag = null;
+                    Aethra.BattleSystem.calculateDamage = function (defender, options = {}) { heroAttackFlag = options.heroAttack === true; return calcOriginal.apply(this, arguments); };
+                    try {
+                        Aethra.BattleSystem.randomSource = () => 0.01;
+                        Aethra.BattleSystem.resolveAttack(Aethra.BattleSystem.getHeroCombatant(), { id: "dummy", name: "Boneco", stats: { defense: 0, evasion: 0 } }, "hero", {});
+                    } finally {
+                        Aethra.BattleSystem.calculateDamage = calcOriginal;
+                    }
+                    attackWorks = strong.damageMin === 5 && strong.damageMax === 7 && weak.damageMin === 3 && rolled.baseDamage === 20 && rolled.amount === 20 && heroAttackFlag === true;
+                    attackDetail = `Força 10: ${strong.damageMin}–${strong.damageMax} · Força 4: ${weak.damageMin}–${weak.damageMax} · golpe com Ataque 20: ${rolled.amount}`;
+                } finally {
+                    attackHero.stats = attackBackup.stats;
+                    Aethra.BattleSystem.randomSource = attackBackup.random;
+                    Aethra.EquipSystem.updatePlayerStats = attackBackup.update;
+                }
+                checks.push(createCheck("Golpe usa o Ataque do painel e a Força conta", attackWorks, attackDetail));
+
                 // Registro em português e no andar final a escada conclui a expedição.
                 const rewardText = Aethra.BattleLogger.formatRewardMessage("Lobo", { xp: 5, gold: 0, lootCount: 2 });
                 const finalHunt = Aethra.GameState.hunt;
