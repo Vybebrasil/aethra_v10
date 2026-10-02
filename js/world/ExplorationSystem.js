@@ -81,7 +81,7 @@
             id: "camp",
             icon: "△",
             title: "Acampamento abandonado",
-            description: "Restos de suprimentos podem ajudar na sobrevivência da sessão.",
+            description: "Um abrigo com restos de suprimentos: dá para recuperar o fôlego e talvez achar uma poção.",
             actionLabel: "Vasculhar",
             professionId: "survival",
             actionType: "camp",
@@ -861,7 +861,14 @@
                 const floor = Math.floor(scaled);
                 return Math.max(1, floor + (this.randomSource() < scaled - floor ? 1 : 0));
             };
-            const scaleGold = (value) => Math.max(0, Math.round(Number(value || 0) * goldMultiplier));
+            /*
+             * Ouro de baús e passagens cresce com o nível da zona (Bosque 1×,
+             * Fronteira Goblin 1,5×, Cripta ~2×…): antes um baú de zona nível 90
+             * dava os mesmos 6–18 de ouro do Bosque.
+             */
+            const zoneLevel = Math.max(1, integer(Aethra.HuntSystem?.getHuntDefinition?.()?.minLevel, 1));
+            const zoneScale = 1 + (zoneLevel - 1) / 8;
+            const scaleGold = (value) => Math.max(0, Math.round(Number(value || 0) * goldMultiplier * zoneScale));
             const checkBonus = Math.max(0, Number(context.skillCheck?.level || 1) - Number(context.skillCheck?.requiredLevel || 1));
 
             if (event.id === "mining") {
@@ -934,18 +941,37 @@
                 };
             }
 
+            // Altar: um quinto da mana e do vigor (mínimo 10/15), pelo dono dos recursos.
             if (event.id === "shrine") {
-                const hero = Aethra.GameState.hero || {};
-                const stats = hero.stats || {};
-                stats.mana = Math.min(Number(stats.maxMana || 50), Number(stats.mana || 0) + 10);
-                stats.energy = Math.min(Number(stats.maxEnergy || 100), Number(stats.energy || 0) + 15);
-                return { items: [], gold: 0, summary: "+10 Mana e +15 Vigor" };
+                const stats = Aethra.GameState.hero?.stats || {};
+                const skills = Aethra.SkillSystem;
+                const mana = Math.max(10, Math.round(Number(stats.maxMana || 0) * 0.2));
+                const energy = Math.max(15, Math.round(Number(stats.maxEnergy || 0) * 0.2));
+                skills?.setResource?.("mana", Number(skills.getResource?.("mana") ?? stats.mana ?? 0) + mana, "exploration:shrine");
+                skills?.setResource?.("energy", Number(skills.getResource?.("energy") ?? stats.energy ?? 0) + energy, "exploration:shrine");
+                return { items: [], gold: 0, summary: `+${mana} Mana e +${energy} Vigor` };
             }
 
+            /*
+             * Acampamento: descanso de verdade (um quarto da vida) e, às vezes, uma
+             * Poção de Vida esquecida. Antes só abatia 3 do "custo" do relatório e
+             * o jogador não ganhava nada.
+             */
             if (event.id === "camp") {
-                const hunt = Aethra.GameState.hunt || {};
-                hunt.supplyCost = Math.max(0, Number(hunt.supplyCost || 0) - 3);
-                return { items: [], gold: 0, summary: "3 de custo recuperado" };
+                const stats = Aethra.GameState.hero?.stats || {};
+                const rest = Math.max(1, Math.round(Number(stats.maxHp || 0) * 0.25));
+                const healing = Aethra.BattleSystem?.applyHealing?.(rest, {
+                    source: "exploration:camp",
+                    skillName: "Descanso no acampamento",
+                    allowZero: true
+                });
+                const healed = Math.max(0, integer(healing?.healedAmount, 0));
+                const potion = this.randomSource() < 0.3
+                    ? Aethra.ItemSystem?.generateItem?.("potion_health", { quantity: 1, source: "exploration:camp" })
+                    : null;
+                const parts = [healed > 0 ? `+${healed} de vida no descanso` : "Descanso (vida cheia)"];
+                if (potion) parts.push("1 Poção de Vida");
+                return { items: potion ? [potion] : [], gold: 0, summary: parts.join(" · ") };
             }
 
             return { items: [], gold: scaleGold(2), summary: `${scaleGold(2)} Gold encontrados` };

@@ -4325,6 +4325,42 @@
                 }
                 checks.push(createCheck("Beber poção não toma o golpe da rodada", sipWorks, sipDetail));
 
+                /*
+                 * Eventos de exploração com recompensa de verdade: acampamento cura um
+                 * quarto da vida (antes só mexia no relatório), altar devolve mana e
+                 * vigor pelo SkillSystem e o ouro do baú cresce com o nível da zona.
+                 */
+                const eventHero = Aethra.GameState.hero;
+                const eventBackup = { hp: eventHero.stats.hp, heroHp: eventHero.hp, mana: eventHero.stats.mana, heroMana: eventHero.mana, energy: eventHero.stats.energy, heroEnergy: eventHero.energy, huntId: Aethra.GameState.hunt.huntId, random: Aethra.ExplorationSystem.randomSource };
+                let eventWorks = false;
+                let eventDetail = "";
+                try {
+                    const exploration = Aethra.ExplorationSystem;
+                    exploration.randomSource = () => 0;
+                    eventHero.stats.maxHp = Math.max(40, Number(eventHero.stats.maxHp) || 40);
+                    eventHero.stats.hp = 1;
+                    eventHero.hp = 1;
+                    const camp = exploration.generateRewards({ id: "camp", professionId: "survival" }, {});
+                    const expectedRest = Math.round(eventHero.stats.maxHp * 0.25);
+                    const campOk = eventHero.hp === 1 + expectedRest && eventHero.stats.hp === eventHero.hp
+                        && camp.items.some((item) => item.templateId === "potion_health");
+                    Aethra.SkillSystem.setResource("mana", 0, "integration-shrine");
+                    exploration.generateRewards({ id: "shrine", professionId: "exploration" }, {});
+                    const shrineOk = eventHero.mana >= 10 && eventHero.mana === eventHero.stats.mana;
+                    Aethra.GameState.hunt.huntId = "whispering_forest";
+                    const forestChest = exploration.generateRewards({ id: "chest", professionId: "thievery" }, {}).gold;
+                    Aethra.GameState.hunt.huntId = "goblin_frontier";
+                    const goblinChest = exploration.generateRewards({ id: "chest", professionId: "thievery" }, {}).gold;
+                    eventWorks = campOk && shrineOk && forestChest === 6 && goblinChest === 9;
+                    eventDetail = `acampamento: vida 1→${eventHero.stats.hp === eventHero.hp ? eventHero.hp : "dessincronizada"} (${camp.summary}) · altar: mana ${eventHero.mana} · baú Bosque ${forestChest} / Fronteira Goblin ${goblinChest}`;
+                } finally {
+                    Aethra.ExplorationSystem.randomSource = eventBackup.random;
+                    Aethra.GameState.hunt.huntId = eventBackup.huntId;
+                    Object.assign(eventHero.stats, { hp: eventBackup.hp, mana: eventBackup.mana, energy: eventBackup.energy });
+                    Object.assign(eventHero, { hp: eventBackup.heroHp, mana: eventBackup.heroMana, energy: eventBackup.heroEnergy });
+                }
+                checks.push(createCheck("Eventos de exploração dão recompensa que faz sentido", eventWorks, eventDetail));
+
                 // Poção de Mana não cura vida (nem a nova, nem a salva com healAmount antigo).
                 const manaHero = Aethra.GameState.hero;
                 const manaBackup = { bag: manaHero.bag };
