@@ -201,7 +201,11 @@
             ["Bloqueio", K.formatStat("blockChance", stats.blockChance)],
             ["Crítico", K.formatStat("critical", stats.critical)],
             ["Esquiva", K.formatStat("evasion", stats.evasion)],
-            ["Precisão", K.formatStat("precision", stats.precision)]
+            ["Precisão", K.formatStat("precision", stats.precision)],
+            // Força já entra no Ataque (+1 a cada 5); Magia move o dano das magias e a mana por rodada.
+            ["Força", K.formatNumber(Math.round(Number(stats.str) || 0))],
+            ["Magia", K.formatNumber(Math.round(Number(stats.mag) || 0))],
+            ["Mana/rodada", `+${K.formatNumber(Aethra.BattleSystem?.getRoundRegeneration?.(stats)?.mana ?? 0)}`]
         ];
         return entries.map(([label, value]) => `<div class="ui3-stat"><span class="ui3-eyebrow">${K.esc(label)}</span><strong>${K.esc(value)}</strong></div>`).join("");
     }

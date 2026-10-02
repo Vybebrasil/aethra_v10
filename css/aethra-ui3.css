@@ -1496,20 +1496,21 @@
 #ui3-root .ui3-stat-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 6px;
+    gap: 4px;
 }
 
+/* Três linhas de atributos (com Força, Magia e mana por rodada) cabem em 720p. */
 #ui3-root .ui3-stat {
-    padding: var(--ui3-space-2) 10px;
+    padding: 4px 8px;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 0;
     background: var(--ui3-bg-2);
     border-radius: var(--ui3-radius-md);
 }
 
 #ui3-root .ui3-stat strong {
-    font-size: var(--ui3-fs-lg);
+    font-size: var(--ui3-fs-md);
     font-weight: 700;
 }
 

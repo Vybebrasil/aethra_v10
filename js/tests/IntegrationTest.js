@@ -4381,6 +4381,20 @@
                 }
                 checks.push(createCheck("Coliseu usa os atributos do painel", arenaWorks, arenaDetail));
 
+                // Painel do herói mostra Força, Magia e a mana que volta por rodada.
+                let panelStats = [];
+                withUi3Game(() => {
+                    windowManager.openWindow("inventory-view", { source: "integration-panel" });
+                    panelStats = [...document.querySelectorAll("#ui3-root [data-ui3-window='inventory-view'] .ui3-stat .ui3-eyebrow")].map((node) => node.textContent.trim());
+                    windowManager.closeWindow("inventory-view", { source: "integration-restore" });
+                });
+                const expectedRegen = Aethra.BattleSystem.getRoundRegeneration(Aethra.GameState.hero.stats).mana;
+                checks.push(createCheck(
+                    "Painel do herói mostra Força, Magia e mana por rodada",
+                    ["Força", "Magia", "Mana/rodada"].every((label) => panelStats.includes(label)) && expectedRegen >= 2,
+                    panelStats.join(", ")
+                ));
+
                 // Poção de Mana não cura vida (nem a nova, nem a salva com healAmount antigo).
                 const manaHero = Aethra.GameState.hero;
                 const manaBackup = { bag: manaHero.bag };
