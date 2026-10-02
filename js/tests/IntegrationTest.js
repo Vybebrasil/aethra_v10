@@ -4387,6 +4387,16 @@
                 }
                 checks.push(createCheck("Loja só abre na cidade", merchantWorks, merchantDetail));
 
+                // Curva de XP: abates por nível (contra monstros do próprio nível) só crescem.
+                const killsAt = (level) => Aethra.XPSystem.getXPRequired(level) / (3 + 1.55 * level);
+                const curveLevels = [1, 5, 10, 20, 50, 100];
+                const curveGrows = curveLevels.every((level, index) => index === 0 || killsAt(level) > killsAt(curveLevels[index - 1]));
+                checks.push(createCheck(
+                    "Curva de XP pede mais abates a cada nível",
+                    curveGrows && killsAt(100) > 100 && killsAt(1) >= 10,
+                    curveLevels.map((level) => `nv${level}: ${Math.round(killsAt(level))} abates`).join(" · ")
+                ));
+
                 // Registro em português e no andar final a escada conclui a expedição.
                 const rewardText = Aethra.BattleLogger.formatRewardMessage("Lobo", { xp: 5, gold: 0, lootCount: 2 });
                 const finalHunt = Aethra.GameState.hunt;

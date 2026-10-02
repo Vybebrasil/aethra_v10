@@ -240,12 +240,17 @@
 
                     if (level >= this.maxLevel) return 0;
 
-                    return Math.max(
-                        1,
-                        Math.round(
-                            this.baseXP * this.xpGrowth ** (level - 1)
-                        )
-                    );
+                    /*
+                     * XP para o próximo nível = XP de um monstro do mesmo nível
+                     * (CreatureBalanceConfig: 3 + 1,55 × nível) × abates esperados,
+                     * que crescem com o nível (12 no 1, ~25 no 10, ~40 no 20, ~150
+                     * no 100). A curva antiga (100 × 1,0057^nível) quase não subia
+                     * enquanto o XP dos monstros subia: no nível 100 um abate dava
+                     * um nível.
+                     */
+                    const monsterXP = 3 + 1.55 * level;
+                    const killsPerLevel = 12 + 1.4 * (level - 1);
+                    return Math.max(1, Math.round(monsterXP * killsPerLevel));
                 },
 
                 getCumulativeXP(targetLevel) {
