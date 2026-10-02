@@ -8,9 +8,11 @@
 
     const MAX_DURABILITY = 100;
     const LOW_DURABILITY_PERCENT = 25;
-    const WEAPON_WEAR = 1;
-    const ARMOR_WEAR = 0.4;
-    const ACCESSORY_WEAR = 0.1;
+    // Desgaste por golpe dado (arma) e por pancada recebida (armadura): uma
+    // expedição gasta ~15–20% da arma; umas 5 expedições até ficar crítica.
+    const WEAPON_WEAR = 0.15;
+    const ARMOR_WEAR = 0.06;
+    const ACCESSORY_WEAR = 0.02;
     const ARMOR_SLOTS = new Set(["offhand", "head", "chest", "hands", "legs", "feet"]);
     const ACCESSORY_SLOTS = new Set(["neck", "ring1", "ring2", "relic"]);
     const DEFAULT_POLICY = Object.freeze({
@@ -49,20 +51,21 @@
         return slot === "weapon" || ARMOR_SLOTS.has(slot) || ACCESSORY_SLOTS.has(slot);
     }
 
+    /*
+     * Normaliza no PRÓPRIO objeto. Antes cada leitura trocava item.durability
+     * por um objeto novo, e applyWear gravava o desgaste no antigo: nenhum
+     * equipamento gastava e o reparo nunca era necessário.
+     */
     function ensureDurability(item) {
         if (!isMaintainable(item)) return null;
-        const source = item.durability && typeof item.durability === "object"
-            ? item.durability
-            : {};
-        const max = Math.max(1, round(source.max, MAX_DURABILITY));
-        const current = clamp(source.current ?? max, 0, max);
-        item.durability = {
-            current: round(current),
-            max: round(max),
-            lastChangedAt: source.lastChangedAt || null,
-            brokenAt: source.brokenAt || null
-        };
-        return item.durability;
+        if (!item.durability || typeof item.durability !== "object") item.durability = {};
+        const durability = item.durability;
+        const max = Math.max(1, round(durability.max, MAX_DURABILITY));
+        durability.max = round(max);
+        durability.current = round(clamp(durability.current ?? max, 0, max));
+        durability.lastChangedAt = durability.lastChangedAt || null;
+        durability.brokenAt = durability.brokenAt || null;
+        return durability;
     }
 
     function getPercent(item) {
@@ -130,7 +133,8 @@
         const armorType = String(item?.armorType || template.armorType || "").toLowerCase();
         const templateId = String(item?.templateId || item?.id || "").toLowerCase();
         const craftedBy = String(item?.origin?.professionId || "").toLowerCase();
-        return armorType === "leather"
+        // Tecido e couro se consertam no Curtume; metal na Forja.
+        return armorType === "leather" || armorType === "cloth"
             || templateId.includes("leather")
             || craftedBy === "leatherworking"
             ? "leatherworking"
@@ -148,6 +152,10 @@
     function getRepairMaterial(item) {
         const professionId = getProfessionId(item);
         const tier = getTier(item);
+        const template = getTemplate(item);
+        if (String(item?.armorType || template.armorType || "").toLowerCase() === "cloth") {
+            return { itemId: "cloth_scrap", professionId, stationId: "tannery", actionType: "repair-leather" };
+        }
         if (professionId === "leatherworking") {
             return {
                 itemId: tier >= 3 ? "shadow_leather" : tier >= 2 ? "reinforced_leather" : "beast_hide",
@@ -363,6 +371,19 @@
             };
             if (beforeEffectiveness !== afterEffectiveness) {
                 Aethra.EquipSystem?.recalculateStats?.({ emit: true, save: false, source: "durability-effectiveness" });
+            }
+            // Avisa quando a peça fica gasta (≤25%) ou quebra — uma vez por mudança.
+            const statusBefore = before <= 0 ? "broken" : (before / Math.max(1, durability.max)) * 100 <= LOW_DURABILITY_PERCENT ? "critical" : "ok";
+            if (payload.status !== statusBefore && (payload.status === "critical" || payload.status === "broken")) {
+                const name = item.name || "Equipamento";
+                const where = getRepairMaterial(item).stationId === "tannery" ? "no Curtume" : "na Forja";
+                Aethra.EventBus.emit("BattleLog", {
+                    message: payload.status === "broken"
+                        ? `${name} quebrou e deixou de funcionar. Repare ${where}.`
+                        : `${name} está desgastado (${Math.round(payload.percent)}%) e perde força. Repare ${where}.`,
+                    color: "#ffb36a",
+                    type: "system"
+                });
             }
             if (context.emit !== false) {
                 Aethra.EventBus.emit("equipment:durability-changed", clone(payload));

@@ -4414,6 +4414,38 @@
                     && new Set(stockBuys.map(stockSignature)).size === 1;
                 checks.push(createCheck("Mercador vende a peça comum e sempre igual", stockOk, `${stockBuys.length} compras · ${[...new Set(stockBuys.map((item) => `${item.name} (${item.rarityId})`))].join(" / ")}`));
 
+                /*
+                 * Durabilidade de verdade: o desgaste fica gravado no item (antes caía
+                 * numa cópia e nada gastava), avisa quando a peça fica gasta e o tecido
+                 * se conserta no Curtume com Retalho de Tecido.
+                 */
+                const wearLogs = [];
+                const captureWear = (payload = {}) => wearLogs.push(payload.message);
+                Aethra.EventBus.on("BattleLog", captureWear);
+                const wearHero = Aethra.GameState.hero;
+                const wearBagBefore = wearHero.bag;
+                let wearWorks = false;
+                let wearDetail = "";
+                try {
+                    const sword = Aethra.ItemSystem.generateItem("eg_sword_l1", { source: "integration-wear", rarity: "common", affixes: [] });
+                    const tunic = Aethra.ItemSystem.generateItem("eg_chest_cloth_l1", { source: "integration-wear", rarity: "common", affixes: [] });
+                    wearHero.bag = [sword, tunic];
+                    const maintenance = Aethra.EquipmentMaintenanceSystem;
+                    maintenance.applyWear(sword.instanceId, 30, { source: "integration-wear" });
+                    const afterFirst = sword.durability.current;
+                    maintenance.applyWear(sword.instanceId, 50, { source: "integration-wear" });
+                    const warned = wearLogs.some((message) => /Espada de Recruta está desgastado .* Repare na Forja/.test(message || ""));
+                    maintenance.applyWear(tunic.instanceId, 10, { source: "integration-wear" });
+                    const tunicQuote = maintenance.getRepairQuote(tunic.instanceId);
+                    wearWorks = afterFirst === 70 && sword.durability.current === 20 && warned
+                        && tunicQuote.materialId === "cloth_scrap" && tunicQuote.stationId === "tannery";
+                    wearDetail = `espada 100→${afterFirst}→${sword.durability.current} · aviso ${warned ? "dado" : "ausente"} · túnica repara com ${tunicQuote.materialName} (${tunicQuote.stationId})`;
+                } finally {
+                    Aethra.EventBus.off("BattleLog", captureWear);
+                    wearHero.bag = wearBagBefore;
+                }
+                checks.push(createCheck("Equipamento desgasta de verdade e avisa", wearWorks, wearDetail));
+
                 // Registro em português e no andar final a escada conclui a expedição.
                 const rewardText = Aethra.BattleLogger.formatRewardMessage("Lobo", { xp: 5, gold: 0, lootCount: 2 });
                 const finalHunt = Aethra.GameState.hunt;
