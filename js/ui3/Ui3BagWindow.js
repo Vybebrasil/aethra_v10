@@ -192,6 +192,15 @@
         });
     }
 
+    // Regeneração da vocação: "vida / mana" por rodada, com o vigor na dica.
+    function regenerationEntry(source) {
+        const K = kit();
+        const regen = Aethra.RegenerationSystem?.getProfile?.(source) || { hp: 0, mana: 0, energy: 0 };
+        const value = (amount) => K.formatStat("regen", Math.round(Number(amount) * 10) / 10);
+        return ["Regen.", `+${value(regen.hp)} / +${value(regen.mana)}`,
+            `Por rodada: +${value(regen.hp)} de vida, +${value(regen.mana)} de mana e +${value(regen.energy)} de vigor`];
+    }
+
     function heroStatsHTML() {
         const K = kit();
         const stats = hero().stats || {};
@@ -202,12 +211,12 @@
             ["Crítico", K.formatStat("critical", stats.critical)],
             ["Esquiva", K.formatStat("evasion", stats.evasion)],
             ["Precisão", K.formatStat("precision", stats.precision)],
-            // Força já entra no Ataque (+1 a cada 5); Magia move o dano das magias e a mana por rodada.
+            // Força já entra no Ataque (+1 a cada 5); Magia move o dano das magias e a mana que regenera.
             ["Força", K.formatNumber(Math.round(Number(stats.str) || 0))],
             ["Magia", K.formatNumber(Math.round(Number(stats.mag) || 0))],
-            ["Mana/rodada", `+${K.formatNumber(Aethra.BattleSystem?.getRoundRegeneration?.(stats)?.mana ?? 0)}`]
+            regenerationEntry(hero())
         ];
-        return entries.map(([label, value]) => `<div class="ui3-stat"><span class="ui3-eyebrow">${K.esc(label)}</span><strong>${K.esc(value)}</strong></div>`).join("");
+        return entries.map(([label, value, title]) => `<div class="ui3-stat"${title ? ` title="${K.esc(title)}"` : ""}><span class="ui3-eyebrow">${K.esc(label)}</span><strong>${K.esc(value)}</strong></div>`).join("");
     }
 
     function equipColumnHTML() {

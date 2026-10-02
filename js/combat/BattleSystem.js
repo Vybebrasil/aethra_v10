@@ -193,7 +193,8 @@
             };
 
             this.syncCombatMirror();
-            Aethra.EventBus.emit("HealingReceived", clone(payload));
+            // quiet: cura de fundo (regeneração natural) não vira linha no registro.
+            if (options.quiet !== true) Aethra.EventBus.emit("HealingReceived", clone(payload));
             Aethra.EventBus.emit("HealthChanged", {
                 eventId: payload.eventId,
                 heroHp: hp,
@@ -648,28 +649,6 @@
          * Fase de fúria (chefes): abaixo de enrage.atPercent da vida, o dano da
          * criatura é multiplicado. Avisa uma vez no registro.
          */
-        /*
-         * Regeneração por rodada (decisão do Paulo, 2026-10-01, estilo Tibia):
-         * mana 2 + 1 a cada 5 de Magia, vigor 2. Sem ela o Arcanista soltava
-         * quatro magias e dependia só de poção; poção segue como reforço.
-         */
-        getRoundRegeneration(stats = Aethra.GameState.hero?.stats || {}) {
-            return {
-                mana: 2 + Math.floor(Math.max(0, number(stats.mag, 0)) / 5),
-                energy: 2
-            };
-        },
-
-        regenerateHeroResources() {
-            const skills = Aethra.SkillSystem;
-            if (!skills?.setResource) return null;
-            const regen = this.getRoundRegeneration();
-            ["mana", "energy"].forEach((resource) => {
-                if (regen[resource] > 0) skills.setResource(resource, skills.getResource(resource) + regen[resource], "round-regeneration");
-            });
-            return regen;
-        },
-
         updateCreatureEnrage(creature) {
             const enrage = creature?.enrage;
             if (!enrage) return 1;
@@ -749,7 +728,7 @@
             battle.phase = "round-start";
             battle.roundStartedAt = wallClockNow;
             Aethra.SkillSystem?.cleanupCooldowns?.();
-            this.regenerateHeroResources();
+            // Regeneração de vida/mana/vigor é contínua: RegenerationSystem.
 
             Aethra.EventBus.emit("battle:round-started", {
                 battleId: battle.battleId,

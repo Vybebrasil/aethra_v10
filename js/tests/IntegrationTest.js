@@ -198,6 +198,8 @@
                 "color: #00ff00; font-weight: bold;"
             );
 
+            // A regeneração natural pulsa sozinha; nos testes ela só roda quando chamada.
+            Aethra.RegenerationSystem?.stop?.();
             const checks = [];
             const startedAt = Date.now();
             const xpBefore = readXP();
@@ -4227,43 +4229,64 @@
                 }
                 checks.push(createCheck("Lobo Alfa usa as técnicas do Mural e entra em fúria", wolfWorks, wolfDetail));
 
-                // Regeneração por rodada: mana 2 + 1 a cada 5 de Magia, vigor 2 (sem passar do máximo).
+                /*
+                 * Regeneração natural estilo Tibia: cada vocação no próprio ritmo
+                 * (placa fecha feridas, Arcanista recupera mana), fração acumula,
+                 * não passa do máximo, não levanta herói caído e a luta não soma
+                 * uma segunda regeneração por rodada.
+                 */
                 const regenHero = Aethra.GameState.hero;
-                const regenBackup = { mana: regenHero.stats.mana, energy: regenHero.stats.energy, mag: regenHero.stats.mag, heroMana: regenHero.mana, heroEnergy: regenHero.energy };
+                const regenBackup = JSON.parse(JSON.stringify({ stats: regenHero.stats, hp: regenHero.hp, mana: regenHero.mana, energy: regenHero.energy, archetypeId: regenHero.archetypeId }));
                 let regenWorks = false;
                 let regenDetail = "";
                 try {
-                    regenHero.stats.mag = 10;
+                    const regen = Aethra.RegenerationSystem;
+                    const vanguard = regen.getProfile({ archetypeId: "vanguard", stats: { mag: 0 } });
+                    const arcanist = regen.getProfile({ archetypeId: "arcanist", stats: { mag: 10 } });
+                    const profilesOk = vanguard.hp > arcanist.hp && arcanist.mana > vanguard.mana && arcanist.mana === 4;
+                    regenHero.archetypeId = "vanguard";
+                    regenHero.stats.mag = 0;
+                    regenHero.hp = regenHero.stats.hp = Math.max(1, regenHero.stats.maxHp - 10);
                     Aethra.SkillSystem.setResource("mana", 0, "integration-regen");
                     Aethra.SkillSystem.setResource("energy", 0, "integration-regen");
-                    Aethra.BattleSystem.regenerateHeroResources();
+                    const hpStart = regenHero.hp;
+                    let feedLines = 0;
+                    const countFeed = () => { feedLines += 1; };
+                    Aethra.EventBus.on("HealingReceived", countFeed);
+                    try {
+                        regen.pulse("integration-regen");
+                        regen.pulse("integration-regen");
+                    } finally {
+                        Aethra.EventBus.off("HealingReceived", countFeed);
+                    }
+                    const hpAfter = regenHero.hp;
                     const manaAfter = Aethra.SkillSystem.getResource("mana");
                     const energyAfter = Aethra.SkillSystem.getResource("energy");
-                    Aethra.SkillSystem.setResource("mana", regenHero.stats.maxMana, "integration-regen");
-                    Aethra.BattleSystem.regenerateHeroResources();
-                    const capped = Aethra.SkillSystem.getResource("mana") === regenHero.stats.maxMana;
-                    // E a rodada de combate de verdade chama a regeneração.
-                    const regenOriginal = Aethra.BattleSystem.regenerateHeroResources;
-                    let roundRegens = 0;
-                    Aethra.BattleSystem.regenerateHeroResources = function () { roundRegens += 1; return regenOriginal.apply(this, arguments); };
+                    regenHero.hp = regenHero.stats.hp = regenHero.stats.maxHp;
+                    regen.pulse("integration-regen");
+                    const capped = regenHero.hp === regenHero.stats.maxHp;
+                    regenHero.hp = regenHero.stats.hp = 0;
+                    regen.pulse("integration-regen");
+                    const fallenStays = regenHero.hp === 0;
+                    // A rodada de combate não regenera por conta própria (só o relógio contínuo).
+                    regenHero.hp = regenHero.stats.hp = regenHero.stats.maxHp;
+                    Aethra.SkillSystem.setResource("mana", 0, "integration-regen");
+                    Aethra.BattleSystem.stopCombat("integration-regen-setup");
+                    Aethra.BattleSystem.startCombat({ id: "integration_dummy", name: "Boneco", hp: 999, maxHp: 999, xp: 0, stats: { defense: 0, damageMin: 0, damageMax: 0 } }, { source: "integration-test", noRewards: true });
+                    const manaBeforeRound = Aethra.SkillSystem.getResource("mana");
                     try {
-                        Aethra.BattleSystem.stopCombat("integration-regen-setup");
-                        Aethra.BattleSystem.startCombat({ id: "integration_dummy", name: "Boneco", hp: 999, maxHp: 999, xp: 0, stats: { defense: 0 } }, { source: "integration-test", noRewards: true });
                         Aethra.BattleSystem.tick(Aethra.BattleSystem.battleToken);
                     } finally {
-                        Aethra.BattleSystem.regenerateHeroResources = regenOriginal;
                         Aethra.BattleSystem.stopCombat("integration-restore");
                     }
-                    regenWorks = manaAfter === 4 && energyAfter === 2 && capped && roundRegens >= 1;
-                    regenDetail = `mana +${manaAfter} (Magia 10) · vigor +${energyAfter} · teto ${capped ? "respeitado" : "ultrapassado"} · rodada ${roundRegens ? "regenera" : "não regenera"}`;
+                    const roundAddsNothing = Aethra.SkillSystem.getResource("mana") <= manaBeforeRound;
+                    regenWorks = profilesOk && hpAfter === hpStart + 4 && manaAfter === 1 && energyAfter === 4
+                        && capped && fallenStays && roundAddsNothing && feedLines === 0 && regen.intervalMs() === Aethra.BattleSystem.config.roundMs;
+                    regenDetail = `Vanguarda +${vanguard.hp} vida/+${vanguard.mana} mana · Arcanista (Magia 10) +${arcanist.hp}/+${arcanist.mana} · 2 pulsos: vida +${hpAfter - hpStart}, mana +${manaAfter}, vigor +${energyAfter} · teto ${capped ? "ok" : "ultrapassado"} · caído ${fallenStays ? "fica" : "levanta"} · rodada ${roundAddsNothing ? "não duplica" : "duplica"} · registro ${feedLines ? `${feedLines} linhas de cura` : "limpo"}`;
                 } finally {
-                    regenHero.stats.mag = regenBackup.mag;
-                    regenHero.stats.mana = regenBackup.mana;
-                    regenHero.stats.energy = regenBackup.energy;
-                    regenHero.mana = regenBackup.heroMana;
-                    regenHero.energy = regenBackup.heroEnergy;
+                    Object.assign(regenHero, { stats: regenBackup.stats, hp: regenBackup.hp, mana: regenBackup.mana, energy: regenBackup.energy, archetypeId: regenBackup.archetypeId });
                 }
-                checks.push(createCheck("Mana e vigor regeneram a cada rodada de combate", regenWorks, regenDetail));
+                checks.push(createCheck("Regeneração natural da vocação, contínua e sem duplicar na luta", regenWorks, regenDetail));
 
                 /*
                  * Regras de combate que fazem sentido:
@@ -4390,10 +4413,10 @@
                     panelStats = [...document.querySelectorAll("#ui3-root [data-ui3-window='inventory-view'] .ui3-stat .ui3-eyebrow")].map((node) => node.textContent.trim());
                     windowManager.closeWindow("inventory-view", { source: "integration-restore" });
                 });
-                const expectedRegen = Aethra.BattleSystem.getRoundRegeneration(Aethra.GameState.hero.stats).mana;
+                const expectedRegen = Aethra.RegenerationSystem.getProfile(Aethra.GameState.hero).energy;
                 checks.push(createCheck(
-                    "Painel do herói mostra Força, Magia e mana por rodada",
-                    ["Força", "Magia", "Mana/rodada"].every((label) => panelStats.includes(label)) && expectedRegen >= 2,
+                    "Painel do herói mostra Força, Magia e regeneração",
+                    ["Força", "Magia", "Regen."].every((label) => panelStats.includes(label)) && expectedRegen >= 1,
                     panelStats.join(", ")
                 ));
 

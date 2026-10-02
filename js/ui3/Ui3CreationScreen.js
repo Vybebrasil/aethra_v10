@@ -110,6 +110,8 @@
             || build().previewAttributes(draft.attributes)?.stats || {};
         const sprite = Aethra.SpriteLoader?.getHeroSource?.(draft.archetypeId) || "";
         const hit = Math.min(98, 85 + number(stats.precision));
+        const regen = Aethra.RegenerationSystem?.getProfile?.({ archetypeId: draft.archetypeId, stats }) || { hp: 0, mana: 0, energy: 0 };
+        const regenText = (amount) => K.formatStat("regen", Math.round(Number(amount) * 10) / 10);
         return `<div class="ui3-creation__figure">
                 ${sprite ? `<img src="${K.esc(sprite)}" alt="Prévia do herói" draggable="false">` : ""}
                 <span class="ui3-paperdoll__shadow" aria-hidden="true"></span>
@@ -129,6 +131,7 @@
                 <div class="ui3-stat"><span class="ui3-eyebrow">Acerto</span><strong>${hit}%</strong></div>
                 <div class="ui3-stat"><span class="ui3-eyebrow">Crítico</span><strong>${K.esc(K.formatStat("critical", stats.critical))}</strong></div>
                 <div class="ui3-stat"><span class="ui3-eyebrow">Esquiva</span><strong>${K.esc(K.formatStat("evasion", stats.evasion))}</strong></div>
+                <div class="ui3-stat" title="${K.esc(`Por rodada: +${regenText(regen.hp)} de vida, +${regenText(regen.mana)} de mana e +${regenText(regen.energy)} de vigor`)}"><span class="ui3-eyebrow">Regen.</span><strong>+${K.esc(regenText(regen.hp))} / +${K.esc(regenText(regen.mana))}</strong></div>
             </div>
             <div class="ui3-note ui3-creation__risk"><span>A morte deixa marcas: derrota custa 10% do XP do nível e 10% do ouro, e o herói volta à cidade.</span></div>`;
     }

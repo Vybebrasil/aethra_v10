@@ -1,6 +1,6 @@
 // CityRest.js — a cidade é zona segura: ao voltar para ela, o herói descansa
-// e vida, mana e vigor enchem (decisão do Paulo, 2026-10-01). Fora dela só
-// poção, nível ou morte recuperam.
+// e vida, mana e vigor enchem (decisão do Paulo, 2026-10-01). Fora dela a
+// recuperação é a regeneração da vocação (RegenerationSystem), poção e nível.
 // "Na cidade" = vista principal "city", sem expedição ativa e sem luta: dá
 // para olhar a Cidade com a caçada rodando, e isso não cura.
 (function initCityRest(Aethra) {
