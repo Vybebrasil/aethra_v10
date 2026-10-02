@@ -92,58 +92,61 @@
     // [regra, sprite, ajuste de tamanho, filtro de cor]. A altura vem do
     // tamanho da criatura (Pequeno, Médio, Grande…); o ajuste só refina.
     const CAST = [
-        [/alpha[_-]?wolf/, "wolf", 1.25, "brightness(.62) contrast(1.15)"],
-        [/winter-wolf/, "wolf", 1, "brightness(1.35) saturate(.3)"],
-        [/wolf-spider/, "spider_yellow", 1, ""],
-        [/phase-spider/, "spider_red", 1, "hue-rotate(200deg) opacity(.85)"],
-        [/spider/, "spider_red", 1, ""],
-        [/wolf/, "wolf", 1, "sepia(.35) brightness(.85)"],
+        [/alpha[_-]?wolf/, "hellhound", 0.95, "brightness(1.15) contrast(1.15)"],
+        [/winter-wolf/, "wolf", 1.1, "grayscale(1) brightness(1.5)"],
+        [/wolf-spider/, "bigspider", 1, "sepia(.5) brightness(1.25)"],
+        [/phase-spider/, "bigspider", 1, "hue-rotate(200deg) saturate(1.6) opacity(.82)"],
+        [/ettercap/, "bigspider", 1.1, "hue-rotate(60deg) saturate(1.4)"],
+        [/spider/, "bigspider", 1, ""],
+        [/wolf/, "wolf", 1, "grayscale(.45) brightness(.88)"],
         [/rat/, "rat", 1, ""],
         [/boar/, "boar", 1, ""],
         [/beetle/, "larva", 1, "hue-rotate(-40deg) saturate(1.6)"],
         [/bandit/, "bandit", 1, ""],
-        [/polar-bear/, "bigdog", 1.05, "grayscale(1) brightness(1.9)"],
-        [/owlbear/, "bigdog", 1.1, "sepia(.9) hue-rotate(-15deg) brightness(.7)"],
-        [/black-bear|brown-bear|grizzly|^bear/, "bigdog", 1.3, "sepia(.6) brightness(.45) contrast(1.2)"],
+        [/polar-bear/, "bear", 1, "grayscale(1) brightness(2.3)"],
+        [/owlbear/, "bear", 1.1, "sepia(.5) hue-rotate(-20deg) brightness(1.15)"],
+        [/black-bear|brown-bear|grizzly|^bear/, "bear", 1, "brightness(.55) saturate(.7)"],
         [/hobgoblin/, "goblin", 1, "hue-rotate(-70deg) saturate(1.2)"],
         [/bugbear/, "goblin", 1.15, "sepia(.6) hue-rotate(-20deg)"],
         [/goblin-boss|goblin_boss/, "goblin", 1.2, "saturate(1.4) brightness(1.1)"],
         [/goblin/, "goblin", 1, ""],
         [/orc/, "brute", 1, "sepia(.35) hue-rotate(60deg) saturate(1.3)"],
         [/ogre/, "brute", 1, "sepia(.5) hue-rotate(10deg)"],
-        [/troll/, "cyclope2", 1, "hue-rotate(60deg)"],
+        [/troll/, "brute", 1, "sepia(.6) hue-rotate(70deg) saturate(1.2) brightness(.8)"],
         [/stone-giant/, "king", 1, "grayscale(1) brightness(1.1)"],
         [/frost-giant/, "king", 1, "grayscale(.6) hue-rotate(180deg) brightness(1.2)"],
-        [/zombie/, "skeleton", 1, "sepia(.6) hue-rotate(50deg) saturate(1.5)"],
-        [/ghoul/, "skeleton", 1, "hue-rotate(220deg) brightness(.75)"],
+        [/zombie/, "zombie", 1, "sepia(.6) hue-rotate(50deg) saturate(1.5)"],
+        [/ghoul/, "zombie", 1, "hue-rotate(220deg) brightness(.8)"],
+        [/mummy/, "zombie", 1.05, "sepia(1) brightness(1.2)"],
         [/wight/, "knight", 1, "grayscale(.8) brightness(.7)"],
-        [/mummy/, "skeleton", 1.05, "sepia(1) brightness(1.1)"],
-        [/skeleton|bone-devil/, "skeleton", 1, ""],
-        [/specter|ghost|spirit/, "spirit", 1, "opacity(.8)"],
+        [/bone-devil/, "demon", 0.9, "grayscale(1) brightness(1.5)"],
+        [/skeleton/, "skeleton", 1, ""],
+        [/specter|ghost|spirit|wraith/, "ghost", 1, ""],
         [/vampire/, "warlock", 1, "hue-rotate(130deg) saturate(1.4)"],
         [/lich/, "warlock", 1, "hue-rotate(-60deg) brightness(1.1)"],
         [/hag/, "warlock", 1, "hue-rotate(200deg)"],
-        [/ettercap/, "beast", 1, ""],
         [/toad|frog/, "beast2", 1, "hue-rotate(60deg)"],
         [/crocodile/, "lizard", 1, ""],
         [/shambling|mound/, "mushroom", 1, "hue-rotate(90deg) brightness(.8)"],
-        [/gargoyle|vrock/, "bat", 1, "grayscale(.85)"],
-        [/earth-elemental/, "cyclope", 1, "sepia(.8) brightness(.8)"],
+        [/gargoyle/, "demon", 0.75, "grayscale(1) brightness(1.15)"],
+        [/vrock/, "demon", 0.9, "hue-rotate(60deg)"],
+        [/hezrou/, "hellbeast", 1, "hue-rotate(90deg)"],
+        [/chain-devil/, "hellbeast", 1, "hue-rotate(-30deg) brightness(1.1)"],
+        [/fire-elemental|flame|magma/, "fireskull", 1, ""],
+        [/earth-elemental/, "hellbeast", 1, "grayscale(.7) sepia(.8) brightness(.8)"],
         [/xorn/, "mole", 1, ""],
-        [/white-dragon/, "dragon", 1, "grayscale(1) brightness(1.6)"],
-        [/black-dragon/, "dragon", 1, "brightness(.45)"],
-        [/green-dragon/, "dragon", 1, "hue-rotate(90deg)"],
-        [/blue-dragon/, "dragon", 1, "hue-rotate(200deg)"],
-        [/red-dragon/, "dragon", 1, "hue-rotate(-20deg) saturate(1.4)"],
-        [/wyvern/, "dragon_yellow", 1, ""],
-        [/dragon/, "dragon", 1, ""],
-        [/hezrou/, "beast2", 1, "hue-rotate(-60deg)"],
-        [/chain-devil/, "knight", 1, "hue-rotate(-40deg) saturate(1.6)"],
+        [/white-dragon/, "drake", 1.15, "grayscale(1) brightness(1.9)"],
+        [/black-dragon/, "drake", 1.15, "brightness(.55)"],
+        [/green-dragon/, "drake", 1.15, "sepia(1) hue-rotate(60deg) saturate(2.2)"],
+        [/blue-dragon/, "drake", 1.15, "sepia(1) hue-rotate(170deg) saturate(2.2)"],
+        [/red-dragon/, "drake", 1.15, "sepia(1) hue-rotate(-30deg) saturate(3)"],
+        [/wyvern/, "drake", 1.2, "sepia(1) hue-rotate(10deg) saturate(1.6)"],
+        [/hydra/, "drake", 1.3, "sepia(1) hue-rotate(80deg) saturate(2)"],
+        [/tarrasque/, "drake", 1.6, "brightness(.6) sepia(.6)"],
+        [/dragon/, "drake", 1.15, ""],
         [/aboleth/, "mollusc", 1, "hue-rotate(160deg)"],
         [/kraken/, "mollusc", 1, "hue-rotate(250deg)"],
-        [/hydra/, "snake", 1, "hue-rotate(90deg)"],
         [/naga/, "snake", 1, "sepia(.8) saturate(2)"],
-        [/tarrasque/, "trex", 1, ""],
         [/slime|ooze/, "slime", 1, ""],
         [/mimic/, "mimic", 1, ""],
         [/mushroom|myconid/, "mushroom", 1, ""],
@@ -151,13 +154,14 @@
         [/bat/, "bat", 1, ""]
     ];
     const TYPE_CAST = {
-        beast: "beast", humanoid: "bandit", undead: "skeleton", monstrosity: "beast2", dragon: "dragon",
-        giant: "brute", elemental: "cyclope", fiend: "beast2", plant: "mushroom", ooze: "slime",
-        aberration: "eye", fey: "warlock", celestial: "spirit", construct: "knight"
+        beast: "bear", humanoid: "bandit", undead: "zombie", monstrosity: "hellbeast", dragon: "drake",
+        giant: "brute", elemental: "hellbeast", fiend: "demon", plant: "mushroom", ooze: "slime",
+        aberration: "eye", fey: "warlock", celestial: "ghost", construct: "knight"
     };
     // Altura alvo (pixels de arte) por tamanho; quadrúpedes e rastejantes são baixos.
     const SIZE_HEIGHT = { tiny: 20, small: 34, medium: 50, large: 70, huge: 92, gargantuan: 112 };
-    const LOW_PROFILE = new Set(["wolf", "bigdog", "boar", "rat", "spider_red", "spider_yellow", "lizard", "snake", "larva", "mole", "slime", "mimic"]);
+    const LOW_PROFILE = new Set(["wolf", "bigdog", "bear", "hellhound", "hellcat", "bigspider", "boar", "rat",
+        "spider_red", "spider_yellow", "lizard", "snake", "larva", "mole", "slime", "mimic"]);
     const HERO_HEIGHT = 54;
 
     function sizeHeight(creature = {}) {
@@ -178,7 +182,7 @@
             if (rule) [, key, adjust, filter] = rule;
             else key = TYPE_CAST[String(creature.type || creature.creatureType || "").toLowerCase()] || "beast";
         }
-        if (!catalog().actors?.[key]) key = "beast";
+        if (!catalog().actors?.[key]) key = "bear";
         const def = catalog().actors?.[key];
         const boss = creature.isBoss || creature.rank === "boss" || /alpha[_-]?wolf/.test(id) ? 1.12 : 1;
         const target = sizeHeight(creature) * (LOW_PROFILE.has(key) ? 0.62 : 1) * adjust * boss;
@@ -288,10 +292,10 @@
     const ZONE_BACKGROUND = {
         whispering_forest: "forest", whispering_woods_focus: "forest", verdant_grove_focus: "forest",
         goblin_frontier: "sunset", merchant_ruins_focus: "autumn", arena_focus: "sunset",
-        forgotten_crypt: "crypt", catacombs_focus: "crypt", black_fortress: "crypt",
-        spider_hollow: "hollow", moonfen: "swamp", sunken_temple: "swamp",
+        forgotten_crypt: "graveyard", catacombs_focus: "graveyard", black_fortress: "nighttown",
+        spider_hollow: "hollow", moonfen: "swamp", sunken_temple: "crypt",
         iron_hills: "hills", apprentice_mines_focus: "hills", deep_mines_focus: "hills",
-        frozen_pass: "frost", dragon_coast: "ember", abyssal_rift: "ember", worlds_end: "hollow"
+        frozen_pass: "frost", dragon_coast: "ember", abyssal_rift: "ember", worlds_end: "nighttown"
     };
 
     function zoneBackgroundKey() {
@@ -358,19 +362,35 @@
         return { x: left, y: top, width: Math.max(1, canvas.width - left - right), height: Math.max(1, canvas.height - top - bottom) };
     }
 
+    // Escala final de um ator: monstro enorme encolhe só o bastante para caber
+    // em metade da área de luta (dragão adulto, gigante...).
+    function scaleOf(actor, area, unit) {
+        const base = actor?.scale || 1;
+        if (!actor || actor === hero) return base;
+        const width = (actorDef(actor)?.width || 40) * base * unit;
+        return base * Math.min(1, (area.width * 0.56) / Math.max(1, width));
+    }
+
     // Linha do chão (pés) e tamanho de um pixel de arte em pixels de tela.
     function layout() {
         const area = playArea();
         const baseline = Math.round(area.y + area.height - Math.max(10, area.height * 0.06));
         const unit = Math.max(1.5, Math.min(baseline / WORLD_HEIGHT, canvas.width / 260));
-        const heroX = Math.round(area.x + Math.max(40, area.width * 0.24));
+        let heroX = Math.round(area.x + Math.max(40, area.width * 0.24));
+        // Inimigo grande: o herói recua em vez de o inimigo invadir o espaço dele.
+        if (enemy && !enemy.dying) {
+            const heroHalf = (actorDef(hero)?.width || 40) * scaleOf(hero, area, unit) / 2;
+            const enemyHalf = (actorDef(enemy)?.width || 40) * scaleOf(enemy, area, unit) / 2;
+            const overflow = heroX + (heroHalf + enemyHalf + 10) * unit - (area.x + area.width - enemyHalf * unit - 8);
+            if (overflow > 0) heroX = Math.round(Math.max(area.x + heroHalf * unit * 0.6, heroX - overflow));
+        }
         return { area, baseline, unit, heroX };
     }
 
     // Distância de luta pela largura real dos dois corpos (sem sobreposição).
     function engageX(geo) {
-        const heroHalf = (actorDef(hero)?.width || 40) * (hero.scale || 1) / 2;
-        const enemyHalf = (actorDef(enemy)?.width || 40) * (enemy?.scale || 1) / 2;
+        const heroHalf = (actorDef(hero)?.width || 40) * scaleOf(hero, geo.area, geo.unit) / 2;
+        const enemyHalf = (actorDef(enemy)?.width || 40) * scaleOf(enemy, geo.area, geo.unit) / 2;
         const gap = (heroHalf + enemyHalf + 10) * geo.unit;
         return Math.min(geo.area.x + geo.area.width - enemyHalf * geo.unit - 8, geo.heroX + gap);
     }
@@ -389,7 +409,7 @@
 
     function actorBody(actor, geo) {
         const def = actorDef(actor);
-        const height = (def?.height || 40) * (actor.scale || 1) * geo.unit;
+        const height = (def?.height || 40) * scaleOf(actor, geo.area, geo.unit) * geo.unit;
         return { height, top: geo.baseline - height, center: geo.baseline - height * 0.55 };
     }
 
@@ -404,23 +424,25 @@
         if (!background) return;
         const layers = background.layers || [];
         const unit = geo.unit;
-        const layerHeight = (layers[0]?.h || 160) * unit;
-        const top = geo.baseline + 8 * unit - layerHeight;
+        const bottom = geo.baseline + 8 * unit;
         // Céu acima do fundo: cor do topo da primeira camada.
         const first = image(layers[0]?.src);
-        if (first && top > 0) {
-            context.drawImage(first, 0, 0, 1, 1, 0, 0, canvas.width, top + 1);
+        const firstTop = bottom - (layers[0]?.h || 160) * unit;
+        if (first && firstTop > 0) {
+            context.drawImage(first, 0, 0, 1, 1, 0, 0, canvas.width, firstTop + 1);
         }
         layers.forEach((layer) => {
             const img = image(layer.src);
             if (!img) return;
             const width = layer.w * unit;
+            const height = layer.h * unit;
+            const top = bottom - height;
             let offset = -((scene.worldX * layer.speed * unit) % width);
             if (offset > 0) offset -= width;
             context.save();
             if (layer.glow) context.globalAlpha = 0.55 + Math.sin(now / 1400) * 0.25;
             for (let x = offset; x < canvas.width; x += width) {
-                context.drawImage(img, Math.floor(x), Math.floor(top), Math.ceil(width) + 1, Math.ceil(layerHeight));
+                context.drawImage(img, Math.floor(x), Math.floor(top), Math.ceil(width) + 1, Math.ceil(height));
             }
             context.restore();
         });
@@ -433,7 +455,8 @@
         sunset: ["#6a2f1c", "#45200f", "#24130c"], crypt: ["#3b4660", "#262e40", "#151a26"],
         hollow: ["#4a3560", "#30223f", "#1a1224"], swamp: ["#3d5a3a", "#283d27", "#172317"],
         hills: ["#6b6258", "#48413a", "#2a2622"], frost: ["#dfe9f2", "#a9bccc", "#5d6e7e"],
-        ember: ["#7a2418", "#4e160f", "#250b08"]
+        ember: ["#7a2418", "#4e160f", "#250b08"], graveyard: ["#3a3550", "#25213a", "#141220"],
+        nighttown: ["#2f3a4a", "#1d2531", "#10141c"]
     };
 
     function drawGround(geo, background) {
@@ -476,7 +499,7 @@
         if (done && !actor.dying && !anim.loop) play(actor, idleOrRun(actor), { force: true });
         if (!img) return false;
 
-        const k = (actor.scale || 1) * geo.unit;
+        const k = scaleOf(actor, geo.area, geo.unit) * geo.unit;
         const x = actorScreenX(actor, geo, now);
         const facingRight = actor === hero;
         const flip = def.facing === "front" ? false : (def.facing === "left") === facingRight;
@@ -611,7 +634,7 @@
     function ambientKind() {
         const key = zoneBackgroundKey();
         if (key === "frost") return "snow";
-        if (key === "crypt" || key === "hollow") return "firefly";
+        if (key === "crypt" || key === "hollow" || key === "graveyard" || key === "nighttown") return "firefly";
         if (key === "ember") return "ember";
         return "leaf";
     }
@@ -765,7 +788,7 @@
     }
 
     function enemyStyle() {
-        return /wolf|dog|rat|bear|boar|spider|beast|owl|lizard|dragon|cyclope|mole|bat|larva|snake|trex|mollusc/.test(enemy?.key || "")
+        return /wolf|dog|hound|cat|rat|bear|boar|spider|beast|owl|lizard|dragon|drake|cyclope|mole|bat|larva|snake|trex|mollusc|demon/.test(enemy?.key || "")
             ? "claw"
             : "blade";
     }

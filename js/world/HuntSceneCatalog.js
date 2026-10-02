@@ -1109,29 +1109,44 @@
             },
             "bear": {
                 "facing": "left",
-                "style": "ninja",
                 "anims": {
                     "idle": {
-                        "src": "assets/scene/monsters/bear/walk.png",
-                        "fw": 16,
-                        "fh": 16,
-                        "frames": 4,
-                        "fps": 4,
+                        "src": "assets/scene/monsters/bear/idle.png",
+                        "fw": 120,
+                        "fh": 120,
+                        "frames": 9,
+                        "fps": 9,
                         "loop": true
                     },
                     "run": {
-                        "src": "assets/scene/monsters/bear/walk.png",
-                        "fw": 16,
-                        "fh": 16,
-                        "frames": 4,
-                        "fps": 9,
+                        "src": "assets/scene/monsters/bear/run.png",
+                        "fw": 120,
+                        "fh": 120,
+                        "frames": 9,
+                        "fps": 12,
                         "loop": true
+                    },
+                    "attack": {
+                        "src": "assets/scene/monsters/bear/attack.png",
+                        "fw": 120,
+                        "fh": 120,
+                        "frames": 9,
+                        "fps": 14,
+                        "loop": false
+                    },
+                    "death": {
+                        "src": "assets/scene/monsters/bear/death.png",
+                        "fw": 120,
+                        "fh": 120,
+                        "frames": 8,
+                        "fps": 10,
+                        "loop": false
                     }
                 },
-                "footY": 16,
-                "centerX": 8,
-                "height": 16,
-                "width": 16
+                "footY": 120,
+                "centerX": 52,
+                "height": 58,
+                "width": 93
             },
             "spider_red": {
                 "facing": "left",
@@ -1626,6 +1641,255 @@
                 "centerX": 8,
                 "height": 15,
                 "width": 16
+            },
+            "hellhound": {
+                "facing": "left",
+                "anims": {
+                    "idle": {
+                        "src": "assets/scene/monsters/hellhound/idle.png",
+                        "fw": 67,
+                        "fh": 32,
+                        "frames": 6,
+                        "fps": 9,
+                        "loop": true
+                    },
+                    "run": {
+                        "src": "assets/scene/monsters/hellhound/run.png",
+                        "fw": 67,
+                        "fh": 32,
+                        "frames": 5,
+                        "fps": 12,
+                        "loop": true
+                    }
+                },
+                "footY": 32,
+                "centerX": 31,
+                "height": 24,
+                "width": 42
+            },
+            "hellbeast": {
+                "facing": "left",
+                "anims": {
+                    "idle": {
+                        "src": "assets/scene/monsters/hellbeast/idle.png",
+                        "fw": 64,
+                        "fh": 67,
+                        "frames": 6,
+                        "fps": 9,
+                        "loop": true
+                    },
+                    "attack": {
+                        "src": "assets/scene/monsters/hellbeast/attack.png",
+                        "fw": 64,
+                        "fh": 67,
+                        "frames": 4,
+                        "fps": 12,
+                        "loop": false
+                    }
+                },
+                "footY": 67,
+                "centerX": 32,
+                "height": 65,
+                "width": 49
+            },
+            "ghost": {
+                "facing": "left",
+                "anims": {
+                    "idle": {
+                        "src": "assets/scene/monsters/ghost/idle.png",
+                        "fw": 64,
+                        "fh": 80,
+                        "frames": 7,
+                        "fps": 9,
+                        "loop": true
+                    },
+                    "death": {
+                        "src": "assets/scene/monsters/ghost/death.png",
+                        "fw": 64,
+                        "fh": 80,
+                        "frames": 6,
+                        "fps": 10,
+                        "loop": false
+                    }
+                },
+                "footY": 66,
+                "centerX": 32,
+                "height": 47,
+                "width": 28
+            },
+            "demon": {
+                "facing": "left",
+                "anims": {
+                    "idle": {
+                        "src": "assets/scene/monsters/demon/idle.png",
+                        "fw": 192,
+                        "fh": 176,
+                        "frames": 6,
+                        "fps": 8,
+                        "loop": true
+                    },
+                    "attack": {
+                        "src": "assets/scene/monsters/demon/attack.png",
+                        "fw": 192,
+                        "fh": 176,
+                        "frames": 8,
+                        "fps": 12,
+                        "loop": false
+                    }
+                },
+                "footY": 160,
+                "centerX": 98,
+                "height": 125,
+                "width": 156
+            },
+            "fireskull": {
+                "facing": "left",
+                "anims": {
+                    "idle": {
+                        "src": "assets/scene/monsters/fireskull/idle.png",
+                        "fw": 96,
+                        "fh": 112,
+                        "frames": 8,
+                        "fps": 10,
+                        "loop": true
+                    }
+                },
+                "footY": 108,
+                "centerX": 46,
+                "height": 99,
+                "width": 89
+            },
+            "zombie": {
+                "facing": "left",
+                "anims": {
+                    "idle": {
+                        "src": "assets/scene/monsters/zombie/idle.png",
+                        "fw": 44,
+                        "fh": 52,
+                        "frames": 8,
+                        "fps": 8,
+                        "loop": true
+                    },
+                    "run": {
+                        "src": "assets/scene/monsters/zombie/run.png",
+                        "fw": 44,
+                        "fh": 52,
+                        "frames": 8,
+                        "fps": 10,
+                        "loop": true
+                    },
+                    "death": {
+                        "src": "assets/scene/monsters/zombie/death.png",
+                        "fw": 44,
+                        "fh": 52,
+                        "frames": 5,
+                        "fps": 10,
+                        "loop": false
+                    }
+                },
+                "footY": 52,
+                "centerX": 22,
+                "height": 45,
+                "width": 32
+            },
+            "hellcat": {
+                "facing": "left",
+                "anims": {
+                    "idle": {
+                        "src": "assets/scene/monsters/hellcat/idle.png",
+                        "fw": 96,
+                        "fh": 53,
+                        "frames": 4,
+                        "fps": 9,
+                        "loop": true
+                    }
+                },
+                "footY": 53,
+                "centerX": 52,
+                "height": 36,
+                "width": 85
+            },
+            "drake": {
+                "facing": "left",
+                "anims": {
+                    "idle": {
+                        "src": "assets/scene/monsters/drake/idle.png",
+                        "fw": 218,
+                        "fh": 134,
+                        "frames": 20,
+                        "fps": 10,
+                        "loop": true
+                    },
+                    "run": {
+                        "src": "assets/scene/monsters/drake/run.png",
+                        "fw": 218,
+                        "fh": 134,
+                        "frames": 20,
+                        "fps": 12,
+                        "loop": true
+                    },
+                    "attack": {
+                        "src": "assets/scene/monsters/drake/attack.png",
+                        "fw": 218,
+                        "fh": 134,
+                        "frames": 20,
+                        "fps": 18,
+                        "loop": false
+                    },
+                    "hurt": {
+                        "src": "assets/scene/monsters/drake/hurt.png",
+                        "fw": 218,
+                        "fh": 134,
+                        "frames": 10,
+                        "fps": 14,
+                        "loop": false
+                    },
+                    "death": {
+                        "src": "assets/scene/monsters/drake/death.png",
+                        "fw": 218,
+                        "fh": 134,
+                        "frames": 20,
+                        "fps": 12,
+                        "loop": false
+                    }
+                },
+                "footY": 107,
+                "centerX": 122,
+                "height": 65,
+                "width": 160
+            },
+            "bigspider": {
+                "facing": "left",
+                "anims": {
+                    "idle": {
+                        "src": "assets/scene/monsters/bigspider/idle.png",
+                        "fw": 154,
+                        "fh": 58,
+                        "frames": 8,
+                        "fps": 8,
+                        "loop": true
+                    },
+                    "run": {
+                        "src": "assets/scene/monsters/bigspider/run.png",
+                        "fw": 154,
+                        "fh": 58,
+                        "frames": 8,
+                        "fps": 12,
+                        "loop": true
+                    },
+                    "attack": {
+                        "src": "assets/scene/monsters/bigspider/attack.png",
+                        "fw": 154,
+                        "fh": 58,
+                        "frames": 8,
+                        "fps": 14,
+                        "loop": false
+                    }
+                },
+                "footY": 58,
+                "centerX": 90,
+                "height": 42,
+                "width": 99
             }
         },
         "backgrounds": {
@@ -1904,6 +2168,72 @@
                         "glow": false
                     }
                 ]
+            },
+            "graveyard": {
+                "ground": "#0d0b14",
+                "layers": [
+                    {
+                        "src": "assets/scene/backgrounds/graveyard/sky.png",
+                        "w": 384,
+                        "h": 224,
+                        "speed": 0.03,
+                        "glow": false
+                    },
+                    {
+                        "src": "assets/scene/backgrounds/graveyard/mountains.png",
+                        "w": 192,
+                        "h": 179,
+                        "speed": 0.12,
+                        "glow": false
+                    },
+                    {
+                        "src": "assets/scene/backgrounds/graveyard/graves.png",
+                        "w": 384,
+                        "h": 123,
+                        "speed": 0.32,
+                        "glow": false
+                    }
+                ]
+            },
+            "nighttown": {
+                "ground": "#0c0a12",
+                "layers": [
+                    {
+                        "src": "assets/scene/backgrounds/nighttown/sky.png",
+                        "w": 96,
+                        "h": 224,
+                        "speed": 0.0,
+                        "glow": false
+                    },
+                    {
+                        "src": "assets/scene/backgrounds/nighttown/clouds.png",
+                        "w": 288,
+                        "h": 224,
+                        "speed": 0.05,
+                        "glow": false
+                    },
+                    {
+                        "src": "assets/scene/backgrounds/nighttown/mountains.png",
+                        "w": 96,
+                        "h": 224,
+                        "speed": 0.1,
+                        "glow": false
+                    },
+                    {
+                        "src": "assets/scene/backgrounds/nighttown/buildings.png",
+                        "w": 320,
+                        "h": 80,
+                        "speed": 0.2,
+                        "glow": false
+                    },
+                    {
+                        "src": "assets/scene/backgrounds/nighttown/town.png",
+                        "w": 512,
+                        "h": 99,
+                        "speed": 0.35,
+                        "glow": false
+                    }
+                ]
             }
         },
         "fx": {
@@ -2053,6 +2383,30 @@
                 "author": "ansimuz",
                 "url": "https://ansimuz.itch.io/parallax-forest",
                 "license": "Gratuito para uso pessoal e comercial"
+            },
+            {
+                "pack": "Gothicvania Patreon's Collection, Gothicvania Cemetery",
+                "author": "ansimuz",
+                "url": "https://opengameart.org/content/gothicvania-patreons-collection",
+                "license": "CC0"
+            },
+            {
+                "pack": "Dragon - Fully Animated",
+                "author": "Cethiel",
+                "url": "https://opengameart.org/content/dragon-fully-animated",
+                "license": "CC0"
+            },
+            {
+                "pack": "Spider (3D art with sprites)",
+                "author": "OpenGameArt",
+                "url": "https://opengameart.org/content/spider-2",
+                "license": "CC0"
+            },
+            {
+                "pack": "Bear Sprite",
+                "author": "Othur",
+                "url": "https://othur.itch.io/bear-sprite",
+                "license": "Livre para uso; uso comercial com gorjeta voluntária ao autor"
             }
         ]
     };

@@ -191,6 +191,121 @@ for key, folder, fname in [
     ("reptile", "Reptile", "Reptile.png"), ("trex", "TRex", "SpriteSheet.png"), ("mollusc", "Mollusc", "Mollusc.png")]:
     ninja_monster(key, folder, fname)
 
+# ---------------- Criaturas extras (Gothicvania CC0, Othur, OpenGameArt CC0) ----------------
+def strip_frames(src, fw, scale=1.0, resample=Image.NEAREST):
+    im = Image.open(src).convert("RGBA")
+    frames = []
+    for i in range(im.size[0] // fw):
+        frame = im.crop((i * fw, 0, (i + 1) * fw, im.size[1]))
+        if not frame.getbbox():
+            continue
+        if scale != 1:
+            frame = frame.resize((max(1, round(frame.size[0] * scale)), max(1, round(frame.size[1] * scale))), resample)
+        frames.append(frame)
+    return frames
+
+
+def grid_row(src, cell, row, scale=1.0):
+    im = Image.open(src).convert("RGBA")
+    frames = []
+    for i in range(im.size[0] // cell):
+        frame = im.crop((i * cell, row * cell, (i + 1) * cell, (row + 1) * cell))
+        if frame.getbbox():
+            if scale != 1:
+                frame = frame.resize((round(cell * scale), round(cell * scale)), Image.LANCZOS)
+            frames.append(frame)
+    return frames
+
+
+def file_frames(folder, step=1, scale=1.0, resample=Image.LANCZOS, limit=None):
+    files = sorted(f for f in Path(folder).glob("*.png") if "MACOSX" not in str(f))
+    files = files[::step]
+    if limit:
+        files = files[:limit]
+    out = []
+    for f in files:
+        frame = Image.open(f).convert("RGBA")
+        if scale != 1:
+            frame = frame.resize((max(1, round(frame.size[0] * scale)), max(1, round(frame.size[1] * scale))), resample)
+        out.append(frame)
+    return out
+
+
+def custom_actor(key, anims, facing="left", idle="idle"):
+    """anims: {nome: (quadros, fps, loop)}; quadros de tamanhos diferentes
+    ficam alinhados pela base e pelo centro numa célula comum."""
+    cell_w = max(f.size[0] for frames, _, _ in anims.values() for f in frames)
+    cell_h = max(f.size[1] for frames, _, _ in anims.values() for f in frames)
+    entry = {"facing": facing, "anims": {}}
+    for name, (frames, anim_fps, loop) in anims.items():
+        strip = Image.new("RGBA", (cell_w * len(frames), cell_h))
+        for i, frame in enumerate(frames):
+            strip.paste(frame, (i * cell_w + (cell_w - frame.size[0]) // 2, cell_h - frame.size[1]), frame)
+        dest = save(strip, OUT / "monsters" / key / f"{name}.png")
+        entry["anims"][name] = {"src": rel(dest), "fw": cell_w, "fh": cell_h, "frames": len(frames), "fps": anim_fps, "loop": loop}
+    first = entry["anims"][idle]
+    box = bbox_union(ROOT / first["src"], first["fw"], first["frames"])
+    entry.update({"footY": box[3], "centerX": round((box[0] + box[2]) / 2), "height": box[3] - box[1], "width": box[2] - box[0]})
+    catalog["actors"][key] = entry
+
+
+OTH = X / "othur"
+if OTH.exists():
+    custom_actor("bear", {
+        "idle": (grid_row(OTH / "160x160_idle-loop.png", 160, 2, 0.75), 9, True),
+        "run": (grid_row(OTH / "160x160_walk-loop.png", 160, 2, 0.75), 12, True),
+        "attack": (grid_row(OTH / "160x160_attack.png", 160, 2, 0.75), 14, False),
+        "death": (grid_row(OTH / "160x160_death.png", 160, 2, 0.75), 10, False)})
+
+GV = X / "oga" / "_gothicvania_patreon_collection"
+
+
+def gv(name):
+    return [f for f in GV.rglob(name) if "PSD" not in str(f) and "MACOSX" not in str(f)][0]
+
+
+if GV.exists():
+    custom_actor("hellhound", {
+        "idle": (strip_frames(gv("hell-hound-idle.png"), 64), 9, True),
+        "run": (strip_frames(gv("hell-hound-run.png"), 67), 12, True)})
+    custom_actor("hellbeast", {
+        "idle": (strip_frames(gv("hell-beast-idle.png"), 55), 9, True),
+        "attack": (strip_frames(gv("hell-beast-breath.png"), 64), 12, False)})
+    custom_actor("ghost", {
+        "idle": (strip_frames(gv("ghost-idle.png"), 64), 9, True),
+        "death": (list(reversed(strip_frames(gv("ghost-appears.png"), 64))), 10, False)})
+    custom_actor("demon", {
+        "idle": (strip_frames(gv("demon-idle.png"), 160), 8, True),
+        "attack": (strip_frames(gv("demon-attack-no-breath.png"), 192), 12, False)})
+    custom_actor("fireskull", {
+        "idle": (strip_frames(gv("fire-skull.png"), 96), 10, True)})
+
+CEM = X / "oga" / "gothicvania-cemetery-files_1" / "gothicvania-cemetery-files" / "PNG"
+if CEM.exists():
+    walk = file_frames(CEM / "Sprites" / "skeleton-clothed", resample=Image.NEAREST)
+    custom_actor("zombie", {
+        "idle": (walk, 8, True),
+        "run": (walk, 10, True),
+        "death": (file_frames(CEM / "Sprites" / "enemy-death", resample=Image.NEAREST), 10, False)})
+    custom_actor("hellcat", {
+        "idle": (file_frames(CEM / "Sprites" / "hell-gato", resample=Image.NEAREST), 9, True)})
+
+DRG = X / "oga" / "Dragon_-_Fully_Animated" / "Dragon - Fully Animated"
+if DRG.exists():
+    custom_actor("drake", {
+        "idle": (file_frames(DRG / "Idle Battle", step=7, scale=0.3, limit=20), 10, True),
+        "run": (file_frames(DRG / "Walking", step=8, scale=0.3, limit=20), 12, True),
+        "attack": (file_frames(DRG / "Attack 1", step=8, scale=0.3, limit=20), 18, False),
+        "hurt": (file_frames(DRG / "Hurt", step=6, scale=0.3, limit=10), 14, False),
+        "death": (file_frames(DRG / "Death", step=15, scale=0.3, limit=20), 12, False)})
+
+SPD = X / "oga" / "spider_sprites" / "spider"
+if SPD.exists():
+    custom_actor("bigspider", {
+        "idle": (file_frames(SPD / "IDLE", step=2, scale=0.6), 8, True),
+        "run": (file_frames(SPD / "WALK", step=2, scale=0.6), 12, True),
+        "attack": (file_frames(SPD / "ATTACK", step=2, scale=0.6), 14, False)})
+
 # ---------------- Fundos por zona (parallax) ----------------
 def hsv_shift(img, hue=0, sat=1.0, val=1.0):
     alpha = img.getchannel("A")
@@ -229,6 +344,24 @@ for key, (layers, shift, ground) in BACKGROUNDS.items():
                                 "glow": name == "lights"})
     catalog["backgrounds"][key] = entry
 
+
+def raw_background(key, layers, ground):
+    entry = {"ground": ground, "layers": []}
+    for name, src, speed in layers:
+        img = Image.open(src).convert("RGBA")
+        dest = save(img, OUT / "backgrounds" / key / f"{name}.png")
+        entry["layers"].append({"src": rel(dest), "w": img.size[0], "h": img.size[1], "speed": speed, "glow": False})
+    catalog["backgrounds"][key] = entry
+
+
+if CEM.exists():
+    env = CEM / "Environment"
+    raw_background("graveyard", [("sky", env / "background.png", 0.03), ("mountains", env / "mountains.png", 0.12),
+                                 ("graves", env / "graveyard.png", 0.32)], "#0d0b14")
+if GV.exists():
+    raw_background("nighttown", [("sky", gv("night-town-background-sky.png"), 0.0), ("clouds", gv("night-town-background-clouds.png"), 0.05),
+                                 ("mountains", gv("night-town-background-mountains.png"), 0.1), ("buildings", gv("night-town-background-far-buildings.png"), 0.2),
+                                 ("town", gv("night-town-background-town.png"), 0.35)], "#0c0a12")
 
 # ---------------- Efeitos (Ninja Adventure) ----------------
 def split_by_gaps(src):
@@ -308,6 +441,10 @@ catalog["credits"] = [
     {"pack": "Ninja Adventure", "author": "Pixel-boy & AAA", "url": "https://pixel-boy.itch.io/ninja-adventure-asset-pack", "license": "CC0"},
     {"pack": "Legacy Fantasy - High Forest", "author": "Anokolisa", "url": "https://anokolisa.itch.io/sidescroller-pixelart-sprites-asset-pack-forest-16x16", "license": "Gratuito, uso comercial permitido com crédito"},
     {"pack": "Parallax Forest", "author": "ansimuz", "url": "https://ansimuz.itch.io/parallax-forest", "license": "Gratuito para uso pessoal e comercial"},
+    {"pack": "Gothicvania Patreon's Collection, Gothicvania Cemetery", "author": "ansimuz", "url": "https://opengameart.org/content/gothicvania-patreons-collection", "license": "CC0"},
+    {"pack": "Dragon - Fully Animated", "author": "Cethiel", "url": "https://opengameart.org/content/dragon-fully-animated", "license": "CC0"},
+    {"pack": "Spider (3D art with sprites)", "author": "OpenGameArt", "url": "https://opengameart.org/content/spider-2", "license": "CC0"},
+    {"pack": "Bear Sprite", "author": "Othur", "url": "https://othur.itch.io/bear-sprite", "license": "Livre para uso; uso comercial com gorjeta voluntária ao autor"},
 ]
 
 js = ("// HuntSceneCatalog.js — GERADO por scripts/build_hunt_scene.py: folhas de sprite, fundos e\n"

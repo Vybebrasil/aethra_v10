@@ -2681,13 +2681,16 @@
                     const ratHeight = rat.scale * (sceneCatalog.actors?.[rat.key]?.height || 0);
                     const dragonHeight = dragon.scale * (sceneCatalog.actors?.[dragon.key]?.height || 0);
                     const bugbear = Aethra.TileMapCanvas.castFor(Aethra.GameData.getCreature("bugbear-mm", 5));
+                    // Feras e dragões usam arte de perfil própria, não os bonecos de 16 px ampliados.
+                    const realArt = [["black-bear-xmm-2024", "bear"], ["giant-spider-xmm-2024", "bigspider"], ["young-red-dragon-xmm-2024", "drake"], ["specter-xmm-2024", "ghost"]]
+                        .filter(([id, key]) => Aethra.TileMapCanvas.castFor(Aethra.GameData.getCreature(id, 5)).key !== key).map(([id]) => id);
                     const routesWithBackground = Object.keys(Aethra.HuntSystem?.hunts || {}).length > 0
                         && Object.keys(sceneCatalog.backgrounds || {}).length >= 6;
                     checks.push(createCheck(
                         "Cena da caçada tem elenco, animações e fundos para todas as rotas",
                         missingAnims.length === 0 && badCast.length === 0 && creatureIds.length >= 20
-                            && ratHeight > 0 && dragonHeight > ratHeight * 2 && bugbear.key === "goblin" && routesWithBackground,
-                        `${creatureIds.length} criaturas · sem sprite: ${badCast.join(", ") || "nenhuma"} · vocações incompletas: ${missingAnims.join(", ") || "nenhuma"} · rato ${Math.round(ratHeight)} px · dragão ${Math.round(dragonHeight)} px · bugbear ${bugbear.key}`
+                            && ratHeight > 0 && dragonHeight > ratHeight * 2 && bugbear.key === "goblin" && routesWithBackground && realArt.length === 0,
+                        `${creatureIds.length} criaturas · sem sprite: ${badCast.join(", ") || "nenhuma"} · vocações incompletas: ${missingAnims.join(", ") || "nenhuma"} · rato ${Math.round(ratHeight)} px · dragão ${Math.round(dragonHeight)} px · bugbear ${bugbear.key} · sem arte própria: ${realArt.join(", ") || "nenhum"}`
                     ));
                 }
 
