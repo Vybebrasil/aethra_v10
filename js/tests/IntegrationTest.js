@@ -4248,6 +4248,46 @@
                 }
                 checks.push(createCheck("Poção de Mana recupera só mana", manaOnly, manaDetail));
 
+                /*
+                 * Progressão por vocação: cada nível dá vida/mana/vigor conforme o
+                 * arquétipo (Vanguarda vida, Arcanista mana). A base é recalculada
+                 * (save antigo com +1 de vida por nível fica certo) e subir de nível
+                 * enche vida, mana e vigor.
+                 */
+                const vocationHero = Aethra.GameState.hero;
+                const vocationBackup = JSON.parse(JSON.stringify(vocationHero));
+                const vocationQuests = JSON.parse(JSON.stringify(Aethra.GameState.quests || {}));
+                let vocationWorks = false;
+                let vocationDetail = "";
+                try {
+                    const build = Aethra.CharacterBuildSystem;
+                    const arcanistGrowth = build.getLevelGrowth("arcanist", 11);
+                    const vanguardGrowth = build.getLevelGrowth("vanguard", 11);
+                    const growthOk = arcanistGrowth.maxMana === 80 && arcanistGrowth.maxHp === 20 && arcanistGrowth.mag === 4
+                        && vanguardGrowth.maxHp === 70 && vanguardGrowth.maxMana === 20 && Object.keys(build.getLevelGrowth("vanguard", 1)).length === 0;
+                    vocationHero.characterCreated = true;
+                    vocationHero.archetypeId = "arcanist";
+                    vocationHero.attributeAllocation = build.archetypes.arcanist.attributes;
+                    vocationHero.level = 11;
+                    vocationHero.baseStats = { ...(vocationHero.baseStats || {}), maxHp: 999, maxMana: 1 };
+                    build.rebuildBaseStats(vocationHero);
+                    const creation = build.previewAttributes(build.archetypes.arcanist.attributes).stats;
+                    const rebuiltOk = vocationHero.baseStats.maxMana === creation.maxMana + 80 && vocationHero.baseStats.maxHp === creation.maxHp + 20;
+                    vocationHero.stats.mana = 0;
+                    vocationHero.mana = 0;
+                    vocationHero.xpNext = Math.max(1, Number(vocationHero.xpNext) || 1);
+                    Aethra.XPSystem.levelUp({ source: "integration-vocation" });
+                    const levelUpFills = vocationHero.level === 12 && vocationHero.mana === vocationHero.stats.maxMana && vocationHero.stats.maxMana >= creation.maxMana + 88;
+                    vocationWorks = growthOk && rebuiltOk && levelUpFills;
+                    vocationDetail = `Arcanista nv11 +${arcanistGrowth.maxMana} mana/+${arcanistGrowth.maxHp} vida · Vanguarda nv11 +${vanguardGrowth.maxHp} vida · base ${rebuiltOk ? "recalculada" : "errada"} · nível 12 ${levelUpFills ? `enche a mana (${vocationHero.mana})` : "não enche"}`;
+                } finally {
+                    Object.keys(vocationHero).forEach((key) => delete vocationHero[key]);
+                    Object.assign(vocationHero, vocationBackup);
+                    Aethra.GameState.quests = vocationQuests;
+                    Aethra.EquipSystem?.recalculateStats?.({ emit: false, save: false, source: "integration-restore" });
+                }
+                checks.push(createCheck("Cada nível dá vida e mana conforme a vocação", vocationWorks, vocationDetail));
+
                 // Registro em português e no andar final a escada conclui a expedição.
                 const rewardText = Aethra.BattleLogger.formatRewardMessage("Lobo", { xp: 5, gold: 0, lootCount: 2 });
                 const finalHunt = Aethra.GameState.hunt;

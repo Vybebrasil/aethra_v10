@@ -309,23 +309,22 @@ window.Aethra = window.Aethra || {};
                 ? 0
                 : this.getXPRequired(hero.level);
 
-            // Crescimento controlado: atributos avançam em marcos, evitando números inflados.
-            hero.baseStats = hero.baseStats || clone(hero.stats);
-            if (hero.level % 5 === 0) {
-                hero.stats.str += 1;
-                hero.baseStats.str = toSafeNumber(hero.baseStats.str, hero.stats.str - 1) + 1;
-            }
-            hero.stats.maxHp += 1;
-            hero.baseStats.maxHp = toSafeNumber(hero.baseStats.maxHp, hero.stats.maxHp - 1) + 1;
-            if (hero.level % 10 === 0) {
-                hero.stats.maxFocus = toSafeNumber(hero.stats.maxFocus, 50) + 1;
-                hero.baseStats.maxFocus = toSafeNumber(hero.baseStats.maxFocus, hero.stats.maxFocus - 1) + 1;
+            // Crescimento da vocação (vida, mana, vigor e atributo a cada 5 níveis).
+            const rebuilt = Aethra.CharacterBuildSystem?.rebuildBaseStats?.(hero);
+            if (!rebuilt) {
+                hero.baseStats = hero.baseStats || clone(hero.stats);
+                hero.stats.maxHp += 1;
+                hero.baseStats.maxHp = toSafeNumber(hero.baseStats.maxHp, hero.stats.maxHp - 1) + 1;
             }
 
-            if (Object.prototype.hasOwnProperty.call(hero, "hp")) {
-                hero.hp = hero.stats.maxHp;
-                hero.maxHp = hero.stats.maxHp;
-            }
+            // Subir de nível enche vida, mana e vigor.
+            ["hp", "mana", "energy"].forEach((resource) => {
+                const maximumKey = `max${resource.charAt(0).toUpperCase()}${resource.slice(1)}`;
+                const maximum = toSafeNumber(hero.stats[maximumKey], toSafeNumber(hero.stats[resource], 0));
+                hero.stats[resource] = maximum;
+                hero[resource] = maximum;
+                hero[maximumKey] = maximum;
+            });
 
             if (Object.prototype.hasOwnProperty.call(hero, "focus")) {
                 hero.focus = hero.stats.maxFocus;

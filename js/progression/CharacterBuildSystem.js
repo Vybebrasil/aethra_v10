@@ -142,6 +142,20 @@
         }
     });
 
+    /*
+     * Progressão por vocação (decisão do Paulo, 2026-10-01): cada nível dá
+     * vida, mana e vigor conforme o arquétipo; a cada 5 níveis, o atributo da
+     * vocação sobe. Quem luta na linha de frente ganha vida; quem conjura, mana.
+     */
+    const VOCATION_GROWTH = Object.freeze({
+        vanguard: Object.freeze({ perLevel: { maxHp: 7, maxMana: 2, maxEnergy: 2 }, everyFive: { str: 1, defense: 1 } }),
+        berserker: Object.freeze({ perLevel: { maxHp: 6, maxMana: 1, maxEnergy: 3 }, everyFive: { str: 2 } }),
+        arcanist: Object.freeze({ perLevel: { maxHp: 2, maxMana: 8, maxEnergy: 1 }, everyFive: { mag: 2 } }),
+        ranger: Object.freeze({ perLevel: { maxHp: 4, maxMana: 3, maxEnergy: 3 }, everyFive: { precision: 1, str: 1 } }),
+        nightblade: Object.freeze({ perLevel: { maxHp: 4, maxMana: 4, maxEnergy: 2 }, everyFive: { precision: 1, mag: 1 } }),
+        templar: Object.freeze({ perLevel: { maxHp: 6, maxMana: 4, maxEnergy: 1 }, everyFive: { str: 1, mag: 1 } })
+    });
+
     function emptyAllocation(definitions) {
         return Object.fromEntries(Object.keys(definitions).map((id) => [id, 0]));
     }
@@ -179,6 +193,7 @@
         attributes: clone(ATTRIBUTES),
         masteries: clone(MASTERIES),
         archetypes: clone(ARCHETYPES),
+        vocationGrowth: clone(VOCATION_GROWTH),
         recommendedAttributes: clone(RECOMMENDED_ATTRIBUTES),
         recommendedMasteries: clone(RECOMMENDED_MASTERIES),
         introProfessions: clone(Aethra.ProfessionSystem?.introPaths || {}),
@@ -187,6 +202,11 @@
             this.ensureState();
             if (this.initialized) return this.getSnapshot();
             this.initialized = true;
+            // Saves carregados antes ou depois: base refeita pela vocação.
+            ["save:loaded", "state:restored"].forEach((eventName) => {
+                Aethra.EventBus.on(eventName, () => this.rebuildBaseStats());
+            });
+            this.rebuildBaseStats();
             Aethra.EventBus.emit("character-build:ready", this.getSnapshot());
             return this.getSnapshot();
         },
@@ -267,6 +287,41 @@
             });
             const composed = Aethra.EquipSystem?.composeStats?.(preview.stats, equipment);
             return { ...preview, stats: composed ? composed.stats : preview.stats };
+        },
+
+        // Ganho acumulado da vocação até o nível (o nível 1 não ganha nada).
+        getLevelGrowth(archetypeId, level = 1) {
+            const growth = VOCATION_GROWTH[archetypeId];
+            const levels = Math.max(0, integer(level, 1) - 1);
+            if (!growth || levels <= 0) return {};
+            const bonus = {};
+            Object.entries(growth.perLevel).forEach(([stat, value]) => {
+                bonus[stat] = (bonus[stat] || 0) + value * levels;
+            });
+            const milestones = Math.floor(integer(level, 1) / 5);
+            Object.entries(growth.everyFive).forEach(([stat, value]) => {
+                bonus[stat] = (bonus[stat] || 0) + value * milestones;
+            });
+            return bonus;
+        },
+
+        /*
+         * Atributos base = criação (atributos distribuídos) + vocação no nível
+         * atual. Recalculado em vez de somado aos poucos: saves antigos (que só
+         * ganhavam +1 de vida por nível) ficam certos ao carregar.
+         */
+        rebuildBaseStats(hero = Aethra.GameState.hero) {
+            if (!hero?.characterCreated || !hero.archetypeId || !ARCHETYPES[hero.archetypeId]) return null;
+            const base = this.previewAttributes(hero.attributeAllocation).stats;
+            Object.entries(this.getLevelGrowth(hero.archetypeId, hero.level)).forEach(([stat, value]) => {
+                base[stat] = (Number(base[stat]) || 0) + value;
+            });
+            base.hp = base.maxHp;
+            base.mana = base.maxMana;
+            base.energy = base.maxEnergy;
+            hero.baseStats = base;
+            Aethra.EquipSystem?.recalculateStats?.({ emit: true, save: false, source: "vocation-growth" });
+            return clone(base);
         },
 
         validateCreation(input = {}) {
