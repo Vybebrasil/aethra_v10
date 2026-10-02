@@ -3921,6 +3921,8 @@
                 const catalogIds = (level) => Aethra.MarketplaceSystem.getNpcCatalog(level).map((item) => item.id || item.templateId);
                 const armorAtLevel1 = starterArmor.every((id) => catalogIds(1).includes(id));
                 const armorAtLevel6 = starterArmor.every((id) => catalogIds(6).includes(id)) && !catalogIds(6).includes("eg_head_l6");
+                // Armas dos três níveis até o do herói (escolha pelo bolso), não mais.
+                const weaponTiers = catalogIds(10).includes("eg_sword_l8") && catalogIds(10).includes("eg_sword_l10") && !catalogIds(10).includes("eg_sword_l7");
                 let armorInShop = false;
                 withUi3Game(() => inCityForShop(() => {
                     windowManager.openWindow("npc-shop-view", { source: "integration-starter-armor" });
@@ -3932,7 +3934,7 @@
                 }));
                 checks.push(createCheck(
                     "Loja vende a armadura inicial em qualquer nível",
-                    armorAtLevel1 && armorAtLevel6 && armorInShop,
+                    armorAtLevel1 && armorAtLevel6 && armorInShop && weaponTiers,
                     `nível 1 ${armorAtLevel1 ? "completo" : "faltando"} · nível 6 ${armorAtLevel6 ? "só a inicial" : "errado"} · aba Armaduras ${armorInShop ? "lista as 5 peças" : "incompleta"}`
                 ));
 
