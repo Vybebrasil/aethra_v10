@@ -4437,9 +4437,15 @@
                     const warned = wearLogs.some((message) => /Espada de Recruta está desgastado .* Repare na Forja/.test(message || ""));
                     maintenance.applyWear(tunic.instanceId, 10, { source: "integration-wear" });
                     const tunicQuote = maintenance.getRepairQuote(tunic.instanceId);
+                    // Item de nível 5 se conserta com material comum (antes pedia Liga Aetheriana).
+                    const focus5 = Aethra.ItemSystem.generateItem("eg_focus_l5", { source: "integration-wear", rarity: "common", affixes: [] });
+                    wearHero.bag.push(focus5);
+                    maintenance.applyWear(focus5.instanceId, 10, { source: "integration-wear" });
+                    const focusQuote = maintenance.getRepairQuote(focus5.instanceId);
                     wearWorks = afterFirst === 70 && sword.durability.current === 20 && warned
-                        && tunicQuote.materialId === "cloth_scrap" && tunicQuote.stationId === "tannery";
-                    wearDetail = `espada 100→${afterFirst}→${sword.durability.current} · aviso ${warned ? "dado" : "ausente"} · túnica repara com ${tunicQuote.materialName} (${tunicQuote.stationId})`;
+                        && tunicQuote.materialId === "cloth_scrap" && tunicQuote.stationId === "tannery"
+                        && focusQuote.materialId === "iron_ore";
+                    wearDetail = `espada 100→${afterFirst}→${sword.durability.current} · aviso ${warned ? "dado" : "ausente"} · túnica repara com ${tunicQuote.materialName} (${tunicQuote.stationId}) · foco nv5 com ${focusQuote.materialName}`;
                 } finally {
                     Aethra.EventBus.off("BattleLog", captureWear);
                     wearHero.bag = wearBagBefore;

@@ -141,12 +141,13 @@
             : "blacksmithing";
     }
 
+    // Faixa de reparo pelo nível do item (até 10, 11–30, acima de 30). O
+    // "tier" do catálogo vai de 1 a 10 e jogava um Foco de nível 5 na Liga
+    // Aetheriana, material de fim de jogo.
     function getTier(item) {
         const template = getTemplate(item);
-        const explicit = Math.floor(number(item?.tier ?? template.tier, 0));
-        if (explicit > 0) return clamp(explicit, 1, 3);
         const level = Math.max(1, Math.floor(number(item?.levelReq ?? template.levelReq, 1)));
-        return clamp(Math.floor((level - 1) / 10) + 1, 1, 3);
+        return level <= 10 ? 1 : level <= 30 ? 2 : 3;
     }
 
     function getRepairMaterial(item) {
