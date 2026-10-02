@@ -2659,6 +2659,38 @@
                     )
                 );
 
+                /*
+                 * Cena viva da caçada: cada vocação tem as cinco animações, toda
+                 * criatura das rotas ganha um sprite do catálogo com escala válida
+                 * (altura pelo tamanho), e cada rota tem fundo próprio.
+                 */
+                {
+                    const sceneCatalog = Aethra.HuntSceneCatalog || { actors: {}, backgrounds: {} };
+                    const vocations = ["vanguard", "berserker", "templar", "ranger", "nightblade", "arcanist"];
+                    const missingAnims = vocations.filter((id) => !["idle", "run", "attack", "hurt", "death"]
+                        .every((anim) => /^assets\/scene\//.test(sceneCatalog.actors?.[id]?.anims?.[anim]?.src || "")));
+                    const creatureIds = [...new Set(Object.values(Aethra.HuntSystem?.hunts || {})
+                        .flatMap((hunt) => (hunt.enemies || []).map((entry) => entry.id)))];
+                    const badCast = creatureIds.filter((id) => {
+                        const creature = Aethra.GameData.getCreature(id, 5) || { id };
+                        const cast = Aethra.TileMapCanvas.castFor(creature);
+                        return !sceneCatalog.actors?.[cast.key] || !(cast.scale > 0) || !Number.isFinite(cast.scale);
+                    });
+                    const rat = Aethra.TileMapCanvas.castFor(Aethra.GameData.getCreature("giant-rat-xmm-2024", 5));
+                    const dragon = Aethra.TileMapCanvas.castFor(Aethra.GameData.getCreature("young-red-dragon-xmm-2024", 5));
+                    const ratHeight = rat.scale * (sceneCatalog.actors?.[rat.key]?.height || 0);
+                    const dragonHeight = dragon.scale * (sceneCatalog.actors?.[dragon.key]?.height || 0);
+                    const bugbear = Aethra.TileMapCanvas.castFor(Aethra.GameData.getCreature("bugbear-mm", 5));
+                    const routesWithBackground = Object.keys(Aethra.HuntSystem?.hunts || {}).length > 0
+                        && Object.keys(sceneCatalog.backgrounds || {}).length >= 6;
+                    checks.push(createCheck(
+                        "Cena da caçada tem elenco, animações e fundos para todas as rotas",
+                        missingAnims.length === 0 && badCast.length === 0 && creatureIds.length >= 20
+                            && ratHeight > 0 && dragonHeight > ratHeight * 2 && bugbear.key === "goblin" && routesWithBackground,
+                        `${creatureIds.length} criaturas · sem sprite: ${badCast.join(", ") || "nenhuma"} · vocações incompletas: ${missingAnims.join(", ") || "nenhuma"} · rato ${Math.round(ratHeight)} px · dragão ${Math.round(dragonHeight)} px · bugbear ${bugbear.key}`
+                    ));
+                }
+
                 const arenaQueueAfterCreation = Aethra.ColiseumSystem?.findMatch?.({ mode: "ranked" });
                 const arenaStartAfterCreation = arenaQueueAfterCreation?.opponent
                     ? Aethra.ColiseumSystem?.startMatch?.()

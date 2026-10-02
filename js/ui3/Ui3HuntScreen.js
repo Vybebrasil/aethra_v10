@@ -596,11 +596,15 @@
         const expedition = screen.querySelector(".ui3-hunt__expedition")?.getBoundingClientRect?.();
         const actions = screen.querySelector(".ui3-hunt__actions")?.getBoundingClientRect?.();
         const hero = parts.hero?.getBoundingClientRect?.();
+        // O registro fica no canto de baixo à esquerda, na altura dos pés: os
+        // atores começam depois dele.
+        const log = screen.querySelector(".ui3-hunt__log");
+        const logRect = log && !log.hidden ? log.getBoundingClientRect() : null;
         Aethra.TileMapCanvas?.setStageInsets?.({
             top: hero ? hero.bottom - stage.top : 0,
             right: expedition ? stage.right - expedition.left : 0,
             bottom: actions ? stage.bottom - actions.top : 0,
-            left: 0
+            left: logRect?.width ? logRect.right - stage.left : 0
         });
     }
 
