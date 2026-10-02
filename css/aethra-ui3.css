@@ -3344,6 +3344,14 @@
     white-space: normal;
 }
 
+/* Loja fechada fora da cidade */
+#ui3-root .ui3-shop__closed {
+    display: grid;
+    gap: var(--ui3-space-2);
+    justify-items: start;
+    padding: var(--ui3-space-4);
+}
+
 /* Pontos de habilidade */
 #ui3-root .ui3-topbar__badge {
     min-width: 18px;

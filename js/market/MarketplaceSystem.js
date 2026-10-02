@@ -462,7 +462,19 @@
         // NPC SHOP
         // =========================================================
 
+        /*
+         * O mercador fica na cidade (decisão do Paulo, 2026-10-01): comprar e
+         * vender com ele exige estar nela — vista Cidade, sem expedição nem luta.
+         */
+        getMerchantAccess() {
+            const inCity = Aethra.CityRest?.isInCity ? Aethra.CityRest.isInCity() : true;
+            return inCity
+                ? { open: true, reason: null }
+                : { open: false, reason: "outside-city", message: "O mercador fica na cidade. Volte para comprar e vender." };
+        },
+
         buyItem(itemId, quantity = 1) {
+            if (!this.getMerchantAccess().open) return this.fail("buyItem", "outside-city", { itemId });
             const hero = ensureHeroState();
             const template = getTemplate(itemId);
             const amount = Math.max(1, Math.floor(Number(quantity || 1)));
@@ -565,6 +577,7 @@
         },
 
         sellLoot(itemId) {
+            if (!this.getMerchantAccess().open) return this.fail("sellLoot", "outside-city", { itemId });
             const hero = ensureHeroState();
             const found = findInventoryItem(itemId);
 
@@ -616,6 +629,7 @@
         },
 
         sellBack(itemId) {
+            if (!this.getMerchantAccess().open) return this.fail("sellBack", "outside-city", { itemId });
             const hero = ensureHeroState();
             const found = findInventoryItem(itemId);
 

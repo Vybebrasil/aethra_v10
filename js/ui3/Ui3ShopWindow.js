@@ -266,7 +266,25 @@
             </div>`;
     }
 
+    // Fora da cidade o balcão está fechado: só o aviso e o caminho de volta.
+    function closedHTML(access) {
+        const K = kit();
+        return `<div class="ui3-shop__closed">
+                <span class="ui3-eyebrow">Loja fechada</span>
+                <p>${K.esc(access.message || "O mercador fica na cidade.")}</p>
+                <p class="ui3-caption">Voltar encerra a expedição em andamento.</p>
+                ${K.button({ label: "Voltar à cidade", variant: "primary", attributes: { "data-ui3-shop-go-city": "" } })}
+            </div>`;
+    }
+
     function render() {
+        const access = market()?.getMerchantAccess?.() || { open: true };
+        if (!access.open) {
+            patch(parts.tabs, "");
+            patch(parts.list, closedHTML(access));
+            patch(parts.details, "");
+            return;
+        }
         if (state.selected && !selectedBuy() && !selectedSell()) state.selected = null;
         patch(parts.tabs, tabsHTML());
         patch(parts.list, state.tab === "buy" ? buyListHTML() : sellListHTML());
@@ -339,6 +357,10 @@
 
     function onClick(event) {
         const target = event.target;
+        if (target.closest("[data-ui3-shop-go-city]")) {
+            Aethra.Ui3Navigation?.followQuestGuidance?.({ action: "go-city" }, { source: "ui3-shop" });
+            return render();
+        }
         const tab = target.closest("[data-ui3-tab]");
         if (tab) {
             state.tab = tab.dataset.ui3Tab;
@@ -407,6 +429,9 @@
             getSubtitle: () => "Velho Varian · suprimentos, equipamento e compra de espólios",
             getHeaderExtra: () => `<span class="ui3-currency"><span class="ui3-currency__coin" aria-hidden="true"></span><strong>${kit().formatNumber(gold())}</strong><small>ouro</small></span>`,
             events: [
+                "ui:primary-view-changed",
+                "hunt:started",
+                "hunt:ended",
                 "inventory:changed",
                 "bag:changed",
                 "hero.bag:changed",

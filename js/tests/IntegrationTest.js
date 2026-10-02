@@ -156,6 +156,20 @@
         }
     }
 
+    // O mercador só atende na cidade: põe o herói nela (sem expedição) durante o teste.
+    function inCityForShop(run) {
+        const viewBefore = Aethra.UIManager?.primaryView;
+        const huntBefore = Aethra.GameState.hunt?.isActive;
+        if (Aethra.GameState.hunt) Aethra.GameState.hunt.isActive = false;
+        Aethra.UIManager?.setPrimaryView?.("city", { source: "integration-shop", emit: false });
+        try {
+            return run();
+        } finally {
+            Aethra.UIManager?.setPrimaryView?.(viewBefore, { source: "integration-restore", emit: false });
+            if (Aethra.GameState.hunt) Aethra.GameState.hunt.isActive = huntBefore;
+        }
+    }
+
     function createCheck(name, passed, details = null) {
         return {
             check: name,
@@ -2370,6 +2384,11 @@
                 Aethra.GameState.hero.bag = (Aethra.GameState.hero.bag || []).filter(
                     (item) => (item.templateId || item.id) !== "potion_health"
                 );
+                // O mercador fica na cidade: os testes de compra e venda acontecem nela.
+                const shopViewBefore = Aethra.UIManager.primaryView;
+                const shopHuntBefore = Aethra.GameState.hunt?.isActive;
+                if (Aethra.GameState.hunt) Aethra.GameState.hunt.isActive = false;
+                Aethra.UIManager.setPrimaryView("city", { source: "integration-shop", emit: false });
                 const potionPurchase = Aethra.MarketplaceSystem?.buyItem?.("potion_health", 3);
                 const purchasedPotion = potionPurchase?.items?.[0];
                 const potionSellback = purchasedPotion
@@ -2464,6 +2483,8 @@
                 const lootKept = Boolean(keptLoot?.instanceId && Aethra.BagSystem?.hasItem?.(keptLoot.instanceId))
                     && Number(Aethra.GameState.hero?.gold || 0) === lootGoldBefore;
                 const manualSale = keptLoot?.instanceId ? Aethra.MarketplaceSystem?.sellLoot?.(keptLoot.instanceId) : null;
+                Aethra.UIManager.setPrimaryView(shopViewBefore, { source: "integration-restore", emit: false });
+                if (Aethra.GameState.hunt) Aethra.GameState.hunt.isActive = shopHuntBefore;
                 const soldByHand = Boolean(manualSale)
                     && Number(Aethra.GameState.hero?.gold || 0) === lootGoldBefore + Number(keptLoot.price || 0) * 2;
                 checks.push(
@@ -3067,6 +3088,10 @@
                 const shopBagOriginal = [...(Aethra.GameState.hero.bag || [])];
                 Aethra.GameState.hero.bag = shopBagOriginal.filter((item) => (item.templateId || item.id) !== "potion_health");
                 Aethra.GameState.hero.gold = Math.max(500, Number(shopGoldOriginal) || 0);
+                const shopViewOriginal = Aethra.UIManager.primaryView;
+                const shopHuntOriginal = Aethra.GameState.hunt?.isActive;
+                if (Aethra.GameState.hunt) Aethra.GameState.hunt.isActive = false;
+                Aethra.UIManager.setPrimaryView("city", { source: "integration-shop", emit: false });
                 windowManager.openWindow("npc-shop-view", { source: "integration-ui3-shop" });
                 const shopLayer = document.querySelector("#ui3-root [data-ui3-window='npc-shop-view']");
                 const shopRows = shopLayer?.querySelectorAll("[data-ui3-shop-buy]").length || 0;
@@ -3113,6 +3138,8 @@
                     )
                 );
                 windowManager.closeWindow("npc-shop-view", { source: "integration-restore" });
+                Aethra.UIManager.setPrimaryView(shopViewOriginal, { source: "integration-restore", emit: false });
+                if (Aethra.GameState.hunt) Aethra.GameState.hunt.isActive = shopHuntOriginal;
                 Aethra.GameState.hero.bag = shopBagOriginal;
                 Aethra.GameState.hero.gold = shopGoldOriginal;
 
@@ -3895,14 +3922,14 @@
                 const armorAtLevel1 = starterArmor.every((id) => catalogIds(1).includes(id));
                 const armorAtLevel6 = starterArmor.every((id) => catalogIds(6).includes(id)) && !catalogIds(6).includes("eg_head_l6");
                 let armorInShop = false;
-                withUi3Game(() => {
+                withUi3Game(() => inCityForShop(() => {
                     windowManager.openWindow("npc-shop-view", { source: "integration-starter-armor" });
                     const shopLayer = document.querySelector("#ui3-root [data-ui3-window='npc-shop-view']");
                     shopLayer?.querySelector("[data-ui3-shop-category='armor']")?.click();
                     armorInShop = starterArmor.every((id) => shopLayer?.querySelector(`[data-ui3-shop-buy='${id}']`));
                     shopLayer?.querySelector("[data-ui3-shop-category='all']")?.click();
                     windowManager.closeWindow("npc-shop-view", { source: "integration-restore" });
-                });
+                }));
                 checks.push(createCheck(
                     "Loja vende a armadura inicial em qualquer nível",
                     armorAtLevel1 && armorAtLevel6 && armorInShop,
@@ -4323,6 +4350,42 @@
                     kitOk && suppliesOk && healOk && shopOk && weightOk,
                     `kit ${kitOk ? "por classe" : "errado"} · poções ${suppliesOk ? "pela vocação" : "iguais para todos"} · Cura ${healOk ? "só com Restauração" : "para todos"} · Loja ${shopOk ? "3 linhas" : "incompleta"} · placa ${inPlate.mag.toFixed(1)} de Magia vs tecido ${inCloth.mag.toFixed(1)}`
                 ));
+
+                /*
+                 * Loja só na cidade: fora dela o MarketplaceSystem recusa compra e venda
+                 * e a janela mostra o balcão fechado com o caminho de volta.
+                 */
+                const merchantHunt = Aethra.GameState.hunt;
+                const merchantBackup = { active: merchantHunt.isActive, view: Aethra.UIManager.primaryView, gold: Aethra.GameState.hero.gold, stop: Aethra.HuntSystem.stopHunt };
+                let merchantWorks = false;
+                let merchantDetail = "";
+                try {
+                    Aethra.GameState.hero.gold = 500;
+                    Aethra.HuntSystem.stopHunt = () => { merchantHunt.isActive = false; return true; };
+                    merchantHunt.isActive = true;
+                    Aethra.UIManager.setPrimaryView("city", { source: "integration-merchant" });
+                    const refused = !Aethra.MarketplaceSystem.buyItem("potion_health", 1) && Aethra.GameState.hero.gold === 500
+                        && Aethra.MarketplaceSystem.getMerchantAccess().reason === "outside-city";
+                    let closedShown = false;
+                    let reopened = false;
+                    withUi3Game(() => {
+                        windowManager.openWindow("npc-shop-view", { source: "integration-merchant" });
+                        const shopLayer = document.querySelector("#ui3-root [data-ui3-window='npc-shop-view']");
+                        closedShown = Boolean(shopLayer?.querySelector("[data-ui3-shop-go-city]")) && !shopLayer?.querySelector("[data-ui3-shop-buy]");
+                        shopLayer?.querySelector("[data-ui3-shop-go-city]")?.click();
+                        reopened = merchantHunt.isActive === false && Boolean(shopLayer?.querySelector("[data-ui3-shop-buy]"));
+                        windowManager.closeWindow("npc-shop-view", { source: "integration-restore" });
+                    });
+                    const boughtInCity = Boolean(Aethra.MarketplaceSystem.buyItem("potion_health", 1)) && Aethra.GameState.hero.gold === 490;
+                    merchantWorks = refused && closedShown && reopened && boughtInCity;
+                    merchantDetail = `caçando: ${refused ? "recusa" : "vende"} · janela ${closedShown ? "fechada com volta" : "aberta"} · voltar ${reopened ? "abre o balcão" : "não abre"} · na cidade ${boughtInCity ? "compra" : "não compra"}`;
+                } finally {
+                    Aethra.HuntSystem.stopHunt = merchantBackup.stop;
+                    merchantHunt.isActive = merchantBackup.active;
+                    Aethra.GameState.hero.gold = merchantBackup.gold;
+                    Aethra.UIManager.setPrimaryView(merchantBackup.view, { source: "integration-restore" });
+                }
+                checks.push(createCheck("Loja só abre na cidade", merchantWorks, merchantDetail));
 
                 // Registro em português e no andar final a escada conclui a expedição.
                 const rewardText = Aethra.BattleLogger.formatRewardMessage("Lobo", { xp: 5, gold: 0, lootCount: 2 });
